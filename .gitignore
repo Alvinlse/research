@@ -1,0 +1,11 @@
+# Data and environments — never commit
+data/
+.venv/
+.venv-forecast/
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ipynb_checkpoints/

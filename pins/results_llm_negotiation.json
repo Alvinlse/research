@@ -1,0 +1,269 @@
+{
+  "model": "qwen2.5:3b",
+  "use_llm": true,
+  "strategist_states": [
+    {
+      "state": "preprocess|cap1|ahead|low|besteffort",
+      "stance": "concede",
+      "focus_gpus": 1,
+      "justification": "Ahead of schedule; focusing on minimal resources to conserve for later phases.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "train|cap8|ahead|high|besteffort",
+      "stance": "balanced",
+      "focus_gpus": 4,
+      "justification": "Ahead of deadline; focusing on fewer GPUs to avoid spreading thin.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "preprocess|cap1|ontrack|high|prod",
+      "stance": "aggressive",
+      "focus_gpus": 1,
+      "justification": "High cluster contention; needed for timely preprocessing.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "preprocess|cap1|behind|low|prod",
+      "stance": "aggressive",
+      "focus_gpus": 1,
+      "justification": "Behind schedule; cluster contention is low but job tier is prod.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "eval|cap2|ahead|low|besteffort",
+      "stance": "balanced",
+      "focus_gpus": 1,
+      "justification": "Ahead of deadline; focusing on one GPU to conserve resources for future phases.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "train|cap8|behind|high|prod",
+      "stance": "aggressive",
+      "focus_gpus": 4,
+      "justification": "Behind schedule; concentrating on fewer GPUs to ensure timely completion despite cluster contention.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "preprocess|cap1|ontrack|high|besteffort",
+      "stance": "aggressive",
+      "focus_gpus": 1,
+      "justification": "High cluster contention; need to secure GPU for timely preprocessing.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "eval|cap2|ontrack|low|prod",
+      "stance": "balanced",
+      "focus_gpus": 1,
+      "justification": "On track with prod job but cluster contention is low, focusing on one GPU to be prepared for potential future spikes.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "preprocess|cap1|ontrack|low|besteffort",
+      "stance": "balanced",
+      "focus_gpus": 1,
+      "justification": "Preprocess phase; workload fits single GPU need without straining cluster resources.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "train|cap8|ontrack|high|besteffort",
+      "stance": "aggressive",
+      "focus_gpus": 4,
+      "justification": "High cluster contention; need to secure GPUs to avoid being blocked.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "train|cap8|behind|high|besteffort",
+      "stance": "aggressive",
+      "focus_gpus": 4,
+      "justification": "Behind schedule; cluster contention is high.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "preprocess|cap1|ahead|high|besteffort",
+      "stance": "concede",
+      "focus_gpus": 1,
+      "justification": "Ahead of deadline; my job is in preprocess phase and can use only one GPU to stay on track.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "preprocess|cap1|behind|high|besteffort",
+      "stance": "aggressive",
+      "focus_gpus": 1,
+      "justification": "Behind schedule; cluster contention is high.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "preprocess|cap1|behind|high|prod",
+      "stance": "aggressive",
+      "focus_gpus": 1,
+      "justification": "Behind schedule; cluster contention is high.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "eval|cap2|behind|high|besteffort",
+      "stance": "aggressive",
+      "focus_gpus": 2,
+      "justification": "Behind schedule; cluster contention is high.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "eval|cap2|ontrack|high|besteffort",
+      "stance": "balanced",
+      "focus_gpus": 1,
+      "justification": "On track with besteffort priority; cluster contention is high, focusing on one GPU to avoid delays.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "eval|cap2|ahead|high|besteffort",
+      "stance": "balanced",
+      "focus_gpus": 1,
+      "justification": "Ahead of deadline; focusing on one GPU to avoid unnecessary competition.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "eval|cap2|behind|high|prod",
+      "stance": "aggressive",
+      "focus_gpus": 2,
+      "justification": "Behind schedule; cluster contention is high.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "eval|cap2|ontrack|high|prod",
+      "stance": "aggressive",
+      "focus_gpus": 2,
+      "justification": "High cluster contention; need to bid aggressively to secure GPUs for timely completion.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "eval|cap2|ahead|high|prod",
+      "stance": "balanced",
+      "focus_gpus": 1,
+      "justification": "Ahead of deadline; focusing on fewer GPUs to conserve for later phases.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "preprocess|cap1|ontrack|low|prod",
+      "stance": "balanced",
+      "focus_gpus": 1,
+      "justification": "On track with limited workload; focusing on one GPU to maintain efficiency.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "train|cap8|ontrack|high|prod",
+      "stance": "aggressive",
+      "focus_gpus": 4,
+      "justification": "Cluster contention is high; bidding aggressively for 4 GPUs will help secure them while still allowing some flexibility.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "train|cap8|ahead|high|prod",
+      "stance": "balanced",
+      "focus_gpus": 4,
+      "justification": "Ahead of deadline; focusing on fewer GPUs to avoid spreading thin.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "eval|cap2|ahead|low|prod",
+      "stance": "balanced",
+      "focus_gpus": 1,
+      "justification": "Ahead of deadline; focusing on one GPU to conserve resources for later phases.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "eval|cap2|behind|low|besteffort",
+      "stance": "aggressive",
+      "focus_gpus": 1,
+      "justification": "Behind schedule; cluster contention is low but job tier suggests urgency.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "train|cap8|ahead|low|besteffort",
+      "stance": "balanced",
+      "focus_gpus": 4,
+      "justification": "Ahead of deadline; focusing on fewer GPUs to conserve for later phases.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "train|cap8|ontrack|low|prod",
+      "stance": "balanced",
+      "focus_gpus": 4,
+      "justification": "On track with workload but cluster contention is low, so bidding for fewer GPUs to stay flexible.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "train|cap8|ahead|low|prod",
+      "stance": "balanced",
+      "focus_gpus": 4,
+      "justification": "Ahead of schedule; focusing on fewer GPUs to conserve for potential future need.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "train|cap8|ontrack|low|besteffort",
+      "stance": "balanced",
+      "focus_gpus": 4,
+      "justification": "On track with workload but cluster contention is low, focusing on four GPUs to balance use.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "train|cap8|behind|low|prod",
+      "stance": "aggressive",
+      "focus_gpus": 4,
+      "justification": "Behind schedule; cluster contention is low but job tier is prod.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "eval|cap2|behind|low|prod",
+      "stance": "aggressive",
+      "focus_gpus": 1,
+      "justification": "Behind schedule; cluster contention is low but job tier is prod.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "train|cap8|behind|low|besteffort",
+      "stance": "aggressive",
+      "focus_gpus": 4,
+      "justification": "Behind schedule; cluster contention is low but I need to concentrate on GPUs to catch up.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "eval|cap2|ontrack|low|besteffort",
+      "stance": "balanced",
+      "focus_gpus": 1,
+      "justification": "On track with besteffort priority; cluster contention is low.",
+      "_source": "llm:qwen2.5:3b"
+    }
+  ],
+  "committed_priorities": [
+    {
+      "state": "besteffort|loose|large",
+      "priority": "low",
+      "justification": "Best effort jobs with loose deadlines can yield to larger, more critical tasks.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "prod|tight|small",
+      "priority": "critical",
+      "justification": "Prod jobs with a tight deadline are the most critical and require immediate GPU allocation.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "besteffort|tight|large",
+      "priority": "high",
+      "justification": "Large workload with a tight deadline places it at the highest priority to ensure timely execution.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "prod|tight|large",
+      "priority": "critical",
+      "justification": "Large, high-impact 'prod' job with a tight deadline is most at risk when resources are scarce.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "state": "besteffort|loose|small",
+      "priority": "normal",
+      "justification": "Best effort jobs with loose deadlines are not as critical as those requiring tight deadlines.",
+      "_source": "llm:qwen2.5:3b"
+    }
+  ]
+}

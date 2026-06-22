@@ -1,0 +1,324 @@
+{
+  "model": "qwen2.5:14b",
+  "use_llm": true,
+  "decisions": [
+    {
+      "state": "medium|medium|ahead|high|besteffort",
+      "hedge": "none",
+      "justification": "Spike risk is only medium, and being ahead of schedule means any spike can be absorbed without missing the deadline.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "low|low|ontrack|high|prod",
+      "hedge": "none",
+      "justification": "Low spike risk and being on track allow no extra safety margin despite high contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "low|low|ahead|high|prod",
+      "hedge": "none",
+      "justification": "Low spike risk and being ahead of schedule means no extra safety margin is needed, especially with high cluster contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "low|low|ontrack|high|besteffort",
+      "hedge": "none",
+      "justification": "Low spike risk and being on track allow no extra safety margin despite high contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "low|low|ahead|high|besteffort",
+      "hedge": "none",
+      "justification": "Low spike risk and being ahead of schedule means no extra safety margin is needed.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "low|low|behind|high|besteffort",
+      "hedge": "none",
+      "justification": "Low spike risk and predictable demand mean no extra margin is needed, even though being behind schedule and high contention are concerns.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|low|ontrack|high|prod",
+      "hedge": "none",
+      "justification": "Low spike risk and being on track allow no extra hedging despite high contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "high|medium|ontrack|high|prod",
+      "hedge": "some",
+      "justification": "Medium spike risk and being on track justify some hedging despite high contention to protect the deadline.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|low|behind|high|prod",
+      "hedge": "some",
+      "justification": "Low spike risk and being behind schedule suggest some hedging, but high contention means not over-provisioning.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "high|medium|behind|high|prod",
+      "hedge": "some",
+      "justification": "Medium spike risk and being behind schedule warrant some insurance, despite high contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|medium|behind|high|prod",
+      "hedge": "heavy",
+      "justification": "High spike risk and being behind schedule necessitate heavy hedging despite high contention to protect the deadline.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "high|medium|behind|high|besteffort",
+      "hedge": "some",
+      "justification": "Medium spike risk and being behind schedule warrant some insurance, despite high cluster contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|medium|behind|high|besteffort",
+      "hedge": "heavy",
+      "justification": "High spike risk and being behind schedule necessitate a heavy hedge despite high contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|low|behind|high|besteffort",
+      "hedge": "some",
+      "justification": "Low spike risk and being behind schedule suggest some margin, but high contention means not overbidding.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|medium|ontrack|high|besteffort",
+      "hedge": "none",
+      "justification": "Medium spike risk and being on track means slack can absorb any moderate spike, while high contention suggests avoiding excess GPU allocation.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|low|ahead|high|besteffort",
+      "hedge": "none",
+      "justification": "Low spike risk and being ahead of schedule means no extra margin is needed despite high contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|low|ontrack|high|besteffort",
+      "hedge": "none",
+      "justification": "Low spike risk and being on track allow no hedging despite high contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "low|low|behind|high|prod",
+      "hedge": "none",
+      "justification": "Low spike risk and predictable demand mean no extra margin is needed, even though being behind schedule and high contention make wasted resources a concern.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "high|medium|ahead|high|besteffort",
+      "hedge": "none",
+      "justification": "Spike risk is only medium and I am ahead of schedule, so no extra margin is needed despite high uncertainty and contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "high|medium|ontrack|high|besteffort",
+      "hedge": "some",
+      "justification": "Medium spike risk and being on track justify some hedging despite high contention to protect the deadline.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|medium|ontrack|high|prod",
+      "hedge": "none",
+      "justification": "Medium spike risk and being on track means slack can absorb any moderate spike, avoiding excess GPU use under high contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "high|high|behind|high|besteffort",
+      "hedge": "heavy",
+      "justification": "High spike risk and being behind schedule necessitate heavy hedging despite high contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "high|high|ontrack|high|besteffort",
+      "hedge": "some",
+      "justification": "High spike risk necessitates some hedging despite high contention to avoid missing the deadline.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "high|high|ahead|high|besteffort",
+      "hedge": "none",
+      "justification": "Despite high spike risk, being ahead of schedule allows absorbing any spikes without missing the deadline, and high contention means extra GPUs would be wasted.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "high|high|ontrack|high|prod",
+      "hedge": "some",
+      "justification": "High spike risk necessitates some hedging despite high contention to protect the deadline.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "high|high|behind|high|prod",
+      "hedge": "heavy",
+      "justification": "High spike risk and being behind schedule necessitate heavy hedging despite high contention to protect the deadline.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "high|medium|ahead|high|prod",
+      "hedge": "none",
+      "justification": "Spike risk is only medium and we are ahead of schedule, so no extra margin is needed despite high uncertainty and contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|low|ahead|high|prod",
+      "hedge": "none",
+      "justification": "Low spike risk and being ahead of schedule means no extra safety margin is needed despite high contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|medium|ahead|high|prod",
+      "hedge": "none",
+      "justification": "Spike risk is only medium, and being ahead of schedule means any spike can be absorbed without missing the deadline.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|medium|ahead|low|besteffort",
+      "hedge": "some",
+      "justification": "Moderate spike risk requires some insurance, especially with spare capacity available.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "low|low|ontrack|low|prod",
+      "hedge": "some",
+      "justification": "Low spike risk and spare capacity warrant a modest safety margin.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "low|low|ahead|low|prod",
+      "hedge": "none",
+      "justification": "Low spike risk and being ahead of schedule means no extra safety margin is needed.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "low|low|ontrack|low|besteffort",
+      "hedge": "some",
+      "justification": "Low spike risk and spare capacity warrant a modest safety margin.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "low|low|ahead|low|besteffort",
+      "hedge": "none",
+      "justification": "Low spike risk and being ahead of schedule means no extra safety margin is needed.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|low|ontrack|low|besteffort",
+      "hedge": "some",
+      "justification": "Low spike risk and spare capacity justify a modest safety margin.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "high|medium|ontrack|low|besteffort",
+      "hedge": "some",
+      "justification": "Medium spike risk and on-track schedule warrant some hedging to protect against a potential demand spike, especially with low cluster contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "high|medium|ahead|low|besteffort",
+      "hedge": "some",
+      "justification": "Medium spike risk and being ahead of schedule allow for a moderate safety margin to protect the deadline without overusing resources in low contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "high|medium|behind|low|besteffort",
+      "hedge": "heavy",
+      "justification": "High uncertainty and medium spike risk, combined with being behind schedule, necessitates a heavy hedge to protect the deadline despite low contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|low|ahead|low|besteffort",
+      "hedge": "some",
+      "justification": "Low spike risk and spare capacity justify a modest safety margin to protect the predictable demand while not overusing resources.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|low|ontrack|low|prod",
+      "hedge": "some",
+      "justification": "Low spike risk and spare capacity warrant a modest safety margin.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|low|ahead|low|prod",
+      "hedge": "some",
+      "justification": "Low spike risk and spare capacity justify a modest safety margin to protect the predictable demand while not overallocating resources.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|low|behind|low|prod",
+      "hedge": "some",
+      "justification": "Low spike risk and spare capacity justify some hedging to protect against delays while not overusing resources.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|medium|behind|low|besteffort",
+      "hedge": "heavy",
+      "justification": "High spike risk and being behind schedule necessitates a heavy hedge to protect the deadline, especially with low contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "low|low|behind|low|besteffort",
+      "hedge": "some",
+      "justification": "Low spike risk and spare capacity justify some hedging to protect against delays despite being behind schedule.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|medium|ontrack|low|besteffort",
+      "hedge": "some",
+      "justification": "Medium spike risk and being on track with low contention warrants a moderate safety margin.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "high|high|ahead|low|besteffort",
+      "hedge": "some",
+      "justification": "High spike risk requires some insurance, but being ahead of schedule and low contention allow for it without wasting resources.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|low|behind|low|besteffort",
+      "hedge": "some",
+      "justification": "Low spike risk and spare capacity justify some hedging to protect against missing the deadline while ahead of schedule.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|medium|ontrack|low|prod",
+      "hedge": "some",
+      "justification": "Medium spike risk and being on track with low contention warrants a moderate safety margin.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "high|high|behind|low|besteffort",
+      "hedge": "heavy",
+      "justification": "High spike risk and being behind schedule necessitates a heavy hedge to ensure the deadline is met despite high uncertainty and current low contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "medium|medium|ahead|low|prod",
+      "hedge": "some",
+      "justification": "Moderate spike risk requires some insurance, especially with a deadline buffer and low contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "high|medium|ontrack|low|prod",
+      "hedge": "some",
+      "justification": "Medium spike risk and being on track with low contention warrants a moderate safety margin.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "high|high|ahead|high|prod",
+      "hedge": "none",
+      "justification": "Despite high spike risk, being ahead of schedule means slack can absorb any spike without needing extra GPUs.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "state": "high|medium|behind|low|prod",
+      "hedge": "heavy",
+      "justification": "High uncertainty and medium spike risk, combined with being behind schedule, necessitates a heavy hedge to protect the deadline despite low contention.",
+      "_source": "llm:qwen2.5:14b"
+    }
+  ]
+}

@@ -1,0 +1,261 @@
+{
+  "models": [
+    "qwen2.5:3b",
+    "qwen2.5:7b",
+    "qwen2.5:14b"
+  ],
+  "decisions": [
+    {
+      "model": "rule",
+      "state": "ample|many",
+      "reserve": "heavy",
+      "justification": "rule: ample contention, many prod incoming",
+      "_source": "rule"
+    },
+    {
+      "model": "rule",
+      "state": "scarce|many",
+      "reserve": "none",
+      "justification": "rule: scarce contention, many prod incoming",
+      "_source": "rule"
+    },
+    {
+      "model": "rule",
+      "state": "moderate|many",
+      "reserve": "light",
+      "justification": "rule: moderate contention, many prod incoming",
+      "_source": "rule"
+    },
+    {
+      "model": "rule",
+      "state": "scarce|few",
+      "reserve": "none",
+      "justification": "rule: scarce contention, few prod incoming",
+      "_source": "rule"
+    },
+    {
+      "model": "rule",
+      "state": "scarce|none",
+      "reserve": "none",
+      "justification": "rule: scarce contention, none prod incoming",
+      "_source": "rule"
+    },
+    {
+      "model": "rule",
+      "state": "moderate|none",
+      "reserve": "none",
+      "justification": "rule: moderate contention, none prod incoming",
+      "_source": "rule"
+    },
+    {
+      "model": "rule",
+      "state": "ample|few",
+      "reserve": "light",
+      "justification": "rule: ample contention, few prod incoming",
+      "_source": "rule"
+    },
+    {
+      "model": "rule",
+      "state": "moderate|few",
+      "reserve": "light",
+      "justification": "rule: moderate contention, few prod incoming",
+      "_source": "rule"
+    },
+    {
+      "model": "qwen2.5:3b",
+      "state": "ample|many",
+      "reserve": "light",
+      "justification": "Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "model": "qwen2.5:3b",
+      "state": "scarce|many",
+      "reserve": "heavy",
+      "justification": "Many high-priority prod jobs are still incoming, warranting heavy GPU headroom to protect against future contention and ensure timely job execution.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "model": "qwen2.5:3b",
+      "state": "scarce|few",
+      "reserve": "light",
+      "justification": "Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect future jobs without significantly impacting existing workload.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "model": "qwen2.5:3b",
+      "state": "moderate|few",
+      "reserve": "light",
+      "justification": "Moderate cluster contention warrants reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "model": "qwen2.5:3b",
+      "state": "scarce|none",
+      "reserve": "none",
+      "justification": "The cluster is currently scarce, no prod jobs are incoming, and there is no need to reserve any idle headroom.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "model": "qwen2.5:3b",
+      "state": "moderate|none",
+      "reserve": "light",
+      "justification": "Moderate cluster contention with no incoming prod jobs, reserving light headroom to avoid unnecessary idle resources and maintain job throughput.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "model": "qwen2.5:3b",
+      "state": "moderate|many",
+      "reserve": "light",
+      "justification": "Moderate cluster contention allows reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "model": "qwen2.5:7b",
+      "state": "ample|many",
+      "reserve": "heavy",
+      "justification": "High prod incoming and ample contention allow heavy reservation.",
+      "_source": "llm:qwen2.5:7b"
+    },
+    {
+      "model": "qwen2.5:7b",
+      "state": "scarce|many",
+      "reserve": "heavy",
+      "justification": "High contention and many prod jobs incoming justify heavy reservation.",
+      "_source": "llm:qwen2.5:7b"
+    },
+    {
+      "model": "qwen2.5:7b",
+      "state": "scarce|few",
+      "reserve": "none",
+      "justification": "High contention and few incoming prod jobs justify no reservation.",
+      "_source": "llm:qwen2.5:7b"
+    },
+    {
+      "model": "qwen2.5:7b",
+      "state": "scarce|none",
+      "reserve": "none",
+      "justification": "No prod jobs incoming and cluster is already scarce, so reserving idle GPUs would harm current jobs.",
+      "_source": "llm:qwen2.5:7b"
+    },
+    {
+      "model": "qwen2.5:7b",
+      "state": "moderate|none",
+      "reserve": "none",
+      "justification": "no prod jobs incoming and moderate contention, so no need to reserve idle GPUs.",
+      "_source": "llm:qwen2.5:7b"
+    },
+    {
+      "model": "qwen2.5:7b",
+      "state": "moderate|many",
+      "reserve": "light",
+      "justification": "moderate contention with multiple prod jobs incoming",
+      "_source": "llm:qwen2.5:7b"
+    },
+    {
+      "model": "qwen2.5:7b",
+      "state": "ample|few",
+      "reserve": "none",
+      "justification": "Contestation ample, few prod jobs incoming.",
+      "_source": "llm:qwen2.5:7b"
+    },
+    {
+      "model": "qwen2.5:7b",
+      "state": "moderate|few",
+      "reserve": "light",
+      "justification": "moderate contention and few incoming prod jobs",
+      "_source": "llm:qwen2.5:7b"
+    },
+    {
+      "model": "qwen2.5:14b",
+      "state": "ample|many",
+      "reserve": "heavy",
+      "justification": "Ample contention with many incoming prod jobs justifies heavy reservation to protect future high-priority tasks.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "model": "qwen2.5:14b",
+      "state": "scarce|many",
+      "reserve": "none",
+      "justification": "Reserving GPUs would starve current waiting jobs given the scarcity.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "model": "qwen2.5:14b",
+      "state": "moderate|many",
+      "reserve": "light",
+      "justification": "Moderate contention with many incoming prod jobs necessitates some idle headroom to protect future high-priority workloads without starving current waiting jobs.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "model": "qwen2.5:14b",
+      "state": "scarce|few",
+      "reserve": "none",
+      "justification": "Reserving GPUs would starve current waiting jobs given the scarcity.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "model": "qwen2.5:14b",
+      "state": "scarce|none",
+      "reserve": "none",
+      "justification": "No incoming prod jobs and current scarcity make reservation unwarranted.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "model": "qwen2.5:14b",
+      "state": "moderate|none",
+      "reserve": "none",
+      "justification": "No incoming prod jobs means no need to protect idle GPUs.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "model": "qwen2.5:14b",
+      "state": "ample|few",
+      "reserve": "light",
+      "justification": "Moderate incoming prod jobs warrant some idle headroom while avoiding GPU starvation.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "model": "qwen2.5:14b",
+      "state": "moderate|few",
+      "reserve": "light",
+      "justification": "Moderate contention with a few incoming prod jobs suggests reserving some but not excessive GPU capacity.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "model": "rule",
+      "state": "ample|none",
+      "reserve": "none",
+      "justification": "rule: ample contention, none prod incoming",
+      "_source": "rule"
+    },
+    {
+      "model": "qwen2.5:3b",
+      "state": "ample|none",
+      "reserve": "none",
+      "justification": "Contention is low, and no prod jobs are incoming; reserving headroom would not benefit the current workload.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "model": "qwen2.5:3b",
+      "state": "ample|few",
+      "reserve": "light",
+      "justification": "Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.",
+      "_source": "llm:qwen2.5:3b"
+    },
+    {
+      "model": "qwen2.5:7b",
+      "state": "ample|none",
+      "reserve": "none",
+      "justification": "No prod jobs incoming and current contention is ample, so no need to reserve idle GPUs.",
+      "_source": "llm:qwen2.5:7b"
+    },
+    {
+      "model": "qwen2.5:14b",
+      "state": "ample|none",
+      "reserve": "none",
+      "justification": "No incoming prod jobs means no need to protect idle GPUs.",
+      "_source": "llm:qwen2.5:14b"
+    }
+  ]
+}

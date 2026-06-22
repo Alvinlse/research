@@ -1,0 +1,92 @@
+{
+  "precision": "bf16",
+  "device": "NVIDIA A100-PCIE-40GB",
+  "rows": [
+    {
+      "id": "w32-b3-64px-bs128",
+      "params_m": 0.29,
+      "truth_gb": 0.355,
+      "deterministic_gb": 0.31,
+      "calib_ab": [
+        2.608,
+        -0.033
+      ]
+    },
+    {
+      "id": "w64-b3-64px-bs256",
+      "params_m": 1.15,
+      "truth_gb": 1.342,
+      "deterministic_gb": 1.37,
+      "calib_ab": [
+        2.572,
+        0.003
+      ]
+    },
+    {
+      "id": "w64-b4-96px-bs128",
+      "params_m": 4.69,
+      "truth_gb": 1.645,
+      "deterministic_gb": 1.68,
+      "calib_ab": [
+        2.576,
+        0.001
+      ]
+    },
+    {
+      "id": "w128-b4-96px-bs128",
+      "params_m": 18.75,
+      "truth_gb": 3.456,
+      "deterministic_gb": 3.36,
+      "calib_ab": [
+        2.492,
+        0.034
+      ]
+    },
+    {
+      "id": "w96-b3-128px-bs64",
+      "params_m": 2.58,
+      "truth_gb": 2.005,
+      "deterministic_gb": 2.07,
+      "calib_ab": [
+        2.59,
+        -0.003
+      ]
+    },
+    {
+      "id": "w64-b5-128px-bs64",
+      "params_m": 18.86,
+      "truth_gb": 1.713,
+      "deterministic_gb": 1.64,
+      "calib_ab": [
+        2.585,
+        -0.023
+      ]
+    }
+  ],
+  "metrics": {
+    "deterministic": {
+      "mem_MAE": 0.05700000000000002,
+      "mem_MAPE": 4.528559430762503,
+      "mem_within_1.5x": 100.0,
+      "mem_spearman": 0.942857142857143,
+      "gpu_exact_acc": 100.0,
+      "gpu_within_1": 100.0
+    },
+    "heuristic": {
+      "mem_MAE": 2.247333333333333,
+      "mem_MAPE": 269.45578384252406,
+      "mem_within_1.5x": 16.666666666666664,
+      "mem_spearman": 0.7714285714285715,
+      "gpu_exact_acc": 100.0,
+      "gpu_within_1": 100.0
+    },
+    "mean": {
+      "mem_MAE": 0.6509999999999999,
+      "mem_MAPE": 82.33078223600562,
+      "mem_within_1.5x": 66.66666666666666,
+      "mem_spearman": 0.7714285714285715,
+      "gpu_exact_acc": 100.0,
+      "gpu_within_1": 100.0
+    }
+  }
+}

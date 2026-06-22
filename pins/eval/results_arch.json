@@ -1,0 +1,122 @@
+{
+  "precision": "fp32",
+  "device": "NVIDIA A100-PCIE-40GB",
+  "rows": [
+    {
+      "id": "cnn-w64-b3-64px-bs256",
+      "family": "cnn",
+      "params_m": 1.15,
+      "act_ps": 2867722,
+      "attn_ps": 0,
+      "truth_gb": 2.404,
+      "deterministic_gb": 2.33
+    },
+    {
+      "id": "cnn-w96-b3-128px-bs64",
+      "family": "cnn",
+      "params_m": 2.58,
+      "act_ps": 17203978,
+      "attn_ps": 0,
+      "truth_gb": 3.546,
+      "deterministic_gb": 3.29
+    },
+    {
+      "id": "res-w64-222-64px-bs128",
+      "family": "resnet",
+      "params_m": 2.78,
+      "act_ps": 6685194,
+      "attn_ps": 0,
+      "truth_gb": 2.423,
+      "deterministic_gb": 2.71
+    },
+    {
+      "id": "res-w64-2222-96px-bs64",
+      "family": "resnet",
+      "params_m": 11.17,
+      "act_ps": 16073738,
+      "attn_ps": 0,
+      "truth_gb": 2.964,
+      "deterministic_gb": 3.33
+    },
+    {
+      "id": "res-w128-222-64px-bs128",
+      "family": "resnet",
+      "params_m": 11.09,
+      "act_ps": 13370378,
+      "attn_ps": 0,
+      "truth_gb": 4.903,
+      "deterministic_gb": 5.26
+    },
+    {
+      "id": "lm-d256-l4-s128-bs32",
+      "family": "transformer",
+      "params_m": 4.22,
+      "act_ps": 1992704,
+      "attn_ps": 262144,
+      "truth_gb": 0.521,
+      "deterministic_gb": 0.66
+    },
+    {
+      "id": "lm-d384-l6-s128-bs16",
+      "family": "transformer",
+      "params_m": 12.23,
+      "act_ps": 4139008,
+      "attn_ps": 393216,
+      "truth_gb": 0.597,
+      "deterministic_gb": 0.81
+    },
+    {
+      "id": "lm-d256-l4-s256-bs16",
+      "family": "transformer",
+      "params_m": 4.25,
+      "act_ps": 3985408,
+      "attn_ps": 1048576,
+      "truth_gb": 0.522,
+      "deterministic_gb": 0.69
+    },
+    {
+      "id": "lm-d256-l4-s512-bs32",
+      "family": "transformer",
+      "params_m": 4.32,
+      "act_ps": 7970816,
+      "attn_ps": 4194304,
+      "truth_gb": 1.857,
+      "deterministic_gb": 1.41
+    },
+    {
+      "id": "lm-d384-l6-s1024-bs16",
+      "family": "transformer",
+      "params_m": 12.58,
+      "act_ps": 33112064,
+      "attn_ps": 25165824,
+      "truth_gb": 3.519,
+      "deterministic_gb": 2.98
+    }
+  ],
+  "metrics": {
+    "deterministic": {
+      "mem_MAE": 0.2846,
+      "mem_MAPE": 17.570155646699863,
+      "mem_within_1.5x": 100.0,
+      "mem_spearman": 0.9636363636363635,
+      "gpu_exact_acc": 100.0,
+      "gpu_within_1": 100.0
+    },
+    "heuristic": {
+      "mem_MAE": 1.8649999999999998,
+      "mem_MAPE": 223.3613328407914,
+      "mem_within_1.5x": 40.0,
+      "mem_spearman": -0.29696969696969694,
+      "gpu_exact_acc": 100.0,
+      "gpu_within_1": 100.0
+    },
+    "mean": {
+      "mem_MAE": 1.1602000000000001,
+      "mem_MAPE": 115.81976674241952,
+      "mem_within_1.5x": 40.0,
+      "mem_spearman": -0.29696969696969694,
+      "gpu_exact_acc": 100.0,
+      "gpu_within_1": 100.0
+    }
+  }
+}

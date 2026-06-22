@@ -1,0 +1,332 @@
+{
+  "model": "qwen2.5:14b",
+  "metrics": {
+    "llm": {
+      "mem_MAE": 58.4,
+      "mem_MAPE": 376.25829725829726,
+      "mem_within_1.5x": 10.0,
+      "mem_spearman": 0.5984962406015037,
+      "gpu_exact_acc": 20.0,
+      "gpu_within_1": 80.0
+    },
+    "heuristic": {
+      "mem_MAE": 20.97,
+      "mem_MAPE": 99.25044191919191,
+      "mem_within_1.5x": 45.0,
+      "mem_spearman": 0.8180451127819548,
+      "gpu_exact_acc": 85.0,
+      "gpu_within_1": 90.0
+    },
+    "mean": {
+      "mem_MAE": 28.47,
+      "mem_MAPE": 194.97817460317458,
+      "mem_within_1.5x": 10.0,
+      "mem_spearman": 0.7458646616541353,
+      "gpu_exact_acc": 90.0,
+      "gpu_within_1": 90.0
+    }
+  },
+  "rows": [
+    {
+      "id": "resnet18-cifar10",
+      "truth": {
+        "peak_mem_gb": 3,
+        "gpus": 1
+      },
+      "llm": {
+        "peak_mem_gb": 16.0,
+        "recommended_gpus": 1
+      },
+      "heuristic": {
+        "peak_mem_gb": 4.0,
+        "recommended_gpus": 1
+      }
+    },
+    {
+      "id": "mobilenetv3-in",
+      "truth": {
+        "peak_mem_gb": 4,
+        "gpus": 1
+      },
+      "llm": {
+        "peak_mem_gb": 16.0,
+        "recommended_gpus": 1
+      },
+      "heuristic": {
+        "peak_mem_gb": 4.0,
+        "recommended_gpus": 1
+      }
+    },
+    {
+      "id": "resnet50-in-fp32",
+      "truth": {
+        "peak_mem_gb": 12,
+        "gpus": 1
+      },
+      "llm": {
+        "peak_mem_gb": 16.0,
+        "recommended_gpus": 2
+      },
+      "heuristic": {
+        "peak_mem_gb": 4.1,
+        "recommended_gpus": 1
+      }
+    },
+    {
+      "id": "resnet50-in-fp16",
+      "truth": {
+        "peak_mem_gb": 16,
+        "gpus": 1
+      },
+      "llm": {
+        "peak_mem_gb": 48.0,
+        "recommended_gpus": 2
+      },
+      "heuristic": {
+        "peak_mem_gb": 4.0,
+        "recommended_gpus": 1
+      }
+    },
+    {
+      "id": "vit-base-ft",
+      "truth": {
+        "peak_mem_gb": 10,
+        "gpus": 1
+      },
+      "llm": {
+        "peak_mem_gb": 25.0,
+        "recommended_gpus": 2
+      },
+      "heuristic": {
+        "peak_mem_gb": 4.2,
+        "recommended_gpus": 1
+      }
+    },
+    {
+      "id": "yolov8m",
+      "truth": {
+        "peak_mem_gb": 10,
+        "gpus": 1
+      },
+      "llm": {
+        "peak_mem_gb": 30.0,
+        "recommended_gpus": 2
+      },
+      "heuristic": {
+        "peak_mem_gb": 4.0,
+        "recommended_gpus": 1
+      }
+    },
+    {
+      "id": "distilbert-ft",
+      "truth": {
+        "peak_mem_gb": 6,
+        "gpus": 1
+      },
+      "llm": {
+        "peak_mem_gb": 30.0,
+        "recommended_gpus": 2
+      },
+      "heuristic": {
+        "peak_mem_gb": 4.1,
+        "recommended_gpus": 1
+      }
+    },
+    {
+      "id": "bert-base-ft",
+      "truth": {
+        "peak_mem_gb": 8,
+        "gpus": 1
+      },
+      "llm": {
+        "peak_mem_gb": 48.0,
+        "recommended_gpus": 2
+      },
+      "heuristic": {
+        "peak_mem_gb": 4.2,
+        "recommended_gpus": 1
+      }
+    },
+    {
+      "id": "bert-large-ft",
+      "truth": {
+        "peak_mem_gb": 16,
+        "gpus": 1
+      },
+      "llm": {
+        "peak_mem_gb": 80.0,
+        "recommended_gpus": 2
+      },
+      "heuristic": {
+        "peak_mem_gb": 8.1,
+        "recommended_gpus": 1
+      }
+    },
+    {
+      "id": "t5-base-ft",
+      "truth": {
+        "peak_mem_gb": 12,
+        "gpus": 1
+      },
+      "llm": {
+        "peak_mem_gb": 384.0,
+        "recommended_gpus": 4
+      },
+      "heuristic": {
+        "peak_mem_gb": 6.0,
+        "recommended_gpus": 1
+      }
+    },
+    {
+      "id": "gpt2-124m",
+      "truth": {
+        "peak_mem_gb": 10,
+        "gpus": 1
+      },
+      "llm": {
+        "peak_mem_gb": 32.0,
+        "recommended_gpus": 1
+      },
+      "heuristic": {
+        "peak_mem_gb": 4.2,
+        "recommended_gpus": 1
+      }
+    },
+    {
+      "id": "gpt2-355m",
+      "truth": {
+        "peak_mem_gb": 14,
+        "gpus": 1
+      },
+      "llm": {
+        "peak_mem_gb": 80.0,
+        "recommended_gpus": 3
+      },
+      "heuristic": {
+        "peak_mem_gb": 8.4,
+        "recommended_gpus": 1
+      }
+    },
+    {
+      "id": "gpt2-774m",
+      "truth": {
+        "peak_mem_gb": 18,
+        "gpus": 1
+      },
+      "llm": {
+        "peak_mem_gb": 38.0,
+        "recommended_gpus": 2
+      },
+      "heuristic": {
+        "peak_mem_gb": 15.9,
+        "recommended_gpus": 1
+      }
+    },
+    {
+      "id": "whisper-small-ft",
+      "truth": {
+        "peak_mem_gb": 8,
+        "gpus": 1
+      },
+      "llm": {
+        "peak_mem_gb": 38.0,
+        "recommended_gpus": 2
+      },
+      "heuristic": {
+        "peak_mem_gb": 6.4,
+        "recommended_gpus": 1
+      }
+    },
+    {
+      "id": "sd15-lora",
+      "truth": {
+        "peak_mem_gb": 12,
+        "gpus": 1
+      },
+      "llm": {
+        "peak_mem_gb": 32.0,
+        "recommended_gpus": 1
+      },
+      "heuristic": {
+        "peak_mem_gb": 17.5,
+        "recommended_gpus": 1
+      }
+    },
+    {
+      "id": "sd15-full",
+      "truth": {
+        "peak_mem_gb": 24,
+        "gpus": 1
+      },
+      "llm": {
+        "peak_mem_gb": 32.0,
+        "recommended_gpus": 2
+      },
+      "heuristic": {
+        "peak_mem_gb": 17.5,
+        "recommended_gpus": 1
+      }
+    },
+    {
+      "id": "llama7b-lora",
+      "truth": {
+        "peak_mem_gb": 18,
+        "gpus": 1
+      },
+      "llm": {
+        "peak_mem_gb": 32.0,
+        "recommended_gpus": 2
+      },
+      "heuristic": {
+        "peak_mem_gb": 128.0,
+        "recommended_gpus": 4
+      }
+    },
+    {
+      "id": "llama7b-full",
+      "truth": {
+        "peak_mem_gb": 120,
+        "gpus": 4
+      },
+      "llm": {
+        "peak_mem_gb": 38.0,
+        "recommended_gpus": 1
+      },
+      "heuristic": {
+        "peak_mem_gb": 128.0,
+        "recommended_gpus": 4
+      }
+    },
+    {
+      "id": "llama13b-lora",
+      "truth": {
+        "peak_mem_gb": 30,
+        "gpus": 1
+      },
+      "llm": {
+        "peak_mem_gb": 80.0,
+        "recommended_gpus": 2
+      },
+      "heuristic": {
+        "peak_mem_gb": 236.0,
+        "recommended_gpus": 7
+      }
+    },
+    {
+      "id": "llama13b-full",
+      "truth": {
+        "peak_mem_gb": 220,
+        "gpus": 6
+      },
+      "llm": {
+        "peak_mem_gb": 480.0,
+        "recommended_gpus": 12
+      },
+      "heuristic": {
+        "peak_mem_gb": 236.0,
+        "recommended_gpus": 7
+      }
+    }
+  ],
+  "failures": 0
+}

@@ -1,0 +1,236 @@
+{
+  "U3-128|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "unet",
+    "gpu_mem_pattern": "sawtooth",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "epochal"
+  },
+  "U3-32|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "unet",
+    "gpu_mem_pattern": "sawtooth",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "epochal"
+  },
+  "U3-64|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "unet",
+    "gpu_mem_pattern": "sawtooth",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "epochal"
+  },
+  "U4-128|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "unet",
+    "gpu_mem_pattern": "sawtooth",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "epochal"
+  },
+  "U4-32|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "unet",
+    "gpu_mem_pattern": "sawtooth",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "epochal"
+  },
+  "U4-64|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "unet",
+    "gpu_mem_pattern": "sawtooth",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "epochal"
+  },
+  "U5-128|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "unet",
+    "gpu_mem_pattern": "sawtooth",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "epochal"
+  },
+  "U5-32|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "unet",
+    "gpu_mem_pattern": "sawtooth",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "epochal"
+  },
+  "U5-64|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "unet",
+    "gpu_mem_pattern": "sawtooth",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "epochal"
+  },
+  "bert-base-uncased|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "transformer",
+    "gpu_mem_pattern": "grows",
+    "gpu_util_dynamics": "steady",
+    "gpu_util_level": "medium",
+    "phase_structure": "single"
+  },
+  "conv|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "gnn",
+    "gpu_mem_pattern": "sawtooth",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "single"
+  },
+  "dimenet|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "gnn",
+    "gpu_mem_pattern": "sawtooth",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "epochal"
+  },
+  "distilbert-base-uncased|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "light",
+    "family": "transformer",
+    "gpu_mem_pattern": "flat",
+    "gpu_util_dynamics": "steady",
+    "gpu_util_level": "low",
+    "phase_structure": "single"
+  },
+  "inception3|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "cnn",
+    "gpu_mem_pattern": "sawtooth",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "epochal"
+  },
+  "inception4|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "cnn",
+    "gpu_mem_pattern": "sawtooth",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "epochal"
+  },
+  "pna|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "gnn",
+    "gpu_mem_pattern": "sawtooth",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "epochal"
+  },
+  "resnet101_v2|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "cnn",
+    "gpu_mem_pattern": "sawtooth",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "epochal"
+  },
+  "resnet101|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "cnn",
+    "gpu_mem_pattern": "grows",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "single"
+  },
+  "resnet152_v2|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "cnn",
+    "gpu_mem_pattern": "sawtooth",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "epochal"
+  },
+  "resnet152|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "cnn",
+    "gpu_mem_pattern": "grows",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "single"
+  },
+  "resnet50_v1.5|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "cnn",
+    "gpu_mem_pattern": "sawtooth",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "epochal"
+  },
+  "resnet50|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "cnn",
+    "gpu_mem_pattern": "grows",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "epochal"
+  },
+  "schnet|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "gnn",
+    "gpu_mem_pattern": "sawtooth",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "epochal"
+  },
+  "vgg11|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "light",
+    "family": "cnn",
+    "gpu_mem_pattern": "grows",
+    "gpu_util_dynamics": "steady",
+    "gpu_util_level": "medium",
+    "phase_structure": "single"
+  },
+  "vgg16|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "cnn",
+    "gpu_mem_pattern": "grows",
+    "gpu_util_dynamics": "steady",
+    "gpu_util_level": "high",
+    "phase_structure": "single"
+  },
+  "vgg19|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b+rulefam",
+    "cpu_role": "heavy",
+    "family": "cnn",
+    "gpu_mem_pattern": "grows",
+    "gpu_util_dynamics": "bursty",
+    "gpu_util_level": "high",
+    "phase_structure": "single"
+  }
+}
