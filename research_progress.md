@@ -1128,3 +1128,207 @@ cd Research
 ```
 `pins/llm_agent.llm_margin` (+ `uncertainty_bucket`, `spike_risk_bucket`, `margin_uncertainty`);
 `pins/uncertainty_sim.make_llm_policy`; trace → `pins/results_uncertainty_llm.json`.
+
+---
+
+# Stage-2 DECIDER — LLMSched-style ILP vs the PINS auction
+
+The thesis `research_plan.md` Open-Question #1 asks which deterministic decider should consume
+the two-LLM negotiation: (a) the PINS auction (`pins/mechanism.py`) or (b) an LLMSched-style ILP
+(reason→guarantee, the IEEE OJ-CS 2026 paper in `Research/CLAUDE.md`). This experiment builds the
+(b) arm as a true drop-in — same `(bids, total_gpus, current)` signature, consuming the SAME
+negotiated marginal-value curves, scored by the SAME metrics — and compares them head-to-head,
+first on the existing 1-D GPU pool, then on a new 2-D node/placement model. New deps/modules:
+`pulp` (CBC MILP); `pins/ilp.py`, `pins/placement.py`, `pins/placement_sim.py`;
+`pins/test_ilp.py` (4), `pins/test_placement.py` (3). `test_mechanism.py` still 5/5.
+
+## Experiment 18 — ILP ties the auction in 1-D; removes a structural placement loss in 2-D
+
+**Date:** 2026-06-22
+
+### Part A — Single GPU pool (1-D): the ILP only TIES the auction (NEGATIVE; expected)
+
+**Method.** A MILP allocator (`pins/ilp.allocate`) maximises welfare under the SAME per-GPU
+anti-thrashing penalty `λ` (`rescale_cost`) the auction uses, but solved by CBC. Value is
+linearised exactly per GPU-unit (the curve is non-increasing, so contiguous fill is automatic).
+Dropped into `negotiation_sim.py` as `ILP-welfare` / `ILP-DL` beside `PINS-auction` /
+`PINS-auct-DL`. Single seed=0 sweep (directional, not the 8-seed protocol of Exp 9-13).
+
+**Result (seed 0; SLA / prodSLA, lower better; welfare higher better).**
+
+| pool | PINS-auction | ILP-welfare | note |
+|---|---|---|---|
+| 6 | 81.2 / 83.3 · w 14627 · slow 4.73 | 87.5 / 83.3 · w 14589 · slow **4.29** | auction edges SLA |
+| 8 | 56.2 / 66.7 · w 12227 · slow 2.43 | 62.5 / 83.3 · w **12353** · slow **1.76** | ILP edges welfare/slow |
+| 12 | 12.5 / 16.7 · w 11935 · slow 1.16 | **0.0 / 0.0** · w **12064** · slow **1.14** | ILP wins SLA |
+| 20 | 0.0 / 0.0 · w 11029 | 0.0 / 0.0 · w **11056** | tie |
+
+**Why it TIES (the point).** On one divisible pool with non-increasing curves, welfare-max is
+**already solved optimally by the auction's greedy fill** — so the ILP cannot beat it on welfare,
+and across pools it matches to within rounding (`test_ties_auction_on_welfare` asserts
+exact-equal welfare across pool sizes). The one real behavioural difference:
+the auction's anti-thrash gate is **all-or-nothing per round** (apply the whole target or keep
+current), whereas the ILP does **fine-grained partial preemption** — giving up only the individual
+GPUs whose marginal value beats the rescale cost. That recovers a sliver of welfare the gate leaves
+on the table (pool 8: 12353 vs 12227) and consistently lowers slowdown — but it is a sliver.
+
+**Cost.** Per round the ILP is **~150× slower** (auction 0.056 ms vs CBC 8.5 ms; still inside
+LLMSched's ~50 ms budget). **Verdict: on 1-D rationing the ILP is not worth the latency + 15 MB
+solver dependency.** This is itself thesis-relevant — it locates exactly where the ILP earns its
+keep: constraints the count-only auction **cannot express**.
+
+### Part B — Nodes + co-location (2-D): the auction is structurally handicapped; the ILP isn't
+
+**Method.** GPUs live on `N` nodes × 8; jobs are **co-located** (all GPUs on one node — the
+NVLink-coupled training case), and placement is **STICKY** (a running job cannot migrate for free,
+modelling real checkpoint/rescale cost). The auction clears a GPU *count* blind to nodes, then a
+deterministic best-effort placement (`place_sticky`, first-fit-decreasing) honours what it can and
+**repairs** (shrinks) the rest — the repaired-away GPUs are its structural loss. The ILP
+(`allocate_placement`) plans count AND node jointly and may **migrate** a live job at a bounded
+`migrate_cost=1.5` — a lever the count-only auction cannot even express. Contended workload
+(40 jobs, arrivals compressed into 60 steps, horizon 400, seed 0). New column `ploss` = mean
+GPUs/round won but unplaceable. `simulate` carries node assignments across rounds.
+
+**Result (seed 0; ploss = GPUs/round lost to fragmentation).**
+
+| cluster | strategy | SLA | prodSLA | util | welfare | slow | **ploss** |
+|---|---|---|---|---|---|---|---|
+| 2×8 | auction+sticky | 97.5 | 100.0 | 91% | 37060 | 10.87 | **1.28** |
+| 2×8 | **ILP-place** | 90.0 | 76.9 | **98%** | 34906 | **8.73** | **0.00** |
+| 2×8 | greedy+sticky | **87.5** | **76.9** | 96% | 28265 | 7.69 | 0.14 |
+| 3×8 | auction+sticky | 97.5 | 92.3 | 84% | 34494 | 7.25 | **2.96** |
+| 3×8 | **ILP-place** | 92.5 | 92.3 | **96%** | 33852 | **5.98** | **0.00** |
+| 3×8 | greedy+sticky | **77.5** | **61.5** | 92% | 27995 | 5.05 | 0.42 |
+| 4×8 | auction+sticky | 90.0 | 92.3 | 84% | 34149 | 5.16 | **3.62** |
+| 4×8 | **ILP-place** | 85.0 | 84.6 | **93%** | 32364 | **4.27** | **0.00** |
+| 4×8 | greedy+sticky | **65.0** | **53.8** | 92% | 27868 | 3.60 | 0.84 |
+| 6×8 | auction+sticky | 80.0 | 76.9 | 79% | 31087 | 3.11 | **5.37** |
+| 6×8 | **ILP-place** | 85.0 | 92.3 | **91%** | 31031 | **2.65** | **0.00** |
+| 6×8 | greedy+sticky | **57.5** | **46.2** | 86% | 28030 | 2.35 | 1.47 |
+
+**Findings.**
+1. **Node placement DOES break the 1-D auction, and the breakage GROWS with the cluster.** The
+   auction wastes `ploss` = 1.28 → 2.96 → 3.62 → 5.37 GPUs *every round* to fragmentation it cannot
+   foresee (more nodes = more ways to strand a whole-node train job behind sticky small jobs). The
+   ILP's `ploss` is **0 by construction** — it plans count+node jointly and migrates to consolidate.
+   This is the regime that justifies the ILP, exactly as Part A predicted (vs the 1-D tie).
+2. **The recovered capacity shows up as utilisation and slowdown, NOT welfare/SLA.** ILP-place wins
+   utilisation by **7–12 pts** (98 vs 91, 96 vs 84, 93 vs 84, 91 vs 79) and slowdown at every size.
+   But welfare is **slightly LOWER** than the auction (37060→34906 etc.) and SLA is **mixed** (ILP
+   beats the auction at 2×/4× but not 6×). Honest cause: welfare/SLA are the *concentration+stability*
+   axis from Exp 9-11, not the placement axis — the ILP optimises per-round welfare, which still
+   spreads/migrates value across jobs the way the per-round auction does.
+3. **`greedy+sticky` wins raw SLA AND prodSLA at every cluster size** (SLA 87.5/77.5/65/57.5),
+   beating both value-aware deciders — and its `ploss` stays low (stable id-order ⇒ placement-friendly).
+   This is the **same lesson as Exp 9/11**: under heavy contention the SLA lever is a *stable,
+   concentrated (run-to-completion) order*, which neither the per-round auction nor the per-round ILP
+   provides. The ILP fixes *placement feasibility*; it does not fix *scheduling discipline*.
+
+**Honest read / through-line.** Part A + B answer Open-Question #1 with data: **the ILP is redundant
+on the 1-D pool (ties the optimal auction at ~150× cost) and earns its keep only once node/placement
+constraints exist** — there it removes a loss the count-only auction *structurally cannot* (1.3→5.4
+GPUs/round) and lifts utilisation 7–12 pts. But it is not a free SLA win: deadline-meeting under
+contention still wants the committed/stable order (Exp 11), an orthogonal axis. This points to the
+natural next experiment: **committed priority (order) + ILP placement** — i.e. the auction/committed
+layer sets *who* and the ILP decides *where*, the layered "auction sets priorities → ILP places"
+architecture from `Research/CLAUDE.md`. Caveats: single seed=0 (not the 8-seed protocol — directional
+only); co-location + sticky-no-migration is one point on the placement-rigidity axis (mirrors Exp 14's
+malleable/rigid split — `migrate_cost` is the analogue knob); reclaim/migration modelled at a flat
+cost; CBC per-round is the bottleneck (full 2-D sweep ≈ 90 s).
+
+**Reproduce.**
+```bash
+cd Research
+(cd pins && ../.venv/bin/python test_ilp.py && ../.venv/bin/python test_placement.py)  # 4 + 3 green
+.venv/bin/python -m pins.negotiation_sim     # Part A: ILP-welfare / ILP-DL beside the auction
+.venv/bin/python -m pins.placement_sim       # Part B: auction+sticky vs ILP-place, ploss column
+```
+`pins/ilp.py` (`allocate`, `allocate_placement` + `migrate_cost`); `pins/placement.py`
+(`Cluster`, `place_ffd`, `place_sticky`); `pins/placement_sim.py` (`simulate`, sticky node state).
+
+---
+
+# Stage-1 REVISITED — what can we actually predict on the *real* MIT Supercloud trace?
+
+## Experiment 19 — Runtime prediction from thin metadata: retrieval beats the LLM (NEGATIVE for the LLM; sharpens the design)
+
+**Why runtime, and why not memory/utilisation.** Re-derived the Stage-1 target from the
+real data instead of the synthetic CNN VRAM proxy (Exp 1-7). Pulled the full scheduler log
+(`data/slurm-log.csv`, public S3 `s3://mit-supercloud-dataset`, no creds) and joined all
+**3,430 labelled DNN jobs**. Three candidate "resource-demand" targets turned out to be
+**dead** for this workload (memory `supercloud-profiling-data-reality`):
+- *Used GPU memory* is contaminated — 87% of telemetry jobs sit pinned at ~30.3 GB because
+  TensorFlow (VGG/ResNet/Inception/U-Net) reserves the whole V100; only ~19 PyTorch jobs
+  report real memory.
+- *Requested resources* (`tres_req`) are a flat copy-paste template (every model ≈ 2 GPU /
+  40 CPU / 332 GB) — no per-job signal.
+- Measured 3 ways, jobs have **no per-job GPU slack**: median util 92%, 0/110 multi-GPU jobs
+  leave a GPU idle, only 1.9% of time below 50% util. The real inefficiency is **queueing**
+  (median wait ~15 h). ⇒ the utilisation win here is *cluster-level scheduling*, and the
+  Stage-1 prediction that feeds it is each job's **wall-clock runtime, with uncertainty**.
+
+**Method.** Predict `runtime_min = time_end - time_start` (3,414 COMPLETED jobs, 10-2605 min,
+median 163) from submission metadata (model name + requested GPUs/CPU/mem + time limit).
+Predictors emit P10/P50/P90 (quantiles, mirroring `pins/forecast/model_quantile.py`):
+**mean** (global median), **heuristic** (calibrated fraction of the time limit), **retrieval**
+(per-model empirical P10/P50/P90; global-quantile fallback for an unseen model), and the
+**LLM** (qwen reasons to `{p10,p50,p90}`, clamped to a plausible band, one call per distinct
+prompt, cached). Two splits: in-distribution 5-fold, and **leave-one-model-family-out** (OOD).
+`pins/eval/predict_runtime.py`.
+
+**Result — in-distribution (5-fold).**
+
+| predictor | MAE(m) | MdAE(m) | within2x | logRMSE | rho | coverage | width(m) |
+|---|---|---|---|---|---|---|---|
+| mean | 199.3 | 114.5 | 44.3% | 1.07 | -0.04 | — | — |
+| heuristic (timelimit) | 198.5 | 113.5 | 44.7% | 1.06 | -0.02 | — | — |
+| **retrieval (per-model)** | **172.0** | **79.4** | **57.4%** | **0.95** | **+0.50** | **0.79** | 598 |
+| LLM qwen2.5:3b | 1101.8 | 637.4 | 20.7% | 2.21 | -0.03 | 0.16 | 557 |
+| LLM qwen2.5:7b | 275.9 | 163.2 | 31.3% | 1.58 | -0.06 | 0.13 | 122 |
+| LLM qwen2.5:14b | 236.2 | 125.1 | 28.8% | 1.66 | +0.11 | 0.16 | 77 |
+
+**Result — OOD (leave-one-model-family-out), within2x / rho / coverage.**
+
+| held-out | n | retrieval | qwen2.5:3b | qwen2.5:7b | qwen2.5:14b |
+|---|---|---|---|---|---|
+| gnn | 92 | **25.0**/+.25/.48 | 5.4/+.33/.03 | 19.6/+.14/.17 | 6.5/+.20/.04 |
+| nlp | 361 | **28.8**/+.36/.98 | 16.1/+.40/.14 | 24.9/-.29/.09 | 26.0/-.28/.04 |
+| unet | 1431 | **37.4**/-.01/.68 | 20.8/-.10/.15 | 31.2/-.03/.14 | 33.8/+.07/.23 |
+| vision | 1530 | **41.8**/+.09/.85 | 22.5/-.25/.17 | 33.6/+.03/.13 | 26.1/+.03/.12 |
+
+**Findings.**
+1. **Retrieval wins decisively in-distribution on every metric and is well-calibrated**
+   (within2x 57%, rho +0.50, coverage 0.79 ≈ the 0.80 target). The per-model *empirical
+   runtime distribution* IS the signal — a one-line `groupby(model).quantile()` baseline.
+2. **The LLM does not earn its cost at any size.** Scale improves point accuracy
+   (MAE 1102→276→236; within2x 21→31→29%) but plateaus far below retrieval, never gains rank
+   skill (rho ≈ 0 vs retrieval's +0.50), and its intervals are **badly over-confident**
+   (coverage 0.13-0.16, far below 0.80 — it doesn't know what it doesn't know). Clamping was
+   essential: the raw 3b emitted absurd outliers (pre-clamp MAE ≈ 7.5M min).
+3. **OOD does not rescue it.** Retrieval beats every LLM on within2x at *every* held-out
+   family. The only flickers of LLM advantage are rank correlation on 1-2 families
+   (3b: nlp rho +0.40) — not enough to matter. Note even retrieval's OOD *ranking* is weak
+   (rho ≈ 0 on unet/vision): runtime for an unseen family is genuinely hard from metadata for
+   ANY method, because within-family runtime is driven by epochs / dataset size /
+   early-stopping that the submission metadata simply does not contain.
+
+**Honest read / through-line.** A clean **negative result for the LLM as a runtime
+predictor**, and a useful one: it removes the LLM from the Stage-1 runtime path. Stage-1
+runtime+uncertainty for the cluster-scheduling sim (Stage-2, next) should be the cheap,
+calibrated **retrieval quantiles**, not an LLM — consistent with the project spine
+("deterministic code decides; the LLM reasons") and with the Exp 1-4 lesson that the LLM
+mis-calibrates absolute numbers. The LLM's demonstrated value stays where Exp 10/12/17 put
+it: the *negotiation/justification* layer, not numeric profiling. Caveats: thin metadata
+(model name + requests) — an LLM given the actual training script/epoch count might do
+better; qwen2.5 only (no frontier model); single Supercloud release; within-family runtime
+variance is largely irreducible from this metadata.
+
+**Reproduce.**
+```bash
+cd Research
+.venv/bin/python -m pins.eval.predict_runtime --no-llm                 # baselines + retrieval intervals
+.venv/bin/python -m pins.eval.predict_runtime --models qwen2.5:3b,qwen2.5:7b,qwen2.5:14b
+```
+`pins/eval/predict_runtime.py` (`build_jobs` join, `retrieval_predict`, `llm_predict`,
+quantile `score`); data `data/slurm-log.csv` + `data/labelled_jobids_full.csv`
+(cache `data/runtime_jobs.csv`); per-job metrics → `pins/eval/results_runtime.json`.
