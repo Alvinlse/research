@@ -1,0 +1,808 @@
+{
+  "device": "NVIDIA A100-PCIE-40GB",
+  "n_jobs": 80,
+  "max_parallel": 64,
+  "library_configs": 48,
+  "rows": [
+    {
+      "job": "j_1000736",
+      "n_nodes": 11,
+      "n_edges": 11,
+      "depth": 5,
+      "peak_concurrent_gb": 15.94434816,
+      "naive_sum": 40.66129664,
+      "naive_max": 5.9208704,
+      "level_sum": 15.94434816
+    },
+    {
+      "job": "j_1001091",
+      "n_nodes": 7,
+      "n_edges": 6,
+      "depth": 5,
+      "peak_concurrent_gb": 5.9208704,
+      "naive_sum": 21.597628415999996,
+      "naive_max": 5.9208704,
+      "level_sum": 5.9208704
+    },
+    {
+      "job": "j_1001481",
+      "n_nodes": 6,
+      "n_edges": 5,
+      "depth": 3,
+      "peak_concurrent_gb": 8.495945728,
+      "naive_sum": 14.241747968,
+      "naive_max": 5.9208704,
+      "level_sum": 8.495945728
+    },
+    {
+      "job": "j_1002092",
+      "n_nodes": 13,
+      "n_edges": 12,
+      "depth": 6,
+      "peak_concurrent_gb": 10.644508672,
+      "naive_sum": 41.63182028799999,
+      "naive_max": 5.9208704,
+      "level_sum": 10.644508672
+    },
+    {
+      "job": "j_1002218",
+      "n_nodes": 21,
+      "n_edges": 18,
+      "depth": 1,
+      "peak_concurrent_gb": 37.63953100799999,
+      "naive_sum": 43.26504959999998,
+      "naive_max": 5.625518592,
+      "level_sum": 37.63953100799999
+    },
+    {
+      "job": "j_1003077",
+      "n_nodes": 6,
+      "n_edges": 5,
+      "depth": 3,
+      "peak_concurrent_gb": 5.625518592,
+      "naive_sum": 19.27279616,
+      "naive_max": 5.625518592,
+      "level_sum": 5.625518592
+    },
+    {
+      "job": "j_1003537",
+      "n_nodes": 12,
+      "n_edges": 11,
+      "depth": 4,
+      "peak_concurrent_gb": 14.01724672,
+      "naive_sum": 46.339293696,
+      "naive_max": 5.625518592,
+      "level_sum": 16.034251775999998
+    },
+    {
+      "job": "j_1003569",
+      "n_nodes": 13,
+      "n_edges": 12,
+      "depth": 6,
+      "peak_concurrent_gb": 14.874355199999998,
+      "naive_sum": 50.28868608000001,
+      "naive_max": 11.409642496,
+      "level_sum": 14.874355199999998
+    },
+    {
+      "job": "j_1003857",
+      "n_nodes": 15,
+      "n_edges": 19,
+      "depth": 5,
+      "peak_concurrent_gb": 3.2000885760000006,
+      "naive_sum": 10.146068992000002,
+      "naive_max": 2.733271552,
+      "level_sum": 3.2000885760000006
+    },
+    {
+      "job": "j_100400",
+      "n_nodes": 5,
+      "n_edges": 4,
+      "depth": 3,
+      "peak_concurrent_gb": 10.569281536,
+      "naive_sum": 23.131571712,
+      "naive_max": 10.569281536,
+      "level_sum": 10.569281536
+    },
+    {
+      "job": "j_1004056",
+      "n_nodes": 8,
+      "n_edges": 7,
+      "depth": 4,
+      "peak_concurrent_gb": 14.961094144,
+      "naive_sum": 40.02602496000001,
+      "naive_max": 10.569281536,
+      "level_sum": 14.961094144
+    },
+    {
+      "job": "j_1004152",
+      "n_nodes": 8,
+      "n_edges": 9,
+      "depth": 3,
+      "peak_concurrent_gb": 8.148178944,
+      "naive_sum": 18.7959168,
+      "naive_max": 7.90302464,
+      "level_sum": 8.148178944
+    },
+    {
+      "job": "j_1004920",
+      "n_nodes": 4,
+      "n_edges": 3,
+      "depth": 2,
+      "peak_concurrent_gb": 10.569281536,
+      "naive_sum": 17.13733888,
+      "naive_max": 10.569281536,
+      "level_sum": 10.569281536
+    },
+    {
+      "job": "j_1004941",
+      "n_nodes": 6,
+      "n_edges": 6,
+      "depth": 3,
+      "peak_concurrent_gb": 10.992970752,
+      "naive_sum": 18.480386048,
+      "naive_max": 7.90302464,
+      "level_sum": 10.992970752
+    },
+    {
+      "job": "j_1005241",
+      "n_nodes": 4,
+      "n_edges": 3,
+      "depth": 2,
+      "peak_concurrent_gb": 6.777201152,
+      "naive_sum": 11.454712320000002,
+      "naive_max": 3.981349376,
+      "level_sum": 6.777201152
+    },
+    {
+      "job": "j_1005246",
+      "n_nodes": 5,
+      "n_edges": 4,
+      "depth": 2,
+      "peak_concurrent_gb": 6.856452096,
+      "naive_sum": 14.627529727999999,
+      "naive_max": 3.981349376,
+      "level_sum": 6.0022215679999995
+    },
+    {
+      "job": "j_1005486",
+      "n_nodes": 4,
+      "n_edges": 3,
+      "depth": 2,
+      "peak_concurrent_gb": 7.90302464,
+      "naive_sum": 14.819871744,
+      "naive_max": 7.90302464,
+      "level_sum": 7.90302464
+    },
+    {
+      "job": "j_1005679",
+      "n_nodes": 12,
+      "n_edges": 12,
+      "depth": 4,
+      "peak_concurrent_gb": 21.003930112,
+      "naive_sum": 35.861462016,
+      "naive_max": 7.90302464,
+      "level_sum": 21.003930112
+    },
+    {
+      "job": "j_1005807",
+      "n_nodes": 24,
+      "n_edges": 25,
+      "depth": 12,
+      "peak_concurrent_gb": 24.515378176,
+      "naive_sum": 56.84857190400001,
+      "naive_max": 11.409642496,
+      "level_sum": 23.005771776
+    },
+    {
+      "job": "j_1006081",
+      "n_nodes": 6,
+      "n_edges": 5,
+      "depth": 3,
+      "peak_concurrent_gb": 2.208990208,
+      "naive_sum": 6.626970623999999,
+      "naive_max": 1.104495104,
+      "level_sum": 2.208990208
+    },
+    {
+      "job": "j_1006223",
+      "n_nodes": 6,
+      "n_edges": 5,
+      "depth": 4,
+      "peak_concurrent_gb": 5.9208704,
+      "naive_sum": 19.354359296,
+      "naive_max": 5.9208704,
+      "level_sum": 5.9208704
+    },
+    {
+      "job": "j_1006325",
+      "n_nodes": 6,
+      "n_edges": 5,
+      "depth": 1,
+      "peak_concurrent_gb": 7.455699967999999,
+      "naive_sum": 11.389924864,
+      "naive_max": 3.934224896,
+      "level_sum": 7.455699967999999
+    },
+    {
+      "job": "j_1006426",
+      "n_nodes": 13,
+      "n_edges": 14,
+      "depth": 7,
+      "peak_concurrent_gb": 13.82389504,
+      "naive_sum": 55.26781388799999,
+      "naive_max": 7.90302464,
+      "level_sum": 13.82389504
+    },
+    {
+      "job": "j_1006796",
+      "n_nodes": 6,
+      "n_edges": 5,
+      "depth": 4,
+      "peak_concurrent_gb": 9.357809152,
+      "naive_sum": 19.879470079999997,
+      "naive_max": 7.90302464,
+      "level_sum": 9.357809152
+    },
+    {
+      "job": "j_1006848",
+      "n_nodes": 4,
+      "n_edges": 3,
+      "depth": 2,
+      "peak_concurrent_gb": 2.396853248,
+      "naive_sum": 4.6997749760000005,
+      "naive_max": 1.198426624,
+      "level_sum": 2.396853248
+    },
+    {
+      "job": "j_1007323",
+      "n_nodes": 4,
+      "n_edges": 3,
+      "depth": 3,
+      "peak_concurrent_gb": 1.497535488,
+      "naive_sum": 4.8110208,
+      "naive_max": 1.497535488,
+      "level_sum": 1.497535488
+    },
+    {
+      "job": "j_1007559",
+      "n_nodes": 12,
+      "n_edges": 14,
+      "depth": 3,
+      "peak_concurrent_gb": 9.201904127999999,
+      "naive_sum": 24.355162624,
+      "naive_max": 3.981349376,
+      "level_sum": 12.756405248
+    },
+    {
+      "job": "j_1007925",
+      "n_nodes": 5,
+      "n_edges": 4,
+      "depth": 2,
+      "peak_concurrent_gb": 4.449855488000001,
+      "naive_sum": 12.823017472,
+      "naive_max": 4.391812608,
+      "level_sum": 4.449855488000001
+    },
+    {
+      "job": "j_1008240",
+      "n_nodes": 11,
+      "n_edges": 14,
+      "depth": 3,
+      "peak_concurrent_gb": 16.885469696,
+      "naive_sum": 45.23748915200001,
+      "naive_max": 8.512307712,
+      "level_sum": 24.788494336
+    },
+    {
+      "job": "j_1008352",
+      "n_nodes": 6,
+      "n_edges": 5,
+      "depth": 2,
+      "peak_concurrent_gb": 4.32418304,
+      "naive_sum": 6.616679936,
+      "naive_max": 2.795851776,
+      "level_sum": 4.32418304
+    },
+    {
+      "job": "j_1008550",
+      "n_nodes": 13,
+      "n_edges": 12,
+      "depth": 4,
+      "peak_concurrent_gb": 16.542868992000002,
+      "naive_sum": 38.54557696,
+      "naive_max": 8.512307712,
+      "level_sum": 16.542868992000002
+    },
+    {
+      "job": "j_1008820",
+      "n_nodes": 4,
+      "n_edges": 3,
+      "depth": 3,
+      "peak_concurrent_gb": 2.823701504,
+      "naive_sum": 10.019779584000002,
+      "naive_max": 2.823701504,
+      "level_sum": 2.823701504
+    },
+    {
+      "job": "j_1008848",
+      "n_nodes": 19,
+      "n_edges": 18,
+      "depth": 4,
+      "peak_concurrent_gb": 23.985559040000005,
+      "naive_sum": 62.38545715199999,
+      "naive_max": 8.512307712,
+      "level_sum": 23.093052928000002
+    },
+    {
+      "job": "j_1008950",
+      "n_nodes": 7,
+      "n_edges": 6,
+      "depth": 3,
+      "peak_concurrent_gb": 10.569281536,
+      "naive_sum": 32.094518784,
+      "naive_max": 10.569281536,
+      "level_sum": 10.569281536
+    },
+    {
+      "job": "j_1009915",
+      "n_nodes": 6,
+      "n_edges": 5,
+      "depth": 4,
+      "peak_concurrent_gb": 7.90302464,
+      "naive_sum": 20.622646784,
+      "naive_max": 7.90302464,
+      "level_sum": 7.90302464
+    },
+    {
+      "job": "j_1010633",
+      "n_nodes": 7,
+      "n_edges": 6,
+      "depth": 2,
+      "peak_concurrent_gb": 8.821974016,
+      "naive_sum": 14.211803136,
+      "naive_max": 2.733271552,
+      "level_sum": 8.821974016
+    },
+    {
+      "job": "j_1011522",
+      "n_nodes": 9,
+      "n_edges": 7,
+      "depth": 2,
+      "peak_concurrent_gb": 31.707844608000002,
+      "naive_sum": 39.88186214399999,
+      "naive_max": 10.569281536,
+      "level_sum": 31.707844608000002
+    },
+    {
+      "job": "j_1011644",
+      "n_nodes": 8,
+      "n_edges": 7,
+      "depth": 4,
+      "peak_concurrent_gb": 3.38409216,
+      "naive_sum": 6.706941951999999,
+      "naive_max": 2.66223872,
+      "level_sum": 3.38409216
+    },
+    {
+      "job": "j_1011852",
+      "n_nodes": 4,
+      "n_edges": 3,
+      "depth": 1,
+      "peak_concurrent_gb": 7.211807232,
+      "naive_sum": 9.874045952,
+      "naive_max": 2.66223872,
+      "level_sum": 7.211807232
+    },
+    {
+      "job": "j_1012308",
+      "n_nodes": 10,
+      "n_edges": 9,
+      "depth": 2,
+      "peak_concurrent_gb": 13.635882495999999,
+      "naive_sum": 19.857432576,
+      "naive_max": 10.569281536,
+      "level_sum": 13.635882495999999
+    },
+    {
+      "job": "j_1012349",
+      "n_nodes": 5,
+      "n_edges": 4,
+      "depth": 4,
+      "peak_concurrent_gb": 4.7643648,
+      "naive_sum": 13.766739456,
+      "naive_max": 4.7643648,
+      "level_sum": 4.7643648
+    },
+    {
+      "job": "j_1012370",
+      "n_nodes": 16,
+      "n_edges": 15,
+      "depth": 9,
+      "peak_concurrent_gb": 11.409642496,
+      "naive_sum": 77.131412992,
+      "naive_max": 11.409642496,
+      "level_sum": 11.409642496
+    },
+    {
+      "job": "j_1012417",
+      "n_nodes": 4,
+      "n_edges": 3,
+      "depth": 3,
+      "peak_concurrent_gb": 5.344750592,
+      "naive_sum": 14.909830144,
+      "naive_max": 5.344750592,
+      "level_sum": 5.344750592
+    },
+    {
+      "job": "j_1012593",
+      "n_nodes": 15,
+      "n_edges": 12,
+      "depth": 4,
+      "peak_concurrent_gb": 3.1758320639999997,
+      "naive_sum": 15.179760640000001,
+      "naive_max": 1.281255936,
+      "level_sum": 3.194614272
+    },
+    {
+      "job": "j_1013692",
+      "n_nodes": 6,
+      "n_edges": 5,
+      "depth": 5,
+      "peak_concurrent_gb": 2.69491456,
+      "naive_sum": 5.85542656,
+      "naive_max": 2.69491456,
+      "level_sum": 2.69491456
+    },
+    {
+      "job": "j_1014015",
+      "n_nodes": 5,
+      "n_edges": 4,
+      "depth": 3,
+      "peak_concurrent_gb": 11.201383936,
+      "naive_sum": 13.097691136000002,
+      "naive_max": 10.569281536,
+      "level_sum": 11.201383936
+    },
+    {
+      "job": "j_1014378",
+      "n_nodes": 19,
+      "n_edges": 24,
+      "depth": 7,
+      "peak_concurrent_gb": 40.338518528,
+      "naive_sum": 100.15236556799998,
+      "naive_max": 11.409642496,
+      "level_sum": 35.574153728
+    },
+    {
+      "job": "j_1014503",
+      "n_nodes": 24,
+      "n_edges": 31,
+      "depth": 8,
+      "peak_concurrent_gb": 12.863504384,
+      "naive_sum": 32.06043647999999,
+      "naive_max": 8.512307712,
+      "level_sum": 11.658564096000001
+    },
+    {
+      "job": "j_1014537",
+      "n_nodes": 5,
+      "n_edges": 4,
+      "depth": 2,
+      "peak_concurrent_gb": 9.710734336,
+      "naive_sum": 11.770107904,
+      "naive_max": 8.512307712,
+      "level_sum": 9.198765568
+    },
+    {
+      "job": "j_1014668",
+      "n_nodes": 4,
+      "n_edges": 3,
+      "depth": 2,
+      "peak_concurrent_gb": 4.391812608,
+      "naive_sum": 11.778696192000002,
+      "naive_max": 4.391812608,
+      "level_sum": 4.391812608
+    },
+    {
+      "job": "j_1014767",
+      "n_nodes": 4,
+      "n_edges": 3,
+      "depth": 2,
+      "peak_concurrent_gb": 17.024615424,
+      "naive_sum": 28.332774911999998,
+      "naive_max": 8.512307712,
+      "level_sum": 17.024615424
+    },
+    {
+      "job": "j_1015100",
+      "n_nodes": 7,
+      "n_edges": 6,
+      "depth": 5,
+      "peak_concurrent_gb": 8.512307712,
+      "naive_sum": 23.78314752,
+      "naive_max": 8.512307712,
+      "level_sum": 8.512307712
+    },
+    {
+      "job": "j_1015254",
+      "n_nodes": 6,
+      "n_edges": 5,
+      "depth": 5,
+      "peak_concurrent_gb": 4.391812608,
+      "naive_sum": 17.284897792,
+      "naive_max": 4.391812608,
+      "level_sum": 4.391812608
+    },
+    {
+      "job": "j_1015761",
+      "n_nodes": 9,
+      "n_edges": 9,
+      "depth": 5,
+      "peak_concurrent_gb": 14.941304832,
+      "naive_sum": 42.906050560000004,
+      "naive_max": 8.512307712,
+      "level_sum": 14.941304832
+    },
+    {
+      "job": "j_1016612",
+      "n_nodes": 5,
+      "n_edges": 4,
+      "depth": 3,
+      "peak_concurrent_gb": 5.31478272,
+      "naive_sum": 12.267148800000001,
+      "naive_max": 5.31478272,
+      "level_sum": 5.31478272
+    },
+    {
+      "job": "j_1017050",
+      "n_nodes": 19,
+      "n_edges": 18,
+      "depth": 4,
+      "peak_concurrent_gb": 18.879254016000004,
+      "naive_sum": 34.318611456,
+      "naive_max": 3.934224896,
+      "level_sum": 18.879254016000004
+    },
+    {
+      "job": "j_1017116",
+      "n_nodes": 8,
+      "n_edges": 7,
+      "depth": 3,
+      "peak_concurrent_gb": 13.51755264,
+      "naive_sum": 20.446848512,
+      "naive_max": 5.31478272,
+      "level_sum": 13.51755264
+    },
+    {
+      "job": "j_1017411",
+      "n_nodes": 4,
+      "n_edges": 3,
+      "depth": 2,
+      "peak_concurrent_gb": 5.9208704,
+      "naive_sum": 13.459912191999999,
+      "naive_max": 5.9208704,
+      "level_sum": 5.9208704
+    },
+    {
+      "job": "j_1017791",
+      "n_nodes": 5,
+      "n_edges": 4,
+      "depth": 3,
+      "peak_concurrent_gb": 9.466439168,
+      "naive_sum": 19.734585344,
+      "naive_max": 5.9208704,
+      "level_sum": 9.466439168
+    },
+    {
+      "job": "j_1018664",
+      "n_nodes": 8,
+      "n_edges": 7,
+      "depth": 4,
+      "peak_concurrent_gb": 5.384881152,
+      "naive_sum": 8.314607104,
+      "naive_max": 3.17700864,
+      "level_sum": 5.384881152
+    },
+    {
+      "job": "j_1018749",
+      "n_nodes": 11,
+      "n_edges": 10,
+      "depth": 7,
+      "peak_concurrent_gb": 8.654753280000001,
+      "naive_sum": 44.81820416,
+      "naive_max": 5.9208704,
+      "level_sum": 10.659533312
+    },
+    {
+      "job": "j_1018754",
+      "n_nodes": 10,
+      "n_edges": 10,
+      "depth": 5,
+      "peak_concurrent_gb": 9.466439168,
+      "naive_sum": 29.326381056,
+      "naive_max": 5.9208704,
+      "level_sum": 9.466439168
+    },
+    {
+      "job": "j_101891",
+      "n_nodes": 7,
+      "n_edges": 6,
+      "depth": 4,
+      "peak_concurrent_gb": 7.90302464,
+      "naive_sum": 24.620562432,
+      "naive_max": 7.90302464,
+      "level_sum": 7.90302464
+    },
+    {
+      "job": "j_1019003",
+      "n_nodes": 5,
+      "n_edges": 4,
+      "depth": 2,
+      "peak_concurrent_gb": 2.332670976,
+      "naive_sum": 5.077384192000001,
+      "naive_max": 2.332670976,
+      "level_sum": 2.332670976
+    },
+    {
+      "job": "j_1019155",
+      "n_nodes": 4,
+      "n_edges": 3,
+      "depth": 2,
+      "peak_concurrent_gb": 3.0188492800000004,
+      "naive_sum": 4.46255616,
+      "naive_max": 2.332670976,
+      "level_sum": 3.0188492800000004
+    },
+    {
+      "job": "j_1019789",
+      "n_nodes": 7,
+      "n_edges": 6,
+      "depth": 5,
+      "peak_concurrent_gb": 5.9208704,
+      "naive_sum": 21.556539904,
+      "naive_max": 5.9208704,
+      "level_sum": 5.9208704
+    },
+    {
+      "job": "j_1019874",
+      "n_nodes": 15,
+      "n_edges": 16,
+      "depth": 5,
+      "peak_concurrent_gb": 20.87624192,
+      "naive_sum": 61.223737344000014,
+      "naive_max": 10.569281536,
+      "level_sum": 21.167220736
+    },
+    {
+      "job": "j_1019925",
+      "n_nodes": 5,
+      "n_edges": 4,
+      "depth": 2,
+      "peak_concurrent_gb": 10.949799424,
+      "naive_sum": 22.246560768000002,
+      "naive_max": 10.569281536,
+      "level_sum": 10.949799424
+    },
+    {
+      "job": "j_1019938",
+      "n_nodes": 7,
+      "n_edges": 6,
+      "depth": 2,
+      "peak_concurrent_gb": 8.161457664,
+      "naive_sum": 15.753782783999998,
+      "naive_max": 2.733271552,
+      "level_sum": 8.161457664
+    },
+    {
+      "job": "j_1020233",
+      "n_nodes": 7,
+      "n_edges": 7,
+      "depth": 5,
+      "peak_concurrent_gb": 10.569281536,
+      "naive_sum": 35.733525504,
+      "naive_max": 10.569281536,
+      "level_sum": 10.569281536
+    },
+    {
+      "job": "j_102059",
+      "n_nodes": 6,
+      "n_edges": 5,
+      "depth": 2,
+      "peak_concurrent_gb": 7.0379069439999995,
+      "naive_sum": 10.545112064,
+      "naive_max": 3.981349376,
+      "level_sum": 7.0379069439999995
+    },
+    {
+      "job": "j_1020817",
+      "n_nodes": 9,
+      "n_edges": 8,
+      "depth": 5,
+      "peak_concurrent_gb": 6.972321792,
+      "naive_sum": 36.149351935999995,
+      "naive_max": 5.625518592,
+      "level_sum": 11.251037184
+    },
+    {
+      "job": "j_1020863",
+      "n_nodes": 10,
+      "n_edges": 9,
+      "depth": 5,
+      "peak_concurrent_gb": 10.764190207999999,
+      "naive_sum": 17.16541184,
+      "naive_max": 3.981349376,
+      "level_sum": 10.764190207999999
+    },
+    {
+      "job": "j_1020918",
+      "n_nodes": 6,
+      "n_edges": 5,
+      "depth": 4,
+      "peak_concurrent_gb": 5.625518592,
+      "naive_sum": 22.986821632,
+      "naive_max": 5.625518592,
+      "level_sum": 5.625518592
+    },
+    {
+      "job": "j_1021286",
+      "n_nodes": 4,
+      "n_edges": 3,
+      "depth": 3,
+      "peak_concurrent_gb": 3.981349376,
+      "naive_sum": 9.489216,
+      "naive_max": 3.981349376,
+      "level_sum": 3.981349376
+    },
+    {
+      "job": "j_1021688",
+      "n_nodes": 5,
+      "n_edges": 4,
+      "depth": 3,
+      "peak_concurrent_gb": 3.7299609599999997,
+      "naive_sum": 5.70322432,
+      "naive_max": 2.442423296,
+      "level_sum": 3.7299609599999997
+    },
+    {
+      "job": "j_1022113",
+      "n_nodes": 11,
+      "n_edges": 10,
+      "depth": 4,
+      "peak_concurrent_gb": 9.443085312,
+      "naive_sum": 13.62966528,
+      "naive_max": 3.17700864,
+      "level_sum": 9.443085312
+    },
+    {
+      "job": "j_1022666",
+      "n_nodes": 6,
+      "n_edges": 5,
+      "depth": 4,
+      "peak_concurrent_gb": 5.9208704,
+      "naive_sum": 20.353352192,
+      "naive_max": 5.9208704,
+      "level_sum": 5.9208704
+    },
+    {
+      "job": "j_1022756",
+      "n_nodes": 5,
+      "n_edges": 5,
+      "depth": 3,
+      "peak_concurrent_gb": 9.999074304,
+      "naive_sum": 20.510415871999996,
+      "naive_max": 5.234709504,
+      "level_sum": 9.999074304
+    },
+    {
+      "job": "j_102279",
+      "n_nodes": 4,
+      "n_edges": 3,
+      "depth": 3,
+      "peak_concurrent_gb": 5.31478272,
+      "naive_sum": 10.918523904,
+      "naive_max": 5.31478272,
+      "level_sum": 5.31478272
+    }
+  ]
+}

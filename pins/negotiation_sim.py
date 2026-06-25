@@ -37,6 +37,7 @@ import os
 import random
 from dataclasses import dataclass, field
 
+from pins.ilp import allocate as ilp_allocate
 from pins.mechanism import clear, welfare
 from pins.predictor import PHASE_PROFILES, marginal_values
 
@@ -197,6 +198,14 @@ def sched_auction(bids: Bids, total_gpus: int, current: Alloc) -> Alloc:
     """PINS: sealed-bid uniform-price auction. Rations by marginal VALUE (=urgency), with the
     anti-thrashing gate ON so it does not thrash GPUs between jobs every round."""
     return clear(bids, total_gpus, current=current, rescale_cost=RESCALE_COST).allocation
+
+
+def sched_ilp(bids: Bids, total_gpus: int, current: Alloc) -> Alloc:
+    """LLMSched-style ILP decider (Open-Question #1, arm b). Consumes the SAME negotiated bids
+    as sched_auction and maximises welfare under the SAME per-GPU rescale penalty — but solves
+    it as a MILP, so it can do FINE-GRAINED partial preemption instead of the auction's
+    all-or-nothing anti-thrash gate. See pins/ilp.py."""
+    return ilp_allocate(bids, total_gpus, current=current, rescale_cost=RESCALE_COST).allocation
 
 
 def sched_greedy(bids: Bids, total_gpus: int, current: Alloc) -> Alloc:
@@ -417,6 +426,8 @@ def make_declared_committed(declare_fn, budget: float | None = None):
 STRATEGIES = [
     ("PINS-auction",      static_bid,   lambda: sched_auction),
     ("PINS-auct-DL",      deadline_bid, lambda: sched_auction),
+    ("ILP-welfare",       static_bid,   lambda: sched_ilp),
+    ("ILP-DL",            deadline_bid, lambda: sched_ilp),
     ("committed-auction", static_bid,   make_committed_auction),
     ("greedy-FIFO",       static_bid,   lambda: sched_greedy),
     ("equal-share",       static_bid,   lambda: sched_equal),

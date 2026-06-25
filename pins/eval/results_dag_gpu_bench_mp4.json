@@ -1,0 +1,408 @@
+{
+  "device": "NVIDIA A100-PCIE-40GB",
+  "n_dags": 40,
+  "max_parallel": 4,
+  "n_configs_measured": 48,
+  "rows": [
+    {
+      "dag": 0,
+      "n_nodes": 12,
+      "n_edges": 21,
+      "peak_concurrent_gb": 18.470864384,
+      "makespan_s": 3.1954054832458496,
+      "naive_sum": 46.948583424000006,
+      "naive_max": 11.409265664,
+      "layer_sum": 15.344604672
+    },
+    {
+      "dag": 1,
+      "n_nodes": 7,
+      "n_edges": 7,
+      "peak_concurrent_gb": 11.673144831999998,
+      "makespan_s": 0.8173239231109619,
+      "naive_sum": 18.622484991999997,
+      "naive_max": 5.624617472,
+      "layer_sum": 11.673144831999998
+    },
+    {
+      "dag": 2,
+      "n_nodes": 7,
+      "n_edges": 7,
+      "peak_concurrent_gb": 4.13980416,
+      "makespan_s": 1.105893611907959,
+      "naive_sum": 14.996900863999999,
+      "naive_max": 2.872628736,
+      "layer_sum": 4.13980416
+    },
+    {
+      "dag": 3,
+      "n_nodes": 9,
+      "n_edges": 9,
+      "peak_concurrent_gb": 10.56733184,
+      "makespan_s": 1.6872339248657227,
+      "naive_sum": 30.688885759999998,
+      "naive_max": 10.56733184,
+      "layer_sum": 10.56733184
+    },
+    {
+      "dag": 4,
+      "n_nodes": 6,
+      "n_edges": 6,
+      "peak_concurrent_gb": 3.6836515839999997,
+      "makespan_s": 0.5002756118774414,
+      "naive_sum": 8.604747776,
+      "naive_max": 2.403558912,
+      "layer_sum": 3.6836515839999997
+    },
+    {
+      "dag": 5,
+      "n_nodes": 11,
+      "n_edges": 12,
+      "peak_concurrent_gb": 13.192667135999999,
+      "makespan_s": 1.8866641521453857,
+      "naive_sum": 37.49375488,
+      "naive_max": 10.56733184,
+      "layer_sum": 13.192667136
+    },
+    {
+      "dag": 6,
+      "n_nodes": 10,
+      "n_edges": 14,
+      "peak_concurrent_gb": 13.597652992,
+      "makespan_s": 2.719708204269409,
+      "naive_sum": 39.017299456,
+      "naive_max": 8.512832,
+      "layer_sum": 12.069611007999999
+    },
+    {
+      "dag": 7,
+      "n_nodes": 12,
+      "n_edges": 11,
+      "peak_concurrent_gb": 19.312798208,
+      "makespan_s": 3.4975645542144775,
+      "naive_sum": 50.75640627200001,
+      "naive_max": 11.409265664,
+      "layer_sum": 19.312798208
+    },
+    {
+      "dag": 8,
+      "n_nodes": 7,
+      "n_edges": 8,
+      "peak_concurrent_gb": 5.843633152,
+      "makespan_s": 0.7091646194458008,
+      "naive_sum": 13.697691136000001,
+      "naive_max": 2.823324672,
+      "layer_sum": 5.843633152
+    },
+    {
+      "dag": 9,
+      "n_nodes": 3,
+      "n_edges": 1,
+      "peak_concurrent_gb": 11.765774848,
+      "makespan_s": 1.9565236568450928,
+      "naive_sum": 23.175040512,
+      "naive_max": 11.409265664,
+      "layer_sum": 11.765774848
+    },
+    {
+      "dag": 10,
+      "n_nodes": 9,
+      "n_edges": 6,
+      "peak_concurrent_gb": 19.080163839999997,
+      "makespan_s": 1.9570891857147217,
+      "naive_sum": 36.298934784,
+      "naive_max": 10.56733184,
+      "layer_sum": 14.137449472
+    },
+    {
+      "dag": 11,
+      "n_nodes": 12,
+      "n_edges": 15,
+      "peak_concurrent_gb": 12.047865856,
+      "makespan_s": 1.8753068447113037,
+      "naive_sum": 36.096091648,
+      "naive_max": 5.920493568,
+      "layer_sum": 12.047865856
+    },
+    {
+      "dag": 12,
+      "n_nodes": 8,
+      "n_edges": 8,
+      "peak_concurrent_gb": 7.167455744,
+      "makespan_s": 1.1149415969848633,
+      "naive_sum": 18.229359616,
+      "naive_max": 3.935339008,
+      "layer_sum": 7.167455744
+    },
+    {
+      "dag": 13,
+      "n_nodes": 9,
+      "n_edges": 12,
+      "peak_concurrent_gb": 9.126168576,
+      "makespan_s": 1.9256341457366943,
+      "naive_sum": 18.346916352,
+      "naive_max": 8.512832,
+      "layer_sum": 9.126168576
+    },
+    {
+      "dag": 14,
+      "n_nodes": 8,
+      "n_edges": 8,
+      "peak_concurrent_gb": 13.62205952,
+      "makespan_s": 1.878692865371704,
+      "naive_sum": 31.566440447999998,
+      "naive_max": 10.56733184,
+      "layer_sum": 13.62205952
+    },
+    {
+      "dag": 15,
+      "n_nodes": 5,
+      "n_edges": 5,
+      "peak_concurrent_gb": 15.801717248,
+      "makespan_s": 1.704179286956787,
+      "naive_sum": 26.089618431999998,
+      "naive_max": 11.409265664,
+      "layer_sum": 15.801717248
+    },
+    {
+      "dag": 16,
+      "n_nodes": 11,
+      "n_edges": 13,
+      "peak_concurrent_gb": 16.006768128,
+      "makespan_s": 1.202519416809082,
+      "naive_sum": 27.989735424,
+      "naive_max": 5.920493568,
+      "layer_sum": 13.986502144
+    },
+    {
+      "dag": 17,
+      "n_nodes": 10,
+      "n_edges": 12,
+      "peak_concurrent_gb": 10.617389056,
+      "makespan_s": 1.8871347904205322,
+      "naive_sum": 28.53718272,
+      "naive_max": 8.512832,
+      "layer_sum": 10.617389056
+    },
+    {
+      "dag": 18,
+      "n_nodes": 6,
+      "n_edges": 6,
+      "peak_concurrent_gb": 12.650647551999999,
+      "makespan_s": 1.048408031463623,
+      "naive_sum": 16.880423424,
+      "naive_max": 8.512832,
+      "layer_sum": 12.385686527999999
+    },
+    {
+      "dag": 19,
+      "n_nodes": 11,
+      "n_edges": 15,
+      "peak_concurrent_gb": 10.634592256,
+      "makespan_s": 2.1824779510498047,
+      "naive_sum": 29.371853824000002,
+      "naive_max": 7.903532544,
+      "layer_sum": 10.634592256
+    },
+    {
+      "dag": 20,
+      "n_nodes": 3,
+      "n_edges": 2,
+      "peak_concurrent_gb": 6.851551232,
+      "makespan_s": 1.239478588104248,
+      "naive_sum": 12.165957120000002,
+      "naive_max": 5.920493568,
+      "layer_sum": 6.851551232
+    },
+    {
+      "dag": 21,
+      "n_nodes": 8,
+      "n_edges": 8,
+      "peak_concurrent_gb": 9.457345536,
+      "makespan_s": 0.941267728805542,
+      "naive_sum": 17.171759104000003,
+      "naive_max": 4.392451584,
+      "layer_sum": 9.457345536
+    },
+    {
+      "dag": 22,
+      "n_nodes": 5,
+      "n_edges": 5,
+      "peak_concurrent_gb": 6.7726976,
+      "makespan_s": 0.840883731842041,
+      "naive_sum": 13.647952895999998,
+      "naive_max": 5.233677312,
+      "layer_sum": 6.7726976
+    },
+    {
+      "dag": 23,
+      "n_nodes": 8,
+      "n_edges": 9,
+      "peak_concurrent_gb": 10.29719296,
+      "makespan_s": 0.9446690082550049,
+      "naive_sum": 21.542083072,
+      "naive_max": 5.624617472,
+      "layer_sum": 10.29719296
+    },
+    {
+      "dag": 24,
+      "n_nodes": 6,
+      "n_edges": 5,
+      "peak_concurrent_gb": 17.276257792,
+      "makespan_s": 1.1537234783172607,
+      "naive_sum": 21.412531712,
+      "naive_max": 11.409265664,
+      "layer_sum": 17.276257792
+    },
+    {
+      "dag": 25,
+      "n_nodes": 6,
+      "n_edges": 6,
+      "peak_concurrent_gb": 7.976660991999999,
+      "makespan_s": 0.8167514801025391,
+      "naive_sum": 12.645775360000002,
+      "naive_max": 5.314405888,
+      "layer_sum": 7.976660991999999
+    },
+    {
+      "dag": 26,
+      "n_nodes": 10,
+      "n_edges": 9,
+      "peak_concurrent_gb": 5.456681472,
+      "makespan_s": 1.1217429637908936,
+      "naive_sum": 19.326336,
+      "naive_max": 3.98185728,
+      "layer_sum": 5.456681472
+    },
+    {
+      "dag": 27,
+      "n_nodes": 7,
+      "n_edges": 6,
+      "peak_concurrent_gb": 8.615555584,
+      "makespan_s": 1.1404354572296143,
+      "naive_sum": 19.050746368000002,
+      "naive_max": 5.920493568,
+      "layer_sum": 8.615555584
+    },
+    {
+      "dag": 28,
+      "n_nodes": 5,
+      "n_edges": 5,
+      "peak_concurrent_gb": 7.7659013120000004,
+      "makespan_s": 0.9012398719787598,
+      "naive_sum": 15.351641088,
+      "naive_max": 4.762415104,
+      "layer_sum": 7.7659013120000004
+    },
+    {
+      "dag": 29,
+      "n_nodes": 7,
+      "n_edges": 9,
+      "peak_concurrent_gb": 19.662622208000002,
+      "makespan_s": 1.8812429904937744,
+      "naive_sum": 30.579350528000003,
+      "naive_max": 10.56733184,
+      "layer_sum": 19.662622208000002
+    },
+    {
+      "dag": 30,
+      "n_nodes": 4,
+      "n_edges": 3,
+      "peak_concurrent_gb": 8.512832,
+      "makespan_s": 1.4768922328948975,
+      "naive_sum": 19.281393152,
+      "naive_max": 8.512832,
+      "layer_sum": 8.512832
+    },
+    {
+      "dag": 31,
+      "n_nodes": 6,
+      "n_edges": 5,
+      "peak_concurrent_gb": 15.338768384,
+      "makespan_s": 1.2290270328521729,
+      "naive_sum": 20.345725952,
+      "naive_max": 11.409265664,
+      "layer_sum": 14.919064576
+    },
+    {
+      "dag": 32,
+      "n_nodes": 11,
+      "n_edges": 16,
+      "peak_concurrent_gb": 6.8669721599999995,
+      "makespan_s": 1.0619330406188965,
+      "naive_sum": 21.89329408,
+      "naive_max": 4.762415104,
+      "layer_sum": 6.8669721599999995
+    },
+    {
+      "dag": 33,
+      "n_nodes": 5,
+      "n_edges": 5,
+      "peak_concurrent_gb": 5.096632319999999,
+      "makespan_s": 0.44332289695739746,
+      "naive_sum": 8.277987328,
+      "naive_max": 2.695062016,
+      "layer_sum": 5.096632319999999
+    },
+    {
+      "dag": 34,
+      "n_nodes": 5,
+      "n_edges": 5,
+      "peak_concurrent_gb": 5.742815232,
+      "makespan_s": 0.6149215698242188,
+      "naive_sum": 9.994870272,
+      "naive_max": 3.1747968,
+      "layer_sum": 4.373239808
+    },
+    {
+      "dag": 35,
+      "n_nodes": 3,
+      "n_edges": 2,
+      "peak_concurrent_gb": 2.141520896,
+      "makespan_s": 0.2983217239379883,
+      "naive_sum": 3.3399639039999998,
+      "naive_max": 1.455046656,
+      "layer_sum": 2.141520896
+    },
+    {
+      "dag": 36,
+      "n_nodes": 4,
+      "n_edges": 3,
+      "peak_concurrent_gb": 10.77616128,
+      "makespan_s": 0.8351328372955322,
+      "naive_sum": 15.704043008,
+      "naive_max": 7.903532544,
+      "layer_sum": 10.726857215999999
+    },
+    {
+      "dag": 37,
+      "n_nodes": 8,
+      "n_edges": 9,
+      "peak_concurrent_gb": 9.902350848000001,
+      "makespan_s": 1.211822271347046,
+      "naive_sum": 22.646706688000002,
+      "naive_max": 5.920493568,
+      "layer_sum": 8.025050624
+    },
+    {
+      "dag": 38,
+      "n_nodes": 8,
+      "n_edges": 11,
+      "peak_concurrent_gb": 20.880276992,
+      "makespan_s": 2.3197178840637207,
+      "naive_sum": 39.51474432,
+      "naive_max": 11.409265664,
+      "layer_sum": 18.434336256
+    },
+    {
+      "dag": 39,
+      "n_nodes": 6,
+      "n_edges": 6,
+      "peak_concurrent_gb": 16.487825408,
+      "makespan_s": 1.1980645656585693,
+      "naive_sum": 22.752174592,
+      "naive_max": 10.56733184,
+      "layer_sum": 12.90116608
+    }
+  ]
+}

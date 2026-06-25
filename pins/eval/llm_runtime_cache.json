@@ -1,0 +1,3047 @@
+{
+  "qwen2.5:3b|Model trained: U4-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: vgg19\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: bert-base-uncased\nGPUs requested: 424 (V100)\nCPUs requested: 8480\nHost memory requested: 70391 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: dimenet\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    800.0,
+    1200.0,
+    2400.0
+  ],
+  "qwen2.5:3b|Model trained: U4-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: U5-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: bert-base-uncased\nGPUs requested: 64 (V100)\nCPUs requested: 1280\nHost memory requested: 10625 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: U4-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: U3-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    80.0,
+    120.0,
+    240.0
+  ],
+  "qwen2.5:3b|Model trained: resnet50\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: U3-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: inception4\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    300.0,
+    480.0,
+    840.0
+  ],
+  "qwen2.5:3b|Model trained: U3-128\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    80.0,
+    160.0,
+    240.0
+  ],
+  "qwen2.5:3b|Model trained: schnet\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: distilbert-base-uncased\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    80.0,
+    120.0,
+    240.0
+  ],
+  "qwen2.5:3b|Model trained: U4-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    480.0,
+    576.0,
+    768.0
+  ],
+  "qwen2.5:3b|Model trained: U4-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: bert-base-uncased\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    800.0,
+    1200.0,
+    2400.0
+  ],
+  "qwen2.5:3b|Model trained: vgg19\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: vgg19\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    800.0,
+    1200.0,
+    2400.0
+  ],
+  "qwen2.5:3b|Model trained: U5-128\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    80.0,
+    120.0,
+    240.0
+  ],
+  "qwen2.5:3b|Model trained: vgg11\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    80.0,
+    120.0,
+    240.0
+  ],
+  "qwen2.5:3b|Model trained: vgg11\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    180.0
+  ],
+  "qwen2.5:3b|Model trained: U3-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: inception4\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: vgg16\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: inception3\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: U5-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    480.0,
+    576.0,
+    768.0
+  ],
+  "qwen2.5:3b|Model trained: resnet152\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    800.0,
+    1200.0,
+    2400.0
+  ],
+  "qwen2.5:3b|Model trained: resnet50\nGPUs requested: 2 (V100)\nCPUs requested: 28\nHost memory requested: 103 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    497.0,
+    504.0,
+    511.0
+  ],
+  "qwen2.5:3b|Model trained: vgg16\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: inception3\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    480.0,
+    576.0,
+    768.0
+  ],
+  "qwen2.5:3b|Model trained: U3-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    480.0,
+    576.0,
+    768.0
+  ],
+  "qwen2.5:3b|Model trained: U5-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    480.0,
+    576.0,
+    768.0
+  ],
+  "qwen2.5:3b|Model trained: U3-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: U5-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    800.0,
+    1200.0,
+    2400.0
+  ],
+  "qwen2.5:3b|Model trained: inception3\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    800.0,
+    1200.0,
+    2400.0
+  ],
+  "qwen2.5:3b|Model trained: dimenet\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: U5-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: resnet50_v1.5\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: U5-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: U4-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    80.0,
+    120.0,
+    240.0
+  ],
+  "qwen2.5:3b|Model trained: inception4\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    800.0,
+    1200.0,
+    2400.0
+  ],
+  "qwen2.5:3b|Model trained: inception3\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet50_v1.5\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    480.0,
+    576.0,
+    768.0
+  ],
+  "qwen2.5:3b|Model trained: vgg16\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    800.0,
+    1200.0,
+    2400.0
+  ],
+  "qwen2.5:3b|Model trained: U3-128\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet50\nGPUs requested: 1 (V100)\nCPUs requested: 28\nHost memory requested: 103 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet101_v2\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    300.0,
+    480.0,
+    720.0
+  ],
+  "qwen2.5:3b|Model trained: U3-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    80.0,
+    160.0,
+    240.0
+  ],
+  "qwen2.5:3b|Model trained: U3-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    480.0,
+    576.0,
+    768.0
+  ],
+  "qwen2.5:3b|Model trained: U4-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: vgg16\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    480.0,
+    576.0,
+    768.0
+  ],
+  "qwen2.5:3b|Model trained: resnet50_v1.5\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: schnet\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:3b|Model trained: U4-128\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    80.0,
+    120.0,
+    240.0
+  ],
+  "qwen2.5:3b|Model trained: vgg16\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    300.0,
+    600.0,
+    1800.0
+  ],
+  "qwen2.5:3b|Model trained: U4-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    480.0,
+    576.0,
+    768.0
+  ],
+  "qwen2.5:3b|Model trained: U3-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: U3-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    480.0,
+    576.0,
+    768.0
+  ],
+  "qwen2.5:3b|Model trained: U5-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: vgg19\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: inception3\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: U4-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet50_v1.5\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: resnet50\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    800.0,
+    1200.0,
+    2400.0
+  ],
+  "qwen2.5:3b|Model trained: inception3\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    300.0,
+    480.0,
+    840.0
+  ],
+  "qwen2.5:3b|Model trained: resnet101_v2\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    800.0,
+    1200.0,
+    2400.0
+  ],
+  "qwen2.5:3b|Model trained: U5-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    80.0,
+    120.0,
+    240.0
+  ],
+  "qwen2.5:3b|Model trained: resnet50\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: U3-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet101\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    1440.0,
+    2880.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: vgg11\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    480.0,
+    576.0,
+    768.0
+  ],
+  "qwen2.5:3b|Model trained: resnet50_v1.5\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    80.0,
+    120.0,
+    240.0
+  ],
+  "qwen2.5:3b|Model trained: U4-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    480.0,
+    576.0,
+    768.0
+  ],
+  "qwen2.5:3b|Model trained: U4-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet152_v2\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    300.0,
+    480.0,
+    840.0
+  ],
+  "qwen2.5:3b|Model trained: bert-base-uncased\nGPUs requested: 16 (V100)\nCPUs requested: 320\nHost memory requested: 2656 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: vgg16\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: resnet50\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    300.0,
+    480.0,
+    840.0
+  ],
+  "qwen2.5:3b|Model trained: pna\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: vgg19\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: U5-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    300.0,
+    480.0,
+    840.0
+  ],
+  "qwen2.5:3b|Model trained: U5-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 188 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    300.0,
+    480.0,
+    720.0
+  ],
+  "qwen2.5:3b|Model trained: vgg19\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    300.0,
+    480.0,
+    840.0
+  ],
+  "qwen2.5:3b|Model trained: resnet101\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    300.0,
+    480.0,
+    840.0
+  ],
+  "qwen2.5:3b|Model trained: resnet152\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet101_v2\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: vgg11\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet101\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: U4-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    800.0,
+    1200.0,
+    2400.0
+  ],
+  "qwen2.5:3b|Model trained: vgg11\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: inception4\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: conv\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    80.0,
+    120.0,
+    240.0
+  ],
+  "qwen2.5:3b|Model trained: resnet152_v2\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: inception3\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet50\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: resnet50_v1.5\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    300.0,
+    480.0,
+    840.0
+  ],
+  "qwen2.5:3b|Model trained: U5-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    480.0,
+    576.0,
+    768.0
+  ],
+  "qwen2.5:3b|Model trained: U3-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet101\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    800.0,
+    1200.0,
+    2400.0
+  ],
+  "qwen2.5:3b|Model trained: inception4\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    480.0,
+    576.0,
+    768.0
+  ],
+  "qwen2.5:3b|Model trained: resnet101\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: distilbert-base-uncased\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: U4-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet50_v1.5\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    1440.0,
+    2880.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: pna\nGPUs requested: 16 (V100)\nCPUs requested: 320\nHost memory requested: 2656 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:3b|Model trained: vgg11\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: dimenet\nGPUs requested: 16 (V100)\nCPUs requested: 320\nHost memory requested: 2656 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:3b|Model trained: schnet\nGPUs requested: 16 (V100)\nCPUs requested: 320\nHost memory requested: 2656 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:3b|Model trained: bert-base-uncased\nGPUs requested: 128 (V100)\nCPUs requested: 2560\nHost memory requested: 21250 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: U5-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 188 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    300.0,
+    480.0,
+    720.0
+  ],
+  "qwen2.5:3b|Model trained: resnet152_v2\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    80.0,
+    120.0,
+    240.0
+  ],
+  "qwen2.5:3b|Model trained: U5-128\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet152\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: inception3\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: bert-base-uncased\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: U5-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: resnet50\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet101\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    480.0,
+    576.0,
+    768.0
+  ],
+  "qwen2.5:3b|Model trained: conv\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet152_v2\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: dimenet\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: vgg19\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    480.0,
+    576.0,
+    768.0
+  ],
+  "qwen2.5:3b|Model trained: U4-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: U4-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    300.0,
+    480.0,
+    720.0
+  ],
+  "qwen2.5:3b|Model trained: U4-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: vgg11\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet101\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet101\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: pna\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    80.0,
+    120.0,
+    240.0
+  ],
+  "qwen2.5:7b|Model trained: U4-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    480.0,
+    600.0
+  ],
+  "qwen2.5:7b|Model trained: vgg19\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: bert-base-uncased\nGPUs requested: 424 (V100)\nCPUs requested: 8480\nHost memory requested: 70391 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    1080.0,
+    1200.0,
+    1320.0
+  ],
+  "qwen2.5:7b|Model trained: dimenet\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: U4-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U5-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: bert-base-uncased\nGPUs requested: 64 (V100)\nCPUs requested: 1280\nHost memory requested: 10625 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    300.0,
+    450.0,
+    600.0
+  ],
+  "qwen2.5:7b|Model trained: U4-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:7b|Model trained: U3-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: resnet50\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:7b|Model trained: U3-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: inception4\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U3-128\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: schnet\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    360.0,
+    720.0
+  ],
+  "qwen2.5:7b|Model trained: distilbert-base-uncased\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: U4-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U4-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: bert-base-uncased\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: vgg19\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: vgg19\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: U5-128\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: vgg11\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: vgg11\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:7b|Model trained: U3-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: inception4\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: vgg16\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:7b|Model trained: inception3\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    360.0,
+    720.0
+  ],
+  "qwen2.5:7b|Model trained: U5-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: resnet152\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: resnet50\nGPUs requested: 2 (V100)\nCPUs requested: 28\nHost memory requested: 103 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:7b|Model trained: vgg16\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:7b|Model trained: inception3\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:7b|Model trained: U3-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U5-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U3-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U5-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: inception3\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: dimenet\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U5-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    480.0,
+    600.0
+  ],
+  "qwen2.5:7b|Model trained: resnet50_v1.5\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U5-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:7b|Model trained: U4-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: inception4\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: inception3\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: resnet50_v1.5\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: vgg16\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: U3-128\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:7b|Model trained: resnet50\nGPUs requested: 1 (V100)\nCPUs requested: 28\nHost memory requested: 103 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:7b|Model trained: resnet101_v2\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U3-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: U3-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U4-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: vgg16\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: resnet50_v1.5\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: schnet\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:7b|Model trained: U4-128\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: vgg16\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:7b|Model trained: U4-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U3-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U3-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U5-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: vgg19\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:7b|Model trained: inception3\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U4-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:7b|Model trained: resnet50_v1.5\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: resnet50\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: inception3\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: resnet101_v2\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: U5-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: resnet50\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:7b|Model trained: U3-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: resnet101\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:7b|Model trained: vgg11\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: resnet50_v1.5\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: U4-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U4-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    300.0,
+    450.0,
+    720.0
+  ],
+  "qwen2.5:7b|Model trained: resnet152_v2\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: bert-base-uncased\nGPUs requested: 16 (V100)\nCPUs requested: 320\nHost memory requested: 2656 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:7b|Model trained: vgg16\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: resnet50\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:7b|Model trained: pna\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    360.0,
+    720.0
+  ],
+  "qwen2.5:7b|Model trained: vgg19\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:7b|Model trained: U5-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U5-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 188 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:7b|Model trained: vgg19\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:7b|Model trained: resnet101\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:7b|Model trained: resnet152\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    480.0,
+    600.0
+  ],
+  "qwen2.5:7b|Model trained: resnet101_v2\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    480.0,
+    600.0
+  ],
+  "qwen2.5:7b|Model trained: vgg11\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:7b|Model trained: resnet101\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U4-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: vgg11\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: inception4\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: conv\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: resnet152_v2\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    480.0,
+    600.0
+  ],
+  "qwen2.5:7b|Model trained: inception3\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:7b|Model trained: resnet50\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: resnet50_v1.5\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U5-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U3-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    360.0,
+    720.0
+  ],
+  "qwen2.5:7b|Model trained: resnet101\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: inception4\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: resnet101\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:7b|Model trained: distilbert-base-uncased\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    360.0,
+    720.0
+  ],
+  "qwen2.5:7b|Model trained: U4-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: resnet50_v1.5\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:7b|Model trained: pna\nGPUs requested: 16 (V100)\nCPUs requested: 320\nHost memory requested: 2656 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: vgg11\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: dimenet\nGPUs requested: 16 (V100)\nCPUs requested: 320\nHost memory requested: 2656 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: schnet\nGPUs requested: 16 (V100)\nCPUs requested: 320\nHost memory requested: 2656 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    60.0,
+    120.0,
+    240.0
+  ],
+  "qwen2.5:7b|Model trained: bert-base-uncased\nGPUs requested: 128 (V100)\nCPUs requested: 2560\nHost memory requested: 21250 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U5-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 188 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: resnet152_v2\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: U5-128\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:7b|Model trained: resnet152\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: inception3\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    1440.0,
+    2880.0,
+    3000.0
+  ],
+  "qwen2.5:7b|Model trained: bert-base-uncased\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:7b|Model trained: U5-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: resnet50\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: resnet101\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: conv\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    360.0,
+    720.0
+  ],
+  "qwen2.5:7b|Model trained: resnet152_v2\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    300.0,
+    450.0,
+    720.0
+  ],
+  "qwen2.5:7b|Model trained: dimenet\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    360.0,
+    720.0
+  ],
+  "qwen2.5:7b|Model trained: vgg19\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U4-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U4-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:7b|Model trained: U4-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: vgg11\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:7b|Model trained: resnet101\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:7b|Model trained: resnet101\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: pna\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:3b|Model trained: pna\nGPUs requested: 64 (V100)\nCPUs requested: 1280\nHost memory requested: 10625 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    397.0,
+    485.0,
+    600.0
+  ],
+  "qwen2.5:3b|Model trained: U5-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 375 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    80.0,
+    120.0,
+    240.0
+  ],
+  "qwen2.5:3b|Model trained: U5-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: U5-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet152\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: inception4\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet50\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    480.0,
+    576.0,
+    768.0
+  ],
+  "qwen2.5:3b|Model trained: schnet\nGPUs requested: 364 (V100)\nCPUs requested: 7280\nHost memory requested: 60430 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    360.0,
+    1080.0
+  ],
+  "qwen2.5:3b|Model trained: U3-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet152\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: U3-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: pna\nGPUs requested: 128 (V100)\nCPUs requested: 2560\nHost memory requested: 21250 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    345.0,
+    480.0,
+    720.0
+  ],
+  "qwen2.5:3b|Model trained: vgg16\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: schnet\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    96.0,
+    144.0,
+    288.0
+  ],
+  "qwen2.5:3b|Model trained: U5-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: schnet\nGPUs requested: 416 (V100)\nCPUs requested: 8320\nHost memory requested: 69062 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    416.0,
+    416.0,
+    416.0
+  ],
+  "qwen2.5:3b|Model trained: U3-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: pna\nGPUs requested: 32 (V100)\nCPUs requested: 640\nHost memory requested: 5312 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:3b|Model trained: U4-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    384.0,
+    432.0,
+    480.0
+  ],
+  "qwen2.5:3b|Model trained: conv\nGPUs requested: 256 (V100)\nCPUs requested: 5120\nHost memory requested: 42500 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: bert-base-uncased\nGPUs requested: 128 (V100)\nCPUs requested: 2560\nHost memory requested: 21250 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: vgg16\nGPUs requested: 2 (V100)\nCPUs requested: 28\nHost memory requested: 103 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: conv\nGPUs requested: 64 (V100)\nCPUs requested: 1280\nHost memory requested: 10625 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    397.0,
+    487.0,
+    618.0
+  ],
+  "qwen2.5:3b|Model trained: dimenet\nGPUs requested: 32 (V100)\nCPUs requested: 640\nHost memory requested: 5312 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: U3-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: U4-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 188 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    300.0,
+    480.0,
+    840.0
+  ],
+  "qwen2.5:3b|Model trained: inception4\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    1440.0,
+    2880.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: conv\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:3b|Model trained: bert-base-uncased\nGPUs requested: 256 (V100)\nCPUs requested: 5120\nHost memory requested: 42500 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet50\nGPUs requested: 1 (V100)\nCPUs requested: 1\nHost memory requested: 4 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    384.0,
+    432.0,
+    480.0
+  ],
+  "qwen2.5:3b|Model trained: conv\nGPUs requested: 16 (V100)\nCPUs requested: 320\nHost memory requested: 2656 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:7b|Model trained: pna\nGPUs requested: 64 (V100)\nCPUs requested: 1280\nHost memory requested: 10625 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U5-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 375 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: U5-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U5-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: resnet152\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:7b|Model trained: inception4\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: resnet50\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: schnet\nGPUs requested: 364 (V100)\nCPUs requested: 7280\nHost memory requested: 60430 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    1440.0,
+    1800.0,
+    2160.0
+  ],
+  "qwen2.5:7b|Model trained: U3-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: resnet152\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    300.0,
+    450.0,
+    600.0
+  ],
+  "qwen2.5:7b|Model trained: U3-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: pna\nGPUs requested: 128 (V100)\nCPUs requested: 2560\nHost memory requested: 21250 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: vgg16\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: schnet\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    60.0,
+    120.0,
+    180.0
+  ],
+  "qwen2.5:7b|Model trained: U5-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:7b|Model trained: schnet\nGPUs requested: 416 (V100)\nCPUs requested: 8320\nHost memory requested: 69062 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    1440.0,
+    1800.0,
+    2160.0
+  ],
+  "qwen2.5:7b|Model trained: U3-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: pna\nGPUs requested: 32 (V100)\nCPUs requested: 640\nHost memory requested: 5312 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: U4-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:7b|Model trained: conv\nGPUs requested: 256 (V100)\nCPUs requested: 5120\nHost memory requested: 42500 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: bert-base-uncased\nGPUs requested: 128 (V100)\nCPUs requested: 2560\nHost memory requested: 21250 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    300.0,
+    480.0,
+    720.0
+  ],
+  "qwen2.5:7b|Model trained: vgg16\nGPUs requested: 2 (V100)\nCPUs requested: 28\nHost memory requested: 103 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:7b|Model trained: conv\nGPUs requested: 64 (V100)\nCPUs requested: 1280\nHost memory requested: 10625 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: dimenet\nGPUs requested: 32 (V100)\nCPUs requested: 640\nHost memory requested: 5312 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    60.0,
+    60.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U3-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U4-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 188 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: inception4\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:7b|Model trained: conv\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:7b|Model trained: bert-base-uncased\nGPUs requested: 256 (V100)\nCPUs requested: 5120\nHost memory requested: 42500 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: resnet50\nGPUs requested: 1 (V100)\nCPUs requested: 1\nHost memory requested: 4 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:7b|Model trained: conv\nGPUs requested: 16 (V100)\nCPUs requested: 320\nHost memory requested: 2656 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:3b|Model trained: U5-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: bert-base-uncased\nGPUs requested: 64 (V100)\nCPUs requested: 1280\nHost memory requested: 10625 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: dimenet\nGPUs requested: 128 (V100)\nCPUs requested: 2560\nHost memory requested: 21250 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet152\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: schnet\nGPUs requested: 64 (V100)\nCPUs requested: 1280\nHost memory requested: 10625 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    397.0,
+    485.0,
+    600.0
+  ],
+  "qwen2.5:3b|Model trained: U3-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 375 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    80.0,
+    120.0,
+    240.0
+  ],
+  "qwen2.5:3b|Model trained: U3-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    300.0,
+    480.0,
+    720.0
+  ],
+  "qwen2.5:3b|Model trained: resnet152\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    480.0,
+    576.0,
+    768.0
+  ],
+  "qwen2.5:3b|Model trained: pna\nGPUs requested: 364 (V100)\nCPUs requested: 7280\nHost memory requested: 60430 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    360.0,
+    720.0
+  ],
+  "qwen2.5:3b|Model trained: U4-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 188 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: dimenet\nGPUs requested: 364 (V100)\nCPUs requested: 7280\nHost memory requested: 60430 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:3b|Model trained: schnet\nGPUs requested: 32 (V100)\nCPUs requested: 640\nHost memory requested: 5312 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: conv\nGPUs requested: 364 (V100)\nCPUs requested: 7280\nHost memory requested: 60430 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    360.0,
+    720.0
+  ],
+  "qwen2.5:3b|Model trained: U3-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 188 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:3b|Model trained: U5-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1440.0
+  ],
+  "qwen2.5:7b|Model trained: U5-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: bert-base-uncased\nGPUs requested: 64 (V100)\nCPUs requested: 1280\nHost memory requested: 10625 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: dimenet\nGPUs requested: 128 (V100)\nCPUs requested: 2560\nHost memory requested: 21250 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: resnet152\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:7b|Model trained: schnet\nGPUs requested: 64 (V100)\nCPUs requested: 1280\nHost memory requested: 10625 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U3-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 375 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:7b|Model trained: U3-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:7b|Model trained: resnet152\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: pna\nGPUs requested: 364 (V100)\nCPUs requested: 7280\nHost memory requested: 60430 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    1440.0,
+    1800.0,
+    2160.0
+  ],
+  "qwen2.5:7b|Model trained: U4-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 188 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: dimenet\nGPUs requested: 364 (V100)\nCPUs requested: 7280\nHost memory requested: 60430 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    1440.0,
+    1800.0,
+    2160.0
+  ],
+  "qwen2.5:7b|Model trained: schnet\nGPUs requested: 32 (V100)\nCPUs requested: 640\nHost memory requested: 5312 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: conv\nGPUs requested: 364 (V100)\nCPUs requested: 7280\nHost memory requested: 60430 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    1440.0,
+    2880.0,
+    3000.0
+  ],
+  "qwen2.5:7b|Model trained: U3-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 188 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U5-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:3b|Model trained: schnet\nGPUs requested: 256 (V100)\nCPUs requested: 5120\nHost memory requested: 42500 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: conv\nGPUs requested: 416 (V100)\nCPUs requested: 8320\nHost memory requested: 69062 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    416.0,
+    416.0,
+    416.0
+  ],
+  "qwen2.5:3b|Model trained: U3-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: conv\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: pna\nGPUs requested: 256 (V100)\nCPUs requested: 5120\nHost memory requested: 42500 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    397.0,
+    585.0,
+    825.0
+  ],
+  "qwen2.5:3b|Model trained: dimenet\nGPUs requested: 256 (V100)\nCPUs requested: 5120\nHost memory requested: 42500 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    387.0,
+    594.0,
+    801.0
+  ],
+  "qwen2.5:3b|Model trained: U3-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: conv\nGPUs requested: 128 (V100)\nCPUs requested: 2560\nHost memory requested: 21250 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    345.0,
+    480.0,
+    720.0
+  ],
+  "qwen2.5:3b|Model trained: vgg16\nGPUs requested: 1 (V100)\nCPUs requested: 28\nHost memory requested: 103 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: resnet50\nGPUs requested: 2 (V100)\nCPUs requested: 28\nHost memory requested: 103 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    1440.0,
+    2880.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: U4-128\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1440.0
+  ],
+  "qwen2.5:7b|Model trained: schnet\nGPUs requested: 256 (V100)\nCPUs requested: 5120\nHost memory requested: 42500 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: conv\nGPUs requested: 416 (V100)\nCPUs requested: 8320\nHost memory requested: 69062 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    1440.0,
+    1800.0,
+    2160.0
+  ],
+  "qwen2.5:7b|Model trained: U3-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: conv\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:7b|Model trained: pna\nGPUs requested: 256 (V100)\nCPUs requested: 5120\nHost memory requested: 42500 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: dimenet\nGPUs requested: 256 (V100)\nCPUs requested: 5120\nHost memory requested: 42500 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U3-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: conv\nGPUs requested: 128 (V100)\nCPUs requested: 2560\nHost memory requested: 21250 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: vgg16\nGPUs requested: 1 (V100)\nCPUs requested: 28\nHost memory requested: 103 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:7b|Model trained: resnet50\nGPUs requested: 2 (V100)\nCPUs requested: 28\nHost memory requested: 103 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:7b|Model trained: U4-128\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:3b|Model trained: conv\nGPUs requested: 32 (V100)\nCPUs requested: 640\nHost memory requested: 5312 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: U3-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: schnet\nGPUs requested: 128 (V100)\nCPUs requested: 2560\nHost memory requested: 21250 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    345.0,
+    480.0,
+    720.0
+  ],
+  "qwen2.5:3b|Model trained: U3-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 375 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    840.0,
+    1680.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: schnet\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    350.0,
+    450.0,
+    700.0
+  ],
+  "qwen2.5:3b|Model trained: bert-base-uncased\nGPUs requested: 392 (V100)\nCPUs requested: 7840\nHost memory requested: 65078 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    3000.0,
+    3000.0,
+    3000.0
+  ],
+  "qwen2.5:3b|Model trained: dimenet\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1200.0
+  ],
+  "qwen2.5:3b|Model trained: pna\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    350.0,
+    450.0,
+    700.0
+  ],
+  "qwen2.5:3b|Model trained: pna\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    75.0,
+    90.0,
+    105.0
+  ],
+  "qwen2.5:3b|Model trained: pna\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    750.0,
+    900.0,
+    1200.0
+  ],
+  "qwen2.5:3b|Model trained: U4-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: dimenet\nGPUs requested: 64 (V100)\nCPUs requested: 1280\nHost memory requested: 10625 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    397.0,
+    485.0,
+    600.0
+  ],
+  "qwen2.5:3b|Model trained: U5-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1440.0
+  ],
+  "qwen2.5:3b|Model trained: dimenet\nGPUs requested: 416 (V100)\nCPUs requested: 8320\nHost memory requested: 69062 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    240.0,
+    360.0
+  ],
+  "qwen2.5:3b|Model trained: U5-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 375 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    80.0,
+    120.0,
+    240.0
+  ],
+  "qwen2.5:7b|Model trained: conv\nGPUs requested: 32 (V100)\nCPUs requested: 640\nHost memory requested: 5312 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    60.0,
+    60.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U3-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    360.0,
+    720.0
+  ],
+  "qwen2.5:7b|Model trained: schnet\nGPUs requested: 128 (V100)\nCPUs requested: 2560\nHost memory requested: 21250 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U3-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 375 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    360.0,
+    720.0
+  ],
+  "qwen2.5:7b|Model trained: schnet\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:7b|Model trained: bert-base-uncased\nGPUs requested: 392 (V100)\nCPUs requested: 7840\nHost memory requested: 65078 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: dimenet\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:7b|Model trained: pna\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:7b|Model trained: pna\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    60.0,
+    120.0,
+    180.0
+  ],
+  "qwen2.5:7b|Model trained: pna\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:7b|Model trained: U4-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    480.0,
+    600.0
+  ],
+  "qwen2.5:7b|Model trained: dimenet\nGPUs requested: 64 (V100)\nCPUs requested: 1280\nHost memory requested: 10625 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:7b|Model trained: U5-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    480.0,
+    600.0
+  ],
+  "qwen2.5:7b|Model trained: dimenet\nGPUs requested: 416 (V100)\nCPUs requested: 8320\nHost memory requested: 69062 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    1440.0,
+    1800.0,
+    2160.0
+  ],
+  "qwen2.5:7b|Model trained: U5-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 375 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: U4-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: vgg19\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    35.0,
+    70.0,
+    105.0
+  ],
+  "qwen2.5:14b|Model trained: bert-base-uncased\nGPUs requested: 424 (V100)\nCPUs requested: 8480\nHost memory requested: 70391 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    12.0,
+    15.0,
+    18.0
+  ],
+  "qwen2.5:14b|Model trained: dimenet\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    15.0,
+    30.0,
+    60.0
+  ],
+  "qwen2.5:14b|Model trained: U4-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: U5-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: bert-base-uncased\nGPUs requested: 64 (V100)\nCPUs requested: 1280\nHost memory requested: 10625 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: U4-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: U3-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    18.0,
+    20.0,
+    22.0
+  ],
+  "qwen2.5:14b|Model trained: resnet50\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    270.0,
+    450.0
+  ],
+  "qwen2.5:14b|Model trained: U3-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: inception4\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: U3-128\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    18.0,
+    20.0,
+    22.0
+  ],
+  "qwen2.5:14b|Model trained: schnet\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    360.0,
+    720.0
+  ],
+  "qwen2.5:14b|Model trained: distilbert-base-uncased\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    18.0,
+    22.0,
+    26.0
+  ],
+  "qwen2.5:14b|Model trained: U4-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: U4-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: bert-base-uncased\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    18.0,
+    22.0,
+    26.0
+  ],
+  "qwen2.5:14b|Model trained: vgg19\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    35.0,
+    45.0,
+    55.0
+  ],
+  "qwen2.5:14b|Model trained: vgg19\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    18.0,
+    20.0,
+    22.0
+  ],
+  "qwen2.5:14b|Model trained: U5-128\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    18.0,
+    22.0,
+    26.0
+  ],
+  "qwen2.5:14b|Model trained: vgg11\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    18.0,
+    20.0,
+    22.0
+  ],
+  "qwen2.5:14b|Model trained: vgg11\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    90.0
+  ],
+  "qwen2.5:14b|Model trained: U3-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: inception4\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    35.0,
+    70.0,
+    140.0
+  ],
+  "qwen2.5:14b|Model trained: vgg16\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    15.0,
+    30.0,
+    60.0
+  ],
+  "qwen2.5:14b|Model trained: inception3\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: U5-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: resnet152\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    18.0,
+    22.0,
+    26.0
+  ],
+  "qwen2.5:14b|Model trained: resnet50\nGPUs requested: 2 (V100)\nCPUs requested: 28\nHost memory requested: 103 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:14b|Model trained: vgg16\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: inception3\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: U3-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: U5-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: U3-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: U5-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: inception3\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: dimenet\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    90.0
+  ],
+  "qwen2.5:14b|Model trained: U5-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    35.0,
+    45.0,
+    55.0
+  ],
+  "qwen2.5:14b|Model trained: resnet50_v1.5\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    35.0,
+    70.0,
+    105.0
+  ],
+  "qwen2.5:14b|Model trained: U5-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: U4-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: inception4\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: inception3\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    35.0,
+    70.0,
+    140.0
+  ],
+  "qwen2.5:14b|Model trained: resnet50_v1.5\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    60.0
+  ],
+  "qwen2.5:14b|Model trained: vgg16\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    18.0,
+    20.0,
+    22.0
+  ],
+  "qwen2.5:14b|Model trained: U3-128\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: resnet50\nGPUs requested: 1 (V100)\nCPUs requested: 28\nHost memory requested: 103 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:14b|Model trained: resnet101_v2\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    90.0
+  ],
+  "qwen2.5:14b|Model trained: U3-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    18.0,
+    20.0,
+    22.0
+  ],
+  "qwen2.5:14b|Model trained: U3-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: U4-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: vgg16\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: resnet50_v1.5\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: schnet\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    95.0,
+    120.0,
+    145.0
+  ],
+  "qwen2.5:14b|Model trained: U4-128\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: vgg16\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    90.0
+  ],
+  "qwen2.5:14b|Model trained: U4-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: U3-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: U3-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: U5-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: vgg19\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    12.0,
+    15.0,
+    18.0
+  ],
+  "qwen2.5:14b|Model trained: inception3\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1080.0
+  ],
+  "qwen2.5:14b|Model trained: U4-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: resnet50_v1.5\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    35.0,
+    45.0,
+    55.0
+  ],
+  "qwen2.5:14b|Model trained: resnet50\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    25.0,
+    30.0,
+    35.0
+  ],
+  "qwen2.5:14b|Model trained: inception3\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: resnet101_v2\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    18.0,
+    22.0,
+    26.0
+  ],
+  "qwen2.5:14b|Model trained: U5-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    18.0,
+    20.0,
+    22.0
+  ],
+  "qwen2.5:14b|Model trained: resnet50\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    15.0,
+    30.0,
+    60.0
+  ],
+  "qwen2.5:14b|Model trained: U3-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: resnet101\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    15.0,
+    30.0,
+    60.0
+  ],
+  "qwen2.5:14b|Model trained: vgg11\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: resnet50_v1.5\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    25.0,
+    30.0,
+    35.0
+  ],
+  "qwen2.5:14b|Model trained: U4-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    480.0,
+    600.0
+  ],
+  "qwen2.5:14b|Model trained: U4-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: resnet152_v2\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    90.0
+  ],
+  "qwen2.5:14b|Model trained: bert-base-uncased\nGPUs requested: 16 (V100)\nCPUs requested: 320\nHost memory requested: 2656 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: vgg16\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    35.0,
+    70.0,
+    105.0
+  ],
+  "qwen2.5:14b|Model trained: resnet50\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    90.0
+  ],
+  "qwen2.5:14b|Model trained: pna\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    720.0,
+    960.0,
+    1440.0
+  ],
+  "qwen2.5:14b|Model trained: vgg19\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: U5-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: U5-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 188 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: vgg19\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    90.0
+  ],
+  "qwen2.5:14b|Model trained: resnet101\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    90.0
+  ],
+  "qwen2.5:14b|Model trained: resnet152\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    35.0,
+    45.0,
+    55.0
+  ],
+  "qwen2.5:14b|Model trained: resnet101_v2\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    35.0,
+    45.0,
+    55.0
+  ],
+  "qwen2.5:14b|Model trained: vgg11\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    18.0,
+    24.0,
+    30.0
+  ],
+  "qwen2.5:14b|Model trained: resnet101\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    35.0,
+    45.0,
+    55.0
+  ],
+  "qwen2.5:14b|Model trained: U4-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    18.0,
+    20.0,
+    22.0
+  ],
+  "qwen2.5:14b|Model trained: vgg11\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    35.0,
+    45.0,
+    55.0
+  ],
+  "qwen2.5:14b|Model trained: inception4\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: conv\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    15.0,
+    30.0,
+    60.0
+  ],
+  "qwen2.5:14b|Model trained: resnet152_v2\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    35.0,
+    45.0,
+    55.0
+  ],
+  "qwen2.5:14b|Model trained: inception3\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:14b|Model trained: resnet50\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    35.0,
+    70.0,
+    105.0
+  ],
+  "qwen2.5:14b|Model trained: resnet50_v1.5\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    35.0,
+    45.0,
+    55.0
+  ],
+  "qwen2.5:14b|Model trained: U5-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: U3-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    360.0,
+    720.0
+  ],
+  "qwen2.5:14b|Model trained: resnet101\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    18.0,
+    22.0,
+    26.0
+  ],
+  "qwen2.5:14b|Model trained: inception4\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    480.0,
+    600.0
+  ],
+  "qwen2.5:14b|Model trained: resnet101\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    270.0,
+    450.0
+  ],
+  "qwen2.5:14b|Model trained: distilbert-base-uncased\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    360.0,
+    720.0
+  ],
+  "qwen2.5:14b|Model trained: U4-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: resnet50_v1.5\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    15.0,
+    30.0,
+    60.0
+  ],
+  "qwen2.5:14b|Model trained: pna\nGPUs requested: 16 (V100)\nCPUs requested: 320\nHost memory requested: 2656 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    96.0,
+    128.0,
+    160.0
+  ],
+  "qwen2.5:14b|Model trained: vgg11\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    90.0
+  ],
+  "qwen2.5:14b|Model trained: dimenet\nGPUs requested: 16 (V100)\nCPUs requested: 320\nHost memory requested: 2656 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    96.0,
+    128.0,
+    160.0
+  ],
+  "qwen2.5:14b|Model trained: schnet\nGPUs requested: 16 (V100)\nCPUs requested: 320\nHost memory requested: 2656 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    96.0,
+    128.0,
+    160.0
+  ],
+  "qwen2.5:14b|Model trained: bert-base-uncased\nGPUs requested: 128 (V100)\nCPUs requested: 2560\nHost memory requested: 21250 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    90.0
+  ],
+  "qwen2.5:14b|Model trained: U5-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 188 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: resnet152_v2\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    18.0,
+    22.0,
+    26.0
+  ],
+  "qwen2.5:14b|Model trained: U5-128\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: resnet152\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    90.0
+  ],
+  "qwen2.5:14b|Model trained: inception3\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    1440.0,
+    1920.0,
+    2400.0
+  ],
+  "qwen2.5:14b|Model trained: bert-base-uncased\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    360.0,
+    720.0
+  ],
+  "qwen2.5:14b|Model trained: U5-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: resnet50\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    90.0
+  ],
+  "qwen2.5:14b|Model trained: resnet101\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: conv\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    360.0,
+    720.0
+  ],
+  "qwen2.5:14b|Model trained: resnet152_v2\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    35.0,
+    70.0,
+    140.0
+  ],
+  "qwen2.5:14b|Model trained: dimenet\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: vgg19\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: U4-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: U4-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: U4-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1080.0
+  ],
+  "qwen2.5:14b|Model trained: vgg11\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    15.0,
+    30.0,
+    45.0
+  ],
+  "qwen2.5:14b|Model trained: resnet101\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    1440.0,
+    1800.0,
+    2160.0
+  ],
+  "qwen2.5:14b|Model trained: resnet101\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    90.0
+  ],
+  "qwen2.5:14b|Model trained: pna\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: pna\nGPUs requested: 64 (V100)\nCPUs requested: 1280\nHost memory requested: 10625 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: U5-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 375 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    18.0,
+    22.0,
+    26.0
+  ],
+  "qwen2.5:14b|Model trained: U5-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: U5-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: resnet152\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: inception4\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    360.0,
+    720.0,
+    1080.0
+  ],
+  "qwen2.5:14b|Model trained: resnet50\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: schnet\nGPUs requested: 364 (V100)\nCPUs requested: 7280\nHost memory requested: 60430 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:14b|Model trained: U3-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    90.0
+  ],
+  "qwen2.5:14b|Model trained: resnet152\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    35.0,
+    70.0,
+    140.0
+  ],
+  "qwen2.5:14b|Model trained: U3-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: pna\nGPUs requested: 128 (V100)\nCPUs requested: 2560\nHost memory requested: 21250 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: vgg16\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    90.0
+  ],
+  "qwen2.5:14b|Model trained: schnet\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    65.0,
+    130.0,
+    240.0
+  ],
+  "qwen2.5:14b|Model trained: U5-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: schnet\nGPUs requested: 416 (V100)\nCPUs requested: 8320\nHost memory requested: 69062 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:14b|Model trained: U3-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    90.0
+  ],
+  "qwen2.5:14b|Model trained: pna\nGPUs requested: 32 (V100)\nCPUs requested: 640\nHost memory requested: 5312 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    96.0,
+    128.0,
+    160.0
+  ],
+  "qwen2.5:14b|Model trained: U4-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: conv\nGPUs requested: 256 (V100)\nCPUs requested: 5120\nHost memory requested: 42500 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    60.0,
+    60.0,
+    60.0
+  ],
+  "qwen2.5:14b|Model trained: bert-base-uncased\nGPUs requested: 128 (V100)\nCPUs requested: 2560\nHost memory requested: 21250 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: vgg16\nGPUs requested: 2 (V100)\nCPUs requested: 28\nHost memory requested: 103 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    144.0,
+    180.0,
+    216.0
+  ],
+  "qwen2.5:14b|Model trained: conv\nGPUs requested: 64 (V100)\nCPUs requested: 1280\nHost memory requested: 10625 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: dimenet\nGPUs requested: 32 (V100)\nCPUs requested: 640\nHost memory requested: 5312 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    60.0,
+    60.0,
+    60.0
+  ],
+  "qwen2.5:14b|Model trained: U3-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: U4-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 188 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: inception4\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:14b|Model trained: conv\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    57.0,
+    69.0,
+    81.0
+  ],
+  "qwen2.5:14b|Model trained: bert-base-uncased\nGPUs requested: 256 (V100)\nCPUs requested: 5120\nHost memory requested: 42500 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    90.0
+  ],
+  "qwen2.5:14b|Model trained: resnet50\nGPUs requested: 1 (V100)\nCPUs requested: 1\nHost memory requested: 4 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    90.0
+  ],
+  "qwen2.5:14b|Model trained: conv\nGPUs requested: 16 (V100)\nCPUs requested: 320\nHost memory requested: 2656 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    96.0,
+    120.0,
+    144.0
+  ],
+  "qwen2.5:14b|Model trained: U5-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: bert-base-uncased\nGPUs requested: 64 (V100)\nCPUs requested: 1280\nHost memory requested: 10625 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    35.0,
+    45.0,
+    55.0
+  ],
+  "qwen2.5:14b|Model trained: dimenet\nGPUs requested: 128 (V100)\nCPUs requested: 2560\nHost memory requested: 21250 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    90.0
+  ],
+  "qwen2.5:14b|Model trained: resnet152\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    12.0,
+    15.0,
+    18.0
+  ],
+  "qwen2.5:14b|Model trained: schnet\nGPUs requested: 64 (V100)\nCPUs requested: 1280\nHost memory requested: 10625 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: U3-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 375 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    18.0,
+    20.0,
+    22.0
+  ],
+  "qwen2.5:14b|Model trained: U3-128\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: resnet152\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 166 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: pna\nGPUs requested: 364 (V100)\nCPUs requested: 7280\nHost memory requested: 60430 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:14b|Model trained: U4-32\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 188 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: dimenet\nGPUs requested: 364 (V100)\nCPUs requested: 7280\nHost memory requested: 60430 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:14b|Model trained: schnet\nGPUs requested: 32 (V100)\nCPUs requested: 640\nHost memory requested: 5312 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    60.0,
+    60.0,
+    60.0
+  ],
+  "qwen2.5:14b|Model trained: conv\nGPUs requested: 364 (V100)\nCPUs requested: 7280\nHost memory requested: 60430 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:14b|Model trained: U3-64\nGPUs requested: 1 (V100)\nCPUs requested: 20\nHost memory requested: 188 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: U5-128\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: schnet\nGPUs requested: 256 (V100)\nCPUs requested: 5120\nHost memory requested: 42500 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    60.0,
+    60.0,
+    60.0
+  ],
+  "qwen2.5:14b|Model trained: conv\nGPUs requested: 416 (V100)\nCPUs requested: 8320\nHost memory requested: 69062 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:14b|Model trained: U3-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: conv\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: pna\nGPUs requested: 256 (V100)\nCPUs requested: 5120\nHost memory requested: 42500 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    60.0,
+    60.0,
+    60.0
+  ],
+  "qwen2.5:14b|Model trained: dimenet\nGPUs requested: 256 (V100)\nCPUs requested: 5120\nHost memory requested: 42500 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    60.0,
+    60.0,
+    60.0
+  ],
+  "qwen2.5:14b|Model trained: U3-64\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: conv\nGPUs requested: 128 (V100)\nCPUs requested: 2560\nHost memory requested: 21250 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: vgg16\nGPUs requested: 1 (V100)\nCPUs requested: 28\nHost memory requested: 103 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    140.0,
+    175.0,
+    210.0
+  ],
+  "qwen2.5:14b|Model trained: resnet50\nGPUs requested: 2 (V100)\nCPUs requested: 28\nHost memory requested: 103 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    25.0,
+    30.0,
+    35.0
+  ],
+  "qwen2.5:14b|Model trained: U4-128\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: conv\nGPUs requested: 32 (V100)\nCPUs requested: 640\nHost memory requested: 5312 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    60.0,
+    60.0,
+    60.0
+  ],
+  "qwen2.5:14b|Model trained: U3-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    240.0,
+    300.0
+  ],
+  "qwen2.5:14b|Model trained: schnet\nGPUs requested: 128 (V100)\nCPUs requested: 2560\nHost memory requested: 21250 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: U3-32\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 375 GB\nUser time limit: 525600 min\n\nEstimate the runtime distribution in minutes.": [
+    180.0,
+    360.0,
+    720.0
+  ],
+  "qwen2.5:14b|Model trained: schnet\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    95.0,
+    120.0,
+    145.0
+  ],
+  "qwen2.5:14b|Model trained: bert-base-uncased\nGPUs requested: 392 (V100)\nCPUs requested: 7840\nHost memory requested: 65078 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    90.0
+  ],
+  "qwen2.5:14b|Model trained: dimenet\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    192.0,
+    240.0,
+    288.0
+  ],
+  "qwen2.5:14b|Model trained: pna\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 664 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    95.0,
+    120.0,
+    145.0
+  ],
+  "qwen2.5:14b|Model trained: pna\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 332 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    185.0,
+    195.0,
+    205.0
+  ],
+  "qwen2.5:14b|Model trained: pna\nGPUs requested: 8 (V100)\nCPUs requested: 160\nHost memory requested: 1328 GB\nUser time limit: 240 min\n\nEstimate the runtime distribution in minutes.": [
+    95.0,
+    120.0,
+    145.0
+  ],
+  "qwen2.5:14b|Model trained: U4-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: dimenet\nGPUs requested: 64 (V100)\nCPUs requested: 1280\nHost memory requested: 10625 GB\nUser time limit: 60 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    45.0,
+    75.0
+  ],
+  "qwen2.5:14b|Model trained: U5-32\nGPUs requested: 4 (V100)\nCPUs requested: 80\nHost memory requested: 750 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    30.0,
+    60.0,
+    120.0
+  ],
+  "qwen2.5:14b|Model trained: dimenet\nGPUs requested: 416 (V100)\nCPUs requested: 8320\nHost memory requested: 69062 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    120.0,
+    180.0,
+    240.0
+  ],
+  "qwen2.5:14b|Model trained: U5-64\nGPUs requested: 2 (V100)\nCPUs requested: 40\nHost memory requested: 375 GB\nUser time limit: 4294967295 min\n\nEstimate the runtime distribution in minutes.": [
+    18.0,
+    22.0,
+    26.0
+  ]
+}

@@ -1332,3 +1332,249 @@ cd Research
 `pins/eval/predict_runtime.py` (`build_jobs` join, `retrieval_predict`, `llm_predict`,
 quantile `score`); data `data/slurm-log.csv` + `data/labelled_jobids_full.csv`
 (cache `data/runtime_jobs.csv`); per-job metrics → `pins/eval/results_runtime.json`.
+
+---
+
+# Stage-1 DAG TRACK — does workflow TOPOLOGY predict a task's resource demand? (Alibaba v2018)
+
+Exp 19 closed the door on the MIT Supercloud trace for *structural* prediction: every job is
+a single training script, `tres_req` is a flat template, and there are **zero task
+dependencies** — so "predict the resource from the job's DAG" is simply not expressible
+there. The **Alibaba cluster-trace-v2018** is DAG-native: a batch *job* is a set of *tasks*
+with explicit precedence, each carrying its own requested resources. This track moves the
+Stage-1 prediction question onto a trace that actually has workflow structure.
+
+## Experiment 20 — DAG extraction + topology-driven demand prediction (PASS; the signal is upstream demand)
+
+**Date:** 2026-06-25
+
+### Part A — Extract per-job task DAGs from `batch_task.csv` (the make-or-break prevalence)
+
+**Method.** `pins/eval/extract_dag.py`. The 766 MB `batch_task.csv` has no header; a job =
+all rows sharing `job_name`, and the DAG is reconstructed **purely from each task's
+`task_name`** encoding `<prefix><id>_<dep1>_<dep2>…` (e.g. `M5_3_4` = task 5 depends on 3
+and 4; `M1` = root). Only the numbers matter; randomly-named tasks (`task_<base64>`,
+`MergeTask`) become independent singletons. Vectorised parse (no per-job networkx) → compact
+node/edge tables + a longest-path `depth` per node by global iterative relaxation. Output:
+`data/alibaba-v2018/dag_{nodes,edges}.csv.gz` + `dag_stats.json`. Deterministic only — no LLM
+(structure is parsed, not reasoned).
+
+**Result (full trace).**
+
+| metric | value |
+|---|---|
+| jobs / tasks | **4,201,014 / 14,295,731** |
+| multi-task jobs (≥2) | **59.5%** |
+| **jobs with ≥1 dependency edge** | **48.3%** (2.03 M) |
+| dependency edges | 9,419,028 |
+| tasks/job | mean 3.4 · median 2 · p90 7 · p99 21 · max 1002 |
+| DAG depth (jobs w/ edges) | mean 2.46 · median 2 · p90 5 · max 53 |
+| malformed | 13 cyclic jobs · 479 edges w/ missing src (negligible) |
+
+**The make-or-break number is 48.3%** — nearly half of all jobs carry real precedence
+structure (vs Supercloud's 0%). Verified by hand on `j_3418309`: `M1`,`M2`(d0) → `R3_2`(d1) →
+`J4_1_3`(d2) → `R5_4`(d3) reconstructs exactly. The trace genuinely supports "predict demand
+from DAG topology."
+
+### Part B — Does topology predict a task's resource demand? (`pins/eval/predict_dag.py`)
+
+**Target = `plan_mem`** (per-task requested memory; 322 distinct values — the richest demand
+signal. `plan_cpu` has only 16 → too coarse; `duration` is contaminated with negatives/zeros).
+**Caveat up front:** these are *requested* resources (no `batch_instance`/actual-usage file
+exists), so the honest framing is *"forecast a task's demand from its DAG context before it is
+submitted"* — exactly the upstream signal Supercloud lacked, and useful to the supply/demand
+agents.
+
+**Method.** A clean ablation (the lab's beat-the-baseline gate). Three predictors, all
+emitting P10/P50/P90 (quantile conventions from `predict_runtime.py`), scored by the same
+`score()`: **global** (plan_mem quantiles — the no-information floor), **gbt-nodag** (sklearn
+`HistGradientBoostingRegressor`, `loss="quantile"`, on log1p target, features knowable WITHOUT
+the DAG: `instances, plan_cpu, stage_type`), and **gbt-dag** (the SAME model + topology:
+`depth, in/out_degree, n_tasks_in_job, parent_mem_{mean,max}, parent_cpu_mean`). Any gbt-dag
+gain is attributable to topology **alone** (every non-DAG feature is in both arms). No leakage:
+`duration` (outcome) excluded; parent features are from UPSTREAM tasks (lower depth), known at
+submit. Split **by job** (siblings never straddle train/test), 75/25, seed 0, 500k-job sample
+(1.69 M tasks).
+
+**Result 1 — with the co-requested `plan_cpu` available.**
+
+| predictor | MAE | within2x | logRMSE | rho | coverage | width |
+|---|---|---|---|---|---|---|
+| global (floor) | 0.1554 | 84.7% | 0.755 | +0.015 | 0.82 | 0.390 |
+| gbt-nodag | 0.0400 | **98.9%** | 0.260 | +0.851 | 0.80 | 0.186 |
+| **gbt-dag** | **0.0395** | 98.8% | 0.256 | **+0.882** | 0.80 | **0.164** |
+
+Gate PASS but **marginal**: topology adds only −1.2% MAE. The no-DAG features already nail it
+(within-2x 98.9%) because a task's own **`plan_cpu` is near-deterministic of `plan_mem`** in
+Alibaba (resource tiers are set together). Topology still helps *ranking* (rho +0.851→+0.882)
+and *sharpens* the interval (width −12%), but is largely redundant when the co-request is known.
+
+**Result 2 — `--no-cpu` ablation: drop the co-request, isolate topology (the real test).**
+
+| predictor | MAE | within2x | logRMSE | rho | coverage | width |
+|---|---|---|---|---|---|---|
+| gbt-nodag (instances + stage only) | 0.1175 | 94.3% | 0.697 | +0.475 | 0.82 | 0.399 |
+| **gbt-dag (+ topology)** | **0.0377** | **98.8%** | **0.277** | **+0.855** | 0.85 | 0.172 |
+
+**Gate PASS, decisively: MAE −67.9%, logRMSE −60.3%, rho +0.475 → +0.855.**
+
+**Findings.**
+1. **DAG topology carries the demand signal — and substitutes for the co-request.** With
+   `plan_cpu` removed, node-isolated features (parallelism + stage type) manage only within-2x
+   94.3% / rho +0.48; adding topology recovers within-2x 98.8% / rho +0.86. Strikingly,
+   **gbt-dag WITHOUT cpu (MAE 0.0377) ≈ gbt-dag WITH cpu (0.0395)** — i.e. a task's upstream DAG
+   context predicts its memory demand *as well as knowing its own co-requested CPU would*. This
+   is the deliverable: forecast a not-yet-submitted task's demand from workflow structure alone.
+2. **The interval stays calibrated** — coverage 0.80–0.85 vs the 0.80 nominal across both runs,
+   so the uncertainty story (P10/P90) survives, sharper with topology (width 0.39→0.17).
+3. **Consistent with the project spine.** Deterministic model decides the number; no LLM (Exp 19
+   already showed the LLM doesn't earn its cost as a numeric predictor — the value here is purely
+   structural). Stage-1 on a DAG-native trace finally has the structure Supercloud lacked.
+
+**Honest read / caveats.**
+- The dominant topology feature is almost certainly **`parent_mem_{mean,max}`** (an edge
+  feature) — so part of "topology predicts demand" is really "tasks in a job share a resource
+  tier." **Disentangling pure topology (depth/degree) from mere job co-membership** (e.g. a
+  job-mean-of-other-tasks baseline that uses no edges) is the immediate next ablation, and would
+  sharpen the claim from "upstream demand predicts downstream demand" to "the *graph* matters."
+- `plan_mem` is a **request, not measured usage** (no instance-level file) — the model predicts
+  what users *ask for*, which on this trace is template-driven and thus highly predictable. A
+  trace with actual per-task usage would be the stronger validation.
+- 500k-job sample (1.69 M tasks), single 75/25 job split, seed 0 (directional, like Exp 18 —
+  not the 8-seed protocol); `--full` runs all 4.2 M jobs. sklearn added as a dependency.
+
+**Reproduce.**
+```bash
+cd Research
+.venv/bin/python -m pins.eval.extract_dag                              # Part A: build node/edge tables
+.venv/bin/python -m pins.eval.predict_dag                              # Part B: with plan_cpu (marginal gate)
+.venv/bin/python -m pins.eval.predict_dag --no-cpu --out pins/eval/results_dag_nocpu.json  # isolate topology
+```
+`pins/eval/extract_dag.py` (`build_tables`, `compute_depth`, `summarize`);
+`pins/eval/predict_dag.py` (`build_features` topology + upstream-demand join, `gbt_predict`
+quantile, `--no-cpu` ablation); artifacts `data/alibaba-v2018/dag_stats.json`,
+`pins/eval/results_dag{,_nocpu}.json`.
+
+---
+
+# Stage-1 DAG-GPU — does DAG topology drive ACTUAL GPU demand? (executed & measured on the A100)
+
+**Trace reality (verified against every Alibaba README).** No public trace pairs precedence
+DAGs with measured GPU: **v2018** has DAGs but no GPU; **gpu-v2020** has measured `gpu_wrk_util`
+but only PS/worker gangs (no precedence); **gpu-v2023/2025** are request-only scheduling
+snapshots (neither). Google Borg 2019 is CPU/mem-normalised, no GPU. So to study DAG→actual-GPU
+we must MINT the labels — execute real GPU workloads on the topology and measure (the Exp 1-7
+A100 closed-loop, lifted to workflows). Honest constraint: v2018 tasks are anonymised (no code),
+so each node runs an executable STAND-IN sized to its `plan_mem`; structure + measurement are
+real, the per-node workload is representative. (`fetch_alibaba_gpu.py` also added to pull
+gpu-v2020 for a real-util cross-check — resumable OSS download, no survey.)
+
+## Experiment 21 — peak-concurrent GPU is additive (deterministic rule wins); util is saturated/k-bound (no relational signal)
+
+**Date:** 2026-06-25 · runs on the A100 via `.venv-forecast` (the main `.venv` torch is broken:
+`ncclCommResume`).
+
+**The right target.** Per-task GPU *memory* is already solved deterministically (Exp 4, 0.04 GB),
+and the DAG is irrelevant to it. The DAG-dependent, unsolved quantity is the WORKFLOW's **peak
+concurrent GPU memory** — how much VRAM the job needs *at once* — a function of (a) topology
+(what MAY run in parallel), (b) durations (what actually OVERLAPS), (c) per-task footprint. It is
+NOT the sum of per-task memory (over-counts) nor the max single task (under-counts).
+
+### Part A — synthetic layered DAGs (`pins/eval/dag_gpu_bench.py`)
+
+**Method.** Generate layered DAGs of CNN tasks (parallel nodes per layer CAN co-run); measure
+each distinct config's (peak_gb, duration) on the A100 (memoised — 48 configs cover hundreds of
+nodes); compute workflow peak-concurrent via a list-scheduler over measured (mem, dur) under a
+parallelism cap. Score three baselines for the peak-concurrent target. 40 DAGs.
+
+**Result (MAPE / within-1.5×; peak-concurrent 2.1–20.9 GB).**
+
+| regime | naive_sum | naive_max | **layer_sum** (heaviest layer) |
+|---|---|---|---|
+| unlimited parallel | 117% / 12.5% | 32.5% / 50% | **3.3% / 100%** |
+| max_parallel=4 | 115% / 12.5% | 33.0% / 47.5% | **3.7% / 100%** |
+| max_parallel=2 | 130% / 10.0% | 28.9% / 57.5% | **9.0% / 100%** |
+
+**Naive aggregation FAILS (sum off 117%), so structure matters — but a one-line topology rule
+(heaviest layer's summed memory) nails it to ~3%**, degrading only mildly under tight
+parallelism and never leaving 100% within-1.5×.
+
+### Part B — REAL v2018 DAG topologies (`pins/eval/dag_gpu_trace_bench.py`)
+
+**Method.** Replace the synthetic generator with **actual v2018 job graphs** (irregular, real
+edges). Each node: a library CNN config **rank-matched** by its `plan_mem` percentile →
+GPU-footprint percentile (preserves the trace's per-node demand ordering without trusting
+plan_mem's units); per-node **duration = the real trace duration** (governs overlap); `layer_sum`
+generalised to **topological depth-level**. 80 real DAGs (4–24 nodes, depth ≤12).
+
+**Result.**
+
+| baseline | MAE (GB) | MAPE | within 1.5× |
+|---|---|---|---|
+| naive_sum | 14.30 | 154% | 11.2% |
+| naive_max | 3.95 | 28.3% | 53.8% |
+| **level_sum** | **0.37** | **2.9%** | **98.8%** |
+
+**The depth-level rule holds on real irregular production DAGs just as on synthetic ones (2.9%).**
+Across synthetic/real graphs, unlimited→2 parallelism, and real skewed durations, it never broke.
+
+### Part C — co-execution: is GPU UTILIZATION non-additive? (`pins/eval/gpu_coexec_probe.py`)
+
+**Why.** Memory is additive; utilisation might not be (two 60%-util tasks ≠ 120% — they contend).
+**Method.** Co-run k tasks as concurrent SUBPROCESSES (private CUDA contexts, real contention),
+fixed-duration full-overlap, started via a `Barrier`; sample whole-device util with `nvidia-smi`;
+measure realised util + throughput slowdown vs solo. 5 CNN configs, 14 random co-run sets.
+
+**Result.**
+
+| quantity | finding |
+|---|---|
+| solo util (every config) | **96–99%** — each CNN already saturates the A100 alone |
+| co-run realised util | **100%** (additive-cap predicts 100% → rule right, 0.3 pt error) |
+| slowdown k=2 / k=3 | **2.4× / 3.5×** (super-linear — co-locating is *worse* than serial) |
+| mix-dependence | slowdown std ≤**0.09** within a k → determined by **count k alone**, not the mix |
+
+**Findings / honest read (the through-line, reinforced).**
+1. **Peak-concurrent GPU memory is additive** — naive sum fails (117–154%) but a deterministic
+   heaviest-(depth-)level rule predicts it to ~3% on synthetic AND real DAGs. The GBT-runtime +
+   attention cascade is **over-engineering for memory**: overlap is second-order (the fattest
+   level dominates), and per-task memory is already deterministic (Exp 4). End-to-end, peak GPU is
+   a submit-time, no-ML pipeline: predict per-task mem → topo-level max.
+2. **Utilization is not a useful learned target for GPU-saturating training jobs** — it pegs at
+   100%, so the additive-cap rule is trivially correct.
+3. **Co-location slowdown IS large and super-linear** (the real scheduler-relevant cost) **but
+   k-determined, not mix-dependent** — a one-line `slowdown ≈ k` rule suffices. The relational
+   signal an attention/GNN model would exploit is **absent for homogeneous (conv-bound) tasks**.
+4. **Where a relational model WOULD earn its keep: heterogeneous bottlenecks.** Compute-bound +
+   bandwidth-bound tasks should overlap productively (less slowdown) than two compute-bound — a
+   *mix*-dependent effect a `≈k` rule can't express. Not yet tested (all tasks here are conv).
+   This is the one open door for `DAG→attention→util`; until a 3-class **resource-contention rule**
+   (compute/bandwidth/IO, slowdown = max per-class demand/capacity) demonstrably fails, attention
+   stays unjustified. **Recommended GPU-util toolkit instead of attention:** retrieval/GBT quantiles
+   for *solo* util (Exp-19 style), a resource-class contention rule for *co-located* util, and the
+   existing **temporal** attention (Exp 8/16) for a *running* job's util trajectory.
+
+**Lesson (unchanged):** structure matters, but a deterministic rule keeps beating the learned
+model — mirrors Exp 18 (ILP ties auction in 1-D) and Exp 9–10 (greedy beats fancy bidding). The
+DAG genuinely drives GPU demand; you don't need ML to exploit it.
+
+**Reproduce.**
+```bash
+cd Research
+.venv-forecast/bin/python -m pins.eval.dag_gpu_bench --n-dags 40                 # Part A (synthetic)
+.venv-forecast/bin/python -m pins.eval.dag_gpu_trace_bench --n-jobs 80           # Part B (real v2018 DAGs)
+.venv-forecast/bin/python -m pins.eval.gpu_coexec_probe --run-s 3 --trials 14    # Part C (co-exec util)
+```
+`pins/eval/dag_gpu_bench.py` (`gen_dag`, `measure_task`, `simulate_peak_concurrent`);
+`pins/eval/dag_gpu_trace_bench.py` (rank-match real DAGs, real durations); `pins/eval/
+gpu_coexec_probe.py` (multiprocess co-exec, nvidia-smi sampler); artifacts `results_dag_gpu_*.json`,
+`results_gpu_coexec.json`.
+
+## Next: integration architecture (decided 2026-06-25)
+Full PINS pipeline locked as **LLMs reason/bid → committed-auction decides → ILP places/guarantees**
+(Open Q #1 = option a-with-placement). New work to build: (1) text bridge from Stage-1 facts
+(GBT runtime + level-sum GPU + uncertainty) to the LLMs; (2) the **bounded two-sided negotiation
+protocol** (job-side Exp 12 ⇄ resource-side Exp 14, which today set value in isolation); (3) the
+must-have **single-LLM-both-objectives** baseline (Open Q #5). Honest expectation from Exp 9–13:
+negotiation won't beat the committed-auction on SLA — its claim is interpretability + modularity +
+incentives, to be *measured* against that baseline, not asserted.
