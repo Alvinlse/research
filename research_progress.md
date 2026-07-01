@@ -2093,6 +2093,21 @@ hand-picked to restore contention (a demand/capacity-ratio-matched comparison vs
 would be cleaner); and the negotiated 3b-over-14b inversion (finding 5) is from a single 8-seed
 synthetic workload — run a seed sweep before leaning on it in the thesis.
 
+**Conclusion.** Once the negotiation runs over real Stage-1 predicted demand instead of synthetic
+caps, the fallback pathology disappears — and the deterministic protocol turns out to SUBSTITUTE
+FOR MODEL SCALE. Three claims the data supports: (1) realistic demand fixed the *mechanism*, not
+the model — Exp 22's 96/74/49% fallback was an artifact of flat-8 caps swamping the pool; at real
+quarter-GPU quanta it is 0% everywhere and the negotiation finally negotiates. (2) What negotiation
+buys is prod-SLA protection priced in best-effort slowdown — the floor always wins raw overall SLA;
+the agents deliberately, auditably reprioritise (pool 3: prodSLA 62.3 → ~47-48). (3) The brake
+matters more than the brain: negotiated@3b matches or beats negotiated@14b, while the un-braked
+single-llm self-harms at 3b and needs 14b to recover — the concession ladder is a guardrail that
+makes a SMALL model safe, the "mechanism substitutes for a bigger model" result Exp 26 failed to
+get from reflection. Thesis slot: Exp 25 showed the ILP makes aggressive LLM bids *safe*; Exp 27
+shows the protocol makes a *cheap* LLM *sufficient* — the guarantees don't just protect against
+the LLM's mistakes, they let you run a much smaller LLM at all. (Seed-sweep the 3b≥14b inversion
+before it becomes a headline claim.)
+
 **Reproduce.**
 ```bash
 cd Research
