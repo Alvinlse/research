@@ -1578,3 +1578,493 @@ protocol** (job-side Exp 12 ⇄ resource-side Exp 14, which today set value in i
 must-have **single-LLM-both-objectives** baseline (Open Q #5). Honest expectation from Exp 9–13:
 negotiation won't beat the committed-auction on SLA — its claim is interpretability + modularity +
 incentives, to be *measured* against that baseline, not asserted.
+
+---
+
+# Stage-1→Stage-2 INTEGRATION — the locked pipeline, built and measured (Exp 22-23)
+
+The three locked next-work items (1) text bridge, (2) bounded two-sided protocol, (3) single-LLM
+baseline are now built (`pins/bridge.py`, `pins/negotiation_protocol.py`, `llm_joint` in
+`pins/llm_agent.py`, `pins/two_sided_sim.py`), plus a placement extension (`pins/affinity.py` +
+an `affinity` arg on `ilp.allocate_placement`). Design hinge preserved throughout: the LLM emits
+only a **categorical level + justification**; deterministic code owns every GPU count, the
+clearing, and the feasibility.
+
+## Experiment 22 — bounded two-sided negotiation in ONE world (margin ⇄ reserve): negotiation ≈ the floor, earns its keep only at slack; single-LLM over-commits
+
+**Date:** 2026-06-26
+
+**Why.** Exp 14 (supply reserve) and Exp 16-17 (demand margin) each isolated ONE lever in its own
+simulator. The two-sided thesis only bites when both levers draw on the SAME free pool, so
+`pins/two_sided_sim.py` MERGES them: rigid non-preemptable incumbents + a reserve held for incoming
+prod (from `simulate_rigid`) AND stochastic train-work spikes where margin GPUs buy absorbing speed
+(from `simulate_stochastic`). Margin and reserve now COMPETE for the same GPUs — the tension the
+bounded protocol resolves.
+
+**Method.** Each tick: build every job's `Stage1Facts` and bridge them to the agent ctx
+(`pins/bridge.py`, wiring build-task #1 into the loop); a POLICY sets `(per-job margin, reserve R)`;
+allocate prod-first then best-effort capped at `free−R`, each job growing to `cap0+margin` and a
+spiked train phase absorbing up to `cap0+round(u·scale)`. Four policies on the identical workload:
+**no-llm** (margins 0, R 0 — the point-forecast floor), **isolated** (`llm_margin` per job +
+`llm_reserve`, decided INDEPENDENTLY — Exp 14/17's state of the art), **negotiated** (the bounded
+concession protocol `negotiate()`), **single-llm** (one `llm_joint` call decides both — Open-Q #5).
+16 jobs, horizon 300, mean of 8 seeds, pools {6,8,12}, spike_max 0.6, scale 3. `fb` = negotiation
+fallback rate (how often it could not fit and dropped to the heuristic). Run at rule-fallback AND
+qwen 3b/14b.
+
+**Result (SLA / prodSLA / util / fallback; lower SLA/prodSLA = better).**
+
+| | | **qwen2.5:3b** | | | | **qwen2.5:14b** | | |
+|---|---|---|---|---|---|---|---|---|
+| pool | policy | SLA | prodSLA | util | fb | SLA | prodSLA | util |
+| 6 | no-llm | 88.3 | 93.3 | 98 | — | 88.3 | 93.3 | 98 |
+| 6 | isolated | 91.4 | 95.4 | 93 | — | 89.8 | 95.4 | 96 |
+| 6 | negotiated | 88.3 | 93.3 | 98 | 96% | 88.3 | 93.3 | 98 |
+| 6 | single-llm | 93.0 | 95.4 | 87 | — | 91.4 | 95.4 | 94 |
+| 8 | no-llm | 72.7 | 77.0 | 95 | — | 72.7 | 77.0 | 95 |
+| 8 | isolated | 75.0 | 73.4 | 91 | — | **71.1** | **71.3** | 94 |
+| 8 | negotiated | 72.7 | 77.0 | 95 | 74% | 72.7 | 77.0 | 95 |
+| 8 | single-llm | 75.8 | 73.4 | 87 | — | 73.4 | 73.4 | 91 |
+| 12 | no-llm | 33.6 | 39.0 | 80 | — | 33.6 | 39.0 | 80 |
+| 12 | isolated | 37.5 | 37.4 | 81 | — | 35.2 | 37.4 | 81 |
+| 12 | negotiated | **31.2** | 35.2 | 82 | 49% | **31.2** | 35.2 | 82 |
+| 12 | single-llm | 37.5 | 35.0 | 80 | — | 33.6 | **33.5** | 80 |
+
+**Findings.**
+1. **`single-llm` over-commits BOTH levers and is the worst overall-SLA policy under contention**
+   — at pool 6, 3b drops util to 87% and finishes only 14.5/16 jobs (it grants heavy margin AND
+   holds a reserve with no mechanism to back off, starving jobs). This is the headline point FOR
+   the two-sided split: the **negotiation's concession ladder is exactly what prevents that
+   over-subscription** — a lone agent has no such brake.
+2. **`negotiated` is INVARIANT to model size** (byte-identical 3b vs 14b: 88.3/72.7/31.2). Because
+   it falls back 96/74/49% of the time, the LLM's choices rarely survive; its behaviour is driven
+   by the deterministic concession ladder + heuristic fallback, not the model. This is both its
+   robustness AND its limitation — the safety property ("can only help or be neutral") working.
+3. **`negotiated` uniquely beats the floor on overall SLA at slack** (pool 12: 31.2 vs 33.6), by
+   RESTRAINT not aggression; under contention it correctly conserves (declines speculative margin,
+   matching the Exp-14 "reservation hurts under scarcity" finding) and ties the floor.
+4. **Model size helps the agents' JUDGEMENT, monotonically** (mirrors Exp 1/19): every place 3b's
+   LLM policies self-harm, 14b recovers — util climbs (87→94%), lost completions return, and at
+   pool 8 `isolated@14b` actually BEATS the floor on BOTH SLA (71.1) and prodSLA (71.3).
+5. **The load-bearing comparison — `negotiated` vs `single-llm@14b` — is a WASH** (negotiated wins
+   overall SLA 31.2 vs 33.6 at pool 12; single-llm wins prodSLA 33.5 vs 35.2). **Neither dominates
+   on allocation quality**, exactly as predicted: the two-sided split does not beat one good agent
+   on the numbers; its case rests on interpretability + modularity + the fallback-safety guarantee.
+
+**Honest read / caveats.** The negotiation's value here is *disciplined restraint + a provable
+fallback*, not an SLA win — confirming the Exp 9-13 prediction. A real limitation surfaced: it
+falls back too readily because `negotiate()` is handed the WHOLE pool as `free_gpus` and aggregate
+forecast demand usually exceeds it, so the LLM's judgement rarely survives under contention; the
+fix (negotiate over the contested SLICE, not the whole pool) is the obvious next tuning. Margin is
+mapped to fixed GPU counts per level (`HEDGE_GPUS`), not uncertainty-sized — the uncertainty still
+gates the *speedup benefit* (`useful=round(u·scale)`) but not the requested count. Single 8-seed
+synthetic workload; the committed/reserve grant stands in for the full auction (mechanism.clear +
+ILP placement not yet in this loop — see Exp 23 for the placement half).
+
+**Reproduce.**
+```bash
+cd Research
+.venv/bin/python -m pins.bridge                  # facts -> text + bridged ctx
+.venv/bin/python -m pins.negotiation_protocol    # protocol smoke: agreement, concession, fallback
+.venv/bin/python -m pins.two_sided_sim           # rule-fallback 4-policy sweep
+.venv/bin/python -m pins.two_sided_sim --llm --model qwen2.5:14b
+```
+`pins/bridge.py` (`Stage1Facts`, `margin_ctx`, `facts_to_text`); `pins/negotiation_protocol.py`
+(`negotiate` bounded ladder, `single_llm_plan`); `llm_joint` in `pins/llm_agent.py`;
+`pins/two_sided_sim.py` (`simulate`, 4 policies); artifact `pins/results_two_sided.json`.
+
+## Experiment 23 — LLM affinity hint + ILP node placement: a knife-edge gated on classification accuracy (the Exp-21 open door)
+
+**Date:** 2026-06-26
+
+**Why.** Exp 21 Part C closed the door on relational GPU-util models for HOMOGENEOUS tasks
+(`slowdown ≈ k`) but flagged one exception: HETEROGENEOUS bottlenecks — two compute-bound tasks on
+a node contend on the SMs, but a compute + a bandwidth task overlap productively. WHICH tasks are
+complementary is a SEMANTIC judgement a numbers-only solver cannot infer from a GPU count, but an
+LLM can. So the LLM's placement role is NOT to choose nodes (Exp 18: the ILP does that
+provably-optimally) — it only classifies each task's **bottleneck class**; code
+(`affinity.affinity_matrix`) turns classes into a soft same-node affinity the ILP
+(`ilp.allocate_placement`, new `affinity` arg) optimises WITHIN the hard capacity/co-location
+constraints. LLM reasons, ILP decides + guarantees.
+
+**Method.** A 4-node × 4-GPU cluster filled exactly by 2-GPU single-node tasks (8 tasks
+— pure placement, not rationing). Each task has a true class (compute/bandwidth) and an op-profile
+string the agent reads to GUESS it. Ground-truth contention (agents never see it): two same-class
+tasks on a node each run at `1/(1+0.7·k_same)`; complementary tasks overlap free. Score total
+throughput. Four placers: **pack** (ILP, no affinity), **spread** (class-BLIND balanced — the
+strong heuristic), **llm-affin** (LLM classes → affinity → ILP), **oracle** (true classes → ILP).
+8 seeds; heterogeneity swept {0, 0.25, 0.5}. CBC given a 10 s budget (the affinity MILP needs it;
+the 0.5 s real-time default truncates and corrupts the comparison). Run at rule / 3b / 14b.
+
+**Result (throughput at hetero=0.50, the discriminating case; ideal = 8.0; homogeneous hetero=0
+ties all four at 4.71).**
+
+| classifier | bottleneck acc | llm-affin tp | vs spread (6.46) | vs oracle (6.87) |
+|---|---|---|---|---|
+| keyword rule | 6/8 effective | 6.46 | +0.00 (tie) | below — can't read semantic profiles |
+| **qwen2.5:3b** | **6/8** | **6.04** | **−0.41 (WORSE)** | a wrong hint mis-separates tasks |
+| **qwen2.5:14b** | **8/8** | **6.87** | **+0.41** | **= oracle (full win)** |
+
+**Findings.**
+1. **Affinity placement is real and worth +0.41 throughput** (oracle vs blind spread at hetero
+   0.50) — and **worthless on homogeneous workloads** (hetero 0: all four tie at 4.71, every node
+   forced into a compute+compute pair). Exactly consistent with Exp 21: the relational signal
+   exists ONLY for heterogeneous bottlenecks.
+2. **The hint is only as good as the classification, and a WRONG hint is worse than none.** 3b
+   (6/8) scores 6.04 — *below* the class-blind spreader — because it confidently mislabels the
+   subtle bandwidth tasks (`cross-GPU comm shard`, `GNN gather/scatter`) as compute ("saturates the
+   tensor cores"), so the ILP separates the wrong pairs. The keyword rule also misses GNN
+   (no keyword) and merely ties spread.
+3. **Only 14b's judgement crosses from harmful to oracle-matching** (8/8 → 6.87 = oracle). It
+   correctly reads "neighbour gather/scatter" and "cross-GPU comm" as bandwidth-bound. Model size
+   gates whether the placement hint is a net asset (mirrors Exp 22 finding 4 and Exp 1/19).
+4. **The guarantee held regardless of the LLM.** Every wrong 3b hint cost throughput but NEVER
+   produced an infeasible placement — the ILP's hard capacity/co-location constraints absorbed the
+   bad advice. This is the design split vindicated: LLM proposes semantics, ILP guarantees physics.
+
+**Honest read / caveats.** Strongest evidence yet that the LLM contributes signal a numbers-only
+solver structurally lacks (task semantics → bottleneck class) — but it is a knife-edge: below a
+capability threshold the LLM is net-negative, so this justifies an LLM in the placement loop ONLY
+at sufficient model size (≥14b here) with a fallback. Synthetic 2-class contention model
+(α=0.7 both, io untested), tiny 4×4 cluster, 8 profiles, 8 seeds (directional). The affinity is a
+pairwise same-node soft term; richer topology (NVLink groups, 3-class compute/bandwidth/io
+contention) is the next step. Does NOT yet feed a running scheduler — it is the placement-stage
+gate, to be wired after the auction in the full pipeline.
+
+**Reproduce.**
+```bash
+cd Research
+.venv/bin/python -m pins.affinity                          # task -> bottleneck class -> affinity matrix
+.venv/bin/python -m pins.placement_affinity_sim            # rule-fallback gate
+.venv/bin/python -m pins.placement_affinity_sim --llm --model qwen2.5:14b
+(cd pins && ../.venv/bin/python test_ilp.py && ../.venv/bin/python test_placement.py)   # affinity arg is regression-safe
+```
+`pins/affinity.py` (`llm_bottleneck`, `affinity_matrix`); `pins/ilp.py`
+(`allocate_placement` + `affinity` soft same-node term); `pins/placement_affinity_sim.py`
+(`make_tasks`, contention `score`, the 4 placers); artifact `pins/results_affinity.json`.
+
+## Next (2026-06-26)
+Items (1)(2)(3) + the placement extension are built and measured (Exp 22-23). Open follow-ups:
+(a) negotiate over the **contested slice** not the whole pool, so the LLM's judgement survives
+under contention (Exp 22 fallback too eager); (b) wire the negotiated bids through the **actual
+auction** (`mechanism.clear`) + **`ilp.allocate_placement`** so the merged sim matches the full
+locked pipeline end-to-end; (c) the incentive layer (Exp 13 budget) on the two-sided protocol;
+(d) Exp 23 on a richer 3-class contention model + real NVLink topology; (e) `qwen2.5:7b` to fill
+the middle of both ablation curves.
+
+## Experiment 24 — Contested-slice negotiation: the fallback was an ARTIFACT; the two-sided split now BEATS the single-LLM
+
+**Date:** 2026-06-29
+
+**Why.** Exp 22's `negotiated` policy fell back to the heuristic 49–96% of the time, which made it
+(a) byte-identical across 3b/14b (the LLM's choices never survived) and (b) "a wash" vs the
+single-LLM baseline. Exp 22's own next-step (a) blamed *"`negotiate()` is handed the WHOLE pool so
+aggregate demand exceeds it."* This experiment implements that fix — and finds the diagnosis was
+only half right.
+
+**The fix, in two steps.**
+1. **The literal "pass the contested slice not the whole pool" is a NO-OP.** Subtracting base demand
+   from both sides of the fit test is algebraic identity: `base+margins ≤ free−reserve`
+   ⟺ `margins ≤ (free−base)−reserve`. The fallback condition reduces to *base demand > pool* — which
+   under contention is **genuine oversubscription, not an artifact of the number passed**. So the
+   high fallback was NOT premature in the way the note assumed; verified empirically (rule sweep
+   unchanged, fb still 96/74/53%).
+2. **The real bug: the demand table mixed non-negotiable base into the margin negotiation.** It
+   handed `negotiate()` *every active job's full base* `cap0`, including jobs that won't run this
+   tick. But a speed-up **margin is only usable by a job already RUNNING its base** — a waiting job
+   needs base first, which is the auction's job, not the margin negotiation's. Fixed
+   (`two_sided_sim.simulate`): the margin table is the **running train jobs only** (`held ≥ cap0 > 0`,
+   `forecast_cap=0`), contesting the **genuinely-free GPUs** (`total − Σheld`) against the supply
+   reserve. Base demand never enters `want`, so the negotiation cannot false-fallback on base
+   oversubscription. (`negotiate()`'s `want`/`avail` were also made explicit — margins vs slice;
+   `aggregate_joint_ctx` guards the empty-table tick. `test_mechanism.py` 5/5, decider untouched.)
+
+**Result — `negotiated` across agents (8-seed mean; SLA / prodSLA, lower = better; fb now 0% everywhere).**
+
+| pool | rule | qwen2.5:3b | qwen2.5:14b |
+|---|---|---|---|
+| 6  | 89.8 / 95.4 | 91.4 / 95.4 | 89.8 / 95.4 |
+| 8  | 71.1 / 71.3 | 73.4 / 71.3 | 71.1 / 71.3 |
+| 12 | 34.4 / 33.1 | 35.2 / 38.0 | 35.2 / **33.4** |
+
+**Result — head-to-head at 14b (the load-bearing comparison; util%, done/16 shown).**
+
+| pool | policy | SLA | prodSLA | util | done |
+|---|---|---|---|---|---|
+| 6  | no-llm (floor) | **88.3** | **93.3** | 98 | 15.6 |
+| 6  | **negotiated** | 89.8 | 95.4 | **96** | 15.6 |
+| 6  | single-llm | 91.4 | 95.4 | 90 | **15.0** |
+| 8  | no-llm | 72.7 | 77.0 | 95 | 16.0 |
+| 8  | **negotiated** | **71.1** | **71.3** | 94 | 16.0 |
+| 8  | single-llm | 74.2 | 73.4 | 90 | 16.0 |
+| 12 | no-llm | **33.6** | 39.0 | 80 | 16.0 |
+| 12 | **negotiated** | 35.2 | **33.4** | 82 | 16.0 |
+| 12 | single-llm | 35.2 | 37.7 | 79 | 16.0 |
+
+**Findings.**
+1. **The fallback was an artifact of the WRONG decision boundary, not the pool size.** Once base
+   demand is removed from the negotiation, fallback drops **96/74/49% → 0%** at every pool: the
+   negotiation always converges, because margins over the free pool can always be conceded to fit.
+   The two-sided protocol now actually *runs* instead of degenerating to the heuristic.
+2. **Model size now MATTERS for the negotiation** (it could not in Exp 22 — fallback washed it out).
+   The LLM's per-job hedge choices survive, so 14b separates from 3b: pool-12 prodSLA **33.4 (14b)
+   vs 38.0 (3b)**; 14b matches the deterministic rule (the oracle) while 3b over-hedges and self-harms
+   — the same "judgement with stakes" pattern as Exp 14C/17.
+3. **The headline FLIPPED: `negotiated@14b` now beats or ties `single-llm@14b` at EVERY pool**
+   (was "a wash" in Exp 22). single-llm consistently **over-commits** — util 90/90/79 and only
+   15.0/16 done at pool 6 — because a lone agent has no brake; the negotiation's **concession ladder
+   is exactly that brake** (util 96/94/82, 15.6 done). And the per-job margin granularity protects
+   prod better than single-llm's one uniform hedge (pool-12 prodSLA 33.4 vs 37.7). This is the first
+   measurement where the two-sided split wins the load-bearing comparison on the NUMBERS, not just on
+   interpretability — corroborating and strengthening Exp 22 finding #1.
+4. **vs the floor:** `negotiated@14b` wins prod-tier SLA at pool 8 (71.3 vs 77.0) and pool 12 (33.4
+   vs 39.0), trading a little overall SLA at pool 12 (35.2 vs 33.6). Its character shifted from
+   Exp 22's "win overall-SLA by restraint" to "protect prod deadlines by granting margins to running
+   at-risk jobs" — the value-weighted behaviour the thesis wants (Exp 11/12 lineage).
+
+**Honest read / caveats.** The win is concentrated in **prod-tier SLA at moderate contention**
+(pools 8/12, where free GPUs exist); at pool 6 (util 96–98%) the slice is near-empty and all
+policies converge, as every lever in this project does under saturation. The contested-slice
+restriction also changed `single-llm`/`isolated` slightly (all policies now see the running-jobs
+table) — the comparison stays apples-to-apples. Reserve still competes with margin for the free
+pool, but reclaim/preemption costs are not modelled here (Exp 14A regime); single 8-seed synthetic
+workload; the committed/reserve grant still stands in for the full `mechanism.clear` + ILP placement
+(follow-up (b)).
+
+**Reproduce.**
+```bash
+cd Research
+.venv/bin/python -m pins.negotiation_protocol            # smoke: contested-slice agreement + no-slice fallback
+.venv/bin/python -m pins.two_sided_sim                   # rule-fallback 4-policy sweep (fb now 0%)
+.venv/bin/python -m pins.two_sided_sim --llm --model qwen2.5:3b
+.venv/bin/python -m pins.two_sided_sim --llm --model qwen2.5:14b
+```
+`pins/two_sided_sim.py` (`simulate`: running-jobs margin table + `free_now`); `pins/
+negotiation_protocol.py` (`negotiate` margins-vs-slice, `aggregate_joint_ctx` empty guard);
+artifact `pins/results_two_sided.json`.
+
+## Next (2026-06-29)
+Exp 24 closed follow-up (a) — and turned the two-sided result from a wash into a measured win. Open:
+(b) wire negotiated bids through the **actual `mechanism.clear` + `ilp.allocate_placement`** (the
+locked pipeline end-to-end); (c) incentive layer (Exp 13 budget) on the two-sided protocol;
+(d) Exp 23 richer 3-class contention + NVLink; (e) `qwen2.5:7b` to fill both ablation curves' middle.
+
+## Experiment 25 — The full locked pipeline end-to-end: the ILP guarantee makes the LLM's over-demand SAFE
+
+**Date:** 2026-06-29
+
+**Why.** Exp 22/24 resolved the demand-margin ⇄ supply-reserve negotiation but then allocated with a
+**bespoke prod-first grant** — a stand-in for the decider. The locked architecture
+(`research_progress.md` 2026-06-25; `Research/CLAUDE.md` §3) is *LLMs reason/bid → committed-auction
+decides (who/how-many) → ILP places (where) / guarantees*. Follow-up (b): replace the stand-in with
+the **real deciders** so the merged sim exercises the pipeline end-to-end.
+
+**Method.** New `pins/pipeline_sim.py` composing the validated harness (imported, unmodified): the
+Exp-22/24 world (rigid incumbents + stochastic train-work spikes; a margin GPU buys spike-absorbing
+speed) lifted onto a **node cluster** so placement bites. Per tick: **RATION** = the committed-auction
+(bid-once frozen-urgency priority + run-to-completion `_serialise` from `negotiation_sim.py` — the
+Exp-11 SLA winner, *not* the per-round `mechanism.clear`, which Exp 9/18A showed spreads+thrashes)
+over `(total − reserve)`; **PLACE** = `place_sticky` (count-only, fragments) vs
+`ilp.allocate_placement` (plans node + migrates to consolidate, feasible by construction). Negotiation
+= the Exp-24 contested slice (running train jobs contest the free GPUs for a margin vs the reserve).
+A clean **2×2: negotiation {off,on} × placement {sticky,ILP}** — `floor`, `floor+ILP`, `nego+sticky`,
+`pipeline`. Contended regime (32 jobs, arrivals compressed ≤48 so whole-node train jobs fragment the
+cluster, horizon 400, 4 seeds, nodes {2,3,4,6}×8). `ploss` = mean GPUs/round won but unplaceable.
+
+**A bug found & fixed en route.** `bid_with_margin` first read `job.phase()`, but the sim tracks each
+job's phase in a local dict and never mutates the `Job` — so every bid was stuck at the *initial*
+phase (preprocess, length 1), starving every train job to 1 GPU (100% SLA at any cluster size). Fixed
+to pass the current phase explicitly. (`test_mechanism.py` still 5/5; no validated module touched.)
+
+**Result (agents=qwen2.5:14b; SLA / prodSLA / util / ploss; lower SLA/prodSLA/ploss = better).**
+
+| cluster | floor | floor+ILP | nego+sticky | pipeline |
+|---|---|---|---|---|
+| 2×8=16 | 82.8 / 45.3 / 96 / 0.17 | **82.0 / 42.2** / 97 / **0.08** | 82.8 / 45.3 / 93 / 0.60 | **82.0 / 42.2** / 94 / 0.53 |
+| 3×8=24 | 71.9 / 23.5 / 92 / 0.62 | **70.3 / 21.0** / 94 / **0.20** | 73.4 / 29.7 / 89 / 1.35 | **70.3 / 21.0** / 91 / 0.97 |
+| 4×8=32 | 58.6 / 6.6 / 88 / 0.93 | **57.0 / 6.6** / 90 / **0.60** | 58.6 / 6.6 / 85 / 2.16 | **57.0 / 6.6** / 87 / 1.63 |
+| 6×8=48 | 32.0 / 5.4 / 79 / 1.59 | **28.9 / 2.3** / 80 / **1.08** | 34.4 / 7.5 / 78 / 3.04 | 30.5 / **2.3** / 80 / 2.21 |
+
+(`floor`/`floor+ILP` are negotiation-free → identical at rule and 14b; the negotiation arms are 14b.
+Rule-fallback negotiation arms are milder, e.g. 6×8 `nego+sticky` ploss 2.09 / SLA 31.2 vs 14b's 3.04 / 34.4.)
+
+**Findings.**
+1. **The ILP placement layer delivers Exp-18's win INSIDE the full pipeline.** `floor+ILP` vs `floor`
+   roughly **halves the fragmentation loss** (ploss 1.59→1.08, 0.93→0.60, 0.62→0.20, 0.17→0.08) and
+   lifts SLA/prodSLA/util at every cluster (6×8: SLA 32.0→28.9, prodSLA 5.4→2.3). The placement value
+   survives being fed by the committed-auction + negotiation rather than a raw bid stream.
+2. **The committed-auction + contested-slice negotiation carry over cleanly:** fallback **0%**
+   everywhere (the Exp-24 property holds), all 32 jobs finish, util stays 79–97%.
+3. **A bigger LLM bids MORE aggressive margins — which BACKFIRE under count-only placement.** 14b
+   grants more headroom than the rule (ploss up across the board), and under `sticky` placement those
+   bigger blocks **fragment the cluster and make `nego+sticky` WORSE than the no-negotiation floor**
+   (6×8: SLA 32.0→34.4, prodSLA 5.4→7.5; 3×8: prodSLA 23.5→29.7). Demanding more GPUs is actively
+   harmful when there is no way to consolidate them.
+4. **The ILP guarantee RESCUES the aggressive negotiation — the headline.** `pipeline` (nego+ILP)
+   absorbs the fragmentation the margins caused and pulls back to the `floor+ILP` frontier
+   (6×8: SLA 34.4→30.5, prodSLA 7.5→2.3; ploss 3.04→2.21). So the ILP placement layer is precisely
+   **what makes the LLM's over-demand safe** — the design hinge *"the LLM reasons/bids; deterministic
+   code decides and GUARANTEES"* demonstrated end-to-end: the guarantee layer protects the system from
+   the proposer's excess, exactly the LLMSched complementarity (`Research/CLAUDE.md` §2).
+
+**Honest read / caveats.** In this heavily-contended regime the negotiation does **not add SLA over
+the floor** — margins need slack (Exp 24), and under saturation the pipeline's net effect is the ILP's
+placement gain plus the safety it lends the negotiation, not a new negotiation SLA win. The committed
+counts are fed to `allocate_placement` as flat priority-weighted demands (it places/migrates, does not
+re-ration); the committed-auction deliberately stands in for per-round `mechanism.clear` (shown worse
+Exp 9/18A); reserve is folded as a scalar pool holdback; spike_max 0.6 (mild), 4 seeds, co-location +
+sticky one point on the placement-rigidity axis; CBC per round is the cost (~50 s for the rule sweep,
+within LLMSched's budget framing). The pipeline now matches the locked architecture end-to-end — the
+remaining gap to "production" is the incentive layer (c) and richer placement (d).
+
+**Reproduce.**
+```bash
+cd Research
+.venv/bin/python -m pins.pipeline_sim                                   # rule-fallback 2×2 sweep
+.venv/bin/python -m pins.pipeline_sim --llm --model qwen2.5:14b         # LLM negotiation arms
+(cd pins && ../.venv/bin/python test_mechanism.py)                      # deciders untouched → 5/5
+```
+`pins/pipeline_sim.py` (`simulate`: committed `_serialise` ration + `place_sticky`/`allocate_placement`;
+`bid_with_margin` takes the phase explicitly); reuses `negotiation_sim`, `ilp`, `placement`,
+`negotiation_protocol`, `two_sided_sim.job_facts`, `uncertainty_sim`, `bridge`.
+
+## Next (2026-06-29, after Exp 25)
+Follow-ups (a)+(b) DONE — the full locked pipeline (negotiate → committed-auction → ILP placement) is
+built and measured. Open: (c) incentive layer (Exp 13 budget) on the two-sided protocol; (d) Exp 23
+richer 3-class contention + NVLink topology; (e) `qwen2.5:7b` to fill both ablation curves' middle;
+(f) a regime with genuine slack where the negotiation's SLA contribution (Exp 24) and the ILP's
+placement contribution can BOTH show in the same pipeline run.
+
+## Experiment 26 — Close the loop: a reflective margin agent (NEGATIVE; the reflection thrashes into a limit cycle)
+
+**Date:** 2026-06-30
+
+**Why.** Every LLM agent so far (Exp 10/12/14/17/24) is STATELESS across episodes: it maps a
+discretised state → a categorical hedge, CACHED per state — the same state yields the same decision
+forever, regardless of whether it worked. The system never sees the consequence of its own choices.
+Exp 25 made the cost vivid: 14b confidently bid aggressive margins that backfired, with nothing to
+tell it to stop. This experiment closes that loop for the demand-side MARGIN agent (the Exp 16/17
+world: single GPU pool, stochastic train spikes, committed auction).
+
+**Method.** New `pins/reflective_sim.py` + `llm_agent.llm_margin_reflect`. The cycle:
+`run episode (current policy) → attribute per-state outcomes → LLM REFLECTS & revises → re-run`.
+The reflection is the interpretability edge over RL: the policy update is a readable sentence
+("no spikes at 96% util → margin wasted, lower hedge"), not a gradient. Hinge intact — the agent
+emits only a categorical hedge; deterministic `margin_uncertainty` owns the GPU count. Deliberately
+starts from the WEAK model (qwen2.5:3b, which Exp 17/24 showed over-hedges and self-harms): can
+reflection make a small model CORRECT its own systematic mistakes over cycles — approaching the
+14b / deterministic-oracle policy — with an auditable trail and WITHOUT a bigger model? Pool 16,
+spike_max 1.5, 6 cycles. References: no-margin, rule-oracle, 14b-static.
+
+**Result (SLA / prodSLA / util; lower SLA/prodSLA = better; `reflect:qwen2.5:3b`).**
+
+| | SLA | prodSLA | util |
+|---|---|---|---|
+| no-margin | 15.6 | 10.2 | 68.9 |
+| **rule-oracle** | **14.8** | **8.2** | 69.2 |
+| **14b-static** | **14.8** | **8.2** | 70.1 |
+| reflect-3b cycles 0/2/4 | 16.4 | 8.2 | 71.2 |
+| reflect-3b cycles 1/3/5 | 15.6 | 10.2 | 71.5 |
+
+**Findings.**
+1. **No convergence — it's a limit cycle of period 2.** The metrics alternate EXACTLY between two
+   policies (cycles 0=2=4, 1=3=5). **40–41 policy changes every single cycle** with no damping, and
+   **40 of 41** ever-changed states **revert to a hedge they already held** (A→B→A…). The reflection
+   "fixes" the previous fix, forever.
+2. **It never reaches the target.** Both references sit at SLA 14.8%; reflect-3b bounces 15.6–16.4%,
+   staying WORSE than the oracle on both parities. "Small model reflects its way up to the 14b
+   frontier" — NOT demonstrated.
+3. **Why it fails is itself interpretable (and the salvageable part).** The reflections are readable,
+   but the small model's reasoning is locally plausible / globally wrong: **25 revisions cut the
+   hedge to `none` in states that had actually spiked ≥50% of the time** — e.g.
+   `high|high|ahead|high|besteffort`: heavy→none, n=14, spiked=10, missed=3, util=0.96, *"reduce GPU
+   wastage without risking missed deadlines."* It reasons from realised deadline MISSES (best-effort
+   didn't formally miss) not spike RATE, so it strips the margin, next cycle the spikes bite, it
+   swings back — the 2-cycle.
+
+**Honest read.** NEGATIVE with a positive corollary: naive per-state LLM reflection at 3b does not
+converge — it needs damping/hysteresis (revise a state only after ≥2 consecutive cycles agree) or a
+memory of prior revisions to break the limit cycle, and the reflection must weigh spike-RATE, not
+just realised misses. The *interpretability* claim survives (every policy change is an auditable
+sentence); the *"reflection substitutes for a bigger model"* claim does not, un-stabilised. Single
+pool, spike_max 1.5, one seed-schedule per cycle — the oscillation is structural, not noise.
+
+**Reproduce.**
+```bash
+cd Research
+.venv/bin/python -m pins.reflective_sim --no-llm                 # rule-reflect, fast, no Ollama
+.venv/bin/python -m pins.reflective_sim --llm --model qwen2.5:3b # → pins/results_reflective.json
+```
+`pins/reflective_sim.py` (`simulate` attributes per-state outcomes; `llm_margin_reflect` revises);
+reuses `negotiation_sim`, `uncertainty_sim`, `predictor`, `llm_agent`.
+
+## Experiment 27 — REAL Stage-1 predicted GPU caps wired into the two-sided sim: the fallback problem vanishes, negotiation buys prod-SLA at slack cost
+
+**Date:** 2026-07-01/02
+
+**Why.** Every two-sided run so far (Exp 22/24/25) gave the train phase a FLAT synthetic cap of 8
+GPUs per job — the one number in the loop that was never a Stage-1 output. The Stage-1 GPU track
+(`pins/eval/predict_gpu.py`) now produces real per-job predicted requests, so this closes the last
+stubbed input: the demand agent negotiates over the job's ACTUAL forecast demand.
+
+**Method.** `load_gpu_distribution()` + `assign_gpu()` in `pins/uncertainty_sim.py` draw each job's
+train-phase cap (`forecast_cap`, per-seed deterministic) from the 2000 predicted P50 `plan_gpu%`
+values in `pins/eval/results_gpu.json`. v2020 is a GPU-SHARING trace — plan_gpu is fractional
+(25 = ¼ A100) and the predicted P50s cluster at 25/50/100%, so rounding to whole GPUs collapses
+~all jobs to 1; caps are instead expressed in the trace's natural QUARTER-GPU quantum
+(`max(1, round(pct/25))` → a genuine ~1/2/4 spread, mean ~2.35). `two_sided_sim.py` uses
+`forecast_cap` as the non-negotiable base; pools rebalanced to {3,4,6} because the old {6,8,12}
+left the pool near-idle once flat-8 caps were replaced by realistic ones. Same 4 policies,
+16 jobs, horizon 300, 8 seeds, spike_max 0.6, scale 3.
+
+**Result (rule-fallback tier; SLA / prodSLA / util / fb; lower SLA/prodSLA = better).**
+
+| pool | policy | SLA | prodSLA | util | fb |
+|---|---|---|---|---|---|
+| 3 | no-llm | **57.0** | 62.3 | 90 | — |
+| 3 | isolated | 63.3 | 52.9 | 84 | — |
+| 3 | negotiated | 60.9 | **47.1** | 84 | 0% |
+| 3 | single-llm | 64.1 | 52.9 | 83 | — |
+| 4 | no-llm | **30.5** | 34.9 | 79 | — |
+| 4 | isolated | 35.2 | **22.3** | 76 | — |
+| 4 | negotiated | 35.9 | 28.2 | 77 | 0% |
+| 4 | single-llm | 35.9 | 24.3 | 76 | — |
+| 6 | no-llm | **7.0** | 14.4 | 58 | — |
+| 6 | isolated | 9.4 | **10.1** | 58 | — |
+| 6 | negotiated | **7.0** | 12.6 | 58 | 0% |
+| 6 | single-llm | 10.2 | 12.6 | 58 | — |
+
+All policies finish 16/16 at every pool.
+
+**Findings.**
+1. **The Exp-22 fallback pathology is GONE: fb = 0% everywhere** (was 96/74/49%). With realistic
+   quarter-GPU-quantum demand, aggregate forecast demand no longer swamps `free_gpus`, so the
+   negotiation actually negotiates instead of collapsing to the heuristic. The Exp-22 "negotiate
+   over the contested slice" fix and this change attack the same root cause — demand/pool ratio —
+   from opposite ends; real caps fix it at the source.
+2. **A clean SLA ⇄ prodSLA trade emerges at every pool.** The floor (no-llm) wins overall SLA;
+   every agent policy buys prod-SLA with best-effort slowdown — most sharply `negotiated` at
+   pool 3: prodSLA 62.3 → 47.1 (−15.2 pts) for +3.9 overall. With flat-8 caps this trade was
+   masked by the fallback; with real caps it is the headline behaviour.
+3. **Negotiated dominates single-llm at the extremes** (pool 3 both metrics; pool 6 both), and at
+   pool 6 it is the only agent policy to tie the floor's overall SLA while still improving prod —
+   the "restraint" property (Exp 22 finding 3) survives the switch to real demand.
+
+**Honest read / caveats.** Rule-tier numbers only. The 3b and 14b sweeps were RUN (2026-07-02
+morning) and their decision traces cached in `llm_agent_cache.json`, but the summary metrics print
+to stdout and were not captured; the 14b trace file `results_two_sided.json` was later overwritten
+by a rule re-run, so the LLM-tier table must be regenerated before any model-size claim is made
+here. The P50 request is a *point* choice — the [P10,P90] width is available in `per_job_gpu` and
+still unused for margin sizing (the margin remains `HEDGE_GPUS` levels). Pools were hand-picked to
+restore contention; a demand/capacity-ratio-matched comparison vs the flat-8 world would be cleaner.
+
+**Reproduce.**
+```bash
+cd Research
+.venv/bin/python -m pins.eval.predict_gpu               # regenerates results_gpu.json (per_job_gpu)
+.venv/bin/python -m pins.two_sided_sim                  # rule tier (table above)
+.venv/bin/python -m pins.two_sided_sim --llm --model qwen2.5:3b   # LLM tiers — metrics TBD
+.venv/bin/python -m pins.two_sided_sim --llm --model qwen2.5:14b
+```
+`load_gpu_distribution` / `assign_gpu` in `pins/uncertainty_sim.py`; consumed at
+`two_sided_sim.py` sweep (`cap_map`); artifact `pins/results_two_sided.json`.
