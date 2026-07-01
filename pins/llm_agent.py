@@ -144,9 +144,11 @@ def load_cache() -> dict:
 
 
 def save_cache(cache: dict) -> None:
+    merged = load_cache()          # merge, don't clobber: keys are model-qualified,
+    merged.update(cache)           # so runs at different models must coexist on disk
     tmp = CACHE_PATH + ".tmp"
     with open(tmp, "w") as f:
-        json.dump(cache, f, indent=2, sort_keys=True)
+        json.dump(merged, f, indent=2, sort_keys=True)
     os.replace(tmp, CACHE_PATH)
 
 

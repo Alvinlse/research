@@ -2036,6 +2036,24 @@ left the pool near-idle once flat-8 caps were replaced by realistic ones. Same 4
 
 All policies finish 16/16 at every pool.
 
+**Result (LLM tiers, same sweep; SLA / prodSLA / util; slowdown for the over-commit story).**
+
+| | | **qwen2.5:3b** | | | | **qwen2.5:14b** | | |
+|---|---|---|---|---|---|---|---|---|
+| pool | policy | SLA | prodSLA | util | slow | SLA | prodSLA | util |
+| 3 | isolated | 64.1 | 50.7 | 81 | 3.00 | 64.1 | 52.9 | 84 |
+| 3 | negotiated | **59.4** | **48.3** | 83 | 2.74 | 63.3 | 50.7 | 86 |
+| 3 | single-llm | 65.6 | 50.7 | 75 | 3.20 | 65.6 | **48.9** | 75 |
+| 4 | isolated | 40.6 | 28.2 | 75 | 1.75 | 35.9 | 26.4 | 77 |
+| 4 | negotiated | **34.4** | **26.4** | 77 | 1.65 | 35.9 | **26.1** | 78 |
+| 4 | single-llm | 43.0 | 28.2 | 74 | 1.79 | 39.8 | 26.4 | 74 |
+| 6 | isolated | 11.7 | 14.4 | 62 | 1.10 | 7.8 | **10.1** | 60 |
+| 6 | negotiated | **7.0** | 12.6 | 62 | 1.04 | **7.0** | 12.6 | 61 |
+| 6 | single-llm | 12.5 | **10.1** | 61 | 1.14 | **7.0** | **10.1** | 60 |
+
+(no-llm floor identical to the rule table: 57.0/62.3, 30.5/34.9, 7.0/14.4. fb = 0% everywhere,
+all tiers, all pools.)
+
 **Findings.**
 1. **The Exp-22 fallback pathology is GONE: fb = 0% everywhere** (was 96/74/49%). With realistic
    quarter-GPU-quantum demand, aggregate forecast demand no longer swamps `free_gpus`, so the
@@ -2049,21 +2067,38 @@ All policies finish 16/16 at every pool.
 3. **Negotiated dominates single-llm at the extremes** (pool 3 both metrics; pool 6 both), and at
    pool 6 it is the only agent policy to tie the floor's overall SLA while still improving prod —
    the "restraint" property (Exp 22 finding 3) survives the switch to real demand.
+4. **With fb = 0% the model finally matters — `negotiated` is no longer model-invariant.** Exp-22
+   finding 2 ("byte-identical 3b vs 14b") was an artifact of the 96/74/49% fallback; with real
+   caps the agents' positions actually reach the ladder, and the tiers now differ (pool-3 SLA:
+   60.9 rule / 59.4 3b / 63.3 14b).
+5. **The bounded protocol is a guardrail that SUBSTITUTES FOR SCALE.** At 3b, `negotiated` is the
+   best agent policy on overall SLA at every pool (59.4/34.4/7.0 vs isolated 64.1/40.6/11.7 and
+   single-llm 65.6/43.0/12.5) — and negotiated@3b matches or beats negotiated@14b (pools 3–4).
+   The lone agent shows the mirror image: `single-llm@14b` at pool 6 ties the floor's SLA and
+   takes best prodSLA (7.0/10.1) where 3b self-harms (12.5) — model size rescues the un-braked
+   agent (Exp-22 finding 4), but the brake makes the bigger model unnecessary. This is the
+   "mechanism substitutes for a bigger model" claim Exp 26 could NOT get from reflection,
+   delivered instead by the deterministic concession ladder.
+6. **`single-llm` still over-commits** — lowest util (75/74%) and worst slowdown (3.14–3.20) at
+   contention in BOTH LLM tiers; Exp-22 finding 1 survives real caps intact.
 
-**Honest read / caveats.** Rule-tier numbers only. The 3b and 14b sweeps were RUN (2026-07-02
-morning) and their decision traces cached in `llm_agent_cache.json`, but the summary metrics print
-to stdout and were not captured; the 14b trace file `results_two_sided.json` was later overwritten
-by a rule re-run, so the LLM-tier table must be regenerated before any model-size claim is made
-here. The P50 request is a *point* choice — the [P10,P90] width is available in `per_job_gpu` and
-still unused for margin sizing (the margin remains `HEDGE_GPUS` levels). Pools were hand-picked to
-restore contention; a demand/capacity-ratio-matched comparison vs the flat-8 world would be cleaner.
+**Honest read / caveats.** All three tiers measured (rule / 3b / 14b, tables above). En route this
+experiment exposed and fixed a cache-clobbering bug: `sweep()` started from an EMPTY cache dict and
+`save_cache()` overwrote the disk file, so every run destroyed the previous model's cached
+decisions (this is how the original 2026-07-02-morning 14b trace was lost). `save_cache` now merges
+with disk, and `sweep` warm-starts from `load_cache()` + checkpoints per pool — re-runs are
+Ollama-free. Remaining caveats: the P50 request is a *point* choice — the [P10,P90] width in
+`per_job_gpu` is still unused for margin sizing (margins remain `HEDGE_GPUS` levels); pools were
+hand-picked to restore contention (a demand/capacity-ratio-matched comparison vs the flat-8 world
+would be cleaner); and the negotiated 3b-over-14b inversion (finding 5) is from a single 8-seed
+synthetic workload — run a seed sweep before leaning on it in the thesis.
 
 **Reproduce.**
 ```bash
 cd Research
 .venv/bin/python -m pins.eval.predict_gpu               # regenerates results_gpu.json (per_job_gpu)
 .venv/bin/python -m pins.two_sided_sim                  # rule tier (table above)
-.venv/bin/python -m pins.two_sided_sim --llm --model qwen2.5:3b   # LLM tiers — metrics TBD
+.venv/bin/python -m pins.two_sided_sim --llm --model qwen2.5:3b   # LLM tiers (cache-warm = fast)
 .venv/bin/python -m pins.two_sided_sim --llm --model qwen2.5:14b
 ```
 `load_gpu_distribution` / `assign_gpu` in `pins/uncertainty_sim.py`; consumed at

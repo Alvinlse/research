@@ -34,7 +34,7 @@ import json
 import os
 
 from pins import bridge
-from pins.llm_agent import (llm_margin, llm_reserve, reserve_amount, save_cache)
+from pins.llm_agent import (llm_margin, llm_reserve, reserve_amount, load_cache, save_cache)
 from pins.negotiation_protocol import (DemandJob, HEDGE_GPUS, negotiate, single_llm_plan)
 from pins.negotiation_sim import Job, make_workload
 from pins.predictor import PHASE_PROFILES
@@ -260,7 +260,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model) -> No
     gpu_p = os.path.join(HERE, "eval", "results_gpu.json")
     gpu_src = ("results_gpu.json" if os.path.exists(gpu_p)
                and json.load(open(gpu_p)).get("per_job_gpu") else "fallback")
-    cache: dict = {}
+    cache: dict = load_cache()     # warm-start from disk so re-runs are Ollama-free
     trace: list = []
     seen: set = set()
     tag = "rule" if not use_llm else model
@@ -305,6 +305,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model) -> No
                   f"{r['util']:>6.0%} {r['slowdown']:>9.2f} {r['fallback_rate']:>5.0%} "
                   f"{r['finished']:>4.1f}/{n_jobs:<3}")
         print()
+        if use_llm:
+            save_cache(cache)      # checkpoint per pool: a killed run resumes, not restarts
     print("'*' = best (lowest) at that pool. no-llm = point-forecast floor; isolated = today's "
           "independent agents;\nnegotiated = bounded protocol; single-llm = one agent both objectives.")
 
