@@ -1,0 +1,124 @@
+{
+  "classifier": "qwen2.5:14b",
+  "use_llm": true,
+  "summary": {
+    "0.0|pack": {
+      "throughput": 4.705882352941177,
+      "mean_slowdown": 1.6999999999999995,
+      "same_pairs": 4.0
+    },
+    "0.0|spread": {
+      "throughput": 4.705882352941177,
+      "mean_slowdown": 1.6999999999999995,
+      "same_pairs": 4.0
+    },
+    "0.0|llm-affin": {
+      "throughput": 4.705882352941177,
+      "mean_slowdown": 1.6999999999999995,
+      "same_pairs": 4.0
+    },
+    "0.0|oracle": {
+      "throughput": 4.705882352941177,
+      "mean_slowdown": 1.6999999999999995,
+      "same_pairs": 4.0
+    },
+    "0.25|pack": {
+      "throughput": 6.5588235294117645,
+      "mean_slowdown": 1.3062500000000001,
+      "same_pairs": 1.75
+    },
+    "0.25|spread": {
+      "throughput": 6.147058823529411,
+      "mean_slowdown": 1.3937500000000003,
+      "same_pairs": 2.25
+    },
+    "0.25|llm-affin": {
+      "throughput": 6.5588235294117645,
+      "mean_slowdown": 1.3062500000000004,
+      "same_pairs": 1.75
+    },
+    "0.25|oracle": {
+      "throughput": 6.5588235294117645,
+      "mean_slowdown": 1.3062500000000004,
+      "same_pairs": 1.75
+    },
+    "0.5|pack": {
+      "throughput": 6.455882352941176,
+      "mean_slowdown": 1.328125,
+      "same_pairs": 1.875
+    },
+    "0.5|spread": {
+      "throughput": 6.455882352941176,
+      "mean_slowdown": 1.328125,
+      "same_pairs": 1.875
+    },
+    "0.5|llm-affin": {
+      "throughput": 6.867647058823529,
+      "mean_slowdown": 1.240625,
+      "same_pairs": 1.375
+    },
+    "0.5|oracle": {
+      "throughput": 6.867647058823529,
+      "mean_slowdown": 1.240625,
+      "same_pairs": 1.375
+    }
+  },
+  "classifications": [
+    {
+      "profile": "ResNet-50 dense conv training",
+      "true": "compute",
+      "pred": "compute",
+      "why": "ResNet-50 involves extensive use of convolutional layers which saturate tensor cores.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "profile": "GPT transformer matmul block",
+      "true": "compute",
+      "pred": "compute",
+      "why": "Dominant due to extensive dense matrix multiplications.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "profile": "convolutional feature extractor",
+      "true": "compute",
+      "pred": "compute",
+      "why": "Convolutional operations are highly computationally intensive and benefit greatly from tensor core acceleration.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "profile": "ViT attention + dense matmul",
+      "true": "compute",
+      "pred": "compute",
+      "why": "The task involves heavy matrix multiplications and self-attention mechanisms, saturating the tensor cores.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "profile": "BERT pretraining with large all-reduce parameter sync",
+      "true": "bandwidth",
+      "pred": "bandwidth",
+      "why": "Large all-reduce operations dominate the task's resource contention.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "profile": "DLRM huge embedding-table lookups, memory-bandwidth bound",
+      "true": "bandwidth",
+      "pred": "bandwidth",
+      "why": "The task is dominated by large embedding table lookups which require significant memory bandwidth.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "profile": "model-parallel shard with cross-GPU comm each step",
+      "true": "bandwidth",
+      "pred": "bandwidth",
+      "why": "High inter-GPU communication overhead due to frequent all-reduce operations.",
+      "_source": "llm:qwen2.5:14b"
+    },
+    {
+      "profile": "graph-neural-net with heavy neighbour gather/scatter",
+      "true": "bandwidth",
+      "pred": "bandwidth",
+      "why": "Heavy neighbour gather/scatter operations require frequent data transfers between nodes.",
+      "_source": "llm:qwen2.5:14b"
+    }
+  ]
+}

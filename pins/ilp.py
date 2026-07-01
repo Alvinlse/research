@@ -150,6 +150,7 @@ def allocate_placement(
     coloc: dict[str, bool] | None = None,
     current_node: dict[str, int | None] | None = None,
     migrate_cost: float = 0.0,
+    affinity: dict[tuple[str, str], float] | None = None,
     time_limit: float = 0.5,
 ) -> ILPResult:
     """2-D allocation: choose GPUs-per-(job,node) jointly, respecting NODE boundaries.
@@ -172,6 +173,12 @@ def allocate_placement(
         current_node: agent_id -> node a running job currently sits on (None if unplaced).
         migrate_cost: value charged per GPU that runs on a node OTHER than the job's current
             one — the cost of relocating a live job. The ILP migrates only when it pays off.
+        affinity: optional soft SAME-NODE preference between job pairs — `(a, b) -> coeff`
+            (coeff > 0 rewards placing a and b on the same node, < 0 penalises it). Supplied by
+            the LLM affinity agent (pins/affinity.py): code turns bottleneck classes into these
+            coeffs and the ILP optimises them WITHIN the hard capacity/co-location constraints
+            (it can only steer placement, never violate feasibility). Only applies to co-located
+            (single-node) jobs; pairs with a splittable job are ignored.
         time_limit: CBC budget in seconds.
     """
     current = dict(current or {})
@@ -222,9 +229,25 @@ def allocate_placement(
             if home is not None and cur[a] > 0:
                 migrate_terms += [g[(a, m)] for m in nodes if m != home]
 
+    # Soft same-node affinity (the LLM placement hint). `w[a,b,m]` linearises (a on m AND b on m);
+    # coeff>0 rewards co-locating the pair, coeff<0 penalises it. Only co-located jobs have a single
+    # `z[(a,m)]` indicator to AND, so pairs touching a splittable job are skipped.
+    affinity_terms = []
+    if affinity:
+        for (a, b), coeff in affinity.items():
+            if a not in bids or b not in bids or not (coloc.get(a, True) and coloc.get(b, True)):
+                continue
+            for m in nodes:
+                w = pulp.LpVariable(f"w_{a}_{b}_{m}", cat="Binary")
+                prob += w <= z[(a, m)]
+                prob += w <= z[(b, m)]
+                prob += w >= z[(a, m)] + z[(b, m)] - 1     # force w=1 when both on m (needed for penalties)
+                affinity_terms.append(float(coeff) * w)
+
     prob += (pulp.lpSum(value_terms)
              - rescale_cost * pulp.lpSum(preempt.values())
-             - migrate_cost * pulp.lpSum(migrate_terms))
+             - migrate_cost * pulp.lpSum(migrate_terms)
+             + pulp.lpSum(affinity_terms))
     prob.solve(pulp.PULP_CBC_CMD(msg=0, timeLimit=time_limit))
 
     alloc = {a: int(round(sum((g[(a, m)].value() or 0) for m in nodes))) for a in bids}

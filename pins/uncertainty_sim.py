@@ -61,6 +61,33 @@ def load_uncertainty_distribution() -> list[float]:
     return [0.02, 0.05, 0.08, 0.10, 0.12, 0.18, 0.25, 0.34]      # fallback spread
 
 
+def load_gpu_distribution() -> list[int]:
+    """The empirical PREDICTED requested-GPU caps from the Stage-1 GPU track (predict_gpu.py,
+    `per_job_gpu` = each test task's [P10,P50,P90] plan_gpu%). We take the P50 request.
+
+    v2020 is a GPU-SHARING trace: plan_gpu is fractional (25 = quarter of an A100, 100 = one, 800
+    = eight) and the PREDICTED P50 clusters at 25/50/100% — the real heterogeneity lives BELOW one
+    whole GPU. Rounding to whole GPUs (pct/100) collapses ~all jobs to 1 and destroys the signal, so
+    the train-phase cap is expressed in the trace's natural QUARTER-GPU quantum: `max(1, round(pct/
+    25))` -> a genuine per-job spread (~1/2/4, i.e. ¼/½/1 GPU) that the demand agent negotiates over,
+    replacing the old flat train cap of 8. Falls back to a plausible spread if not yet generated."""
+    p = os.path.join(HERE, "eval", "results_gpu.json")
+    if os.path.exists(p):
+        with open(p) as f:
+            rows = json.load(f).get("per_job_gpu", [])
+        caps = [max(1, round(r[1] / 25.0)) for r in rows if r and r[1] > 0]
+        if caps:
+            return caps
+    return [1, 1, 1, 2, 2, 4, 6, 8]                              # fallback spread
+
+
+def assign_gpu(jobs: list[Job], seed: int, gpu_dist: list[int]) -> dict[str, int]:
+    """Draw each job's PREDICTED train-phase GPU cap from the Stage-1 distribution (deterministic
+    per seed). This is the per-job `forecast_cap` the negotiation treats as non-negotiable base."""
+    rng = random.Random(f"gpu-{seed}")
+    return {j.jid: rng.choice(gpu_dist) for j in jobs}
+
+
 def assign(jobs: list[Job], seed: int, dist: list[float], spike_max: float):
     """Give each job a true uncertainty `u` (drawn from the Stage-1 distribution) and a realised
     train-work spike fraction in [0, u*spike_max] (uncertainty BOUNDS the spike; the forecast

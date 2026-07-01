@@ -395,6 +395,12 @@ MARGIN_HEDGES = ["none", "some", "heavy"]
 UNCERTAINTY_BUCKETS = ["low", "medium", "high"]
 SPIKE_RISK_BUCKETS = ["low", "medium", "high"]
 
+
+def _step_hedge(h: str, delta: int) -> str:
+    """Move a hedge up/down the none<some<heavy ladder, clamped."""
+    i = MARGIN_HEDGES.index(h) if h in MARGIN_HEDGES else 1
+    return MARGIN_HEDGES[max(0, min(len(MARGIN_HEDGES) - 1, i + delta))]
+
 SYSTEM_MARGIN = (
     "You are the demand agent for ONE HPC training job. A forecaster gives you (1) how UNCERTAIN your "
     "near-future GPU demand is and (2) your SPIKE RISK — how LARGE a demand spike could plausibly be "
@@ -408,8 +414,11 @@ SYSTEM_MARGIN = (
     "HIGH a spike would likely make you miss your deadline, so hedge to protect it EVEN IF contention "
     "is high (use 'heavy' if you are also behind schedule, else 'some'). When spike risk is only mild, "
     "the contention rule applies: hedge 'none' under HIGH contention (extra GPUs would be wasted and "
-    "starve others) and 'some' when there is spare capacity. Justify in one sentence citing your "
-    "spike risk, deadline, and the contention."
+    "starve others) and 'some' when there is spare capacity. Your PREDICTED REQUEST SIZE tempers this: "
+    "a LARGE base ask is expensive to add margin to and unlikely to be granted under contention, so "
+    "hedge one notch LOWER when your request is large and the pool is contended; a SMALL ask is cheap "
+    "to insure, so a modest hedge is worth it even under contention when you are at risk. Justify in "
+    "one sentence citing your spike risk, request size, deadline, and the contention."
 )
 
 
@@ -439,15 +448,16 @@ def margin_uncertainty(hedge: str, u: float, scale: int) -> float:
 
 
 def margin_state_key(ctx: dict) -> str:
-    return (f"{ctx['uncertainty']}|{ctx['spike_risk']}|{ctx['deadline']}|"
-            f"{ctx['contention']}|{ctx['tier']}")
+    return (f"{ctx['uncertainty']}|{ctx['spike_risk']}|{ctx.get('req_gpu', 'medium')}|"
+            f"{ctx['deadline']}|{ctx['contention']}|{ctx['tier']}")
 
 
 def _margin_prompt(ctx: dict) -> str:
     return (f"Your forecast uncertainty is {ctx['uncertainty']} and your spike risk (how large a "
-            f"demand spike could be) is {ctx['spike_risk']}. Deadline status: you are "
-            f"{ctx['deadline']} schedule. Priority tier: {ctx['tier']}. Cluster contention right "
-            f"now: {ctx['contention']}. How much safety margin should you hedge for?")
+            f"demand spike could be) is {ctx['spike_risk']}. Your predicted GPU request this phase "
+            f"is {ctx.get('req_gpu', 'medium')}. Deadline status: you are {ctx['deadline']} "
+            f"schedule. Priority tier: {ctx['tier']}. Cluster contention right now: "
+            f"{ctx['contention']}. How much safety margin should you hedge for?")
 
 
 def _rule_margin(ctx: dict) -> dict:
@@ -456,6 +466,7 @@ def _rule_margin(ctx: dict) -> dict:
     the deadline even when contended; otherwise apply the Exp-16 lesson (hedge only with spare
     capacity)."""
     unc, sr, db, con = ctx["uncertainty"], ctx["spike_risk"], ctx["deadline"], ctx["contention"]
+    req = ctx.get("req_gpu", "medium")
     if unc == "low" or db == "ahead":
         h = "none"                                  # predictable, or slack absorbs any spike
     elif sr == "high":
@@ -464,8 +475,16 @@ def _rule_margin(ctx: dict) -> dict:
         h = "none"                                  # mild risk + no spare capacity -> don't waste
     else:
         h = "heavy" if (db == "behind" and unc == "high") else "some"
+    # Predicted request size tempers the hedge (only when it doesn't override a deadline-critical
+    # spike, i.e. sr != "high"): a LARGE ask is costly to over-provision under contention -> step
+    # down; a SMALL ask is cheap to insure -> allow a modest hedge even when contended & at risk.
+    if sr != "high":
+        if req == "large" and con == "high":
+            h = _step_hedge(h, -1)
+        elif req == "small" and con == "high" and unc != "low" and db != "ahead":
+            h = _step_hedge(h, +1) if h == "none" else h
     return {"hedge": h,
-            "justification": f"rule: {unc} uncertainty, {sr} spike-risk, {db}, {con} contention",
+            "justification": f"rule: {unc} uncertainty, {sr} spike-risk, {req}-req, {db}, {con} contention",
             "_source": "rule"}
 
 
@@ -500,6 +519,181 @@ def llm_margin(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
                   f"{type(e).__name__}: {e}")
     if out is None:
         out = _rule_margin(ctx)
+
+    cache[key] = out
+    return out
+
+
+# --------------------------------------------------------------------------- #
+#  REFLECTIVE margin agent (Exp 26) — close the loop: learn the hedge from        #
+#  OUTCOMES, not from a one-shot prompt. After an episode the agent is shown        #
+#  what its hedge for a state actually CAUSED (jobs that missed / spiked / how       #
+#  saturated the cluster was) and REVISES the hedge in natural language. The         #
+#  policy update is a readable reflection — the interpretability edge over RL.       #
+#  Hinge intact: categorical hedge only; code still owns the GPU count.              #
+# --------------------------------------------------------------------------- #
+SYSTEM_MARGIN_REFLECT = (
+    "You are the demand agent for HPC training jobs, REVIEWING your own past decision. For one "
+    "discretised job state you previously chose a safety-margin hedge; you are now shown what that "
+    "choice CAUSED last cycle. Revise the hedge to protect deadlines against demand spikes WITHOUT "
+    "wasting scarce GPUs. You output NO numbers.\n"
+    "Respond with ONLY this JSON, using EXACTLY the allowed values:\n"
+    '{"hedge": "none|some|heavy", "justification": "<one short sentence on WHY you changed or kept it>"}\n'
+    "Learn from the outcome: if jobs in this state MISSED their deadline AND actually SPIKED, your "
+    "hedge was too LOW — raise it (none->some->heavy). If jobs MET their deadline but the cluster was "
+    "SATURATED (high utilisation) and FEW actually spiked, your margin was WASTED — lower it. If "
+    "demand was predictable or jobs were ahead, 'none' is right. Move ONE step at a time; keep the "
+    "hedge when the outcome was already good."
+)
+
+
+def _reflect_prompt(ctx: dict, exp: dict) -> str:
+    return (f"State: uncertainty={ctx['uncertainty']}, spike_risk={ctx['spike_risk']}, "
+            f"deadline={ctx['deadline']}, contention={ctx['contention']}, tier={ctx['tier']}.\n"
+            f"Last cycle you hedged '{exp['hedge']}'. Outcome: of {exp['n']} jobs that hit this "
+            f"state, {exp['missed']} MISSED their deadline and {exp['spiked']} actually SPIKED; "
+            f"average cluster utilisation while this hedge was active was {exp['util']:.0%}.\n"
+            f"Choose the hedge for next cycle.")
+
+
+def _rule_margin_reflect(ctx: dict, exp: dict) -> dict:
+    """Deterministic reflection (the no-Ollama fallback AND a 'rule-reflect' baseline): a one-step
+    hill-climb on the observed outcome. Raise the hedge when jobs missed while spiking; lower it when
+    margin was wasted (saturated cluster, no spikes); otherwise keep."""
+    cur = exp["hedge"] if exp["hedge"] in MARGIN_HEDGES else "some"
+    i = MARGIN_HEDGES.index(cur)
+    missed, spiked, util, n = exp["missed"], exp["spiked"], exp["util"], max(exp["n"], 1)
+    if missed > 0 and spiked > 0:                         # under-hedged: a spike caused a miss
+        i = min(i + 1, len(MARGIN_HEDGES) - 1)
+        why = f"rule-reflect: {missed}/{n} missed while spiking -> raise hedge"
+    elif util >= 0.9 and spiked == 0 and cur != "none":   # wasted: saturated, nothing spiked
+        i = max(i - 1, 0)
+        why = f"rule-reflect: no spikes at {util:.0%} util -> margin wasted, lower hedge"
+    else:
+        why = f"rule-reflect: outcome acceptable -> keep {cur}"
+    return {"hedge": MARGIN_HEDGES[i], "justification": why, "_source": "rule-reflect"}
+
+
+def llm_margin_reflect(ctx: dict, exp: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
+                       host: str = HOST) -> dict:
+    """Revise the hedge for a state given the OUTCOME `exp` it produced last cycle. Not cached — the
+    experience changes every cycle, so each reflection is a fresh call. Falls back to the
+    deterministic one-step hill-climb (`_rule_margin_reflect`) when Ollama is unavailable."""
+    if use_llm:
+        try:
+            import ollama
+            client = ollama.Client(host=host)
+            resp = client.chat(
+                model=model, format="json",
+                options={"temperature": 0, "num_predict": 120},
+                messages=[{"role": "system", "content": SYSTEM_MARGIN_REFLECT},
+                          {"role": "user", "content": _reflect_prompt(ctx, exp)}],
+            )
+            obj = _parse(resp.message.content)
+            if obj is not None:
+                h = str(obj.get("hedge", "")).strip().lower()
+                if h in MARGIN_HEDGES:
+                    why = str(obj.get("justification", "")).strip().replace("\n", " ")[:200]
+                    return {"hedge": h, "justification": why, "_source": f"llm-reflect:{model}"}
+        except Exception as e:
+            print(f"  ! llm_margin_reflect fallback for [{margin_state_key(ctx)}]: "
+                  f"{type(e).__name__}: {e}")
+    return _rule_margin_reflect(ctx, exp)
+
+
+# --------------------------------------------------------------------------- #
+#  Single-LLM BOTH-objectives baseline (Open-Q #5 — the must-have control)       #
+#                                                                              #
+#  The two-sided thesis (Research/CLAUDE.md §3) splits demand (margin) and       #
+#  supply (reserve) into two negotiating agents. The honest baseline it must     #
+#  beat is ONE LLM holding BOTH objectives at once — it sees the demand picture  #
+#  (uncertainty / spike risk / deadline pressure) AND the supply picture         #
+#  (contention / incoming prod) and emits the SAME two categorical levers in a   #
+#  single call, with no negotiation. If a lone agent does as well, the           #
+#  negotiation's extra cost buys only interpretability/modularity — which is     #
+#  exactly the claim to MEASURE, not assert. Same hinge: categorical only, code  #
+#  owns the GPU counts (reserve_amount / margin_uncertainty).                    #
+# --------------------------------------------------------------------------- #
+SYSTEM_JOINT = (
+    "You are the SOLE scheduler for a shared GPU cluster, holding BOTH objectives at once: you "
+    "must protect each job's deadline against demand SPIKES (by granting safety MARGIN GPUs) AND "
+    "protect future high-priority ('prod') arrivals (by RESERVING idle headroom, since running "
+    "jobs are rigid and cannot be preempted). These two pull against each other — margin and "
+    "reserve both consume the same free GPUs. Balance them. You output NO numbers (no GB, count, "
+    "or %).\n"
+    "Respond with ONLY this JSON, using EXACTLY the allowed values:\n"
+    '{"margin": "none|some|heavy", "reserve": "none|light|heavy", '
+    '"justification": "<one short sentence>"}\n'
+    "Guidance: MARGIN — hedge 'none' when demand is predictable (low uncertainty) or jobs are "
+    "ahead of schedule; hedge 'some'/'heavy' when SPIKE RISK is high and deadlines are at risk. "
+    "RESERVE — hold headroom ('light'/'heavy') only when prod jobs are still INCOMING and the "
+    "pool is NOT already scarce; reserve 'none' when no prod is coming or contention is scarce "
+    "(idle GPUs would starve waiting jobs). The two compete: under scarcity, prefer spending the "
+    "free pool on whichever protects the more imminent risk. Justify in one sentence."
+)
+
+
+def joint_state_key(ctx: dict) -> str:
+    return (f"{ctx['uncertainty']}|{ctx['spike_risk']}|{ctx['deadline']}|"
+            f"{ctx['contention']}|{ctx['incoming_prod']}")
+
+
+def _joint_prompt(ctx: dict) -> str:
+    return (f"Demand picture: forecast uncertainty {ctx['uncertainty']}, spike risk "
+            f"{ctx['spike_risk']}, queue deadline pressure {ctx['deadline']}. Supply picture: "
+            f"cluster contention {ctx['contention']}, prod jobs still incoming "
+            f"{ctx['incoming_prod']}. Choose margin and reserve.")
+
+
+def _rule_joint(ctx: dict) -> dict:
+    """Deterministic fallback: fuse the existing single-objective rules. The demand rule wants
+    {low,high} contention, the supply rule wants {scarce,moderate,ample}; map between them
+    (scarce/moderate -> 'high' for the margin decision)."""
+    con = ctx["contention"]
+    con_demand = "low" if con == "ample" else "high"
+    m = _rule_margin({"uncertainty": ctx["uncertainty"], "spike_risk": ctx["spike_risk"],
+                      "deadline": ctx["deadline"], "contention": con_demand, "tier": "prod"})
+    r = _rule_reserve({"contention": con, "incoming_prod": ctx["incoming_prod"]})
+    return {"margin": m["hedge"], "reserve": r["reserve"],
+            "justification": f"rule: {m['hedge']} margin + {r['reserve']} reserve "
+                             f"({ctx['spike_risk']} spike, {con} contention, {ctx['incoming_prod']} prod)",
+            "_source": "rule"}
+
+
+def llm_joint(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
+              host: str = HOST, cache: dict | None = None) -> dict:
+    """Return `{margin, reserve, justification, _source}` for a joint demand+supply state, cached.
+    The single-agent control for the two-sided negotiation (pins/negotiation_protocol.py)."""
+    cache = load_cache() if cache is None else cache
+    key = f"joint|{joint_state_key(ctx)}|{'llm:' + model if use_llm else 'rule'}"
+    if key in cache:
+        return cache[key]
+
+    out = None
+    if use_llm:
+        try:
+            import ollama
+            client = ollama.Client(host=host)
+            resp = client.chat(
+                model=model, format="json",
+                options={"temperature": 0, "num_predict": 150},
+                messages=[{"role": "system", "content": SYSTEM_JOINT},
+                          {"role": "user", "content": _joint_prompt(ctx)}],
+            )
+            obj = _parse(resp.message.content)
+            if obj is not None:
+                m = str(obj.get("margin", "")).strip().lower()
+                r = str(obj.get("reserve", "")).strip().lower()
+                if m not in MARGIN_HEDGES:
+                    m = "some"
+                if r not in RESERVE_LEVELS:
+                    r = "none"
+                why = str(obj.get("justification", "")).strip().replace("\n", " ")[:200]
+                out = {"margin": m, "reserve": r, "justification": why, "_source": f"llm:{model}"}
+        except Exception as e:
+            print(f"  ! llm_joint fallback for [{joint_state_key(ctx)}]: {type(e).__name__}: {e}")
+    if out is None:
+        out = _rule_joint(ctx)
 
     cache[key] = out
     return out
@@ -559,4 +753,21 @@ if __name__ == "__main__":
         m = llm_margin(ctx, use_llm=not args.no_llm, model=args.model, cache=cache)
         print(f"[{margin_state_key(ctx)}] -> hedge={m['hedge']:6s} ({m.get('_source','?')})")
         print(f"      why: {m['justification']}\n")
+
+    print("=== single-LLM BOTH-objectives baseline (Open-Q #5) ===\n")
+    joint_probes = [
+        {"uncertainty": "high", "spike_risk": "high", "deadline": "behind",
+         "contention": "moderate", "incoming_prod": "many"},
+        {"uncertainty": "high", "spike_risk": "high", "deadline": "behind",
+         "contention": "scarce", "incoming_prod": "many"},
+        {"uncertainty": "low", "spike_risk": "low", "deadline": "ahead",
+         "contention": "ample", "incoming_prod": "none"},
+        {"uncertainty": "medium", "spike_risk": "medium", "deadline": "ontrack",
+         "contention": "ample", "incoming_prod": "few"},
+    ]
+    for ctx in joint_probes:
+        j = llm_joint(ctx, use_llm=not args.no_llm, model=args.model, cache=cache)
+        print(f"[{joint_state_key(ctx)}] -> margin={j['margin']:6s} reserve={j['reserve']:6s} "
+              f"({j.get('_source','?')})")
+        print(f"      why: {j['justification']}\n")
     save_cache(cache)
