@@ -18,8 +18,8 @@
 | 8 | The LLM does not earn its cost as a numeric predictor (runtime: retrieval wins; DAG demand: GBT/one-line rules win); its measured value is judgement + justification in the agent layer | Exp 19-21 | solid (negative for the LLM) |
 | 9 | The two-sided split beats the single-LLM-both-objectives baseline: the concession ladder is the brake a lone agent lacks (single-llm over-commits at every scale) | Exp 22, 24, 27-29 | solid |
 | 10 | On real trace replay, negotiation buys significant prod-SLA protection (-4..-8 pts, 95% CI) at no measurable overall-SLA or slowdown cost; "beats the floor on overall SLA" was 8-seed noise | Exp 28 -> **Exp 29** | solid (n=32) |
-| 11 | The bounded protocol substitutes for scale as SUFFICIENCY: negotiated@3b is statistically indistinguishable from @14b (the earlier "3b beats 14b" was noise); the un-braked single-llm still needs scale and still loses | Exp 27-28 -> **Exp 29** | solid (n=32) |
-| 12 | With Stage-1 predicted demand in the loop, prediction error costs every policy; at slack the negotiation measurably cushions it, and the prod-protection headline survives | Exp 30 | solid (rule tier) |
+| 11 | The bounded protocol substitutes for scale as SUFFICIENCY: negotiated rule ~ 3b ~ 7b ~ 14b, all statistically indistinguishable (the earlier "3b beats 14b" was noise); the un-braked single-llm still needs scale and still loses at every size tried | Exp 27-28 -> **Exp 29 (+7b addendum)** | solid (n=32) |
+| 12 | With Stage-1 predicted demand in the loop, prediction error costs every policy, yet prod-SLA protection survives it at every pool (rule AND 3b tiers); the slack-regime cushion vs the floor is significant at the rule tier, direction-consistent at 3b | Exp 30 | solid (rule + 3b) |
 | 13 | Naive per-state LLM reflection does not converge (period-2 limit cycle) — the deterministic ladder, not reflection, is what makes a small model safe | Exp 26 | negative |
 
 **Environment:** single A100-PCIE-40GB · PyTorch 2.6.0+cu124 (`.venv-forecast` for torch) ·
@@ -1087,6 +1087,14 @@ cd Research
 Per-seed data: `pins/results_trace_replay.json` (`tiers.<tag>.per_seed`); stats helpers
 `paired_ci`/`t95`/`cross_tier_stats` in `pins/trace_replay.py`.
 
+**Addendum (2026-07-06, follow-up e): 7b fills the ablation middle and lands inside the tie.**
+32-seed real-caps sweep at qwen2.5:7b: `negotiated@7b` is statistically indistinguishable from
+rule, 3b AND 14b on both metrics at every pool (all paired CIs include 0; largest |diff| 2.0 pts
+vs a ±2.4 CI). The sufficiency claim is now the full flat curve — **rule ≈ 3b ≈ 7b ≈ 14b inside
+the protocol** — while the un-braked `single-llm@7b` still pays clearly (pool 4: SLA 78.5 vs
+floor 67.8, util 82%, 12.6/16 done, worst slowdown 15.8). Model scale changes nothing the brake
+hasn't already fixed, at any of three sizes.
+
 ## Experiment 30 — PREDICTION ERROR IN THE LOOP: agents negotiate over Stage-1 *predicted* demand
 
 **Date:** 2026-07-06
@@ -1165,3 +1173,15 @@ cd Research
 ```
 `true_cap_map` in `two_sided_sim.simulate`; `--caps` + `load_predicted_quanta` in
 `pins/trace_replay.py`; tiers `rule+pred` / `rule+oracle` in `pins/results_trace_replay.json`.
+
+**Addendum (2026-07-06): the 3b LLM tier measured (`qwen2.5:3b+pred` / `+oracle`, 32 seeds).**
+1. **The headline strengthens with LLM agents in the loop:** under predicted caps,
+   `negotiated@3b` buys significant prod-SLA protection at EVERY pool (−8.9 ±5.8* / −7.6 ±4.6* /
+   −8.7 ±4.4* at pools 4/6/8) at no significant overall-SLA or slowdown cost — prod protection
+   survives prediction error with the actual LLM agents, not just the rule.
+2. **Prediction error still costs the 3b agents** (+3.7/+6.4/+7.0 SLA pts*, pred − oracle) —
+   same order as the rule tier.
+3. **The pool-8 cushion points the right way at 3b but loses significance** (diff-of-diffs
+   −1.8 ±2.7 SLA / −2.4 ±4.1 prodSLA vs the rule tier's −2.7*/−4.7*): the LLM agents' extra
+   decision variance widens the CIs. The "negotiation cushions prediction error" claim should be
+   stated as rule-tier-significant, direction-consistent at 3b.
