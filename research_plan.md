@@ -282,7 +282,7 @@ gracefully when the model is unavailable (rule-based fallback).
 
 ---
 
-## Current Status (prototype: PINS Stage-1 Exp 1–8,16–17 · Stage-2 Exp 9–15)
+## Current Status (prototype: Stage-1 Exp 1–8,16–17,19–21 · Stage-2 Exp 9–15,18 · integration Exp 22–28)
 
 The deterministic spine and the **demand-side** LLM agent are built and measured in
 `pins/` (pure-Python simulator, no network in the hot loop):
@@ -321,9 +321,31 @@ deterministic margin in both mild and heavy-tail regimes, with an auditable just
 A demand-side echo of Stage-1's lesson: a heavy-tail failure was fixed by adding the missing *signal*
 (spike-risk), not a bigger model — and model size still matters for the judgement (3b over-hedges).
 
-**Still unbuilt:** the bounded multi-round *protocol* collapsed empirically to a one-shot
-declaration (Exp 11 showed re-auctioning thrashes), incentive-compatible clearing (Exp 13: gameable,
-payments/per-user budgets open), and the ILP guarantee layer (Phase 3c).
+**The integration phase is underway (Exp 22–28).** The pieces above are now wired into one
+locked pipeline (negotiate → committed-auction → ILP placement) and measured end-to-end:
+
+- **ILP guarantee layer built and measured (Exp 18, 23, 25).** The LLMSched-style ILP ties the
+  auction in 1-D and removes a structural placement loss in 2-D (Exp 18); LLM affinity hints +
+  ILP node placement are a knife-edge gated on classification accuracy (Exp 23); and in the full
+  pipeline the ILP guarantee makes the LLM's aggressive over-demand *safe* (Exp 25).
+- **Bounded two-sided protocol built (Exp 22, 24).** A margin ⇄ reserve concession ladder with
+  rule fallback; the Exp-22 fallback pathology (96/74/49%) was an artifact of flat synthetic
+  caps — with real Stage-1 demand it is 0% everywhere (Exp 27). Contested-slice negotiation
+  flipped the headline: negotiated beats the single-LLM baseline (Exp 24).
+- **The must-have single-LLM-with-both-objectives baseline exists** and is measured in every
+  two-sided sweep (Exp 22–28); it consistently over-commits (lowest util, worst slowdown).
+- **Real Stage-1 predictions + real trace jobs (Exp 27–28).** With predicted GPU caps
+  (quarter-GPU quanta) and then full Alibaba v2020 trace replay (real arrivals/durations/demand,
+  jointly), the headline survives: agents buy prod-SLA; at pool 8 `negotiated` beats the no-LLM
+  floor on BOTH metrics; and **the protocol substitutes for model scale** — negotiated@3b ≥
+  negotiated@14b while the un-braked single-LLM needs 14b and still loses (needs a seed sweep
+  before it becomes a thesis headline; 8 seeds so far).
+- A reflective margin agent was tried and is a clean negative (Exp 26: limit-cycle thrashing) —
+  the deterministic concession ladder, not reflection, is what makes the small model safe.
+
+**Still unbuilt:** incentive-compatible clearing (Exp 13: priority reports are gameable, a flat
+budget does not fix it; payments / uniform-price clearing open) and the classical-scheduler
+baselines from the evaluation plan (EASY backfilling, DRL) — scope in or out explicitly.
 
 ---
 
@@ -347,29 +369,29 @@ payments/per-user budgets open), and the ILP guarantee layer (Phase 3c).
 
 | Phase | Name | Description | Status |
 |-------|------|-------------|--------|
-| **Phase 1** | Foundation | Load a trace; reproduce a baseline scheduler's utilization / SLA as a yardstick. | in progress |
+| **Phase 1** | Foundation | Load a trace; reproduce a baseline scheduler's utilization / SLA as a yardstick. | **done for Alibaba v2020 (Exp 28 trace replay: real arrivals/durations/demand vs no-LLM floor)**; EASY/DRL yardsticks unscoped |
 | **Phase 2** | Predictor | Local-LLM metadata + ST-attention + quantile regression; validate P10/P50/P90 intervals (uncertainty sizes the margin). | **quantile + conformal calibration + margin + LLM-hedge done (Exp 16-17)**; local-LLM metadata extraction remains |
 | **Phase 3a** | Mechanism + demand agent | Sealed-bid / committed auction + demand-side LLM bidding & priority. | **done (Exp 9–13)** |
 | **Phase 3b** | Supply agent + protocol | Asymmetric supply LLM (headroom reservation); regime-gated to rigid incumbents; malleability-aware reservation. | **done (Exp 14–15)** · protocol → one-shot (Exp 11) |
-| **Phase 3c** | ILP guarantee | Lightweight ILP repair / reconcile-to-live-state layer. | planned |
-| **Phase 4** | Integrate & evaluate | End-to-end in simulator; run all ablations incl. single-LLM baseline; compare vs baselines; thesis write-up. | planned |
+| **Phase 3c** | ILP guarantee | Lightweight ILP repair / reconcile-to-live-state layer. | **done (Exp 18, 23, 25)** — ties auction in 1-D, fixes 2-D placement, makes LLM over-demand safe |
+| **Phase 4** | Integrate & evaluate | End-to-end in simulator; run all ablations incl. single-LLM baseline; compare vs baselines; thesis write-up. | **in progress (Exp 22–28)** — locked pipeline + single-LLM baseline measured; real caps (Exp 27) + trace replay (Exp 28); remaining: seed-swept statistics, prediction error in loop, incentives, write-up |
 
 *Master's entrance exam preparation runs in parallel with Phase 1.*
 
 ---
 
-## Next Week Plan
+## Next Week Plan (post-Exp-28, updated 2026-07-06)
 
 1. Study for the master's entrance exam.
-2. **Supply agent — next steps after Exp 14-15:** (a) add a non-zero `reclaim_penalty` to
-   `simulate_mixed` and measure how far it erodes the malleability-aware util recovery; (b) put the
-   **LLM supply agent on the mixed regime** with a third state dimension (`malleable_fraction`) —
-   Exp-14C predicts model size will matter for the reserve-vs-reclaim judgment.
-3. **Must-have baseline:** build the **single-LLM-with-both-objectives + ILP** comparator so the
-   two-sided split can be shown to earn its cost (still unbuilt).
-4. **Prediction:** quantile outputs + conformal calibration + uncertainty→margin bridge + the
-   **LLM demand agent that hedges from uncertainty (with a spike-risk signal)** are now built and
-   working end-to-end (Exp 16-17): 7b/14b beat the deterministic margin in both mild and heavy-tail
-   regimes, with auditable per-decision justifications. Remaining: (a) the still-missing local-LLM
-   metadata extraction for cold-start prediction; (b) optionally derive spike-risk directly from the
-   forecaster's P90/P50 ratio (currently a per-job tail proxy) for a fully end-to-end signal.
+2. **Seed-sweep the headline (Exp 29):** rerun the Exp-28 trace replay at 32 seeds with per-seed
+   logging and paired 95% CIs — the "negotiated beats the floor on both metrics at pool 8" and
+   "negotiated@3b ≥ @14b" claims currently rest on 8 seeds with no error bars. Report the
+   prod-SLA-gain vs best-effort-slowdown trade-off from the same data (the price of protection).
+3. **Prediction error into the loop (Exp 30):** key `predict_gpu.py` outputs by `job_name` and
+   replay with *predicted* caps instead of the trace's real requests — the last step for a true
+   end-to-end prediction→negotiation claim (Exp 28's own caveat).
+4. **Incentives (open since Exp 13):** design a payments/uniform-price clearing rule so truthful
+   priority declaration is optimal; the flat budget is proven not to work.
+5. **Scope decision:** EASY-backfilling / DRL baselines — in or out, with a written defense.
+6. **Prediction leftovers:** local-LLM metadata extraction for cold-start; derive spike-risk from
+   the forecaster's P90/P50 ratio for a fully end-to-end signal.

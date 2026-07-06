@@ -12,8 +12,8 @@ the gates, and what counts as a contribution (incl. §5 measured Stage-1 finding
 task-classified RAG predictor sub-plan). `research_progress.md` is the running experiment log
 (every Stage-1 result, with numbers). `pins/README.md` documents the negotiation layer.
 
-This is a `uv` project (Python 3.10). The git repo root is the user's home directory; this
-`MCP/` directory is the actual project root — run all commands from here.
+This is a `uv` project (Python 3.10). This `Research/` directory (formerly `MCP/`) is the
+project root AND its own git repository — run all commands and make all commits from here.
 
 ## Commands
 
