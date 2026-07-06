@@ -3,6 +3,9 @@ data/
 .venv/
 .venv-forecast/
 
+# Backup copies of result artifacts
+*.bak.json
+
 # Python caches
 __pycache__/
 *.pyc
