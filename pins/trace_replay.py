@@ -42,6 +42,7 @@ from pins.uncertainty_sim import assign, load_uncertainty_distribution
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPLAY_CSV = os.path.join(HERE, "..", "data", "alibaba-gpu-v2020", "replay_jobs.csv")
+PRED_CSV = os.path.join(HERE, "eval", "pred_job_gpu.csv")
 
 TICK_S = 120         # one sim tick = 2 real minutes -> median trace job ≈ 9 ticks of work
 WORK_CLAMP = (1, 60)
@@ -49,35 +50,51 @@ CAP_CLIP = 8         # quanta (= 2 GPUs); ~80% of trace jobs are below; keeps po
 ARRIVAL_FRAC = 0.6   # sample arrivals from the first 60% of the horizon (make_workload conv.)
 
 
-def load_trace(path: str = REPLAY_CSV) -> list[tuple[int, int, int]]:
-    """(arrival_s, dur_s, quanta) per job, sorted by real arrival."""
+def load_trace(path: str = REPLAY_CSV) -> list[tuple[int, int, int, str]]:
+    """(arrival_s, dur_s, quanta, job_name) per job, sorted by real arrival.
+
+    Sort key excludes job_name so tie order (stable = CSV order) is byte-identical to the
+    Exp-28 3-tuple version — same seeds keep sampling the same windows/jobs."""
     with open(path) as f:
-        rows = [(int(float(r["arrival"])), int(float(r["dur"])), int(r["quanta"]))
+        rows = [(int(float(r["arrival"])), int(float(r["dur"])), int(r["quanta"]), r["job_name"])
                 for r in csv.DictReader(f)]
-    rows.sort()
+    rows.sort(key=lambda r: r[:3])
     return rows
 
 
-def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int
-                        ) -> tuple[list[Job], dict[str, int]]:
+def load_predicted_quanta(path: str = PRED_CSV) -> dict[str, float]:
+    """Exp 30: job_name -> Stage-1 predicted P50 quanta (test-split jobs of predict_gpu)."""
+    with open(path) as f:
+        return {r["job_name"]: float(r["p50"]) for r in csv.DictReader(f)}
+
+
+def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, oracle=False
+                        ) -> tuple[list[Job], dict[str, int], dict[str, int]]:
     """n_jobs real jobs thinned from a random 10-hour trace window, on ONE clock.
 
     Real (jointly, per job): arrival time within the window, duration, GPU quanta — all in
     the same TICK_S units, so burstiness vs job length is the trace's own. Synthetic (same
     seeded recipe as make_workload, because the trace has none): urgency, deadline, tier.
+
+    Exp 30: `pred` = {job_name: predicted quanta} restricts the window to jobs the Stage-1
+    predictor has predictions for (its test split) and returns cap_map = PREDICTED demand
+    (what the agents request/negotiate over) next to true_cap_map = the trace's real demand
+    (what the job actually needs to progress). `oracle=True` keeps the same restricted window
+    but requests the truth — the matched-window control. pred=None: Exp 28/29, request==truth.
     """
     rng = random.Random(f"replay-{seed}")
     window_s = int(horizon * ARRIVAL_FRAC) * TICK_S        # arrivals within first 60%
     t_lo, t_hi = trace[0][0], trace[-1][0] - window_s
     t0 = rng.randrange(t_lo, t_hi)
-    in_win = [r for r in trace if t0 <= r[0] < t0 + window_s]
+    in_win = [r for r in trace if t0 <= r[0] < t0 + window_s and (pred is None or r[3] in pred)]
     if len(in_win) < n_jobs:                               # sparse stretch of the trace: reroll
-        return make_trace_workload(trace, n_jobs, seed + 7919, horizon)
-    window = sorted(rng.sample(in_win, n_jobs))            # thin the arrival stream
+        return make_trace_workload(trace, n_jobs, seed + 7919, horizon, pred, oracle)
+    window = sorted(rng.sample(in_win, n_jobs), key=lambda r: r[:3])   # thin the arrival stream
 
     jobs: list[Job] = []
     cap_map: dict[str, int] = {}
-    for i, (arr_s, dur_s, quanta) in enumerate(window):
+    true_cap_map: dict[str, int] = {}
+    for i, (arr_s, dur_s, quanta, name) in enumerate(window):
         arrival = (arr_s - t0) // TICK_S
         work = float(min(WORK_CLAMP[1], max(WORK_CLAMP[0], round(dur_s / TICK_S))))
         urgency = round(rng.uniform(0.6, 2.2), 3)          # make_workload recipe verbatim
@@ -86,17 +103,102 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int
         tier = "prod" if urgency >= 1.667 else "besteffort"
         j = Job(f"r{i:02d}", arrival, ["train"], [work], urgency, deadline, tier)
         jobs.append(j)
-        cap_map[j.jid] = min(quanta, CAP_CLIP)
-    return jobs, cap_map
+        true_cap_map[j.jid] = min(quanta, CAP_CLIP)
+        cap_map[j.jid] = true_cap_map[j.jid] if pred is None or oracle else \
+            min(max(1, round(pred[name])), CAP_CLIP)
+    return jobs, cap_map, true_cap_map
 
 
-def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model) -> None:
+METRICS = ("sla", "prod_sla", "util", "slowdown", "finished", "fallback_rate")
+RESULTS = os.path.join(HERE, "results_trace_replay.json")
+
+
+def t95(df: int) -> float:
+    """Two-sided 95% Student-t critical value (coarse table; df>=1)."""
+    for lo, t in ((60, 2.000), (30, 2.042), (20, 2.086), (10, 2.228), (5, 2.571), (2, 4.303)):
+        if df >= lo:
+            return t
+    return 12.71
+
+
+def paired_ci(diffs: list[float]) -> tuple[float, float]:
+    """Mean paired difference and 95% CI half-width."""
+    n = len(diffs)
+    m = sum(diffs) / n
+    if n < 2:
+        return m, float("inf")
+    var = sum((d - m) ** 2 for d in diffs) / (n - 1)
+    return m, t95(n - 1) * (var / n) ** 0.5
+
+
+def print_paired_vs_floor(per_seed_pool: dict[str, list[dict]]) -> None:
+    """Per-policy paired diffs vs the no-llm floor (same seed = same workload+spikes)."""
+    floor = per_seed_pool["no-llm"]
+    for name, rows_ in per_seed_pool.items():
+        if name == "no-llm":
+            continue
+        parts = []
+        for metric, label, pct in (("sla", "dSLA", True), ("prod_sla", "dprodSLA", True),
+                                   ("slowdown", "dslow", False)):
+            diffs = [a[metric] - b[metric] for a, b in zip(rows_, floor)]
+            m, h = paired_ci(diffs)
+            u = 100.0 if pct else 1.0
+            sig = "*" if h < abs(m) else " "
+            parts.append(f"{label} {m*u:+6.1f} ±{h*u:4.1f}{sig}")
+        print(f"      {name:<12} vs floor:  " + "  ".join(parts))
+    print(f"      (* = 95% CI excludes 0, paired by seed, n={len(floor)})")
+
+
+def load_results() -> dict:
+    if os.path.exists(RESULTS):
+        with open(RESULTS) as f:
+            data = json.load(f)
+        if "tiers" in data:
+            return data
+    return {"tiers": {}}
+
+
+def cross_tier_stats(policy: str = "negotiated") -> None:
+    """Paired-by-seed comparison of one policy across tiers (e.g. the 3b vs 14b inversion)."""
+    tiers = load_results()["tiers"]
+    tags = [t for t in tiers if policy in next(iter(tiers[t]["per_seed"].values()), {})]
+    if len(tags) < 2:
+        print(f"need >=2 tiers with per-seed data for '{policy}' in {RESULTS}; have {tags}")
+        return
+    pools = sorted({int(p) for t in tags for p in tiers[t]["per_seed"]})
+    print(f"\nCross-tier paired stats for policy '{policy}' (95% CI, paired by seed):")
+    for a in tags:
+        for b in tags:
+            if a >= b:
+                continue
+            print(f"  {a} - {b}:")
+            for pool in pools:
+                ra = tiers[a]["per_seed"].get(str(pool), {}).get(policy)
+                rb = tiers[b]["per_seed"].get(str(pool), {}).get(policy)
+                if not ra or not rb or len(ra) != len(rb):
+                    continue
+                parts = []
+                for metric, label, pct in (("sla", "dSLA", True), ("prod_sla", "dprodSLA", True),
+                                           ("slowdown", "dslow", False)):
+                    diffs = [x[metric] - y[metric] for x, y in zip(ra, rb)]
+                    m, h = paired_ci(diffs)
+                    u = 100.0 if pct else 1.0
+                    sig = "*" if h < abs(m) else " "
+                    parts.append(f"{label} {m*u:+6.1f} ±{h*u:4.1f}{sig}")
+                print(f"    pool {pool:>2} (n={len(ra)}):  " + "  ".join(parts))
+
+
+def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
+          caps_mode: str = "real") -> None:
     trace = load_trace()
+    pred = load_predicted_quanta() if caps_mode != "real" else None
+    oracle = caps_mode == "oracle"
     dist = load_uncertainty_distribution()
     cache: dict = load_cache()
     decisions: list = []
     seen: set = set()
-    tag = "rule" if not use_llm else model
+    tag = ("rule" if not use_llm else model) + {"real": "", "predicted": "+pred",
+                                                "oracle": "+oracle"}[caps_mode]
 
     rows = [
         ("no-llm",     lambda: policy_none),
@@ -113,21 +215,25 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model) -> No
           f"| caps = real plan_gpu quanta clipped at {CAP_CLIP}")
     header = (f"{'pool':>4}  {'policy':<12} {'SLA':>7} {'prodSLA':>8} {'util':>6} "
               f"{'slowdown':>9} {'fb':>6} {'done':>8}")
+    all_per_seed: dict[str, dict[str, list[dict]]] = {}
     for gpus in pools:
         print("-" * len(header)); print(header); print("-" * len(header))
         results = []
+        per_seed_pool: dict[str, list[dict]] = {}
         for name, factory in rows:
-            acc = {"sla": 0.0, "prod_sla": 0.0, "util": 0.0, "slowdown": 0.0,
-                   "finished": 0.0, "fallback_rate": 0.0}
+            per_seed: list[dict] = []
             for s in seeds:
-                jobs, cap_map = make_trace_workload(trace, n_jobs, s, horizon)
+                jobs, cap_map, tcap = make_trace_workload(trace, n_jobs, s, horizon, pred, oracle)
                 cap_map = {k: min(v, gpus) for k, v in cap_map.items()}  # feasible at this pool
+                tcap = {k: min(v, gpus) for k, v in tcap.items()}
                 u_map, spike_map = assign(jobs, s, dist, spike_max)
                 r = simulate(jobs, factory(), gpus, horizon, u_map, spike_map, scale,
-                             spike_max, cap_map)
-                for k in acc:
-                    acc[k] += r[k]
-            results.append((name, {k: v / len(seeds) for k, v in acc.items()}))
+                             spike_max, cap_map, true_cap_map=tcap)
+                per_seed.append({k: r[k] for k in METRICS})
+            per_seed_pool[name] = per_seed
+            results.append((name, {k: sum(row[k] for row in per_seed) / len(seeds)
+                                   for k in METRICS}))
+        all_per_seed[str(gpus)] = per_seed_pool
         best_sla = min(r["sla"] for _, r in results)
         best_prod = min(r["prod_sla"] for _, r in results)
         for name, r in results:
@@ -136,17 +242,20 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model) -> No
             print(f"{gpus:>4}  {name:<12} {r['sla']:>6.1%}{s1}{r['prod_sla']:>7.1%}{p1}"
                   f"{r['util']:>6.0%} {r['slowdown']:>9.2f} {r['fallback_rate']:>5.0%} "
                   f"{r['finished']:>4.1f}/{n_jobs:<3}")
+        print_paired_vs_floor(per_seed_pool)
         print()
         if use_llm:
             save_cache(cache)
 
-    out = os.path.join(HERE, "results_trace_replay.json")
-    with open(out, "w") as f:
-        json.dump({"agents": tag, "use_llm": use_llm, "spike_max": spike_max, "scale": scale,
-                   "cap_clip": CAP_CLIP, "decisions": decisions}, f, indent=2)
+    data = load_results()   # merge per tier: rule / 3b / 14b runs no longer clobber each other
+    data["tiers"][tag] = {"use_llm": use_llm, "spike_max": spike_max, "scale": scale,
+                          "cap_clip": CAP_CLIP, "n_seeds": len(seeds),
+                          "per_seed": all_per_seed, "decisions": decisions}
+    with open(RESULTS, "w") as f:
+        json.dump(data, f, indent=2)
     if use_llm:
         save_cache(cache)
-    print(f"{len(decisions)} distinct decisions/transcripts -> {out}")
+    print(f"{len(decisions)} distinct decisions/transcripts -> {RESULTS} (tier '{tag}')")
 
 
 def main() -> None:
@@ -157,10 +266,18 @@ def main() -> None:
     ap.add_argument("--scale", type=int, default=3)
     ap.add_argument("--seeds", type=int, default=8)
     ap.add_argument("--pools", default="4,6,8", help="real caps are heavier (median 4 quanta)")
+    ap.add_argument("--stats", action="store_true",
+                    help="no sim: cross-tier paired stats from results_trace_replay.json")
+    ap.add_argument("--caps", default="real", choices=("real", "predicted", "oracle"),
+                    help="Exp 30: agents request Stage-1 PREDICTED demand (dynamics stay true); "
+                         "'oracle' = truth requested on the same prediction-covered windows")
     a = ap.parse_args()
+    if a.stats:
+        cross_tier_stats()
+        return
     sweep([int(p) for p in a.pools.split(",")], n_jobs=16, horizon=300,
           seeds=list(range(a.seeds)), scale=a.scale, spike_max=a.spike,
-          use_llm=a.llm, model=a.model)
+          use_llm=a.llm, model=a.model, caps_mode=a.caps)
 
 
 if __name__ == "__main__":

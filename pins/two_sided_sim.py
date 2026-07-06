@@ -121,12 +121,17 @@ def _record_outcome(trace, seen, tag, o):
 # --------------------------------------------------------------------------- #
 def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
              u_map: dict, spike_map: dict, scale: int, spike_max: float,
-             cap_map: dict[str, int]) -> dict:
+             cap_map: dict[str, int], true_cap_map: dict[str, int] | None = None) -> dict:
     """One run of a policy on a fresh workload copy. Rigid: a running job is never involuntarily
     preempted; it only shrinks VOLUNTARILY to its ceiling (cap0 + this tick's negotiated margin).
     Spikes: a train phase's true work is inflated; margin GPUs grant rate>1 to absorb it, capped at
     the spike's usable parallelism `useful = round(u*scale)`. Deadlines come from NOMINAL work, so
-    an unabsorbed spike is what threatens the SLA — and reserved headroom protects late prod jobs."""
+    an unabsorbed spike is what threatens the SLA — and reserved headroom protects late prod jobs.
+
+    `true_cap_map` (Exp 30): if given, `cap_map` is the demand the agents REQUEST/negotiate over
+    (e.g. a Stage-1 prediction) while progress dynamics run on the job's TRUE train demand —
+    under-prediction starves the job (rate<1 even fully granted), over-prediction hogs GPUs it
+    cannot convert into progress. If None, request == truth (Exp 27/28 behaviour, unchanged)."""
     jobs = [Job(j.jid, j.arrival, list(j.phases), list(j.need), j.urgency, j.deadline, j.tier)
             for j in jobs_proto]
     by_id = {j.jid: j for j in jobs}
@@ -214,8 +219,11 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
         # --- advance: margin GPUs buy spike-absorbing speed ------------------------------------
         busy_sum += sum(held[j.jid] for j in active) / total_gpus
         busy_steps += 1
+        tcap = true_cap_map or cap_map
         for j in active:
-            c0 = cap0(j)
+            # dynamics run on the TRUE demand; cap0/ceiling above used the (possibly predicted)
+            # requested demand — the gap is exactly prediction error hitting outcomes
+            c0 = tcap[j.jid] if phase_of(j) == "train" else PHASE_PROFILES[phase_of(j)][0]
             g = held[j.jid]
             if c0 == 0:
                 rate = 1.0

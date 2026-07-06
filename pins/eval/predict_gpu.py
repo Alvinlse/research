@@ -189,6 +189,17 @@ def main():
     per_job_gpu = [[round(float(p10[i]), 2), round(float(p50[i]), 2), round(float(p90[i]), 2)]
                    for i in idx]
 
+    # Exp 30: per-JOB predicted quanta keyed by job_name, so trace_replay can negotiate over the
+    # PREDICTION for the very jobs it replays (test set only — train jobs would leak). Aggregated
+    # the same way replay_jobs.csv aggregates the truth: sum(plan_gpu*inst_num)/25 quarter-GPU.
+    agg = test[["job_name", "inst_num"]].copy()
+    for col, p in (("p10", p10), ("p50", p50), ("p90", p90)):
+        agg[col] = p * agg.inst_num / 25.0
+    per_job = agg.groupby("job_name")[["p10", "p50", "p90"]].sum().round(3)
+    jobs_csv = os.path.join(HERE, "pred_job_gpu.csv")
+    per_job.to_csv(jobs_csv)
+    print(f"per-job predicted quanta ({len(per_job):,} test jobs) -> {jobs_csv}")
+
     base, full = results["gbt-num"], results["gbt-full"]
     d_mae = (base["MAE"] - full["MAE"]) / base["MAE"] * 100
     d_log = (base["log_rmse"] - full["log_rmse"]) / base["log_rmse"] * 100
