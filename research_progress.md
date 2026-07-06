@@ -2195,3 +2195,157 @@ cd Research
 ```
 `pins/trace_replay.py` (`load_trace`, `make_trace_workload` one-clock thinned windows, `sweep`);
 cache `data/alibaba-gpu-v2020/replay_jobs.csv`; artifact `pins/results_trace_replay.json`.
+
+## Experiment 29 — SEED SWEEP: the Exp-28 headline under 32-seed paired statistics
+
+**Date:** 2026-07-06
+
+**Why.** Exp 27's conclusion and Exp 28's finding 3 both said it themselves: the "negotiated beats
+the floor on BOTH metrics" and "negotiated@3b ≥ @14b" claims rested on **8 seeds with no error
+bars**, where differences like 46.9 vs 47.7 SLA are plausibly noise. Before either becomes a thesis
+headline, run enough seeds to attach confidence intervals — and accept whatever survives.
+
+**Method.** `trace_replay.py` upgraded, sim untouched: `sweep()` now records **per-seed** metrics
+per (pool, policy), saves them into `results_trace_replay.json` **keyed by tier** (rule / 3b / 14b
+runs no longer clobber each other), and prints **paired mean differences ± 95% CI**
+(Student-t, df=31 → 2.042). Pairing is by seed and exact: within a tier all policies see the
+identical workload + spike realisation; across tiers the same seed regenerates the same window, so
+3b−14b is also matched. 32 seeds (= 32 random 10-h windows), pools {4,6,8}, all three tiers; the
+same one-clock thinned-replay recipe as Exp 28. `--stats` reprints cross-tier comparisons from the
+saved per-seed data. (`test_mechanism.py` green; the modified harness reproduces the Exp-28 8-seed
+table digit-for-digit before scaling up.)
+
+**Result (paired diff, negotiated − no-llm floor; − = negotiated better; * = 95% CI excludes 0).**
+
+| pool | tier | ΔSLA (pts) | ΔprodSLA (pts) | Δslowdown |
+|---|---|---|---|---|
+| 4 | rule | +1.2 ±3.2 | −2.2 ±4.2 | −0.1 ±1.1 |
+| 6 | rule | −0.4 ±1.9 | **−4.1 ±3.6*** | +1.3 ±1.3 |
+| 8 | rule | −0.8 ±2.1 | **−4.7 ±3.2*** | +0.8 ±1.2 |
+| 6 | 3b | −0.8 ±2.5 | **−7.5 ±5.6*** | +1.3 ±1.6 |
+| 8 | 3b | +0.0 ±2.6 | **−7.7 ±5.1*** | +2.2 ±1.9* |
+| 6 | 14b | −1.6 ±2.4 | **−5.2 ±4.1*** | +1.2 ±1.3 |
+| 8 | 14b | −1.2 ±2.2 | **−5.3 ±4.0*** | +0.7 ±1.3 |
+
+**Cross-tier, negotiated only (paired by seed, n=32):** 14b−3b = pool 4 SLA **−2.9 ±2.8*** (14b
+better), pool 6 −0.8 ±1.1 ns, pool 8 −1.2 ±1.6 ns; prodSLA +2.2 ±3.8 / +2.3 ±4.7 ns (sign favours
+3b, noise); pool-8 slowdown −1.5 ±1.4* (14b cheaper). 14b−rule: all metrics ns with tiny CIs
+(±1.1–2.0) — the 14b agents essentially reproduce the deterministic ladder. 3b−rule: pool-6
+prodSLA **−3.4 ±3.3*** (3b better), pool-4 SLA **+2.7 ±2.3*** (3b worse).
+
+**Findings.**
+1. **The prod-SLA protection is REAL.** Significant at pools 6 & 8 in every tier (−4 to −8 pts,
+   CIs exclude 0). This is the negotiation's genuine, now statistically-backed contribution.
+2. **"Beats the floor on overall SLA" did NOT survive.** No tier, no pool: negotiated's ΔSLA is
+   never significant (best −1.6 ±2.4). Exp 28's pool-8 both-metrics win was an 8-seed fluctuation.
+   The defensible claim is sharper and still strong: **prod-tier protection at no measurable
+   overall-SLA cost** — the SLA⇄prodSLA *trade* of Exp 27 also vanishes into noise at n=32.
+3. **The 3b≥14b inversion DISSOLVES — into indistinguishability, not defeat.** At contended pools
+   6/8 negotiated@3b and @14b are statistically tied on both SLA metrics; at slack pool 4, 14b is
+   marginally better. So the claim is **sufficiency, not superiority**: inside the bounded
+   protocol a 3b model is indistinguishable from a 14b — while the un-braked `single-llm` still
+   pays measurably (14b: pool-4 ΔSLA +4.9 ±4.6*, pool-8 Δslowdown +2.5 ±2.1*). "The brake makes
+   the small model *as good as* the big one", not "better than".
+4. **The slowdown price is smaller than Exp 28 suggested.** For negotiated it is significant only
+   at 3b pool 8 (+2.2 ±1.9); rule/14b are ns everywhere. The "price moved to latency" caveat
+   softens: at n=32 the latency price is mostly within noise too.
+5. Tier nuance worth keeping: 14b ≈ the deterministic rule (near-zero paired diffs — it *concurs*
+   with the ladder), while 3b *deviates* from it — sometimes profitably (pool-6 prodSLA), sometimes
+   not (pool-4 SLA). Model scale buys conformity to the safe policy, not extra performance.
+
+**Honest read / caveats.** n=32 windows from one trace, one contention recipe; deadlines/tiers
+still synthetic (v2020 has none); the pool-4 saturated regime still favours the floor (unchanged).
+The earlier "negotiated beats floor on both metrics" language in Exp 28 should be read as
+superseded by this experiment. Multiple comparisons: ~21 CIs per tier are reported without
+correction — the repeated, same-direction prodSLA effect is safe; isolated single stars (e.g.
+3b−rule pool-4) should not be leaned on individually.
+
+**Reproduce.**
+```bash
+cd Research
+.venv/bin/python -m pins.trace_replay --seeds 32                          # rule tier + CIs
+.venv/bin/python -m pins.trace_replay --seeds 32 --llm --model qwen2.5:3b
+.venv/bin/python -m pins.trace_replay --seeds 32 --llm --model qwen2.5:14b
+.venv/bin/python -m pins.trace_replay --stats                             # cross-tier paired stats
+```
+Per-seed data: `pins/results_trace_replay.json` (`tiers.<tag>.per_seed`); stats helpers
+`paired_ci`/`t95`/`cross_tier_stats` in `pins/trace_replay.py`.
+
+## Experiment 30 — PREDICTION ERROR IN THE LOOP: agents negotiate over Stage-1 *predicted* demand
+
+**Date:** 2026-07-06
+
+**Why.** Exp 28's own caveat: caps were the trace's **real** requests, so the "prediction feeds
+negotiation" story was demonstrated with ground truth on the demand side. This experiment finally
+separates the two: the agents request/negotiate over the **Stage-1 GBT prediction** for each
+replayed job, while the job's true demand governs what it can actually do with the grant —
+under-prediction starves a job (rate<1 even fully granted), over-prediction hogs GPUs it cannot
+convert into progress. Prediction ERROR, not just prediction, now hits outcomes.
+
+**Method.** `predict_gpu.py` now emits per-JOB predicted quanta keyed by `job_name`
+(test split only — 254,476 jobs; aggregated `Σ p50·inst_num/25`, the same recipe as
+`replay_jobs.csv` aggregates the truth) → `pins/eval/pred_job_gpu.csv`. `two_sided_sim.simulate`
+gains an optional `true_cap_map`: `cap_map` (what agents see/request) and the progress-rate
+denominator (truth) decouple; `None` reproduces Exp 28/29 byte-for-byte. `trace_replay --caps
+predicted` restricts windows to prediction-covered jobs and requests the P50 prediction;
+`--caps oracle` requests the truth **on the same windows** — the matched control, so
+pred − oracle, paired by seed, *is* the cost of prediction error per policy. Rule tier, 32 seeds,
+pools {4,6,8}. fb = 0% everywhere, both modes.
+
+**Result (paired by seed, n=32; * = 95% CI excludes 0).**
+
+Cost of prediction error (pred − oracle, same windows; + = worse):
+
+| pool | policy | ΔSLA (pts) | ΔprodSLA (pts) |
+|---|---|---|---|
+| 4 | no-llm floor | +5.3 ±3.2* | +5.2 ±5.1* |
+| 4 | negotiated | +4.1 ±2.6* | +4.1 ±5.2 |
+| 6 | no-llm floor | +6.6 ±3.0* | +8.2 ±5.6* |
+| 6 | negotiated | +5.7 ±3.2* | +10.1 ±6.5* |
+| 8 | no-llm floor | **+8.8 ±3.8*** | **+9.7 ±5.4*** |
+| 8 | negotiated | **+6.1 ±3.3*** | +5.0 ±6.2 |
+
+Diff-of-diffs (does the policy absorb prediction error better than the floor? − = yes):
+
+| pool | negotiated | single-llm |
+|---|---|---|
+| 4 | ΔΔSLA −1.2 ±3.0 · ΔΔprodSLA −1.1 ±5.6 | −2.0 ±3.4 · −2.1 ±5.0 |
+| 6 | ΔΔSLA −1.0 ±2.4 · ΔΔprodSLA +1.8 ±5.5 | −0.6 ±2.4 · +3.5 ±5.5 |
+| 8 | **ΔΔSLA −2.7 ±2.1*** · **ΔΔprodSLA −4.7 ±4.3*** | **−2.3 ±2.3*** · **−4.7 ±3.7*** |
+
+And within the predicted-caps world, negotiated − floor at pool 8: SLA −1.0 ±2.1 ns, prodSLA
+**−6.2 ±4.3***, slowdown −0.7 ±0.7 (marginally *negative* — the agents no longer even pay latency).
+
+**Findings.**
+1. **Prediction error is expensive for everyone** — +4 to +10 SLA/prodSLA points across policies
+   and pools (GBT plan_gpu prediction: MAE ~27 plan_gpu%, ρ 0.56 — a realistic, imperfect
+   predictor, not a straw man).
+2. **At slack (pool 8) the negotiation measurably CUSHIONS prediction error**: it absorbs
+   2.7 SLA pts and 4.7 prodSLA pts of the floor's error cost (diff-of-diffs significant). The
+   mechanism's margins + reserve act as insurance against demand misestimation — the Exp-16
+   "uncertainty is insurance" story reappearing at the system level, unprompted.
+3. **The Exp-29 headline survives prediction error**: with predicted caps, negotiated still buys
+   significant prod-SLA protection (−6.2 pts) at no significant overall-SLA or slowdown cost.
+   The end-to-end claim — *Stage-1 prediction (with its real errors) feeds Stage-2 negotiation and
+   the value proposition holds* — is now measured, not assumed.
+4. Regime unchanged: at saturation (pool 4) nothing cushions anything; every lever in this project
+   needs slack.
+
+**Honest read / caveats.** Rule-tier agents only (LLM tiers on predicted caps not yet run —
+Exp 29 suggests they would track the rule closely); the P50 is still a *point* request (the
+[P10,P90] width in `pred_job_gpu.csv` sits unused — sizing the hedge from it is the natural next
+step and now has job-level plumbing); windows restricted to predict_gpu's test jobs (25% split;
+~550 arrivals per 10-h window, plenty); oracle mode requests the truth but both modes clip at
+CAP_CLIP=8 and the pool. The prediction is of the *requested* GPU (plan_gpu), not measured usage —
+same honest framing as the Stage-1 GPU track itself.
+
+**Reproduce.**
+```bash
+cd Research
+.venv/bin/python -m pins.eval.predict_gpu                        # regenerates pred_job_gpu.csv (~2 min)
+.venv/bin/python -m pins.trace_replay --seeds 32 --caps oracle   # matched-window control
+.venv/bin/python -m pins.trace_replay --seeds 32 --caps predicted
+.venv/bin/python -m pins.trace_replay --stats                    # includes rule+pred vs rule+oracle
+```
+`true_cap_map` in `two_sided_sim.simulate`; `--caps` + `load_predicted_quanta` in
+`pins/trace_replay.py`; tiers `rule+pred` / `rule+oracle` in `pins/results_trace_replay.json`.

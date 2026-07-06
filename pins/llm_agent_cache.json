@@ -11,6 +11,12 @@
     "margin": "heavy",
     "reserve": "heavy"
   },
+  "joint|high|high|ahead|moderate|few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "justification": "High spike risk threatens deadlines more urgently than the steady stream of incoming production jobs.",
+    "margin": "heavy",
+    "reserve": "light"
+  },
   "joint|high|high|ahead|moderate|many|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "justification": "High spike risk threatens deadlines, but ongoing prod arrivals necessitate some idle headroom.",
@@ -20,6 +26,12 @@
   "joint|high|high|ahead|moderate|many|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
     "justification": "High demand and spike risk warrant heavy GPU margins to protect imminent deadlines; light reservation allows some idle headroom for incoming prod jobs without starving other users.",
+    "margin": "heavy",
+    "reserve": "light"
+  },
+  "joint|high|high|ahead|moderate|none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "justification": "High spike risk threatens deadlines, but some headroom is needed for incoming production jobs.",
     "margin": "heavy",
     "reserve": "light"
   },
@@ -80,6 +92,12 @@
   "joint|high|high|behind|moderate|few|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
     "justification": "High demand spike risk requires heavy GPU margin hedging, while light reserve allows some idle headroom for incoming prod jobs without starving other tasks.",
+    "margin": "heavy",
+    "reserve": "light"
+  },
+  "joint|high|high|behind|moderate|many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "justification": "High spike risk threatens current deadlines more than future scarcity.",
     "margin": "heavy",
     "reserve": "light"
   },
@@ -971,6 +989,12 @@
     "margin": "some",
     "reserve": "heavy"
   },
+  "joint|medium|low|behind|ample|many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "justification": "Moderate spike risk and ongoing prod job arrivals necessitate a balanced approach.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|low|behind|ample|many|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
     "justification": "High demand uncertainty requires a moderate GPU hedge to protect against potential spikes without starving future high-priority jobs.",
@@ -1576,10 +1600,20 @@
     "hedge": "heavy",
     "justification": "High spike risk and uncertainty warrant a heavy hedge to protect against potential missed deadlines, even though the pool contention is currently low."
   },
+  "marg|high|high|medium|behind|high|besteffort|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "hedge": "heavy",
+    "justification": "High spike risk and being behind schedule necessitate heavy hedging despite high contention."
+  },
   "marg|high|high|medium|behind|high|besteffort|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
     "hedge": "heavy",
     "justification": "Given the high uncertainty and spike risk, even with a medium predicted request size and best-effort priority, the heavy hedge protects against a large demand spike that could jeopardize hitting the b"
+  },
+  "marg|high|high|medium|ontrack|high|besteffort|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "hedge": "some",
+    "justification": "High spike risk necessitates a hedge, but high contention limits it to some."
   },
   "marg|high|high|medium|ontrack|high|besteffort|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
@@ -2790,6 +2824,11 @@
     "_source": "llm:qwen2.5:3b",
     "hedge": "heavy",
     "justification": "Given the medium spike risk and large predicted GPU request, a heavy hedge protects against potential spikes even under high cluster contention to ensure timely job execution despite being behind sche"
+  },
+  "marg|medium|medium|large|behind|low|besteffort|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "hedge": "some",
+    "justification": "Medium spike risk and being behind schedule warrant some insurance, despite low contention."
   },
   "marg|medium|medium|large|behind|low|besteffort|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
