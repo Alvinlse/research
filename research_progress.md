@@ -8,7 +8,7 @@
 
 | # | Claim | Evidence | Status |
 |---|---|---|---|
-| 1 | LLMs cannot calibrate absolute resource numbers; LLM-derives-structure + code-computes predicts peak GPU memory to ~2% (~40x better than the params heuristic), robust across precision, architectures, long context | Exp 1-7 | solid |
+| 1 | LLMs cannot calibrate absolute resource numbers — CONFIRMED on real named models (22-572 GB MAE, famous names don't help); LLM-derives-structure + code-computes beats heuristic/mean/LLM on every metric, but on REAL architectures (13 Supercloud-labelled families) the margin is MAPE 18%/rho 0.80 vs 24%/0.40, not the synthetic ~2%/40x; residual = two mechanically fixable proxy blind spots (functional pools, transformer internals) | Exp 1-7 → **Exp 34** | solid (negative); revised (deterministic margin) |
 | 2 | A small attention forecaster beats persistence on the dynamic channels; a quantile head + conformal calibration adds a usable per-job uncertainty signal at no accuracy cost | Exp 8, 16A | solid |
 | 3 | Per-round value-max auctions lose SLA to stable serialisation; the bid-once committed-auction matches greedy on raw SLA and ~halves prod-tier SLA; an LLM can set & justify the priority (interpretable, matches deterministic) | Exp 9-12 | solid |
 | 4 | The committed mechanism is gameable via inflated self-reports; a flat budget does NOT fix it; per-USER budgets + contested-tick claim pricing neutralise the deviation (lying's net gain → 0*, its cost lands on the liar's own prod jobs) at a measured rationing price (+3..+9 prodSLA pts honest-world); all-liars collapse is not rescuable by any anonymous tariff. A self-interested LLM user exploits the unpriced mechanism UNPROMPTED (−5..−14* vs honest; 3b games harder than 14b) and the tariff flips it to honesty-equivalence (14b exactly, 3b ns), citing the mechanism's logic in its justification | Exp 13 → **Exp 32-33** | solid (deterrence, n=32) |
@@ -1455,3 +1455,73 @@ cd Research
 `llm_declare`/`SYSTEM_DECLARE_*` in `pins/llm_agent.py`; `make_llm_declare0`/`llm_sweep` in
 `pins/incentive_sim.py`; per-seed data + decision tables in
 `pins/results_incentive_llm_qwen2.5_{3b,14b}.json`.
+
+
+## Experiment 34 — Exp 1-7 REDONE on real architectures: gate still passes, but the 40x headline was a synthetic-benchmark artifact (2026-07-07)
+
+**Question.** The whole Stage-1-static result (claims-table row 1) rested on 6 hand-written
+synthetic CNNs + a toy ResNet/TinyLM. Does it survive on REAL models? Model list externally
+justified: exactly the DNN families in the MIT Supercloud labelled trace
+(`data/labelled_jobids_full.csv`) — resnet50/101/152, vgg11/16/19, inception3,
+bert-base/distilbert (HF, eager attention — verified `_attn_implementation == "eager"` so the
+seq^2 score matrix IS materialised, matching the Exp-7 analytic term), U-Net family
+U{3,4,5}-{32,64,128}. GNNs skipped (PyG). 13 jobs, truth measured on the A100
+(fp32, Adam, 6 steps), batch/res/seq controlled. `pins/eval/predict_real.py`, reusing the
+Exp 6/7 machinery (leaf-module hook activation proxy + analytic attention term + global
+LOOCV (a,b)).
+
+**Result (fp32, n=13).**
+
+| Predictor | mem MAE | MAPE | within 1.5x | rho |
+|---|---|---|---|---|
+| **Deterministic (LOOCV global)** | **1.30 GB** | **18.4%** | **84.6%** | **0.80** |
+| Params heuristic | 1.66 GB | 24.0% | 69.2% | 0.40 |
+| Mean (no prediction) | 1.87 GB | 34.0% | 69.2% | −0.10 |
+| Raw LLM qwen2.5:3b | 572 GB | 9902% | 0% | 0.25 |
+| Raw LLM qwen2.5:7b | 43 GB | 854% | 0% | −0.09 |
+| Raw LLM qwen2.5:14b | 22 GB | 479% | 7.7% | −0.14 |
+
+Beats-heuristic gate: **PASS** (1.30 vs 1.66 GB) — but the margin is 1.3x, not 40x.
+
+**What replicated exactly — the Exp-1 negative.** Raw-LLM miscalibration is fully confirmed
+on FAMOUS models: knowing the name "ResNet-101" does not rescue calibration (3b said
+1792 GB for resnet101@bs32; truth 4.7). Same monotonic scale ladder as Exp 1
+(572→43→22 GB MAE vs 283→77→24 on synthetic), same never-closing order-of-magnitude gap,
+and ranking is destroyed at 7b/14b (rho ≤ 0). Claim-1's first clause is now trace-grounded.
+
+**What did NOT replicate — the ~2%/40x headline.** On real architectures the deterministic
+estimator degrades to MAPE 18.4%, and the heuristic is far less bad than on the synthetic set
+(the real-model truths cluster at 3–12 GB, close to the heuristic's ~4 GB floor). The honest
+claim after Exp 34: the deterministic route still wins every metric and is the only predictor
+with usable ranking (rho 0.80 vs 0.40), but the 40x figure was an artifact of a synthetic
+family designed to spread activation memory. Two localized blind spots explain most of the
+residual, and both are the Exp-6 lesson recurring (structure the proxy can't see):
+1. **inception3** (det 4.2 vs truth 6.7 GB): torchvision Inception uses FUNCTIONAL pooling
+   (`F.max_pool2d` in `forward`) — invisible to leaf-MODULE hooks, so activations are
+   undercounted. Fix is mechanical (also hook `torch.nn.functional` or count via autograd
+   graph), not conceptual.
+2. **bert-s512** (det 7.0 vs truth 12.0 GB): eager HF attention materialises more than the
+   score matrix (post-softmax probs saved for backward, dropout masks, 4×hidden FF
+   intermediates); one global `a` fit mostly on convnets under-credits transformer
+   internals. A per-family `a` or an explicit probs term would close it — at the cost of
+   more calibration data.
+Per-family MAE: unet 0.47 · vgg 0.91 · resnet 1.47 · transformer 1.94 · inception 2.50 GB.
+
+**Claims-table impact.** Row 1 weakened from "~2% (~40x)" to: raw-LLM incapability CONFIRMED
+on real models; deterministic route beats heuristic/mean/LLM on all metrics on real
+architectures (MAPE 18%, rho 0.80) with known, mechanically fixable blind spots. Updated in
+the table.
+
+**Honest read / caveats.** n=13, single precision (fp32), one batch-size choice per model
+(truth range 2.9–12 GB is narrower than production jobs — a wider batch/seq sweep would
+stretch the spread and likely favour the activation-aware route); U-Net "Supercloud" configs
+are our reconstruction of the U{depth}-{filters} labels, not the original code; GNN families
+skipped entirely.
+
+**Reproduce.**
+```bash
+cd Research
+.venv-forecast/bin/python -m pins.eval.predict_real            # needs the A100 + Ollama
+.venv-forecast/bin/python -m pins.eval.predict_real --skip-llm # deterministic arms only
+```
+Per-job data in `pins/eval/results_real.json`.
