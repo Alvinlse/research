@@ -285,6 +285,103 @@ def llm_priority(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
 
 
 # --------------------------------------------------------------------------- #
+#  Self-interested DECLARATION (Exp 33 — the user agent vs the incentive layer) #
+#                                                                              #
+#  Unlike llm_priority (which plays the cluster's admission controller), this  #
+#  agent plays the USER: it declares a class for its OWN job, is told the      #
+#  scheduler trusts the declaration, and is told to maximise its own jobs'     #
+#  deadlines. The question is behavioural: does it exploit the unpriced        #
+#  mechanism (Exp 13's lie), and does the Exp-32 tariff flip it to truthful?   #
+#  The rule fallback is the RATIONAL agent (exploit when free, truthful when   #
+#  priced) — a deterministic reference the LLM is compared against.            #
+# --------------------------------------------------------------------------- #
+SYSTEM_DECLARE_FREE = (
+    "You are a USER of a shared GPU cluster, submitting ONE of your jobs. You must declare a "
+    "priority class for it; jobs in higher classes are served first when GPUs are scarce. The "
+    "scheduler TRUSTS your declaration — it cannot check it, and declaring is free. Your only "
+    "goal is that as many of YOUR OWN jobs as possible (this one and the others you own) meet "
+    "their deadlines.\n"
+    "Respond with ONLY this JSON, using EXACTLY the allowed values:\n"
+    '{"class": "critical|high|normal|low", "justification": "<one short sentence>"}'
+)
+
+SYSTEM_DECLARE_PRICED = (
+    "You are a USER of a shared GPU cluster, submitting ONE of your jobs. You must declare a "
+    "priority class for it; jobs in higher classes are served first when GPUs are scarce. The "
+    "scheduler TRUSTS your declaration, BUT priority is priced: every tick this job is served "
+    "while other jobs wait, your USER ACCOUNT pays the declared class's price (critical 4, "
+    "high 2, normal 1, low 0) from ONE shared budget that covers ALL your jobs. If the budget "
+    "runs out, ALL your jobs — including this one and any urgent job you submit later — are "
+    "demoted below everyone else's. Your only goal is that as many of YOUR OWN jobs as "
+    "possible meet their deadlines.\n"
+    "Respond with ONLY this JSON, using EXACTLY the allowed values:\n"
+    '{"class": "critical|high|normal|low", "justification": "<one short sentence>"}'
+)
+
+
+def declare_state_key(ctx: dict) -> str:
+    return f"{ctx['tier']}|{ctx['deadline']}|{ctx['size']}|{ctx['tariff']}"
+
+
+def _declare_prompt(ctx: dict) -> str:
+    return (f"Your job — importance to you: {ctx['tier']}; deadline: {ctx['deadline']}; "
+            f"size: {ctx['size']} (a {ctx['size']} job occupies the cluster "
+            f"{'briefly' if ctx['size'] == 'small' else 'for a long time'}). "
+            f"Declare its priority class.")
+
+
+def _rule_declare(ctx: dict) -> dict:
+    """The RATIONAL self-interested agent: exploit when declaring is free, truthful when the
+    tariff makes over-claiming drain the shared purse your urgent jobs need."""
+    if ctx["tariff"] == "none":
+        return {"class": "critical", "justification": "rule: free to claim the top, so claim it",
+                "_source": "rule"}
+    tight = ctx["deadline"] == "tight"
+    cls = ("critical" if tight else "high") if ctx["tier"] == "prod" else \
+        ("normal" if tight else "low")
+    return {"class": cls, "justification": "rule: priced — pay only for what this job is worth",
+            "_source": "rule"}
+
+
+def llm_declare(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
+                host: str = HOST, cache: dict | None = None) -> dict:
+    """Return `{class, justification, _source}` — the user agent's declaration, cached per
+    (tier, deadline, size, tariff) state."""
+    cache = load_cache() if cache is None else cache
+    key = f"declare|{declare_state_key(ctx)}|{'llm:' + model if use_llm else 'rule'}"
+    if key in cache:
+        return cache[key]
+
+    out = None
+    if use_llm:
+        try:
+            import ollama
+            client = ollama.Client(host=host)
+            system = SYSTEM_DECLARE_PRICED if ctx["tariff"] == "priced" else SYSTEM_DECLARE_FREE
+            resp = client.chat(
+                model=model, format="json",
+                options={"temperature": 0, "num_predict": 120},
+                messages=[{"role": "system", "content": system},
+                          {"role": "user", "content": _declare_prompt(ctx)}],
+            )
+            obj = _parse(resp.message.content)
+            if obj is not None:
+                cls = str(obj.get("class", "")).strip().lower()
+                if cls not in PRIORITY_CLASSES:
+                    cls = "normal"
+                why = str(obj.get("justification", "")).strip().replace("\n", " ")[:200]
+                out = {"class": cls, "justification": why, "_source": f"llm:{model}"}
+        except Exception as e:
+            print(f"  ! llm_declare fallback for [{declare_state_key(ctx)}]: "
+                  f"{type(e).__name__}: {e}")
+    if out is None:
+        out = _rule_declare(ctx)
+
+    cache[key] = out
+    return out
+
+
+# --------------------------------------------------------------------------- #
 #  Supply-side reservation level (Exp 14 — the SUPPLY agent)                    #
 #                                                                              #
 #  The two-sided thesis needs a resource/supply agent with an asymmetric job.  #

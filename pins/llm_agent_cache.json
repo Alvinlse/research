@@ -1,4 +1,124 @@
 {
+  "declare|besteffort|loose|large|none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "class": "normal",
+    "justification": "The job has a loose deadline and is not critical."
+  },
+  "declare|besteffort|loose|large|none|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "class": "high",
+    "justification": "High priority needed for large job to minimize impact on other users' deadlines."
+  },
+  "declare|besteffort|loose|large|priced|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "class": "low",
+    "justification": "The job has no strict deadline and is of low importance, minimizing cost impact on other critical jobs."
+  },
+  "declare|besteffort|loose|large|priced|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "class": "high",
+    "justification": "High priority needed due to large job size and tight deadlines"
+  },
+  "declare|besteffort|loose|small|none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "class": "low",
+    "justification": "The job has a loose deadline and is small, minimizing impact on others."
+  },
+  "declare|besteffort|loose|small|none|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "class": "normal",
+    "justification": "Normal jobs provide balanced resource usage for fair scheduling of all types of tasks."
+  },
+  "declare|besteffort|loose|small|priced|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "class": "low",
+    "justification": "The job has a loose deadline and is small, minimizing impact on others."
+  },
+  "declare|besteffort|loose|small|priced|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "class": "low",
+    "justification": "Lowest priority for a small job that does not have an urgent deadline"
+  },
+  "declare|besteffort|tight|large|none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "class": "high",
+    "justification": "Tight deadline requires high priority."
+  },
+  "declare|besteffort|tight|large|none|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "class": "high",
+    "justification": "High priority needed due to large job size and tight deadline"
+  },
+  "declare|besteffort|tight|large|priced|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "class": "high",
+    "justification": "The job has a tight deadline but is not critical enough to\u62a2\u5360\u4e0b\u4e00\u4e2a\u5355\u8bcd\u8f93\u5165\uff0c\u8bf7\u95ee\u4e0a\u6587\u8981\u6c42\u6211\u4eec\u63d0\u4ea4\u4e00\u4e2aGPU\u4efb\u52a1\u5e76\u58f0\u660e\u5176\u4f18\u5148\u7ea7\u3002\u6839\u636e\u63cf\u8ff0\uff0c\u6211\u7684\u4f5c\u4e1a\u91cd\u8981\u6027\u4e3a\u5c3d\u529b\u800c\u4e3a\uff0cdeadline\u7d27\u5f20\uff0c\u89c4\u6a21\u5927\uff08\u5360\u7528\u96c6\u7fa4\u65f6\u95f4\u957f\uff09\u3002\u8bf7\u7ed9\u51fa\u5408\u9002\u7684\u4f18\u5148\u7ea7\u58f0\u660e\u3002\u6309\u7167\u4e4b\u524d\u7684\u9009\u9879\uff0c\u8fd9\u4e2a\u4efb\u52a1\u7684\u4f18\u5148\u7ea7\u5e94\u8be5\u8bbe\u4e3a"
+  },
+  "declare|besteffort|tight|large|priced|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "class": "high",
+    "justification": "High priority needed due to large job size and tight deadline"
+  },
+  "declare|besteffort|tight|small|none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "class": "high",
+    "justification": "Tight deadline requires high priority for timely execution."
+  },
+  "declare|besteffort|tight|small|none|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "class": "high",
+    "justification": "High priority needed for timely completion of small jobs."
+  },
+  "declare|besteffort|tight|small|priced|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "class": "high",
+    "justification": "Tight deadline requires high priority to secure resources quickly."
+  },
+  "declare|besteffort|tight|small|priced|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "class": "high",
+    "justification": "High priority ensures timely completion of small jobs maintaining overall project timeline"
+  },
+  "declare|prod|tight|large|none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "class": "critical",
+    "justification": "This is a production job with a tight deadline."
+  },
+  "declare|prod|tight|large|none|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "class": "critical",
+    "justification": "Critical production job with strict deadline."
+  },
+  "declare|prod|tight|large|priced|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "class": "critical",
+    "justification": "This is a production job with a tight deadline."
+  },
+  "declare|prod|tight|large|priced|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "class": "critical",
+    "justification": "Job is of utmost importance and must meet its strict deadline"
+  },
+  "declare|prod|tight|small|none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "class": "high",
+    "justification": "This is a production job with a tight deadline."
+  },
+  "declare|prod|tight|small|none|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "class": "critical",
+    "justification": "Small job but critical for production purposes and needs to meet tight deadline."
+  },
+  "declare|prod|tight|small|priced|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "class": "critical",
+    "justification": "The job is crucial for production and has a tight deadline."
+  },
+  "declare|prod|tight|small|priced|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "class": "high",
+    "justification": "Job is important for production and has a tight deadline."
+  },
   "joint|high|high|ahead|ample|many|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "justification": "High spike risk threatens deadlines while ensuring some headroom for incoming critical jobs.",

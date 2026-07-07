@@ -1,0 +1,104 @@
+{
+  "agent": "rational-rule",
+  "n_seeds": 4,
+  "pools": {
+    "none": {
+      "8": {
+        "vs_truthful": [
+          0.0,
+          -0.25,
+          -0.25,
+          -0.5
+        ],
+        "vs_liar": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      }
+    },
+    "priced": {
+      "8": {
+        "vs_truthful": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "vs_liar": [
+          0.0,
+          0.0,
+          0.25,
+          0.0
+        ]
+      }
+    }
+  },
+  "decisions": {
+    "none": [
+      {
+        "state": "besteffort|loose|large|none",
+        "class": "critical",
+        "justification": "rule: free to claim the top, so claim it",
+        "_source": "rule"
+      },
+      {
+        "state": "besteffort|tight|large|none",
+        "class": "critical",
+        "justification": "rule: free to claim the top, so claim it",
+        "_source": "rule"
+      },
+      {
+        "state": "prod|tight|large|none",
+        "class": "critical",
+        "justification": "rule: free to claim the top, so claim it",
+        "_source": "rule"
+      },
+      {
+        "state": "prod|tight|small|none",
+        "class": "critical",
+        "justification": "rule: free to claim the top, so claim it",
+        "_source": "rule"
+      },
+      {
+        "state": "besteffort|loose|small|none",
+        "class": "critical",
+        "justification": "rule: free to claim the top, so claim it",
+        "_source": "rule"
+      }
+    ],
+    "priced": [
+      {
+        "state": "besteffort|loose|large|priced",
+        "class": "low",
+        "justification": "rule: priced \u2014 pay only for what this job is worth",
+        "_source": "rule"
+      },
+      {
+        "state": "besteffort|tight|large|priced",
+        "class": "normal",
+        "justification": "rule: priced \u2014 pay only for what this job is worth",
+        "_source": "rule"
+      },
+      {
+        "state": "prod|tight|large|priced",
+        "class": "critical",
+        "justification": "rule: priced \u2014 pay only for what this job is worth",
+        "_source": "rule"
+      },
+      {
+        "state": "prod|tight|small|priced",
+        "class": "critical",
+        "justification": "rule: priced \u2014 pay only for what this job is worth",
+        "_source": "rule"
+      },
+      {
+        "state": "besteffort|loose|small|priced",
+        "class": "low",
+        "justification": "rule: priced \u2014 pay only for what this job is worth",
+        "_source": "rule"
+      }
+    ]
+  }
+}

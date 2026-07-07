@@ -11,7 +11,7 @@
 | 1 | LLMs cannot calibrate absolute resource numbers; LLM-derives-structure + code-computes predicts peak GPU memory to ~2% (~40x better than the params heuristic), robust across precision, architectures, long context | Exp 1-7 | solid |
 | 2 | A small attention forecaster beats persistence on the dynamic channels; a quantile head + conformal calibration adds a usable per-job uncertainty signal at no accuracy cost | Exp 8, 16A | solid |
 | 3 | Per-round value-max auctions lose SLA to stable serialisation; the bid-once committed-auction matches greedy on raw SLA and ~halves prod-tier SLA; an LLM can set & justify the priority (interpretable, matches deterministic) | Exp 9-12 | solid |
-| 4 | The committed mechanism is gameable via inflated self-reports; a flat budget does NOT fix it; per-USER budgets + contested-tick claim pricing neutralise the deviation (lying's net gain → 0*, its cost lands on the liar's own prod jobs) at a measured rationing price (+3..+9 prodSLA pts honest-world); all-liars collapse is not rescuable by any anonymous tariff | Exp 13 → **Exp 32** | solid (deterrence, n=32) |
+| 4 | The committed mechanism is gameable via inflated self-reports; a flat budget does NOT fix it; per-USER budgets + contested-tick claim pricing neutralise the deviation (lying's net gain → 0*, its cost lands on the liar's own prod jobs) at a measured rationing price (+3..+9 prodSLA pts honest-world); all-liars collapse is not rescuable by any anonymous tariff. A self-interested LLM user exploits the unpriced mechanism UNPROMPTED (−5..−14* vs honest; 3b games harder than 14b) and the tariff flips it to honesty-equivalence (14b exactly, 3b ns), citing the mechanism's logic in its justification | Exp 13 → **Exp 32-33** | solid (deterrence, n=32) |
 | 5 | The supply agent's headroom-reservation lever pays only against rigid incumbents at moderate contention; malleability-aware reservation recovers the utilisation cost | Exp 14-15 | solid (regime-gated) |
 | 6 | Uncertainty-sized margins are insurance whose value grows with tail severity; blanket margins backfire; the LLM hedge (7b+) beats the deterministic margin once given a spike-risk signal | Exp 16-17 | solid |
 | 7 | The ILP ties the auction on a 1-D pool (~150x cost, not worth it) and earns its keep exactly where count-only clearing structurally fails: node placement (ploss to 0, util +7-12 pts) and making aggressive LLM margins SAFE | Exp 18, 25 | solid |
@@ -1384,3 +1384,74 @@ cd Research
 `make_user_budget_committed` / `assign_users` / `declare_for` in `pins/incentive_sim.py`;
 per-seed data in `pins/results_incentive.json`; `simulate(return_jobs=True)` added to
 `negotiation_sim.py` (default unchanged).
+
+## Experiment 33 — THE LLM USER AGENT vs THE TARIFF: does a self-interested LLM discover honesty?
+
+**Date:** 2026-07-07
+
+**Why.** Exp 32 proved deterrence against *scripted* deviations. But the thesis's agents are
+LLMs — so the behavioural question is whether an LLM user, told only to maximise its own jobs'
+deadlines (never told to lie, never told to be honest), (a) exploits the trusting mechanism
+unprompted, and (b) is flipped to honesty by the tariff — with the transcript showing *why*.
+This is the interpretability claim meeting the incentive layer.
+
+**Method.** New `llm_declare` in `llm_agent.py`: the agent plays the USER (not the admission
+controller of `llm_priority`) — system prompt states the game (declarations trusted, higher
+classes served first) and, in the priced variant, the exact Exp-32 tariff (class prices,
+shared purse, portfolio-wide demotion on insolvency). Ctx buckets: tier × deadline × size ×
+tariff (≤16 states, cached; code owns all magnitudes as always). `incentive_sim --llm`: user 0
+declared by the agent, other 3 users truthful, budget none vs 120-lump, 32 seeds, pools
+{6,8,12}. Reference points: user-0's truthful world and the scripted all-critical-BE liar,
+same seeds. The rule fallback IS the rational agent (exploit when free / truthful when priced)
+and validates the harness exactly (unpriced: −25 vs truthful ≡ liar; priced: ≡ truthful).
+
+**Result (user-0's own violation rate, paired diffs ±95% CI; − = agent better).**
+
+| | vs truthful, unpriced | vs liar, unpriced | vs truthful, priced |
+|---|---|---|---|
+| qwen2.5:3b | **−11.7* / −12.5* / −14.1*** | +12.5* / +10.2* / 0 | +2.3 / −4.7 / −2.3 (ns) |
+| qwen2.5:14b | **−4.7* / −5.5* / −7.0*** | +19.5* / +17.2* / +7.0* | **+0.0 / +0.0 / +0.0** |
+
+Declarations (the decision table): unpriced, 3b lifts every best-effort job (loose-large →
+'high', tight-small → 'high'); 14b lifts only the tight ones. Priced, both shift down
+(3b: prod-tight-small critical→high, BE-loose-small→low; 14b: BE-loose→low, prod stays
+critical) — and 14b's outcomes become *exactly* the truthful world's at every pool.
+
+**Findings.**
+1. **The vulnerability is emergent, not hypothetical:** given only "maximise your own jobs,"
+   both models exploit the unpriced mechanism significantly (3b −12..−14*, 14b −5..−7* vs
+   honest play). Nobody has to teach an LLM user to over-claim.
+2. **Scale is INVERSELY related to ruthlessness:** both leave gains on the table vs the
+   scripted liar, 14b much more (+17..+20* behind the liar). Its unpriced justifications use
+   normative language ("minimizing impact on others") — prior alignment, not payoff
+   maximisation. The smaller model games harder.
+3. **The Exp-32 tariff flips both to honesty-equivalence:** priced, the agent−truthful gap is
+   ns at every pool for 3b and identically zero for 14b — deterrence holds against LLM agents,
+   not just scripted deviations. 14b's priced justification cites the mechanism's logic
+   explicitly ("low importance, minimizing cost impact on other critical jobs") — the tariff
+   is *legible* to the agent, which is what makes the deterrence work through reasoning rather
+   than trial and error.
+4. **Decisions respond to incentives more reliably than explanations describe them:** 3b's
+   justifications confabulate (claims "tight deadlines" for a loose-deadline state while
+   declaring it 'high'); one 14b transcript degenerated into Chinese mid-sentence (class still
+   valid). The class shifts track the tariff; the prose only tracks it at 14b — consistent
+   with the Exp 12/23 scale pattern for justification quality.
+
+**Honest read / caveats.** One-shot declaration per state (no in-context learning from
+outcomes — the agent never SEES its purse drain; flipping via the prompt's rule description
+alone is the strong version of the result, but an adaptive/multi-round variant is untested and
+Exp 26 warns naive reflection may not converge); 16-state bucketing hides within-state
+heterogeneity; temperature 0, one sample per state (no variance over drafts); the scripted
+liar comparison at priced pools is ns everywhere (tariff neutralises the liar too — consistent
+with Exp 32).
+
+**Reproduce.**
+```bash
+cd Research
+.venv/bin/python -m pins.incentive_sim --llm --model qwen2.5:3b    # 32 seeds, pools {6,8,12}
+.venv/bin/python -m pins.incentive_sim --llm --model qwen2.5:14b
+.venv/bin/python -m pins.incentive_sim --llm --no-llm              # rational-rule reference
+```
+`llm_declare`/`SYSTEM_DECLARE_*` in `pins/llm_agent.py`; `make_llm_declare0`/`llm_sweep` in
+`pins/incentive_sim.py`; per-seed data + decision tables in
+`pins/results_incentive_llm_qwen2.5_{3b,14b}.json`.

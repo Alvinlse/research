@@ -66,12 +66,15 @@ def declare_for(job: Job, users: dict[str, int], liars: set[int]) -> str:
 
 
 def make_user_budget_committed(users: dict[str, int], liars: set[int],
-                               budget: tuple[float, float] | None):
+                               budget: tuple[float, float] | None,
+                               declare0=None):
     """Committed auction + the incentive layer. budget=None reproduces Exp 13's unpriced
     declared-committed (the vulnerable mechanism) for the same declarations.
     budget=(B, r): purse starts at B, earns r per tick, capped back at B (scrip income —
     bursty honest spending recovers between contested stretches; a liar's sustained
-    contested drain outruns income)."""
+    contested drain outruns income).
+    declare0 (Exp 33): callable(job) -> class for USER 0's jobs — the LLM user agent;
+    everyone else declares via `declare_for` as before."""
     cls: dict[str, str] = {}
     weight: dict[str, float] = {}
     b0, income = budget if budget is not None else (0.0, 0.0)
@@ -79,7 +82,8 @@ def make_user_budget_committed(users: dict[str, int], liars: set[int],
 
     def bid_builder(job: Job, t: int, market: dict) -> list[float]:
         if job.jid not in cls:
-            c = declare_for(job, users, liars)
+            c = declare0(job) if declare0 is not None and users[job.jid] == 0 else \
+                declare_for(job, users, liars)
             cls[job.jid], weight[job.jid] = c, priority_weight(c)
         return job.bid()
 
@@ -213,13 +217,89 @@ def sweep(pools, budgets, n_jobs, horizon, seeds) -> None:
           "reproduces Exp 13's gain.")
 
 
+# --------------------------------------------------------------------------- #
+#  Exp 33: the LLM plays user 0 — does the tariff flip it to honesty?           #
+# --------------------------------------------------------------------------- #
+def make_llm_declare0(use_llm: bool, model: str, cache: dict, tariff: str, trace: list):
+    """job -> declared class via the self-interested user agent (cached per state)."""
+    from pins.llm_agent import declare_state_key, llm_declare
+    seen: set[str] = set()
+
+    def declare0(job: Job) -> str:
+        slack = (job.deadline - job.arrival) / max(job.nominal, 1e-9)
+        ctx = {"tier": job.tier, "deadline": "tight" if slack < 1.5 else "loose",
+               "size": "small" if job.nominal <= 10 else "large", "tariff": tariff}
+        d = llm_declare(ctx, use_llm=use_llm, model=model, cache=cache)
+        key = declare_state_key(ctx)
+        if key not in seen:
+            seen.add(key)
+            trace.append({"state": key, "class": d["class"],
+                          "justification": d["justification"], "_source": d["_source"]})
+        return d["class"]
+
+    return declare0
+
+
+def llm_sweep(pools, n_jobs, horizon, seeds, use_llm: bool, model: str) -> None:
+    from pins.llm_agent import load_cache, save_cache
+    cache = load_cache()
+    tag = model if use_llm else "rational-rule"
+    print(f"\n{'='*88}")
+    print(f"LLM USER AGENT vs THE TARIFF (Exp 33) — user 0 declared by {tag}, others truthful")
+    print(f"{'='*88}")
+    data = {"agent": tag, "n_seeds": len(seeds), "pools": {}, "decisions": {}}
+
+    for tariff, budget in (("none", None), ("priced", (120.0, 0.0))):
+        trace: list = []
+        declare0 = make_llm_declare0(use_llm, model, cache, tariff, trace)
+        print(f"\n--- tariff = {tariff} (budget {'none' if budget is None else '120'}) " + "-" * 40)
+        for gpus in pools:
+            d_agent, d_liar = [], []
+            for s in seeds:
+                jobs = make_workload(n_jobs, s, horizon)
+                users = assign_users(jobs, s)
+                _, j_hon = run_world(jobs, users, set(), budget, gpus, horizon)
+                _, j_liar = run_world(jobs, users, {0}, budget, gpus, horizon)
+                bb, alf = make_user_budget_committed(users, set(), budget, declare0=declare0)
+                _, j_llm = simulate(jobs, bb, alf(), gpus, horizon, return_jobs=True)
+                r = lambda js: user_rates(js, users, 0)["all"]
+                d_agent.append(r(j_llm) - r(j_hon))     # agent vs its truthful self
+                d_liar.append(r(j_llm) - r(j_liar))     # agent vs the scripted liar
+            print(f"  pool {gpus:>2}:  {fmt(d_agent, 'vs truthful')}   {fmt(d_liar, 'vs liar')}")
+            data["pools"].setdefault(tariff, {})[str(gpus)] = {
+                "vs_truthful": d_agent, "vs_liar": d_liar}
+        print("  declarations:")
+        for row in trace:
+            print(f"    [{row['state']:<28}] -> {row['class']:<8} | {row['justification']}")
+        data["decisions"][tariff] = trace
+
+    if use_llm:
+        save_cache(cache)
+    out = os.path.join(HERE, f"results_incentive_llm_{tag.replace(':', '_')}.json")
+    with open(out, "w") as f:
+        json.dump(data, f, indent=2)
+    print(f"\nper-seed data + decision tables -> {out}")
+    print("Read: 'vs truthful' < 0 = the agent beat honest play (found a profitable deviation); "
+          "~0 = honesty-equivalent.\n'vs liar' shows whether it out-schemes the scripted liar "
+          "where lying pays (tariff none).")
+
+
 def main() -> None:
     ap = argparse.ArgumentParser(description="Exp 32: incentive layer for the committed auction")
     ap.add_argument("--seeds", type=int, default=32)
     ap.add_argument("--pools", default="6,8,12")
     ap.add_argument("--budgets", default="none,60,120,240",
                     help="comma list: 'none' | B | B+r (initial purse + income/tick, cap B)")
+    ap.add_argument("--llm", action="store_true",
+                    help="Exp 33: user 0 declared by the LLM user agent (needs Ollama)")
+    ap.add_argument("--no-llm", action="store_true",
+                    help="with --llm: rational-rule agent instead of calling Ollama")
+    ap.add_argument("--model", default="qwen2.5:3b")
     a = ap.parse_args()
+    if a.llm:
+        llm_sweep([int(p) for p in a.pools.split(",")], n_jobs=16, horizon=300,
+                  seeds=list(range(a.seeds)), use_llm=not a.no_llm, model=a.model)
+        return
 
     def parse_budget(b: str):
         if b == "none":
