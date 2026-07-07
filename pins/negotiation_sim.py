@@ -450,7 +450,7 @@ class Result:
 
 
 def simulate(jobs_proto: list[Job], bid_builder, allocator, total_gpus: int,
-             horizon: int) -> Result:
+             horizon: int, return_jobs: bool = False):
     """Run one strategy (bid_builder + allocator) on a fresh copy of the workload.
 
     `bid_builder(job, t, market)` produces the curve used for ALLOCATION (deadline/LLM builders
@@ -494,7 +494,7 @@ def simulate(jobs_proto: list[Job], bid_builder, allocator, total_gpus: int,
     prod = [j for j in jobs if j.tier == "prod"]
     prod_viol = sum(1 for j in prod if violated(j))
     slow = [(j.done_at - j.arrival) / j.nominal for j in finished if j.nominal > 0]
-    return Result(
+    res = Result(
         sla_violation_rate=violations / len(jobs),
         prod_sla_rate=prod_viol / max(len(prod), 1),
         utilisation=busy_sum / max(busy_steps, 1),
@@ -503,6 +503,7 @@ def simulate(jobs_proto: list[Job], bid_builder, allocator, total_gpus: int,
         finished=len(finished),
         n_jobs=len(jobs),
     )
+    return (res, jobs) if return_jobs else res
 
 
 def sweep(n_jobs: int, horizon: int, pools: list[int], seed: int, strategies=None) -> None:

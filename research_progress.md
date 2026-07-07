@@ -11,7 +11,7 @@
 | 1 | LLMs cannot calibrate absolute resource numbers; LLM-derives-structure + code-computes predicts peak GPU memory to ~2% (~40x better than the params heuristic), robust across precision, architectures, long context | Exp 1-7 | solid |
 | 2 | A small attention forecaster beats persistence on the dynamic channels; a quantile head + conformal calibration adds a usable per-job uncertainty signal at no accuracy cost | Exp 8, 16A | solid |
 | 3 | Per-round value-max auctions lose SLA to stable serialisation; the bid-once committed-auction matches greedy on raw SLA and ~halves prod-tier SLA; an LLM can set & justify the priority (interpretable, matches deterministic) | Exp 9-12 | solid |
-| 4 | The committed mechanism is gameable via inflated self-reports; a flat budget does NOT fix it — incentive-compatible clearing (payments) is unbuilt | Exp 13 | **open problem** |
+| 4 | The committed mechanism is gameable via inflated self-reports; a flat budget does NOT fix it; per-USER budgets + contested-tick claim pricing neutralise the deviation (lying's net gain → 0*, its cost lands on the liar's own prod jobs) at a measured rationing price (+3..+9 prodSLA pts honest-world); all-liars collapse is not rescuable by any anonymous tariff | Exp 13 → **Exp 32** | solid (deterrence, n=32) |
 | 5 | The supply agent's headroom-reservation lever pays only against rigid incumbents at moderate contention; malleability-aware reservation recovers the utilisation cost | Exp 14-15 | solid (regime-gated) |
 | 6 | Uncertainty-sized margins are insurance whose value grows with tail severity; blanket margins backfire; the LLM hedge (7b+) beats the deterministic margin once given a spike-risk signal | Exp 16-17 | solid |
 | 7 | The ILP ties the auction on a 1-D pool (~150x cost, not worth it) and earns its keep exactly where count-only clearing structurally fails: node placement (ploss to 0, util +7-12 pts) and making aggressive LLM margins SAFE | Exp 18, 25 | solid |
@@ -1302,3 +1302,85 @@ over-commitment interacts with the un-hedged best-effort majority there).
 ```bash
 .venv/bin/python -m pins.trace_replay --seeds 32 --caps predicted --quantile prod-p90
 ```
+
+## Experiment 32 — THE INCENTIVE LAYER: per-user budgets + contested-tick claim pricing
+
+**Date:** 2026-07-07
+
+**Why.** Open problem (c), the claims-table hole since Exp 13: the committed auction trusts
+declared priority classes; best-effort jobs lying 'critical' collapse prod protection to the
+greedy floor, and a flat per-job budget cannot fix it (any cost on the class hits a liar and an
+honest declarer identically, and it taxed honest jobs even uncontested). Exp 13's post-mortem
+named the fix — exogenous per-USER budgets, fair-share style, which needs multi-job agents.
+Built here, with the measurement upgraded to the question IC actually asks: not "what happens
+to system SLA" but **is lying a profitable best response for a single deviating user?**
+
+**Mechanism (`pins/incentive_sim.py`, pure code — no LLM in the loop).** 16 jobs → 4 users
+(seeded round-robin). A user's jobs share ONE purse. Each tick, a SERVED job pays its own
+declared class cost (`PRIO_CLASS_COST`: critical 4 … low 0) **only when someone else waits**
+(contested ticks) — nobody pays in uncontested regimes (Exp 13's flat-budget failure), waiting
+costs nothing (you pay for what the claim GOT you). A user at purse ≤ 0 has every job demoted
+below 'low' (live, so running jobs lose priority mid-flight). Optional scrip income `B+r`
+(start B, earn r/tick, cap B). Deviation = the Exp-13 damaging one: the user's best-effort
+jobs claim 'critical', its prod jobs stay honest.
+
+**Two designs tried and REJECTED before it worked** (recorded because both are the "obvious"
+choices): (i) *uniform second-price* (price = highest waiting class, charged to all served)
+SOCIALISES the lie — probe showed the honest heavy user draining to 16 while the deviator kept
+92; (ii) Exp 13's flat per-job budget, already dead. Pay-your-own-claim from a SHARED purse is
+what internalises the externality: the probe shows lying multiplies the deviator's own spend
+2–40× (honest user-0 spend 0/52/4/48 across seeds → lying 28/124/156/160).
+
+**Result (32 seeds, pools {6,8,12}, paired by seed; deviator gain = user-0's own violation
+rate, lie − honest; + = lying hurts the liar).**
+
+| tariff | d(all) pool 6/8/12 | d(own prod) | honest prodSLA cost vs none |
+|---|---|---|---|
+| none | **−24.2* / −22.7* / −14.1*** (lying pays) | +10/+9/0 ns | — (46.3/21.6/9.1%) |
+| 120 lump | +3.9 / −2.3 / −3.1 all ns | **+15.1* / +15.6*** / +7.3 | +9.1 / +5.8 / +3.1 |
+| 90+0.3 | +6.2 / +3.9 / −2.3 ns | +15.1* / +18.2* / +6.2 | +10.1 / +7.5 / +4.0 |
+| 60+0.5 | +5.5 / +8.6 / +4.7 ns | +3 / +18.2* / +8 | +24.9 / +13.3 / +6.6 |
+| 30+0.8 | **+8.6* / +14.1*** / +6.2 (lying punished) | 0 / +7 / +5 | +38.2 / +46.0 / +16.2 |
+
+Victim prod harm (deviation's externality on other users' prod jobs): +6.2*/+9.6* at pools 6/8
+unpriced → ns at every priced tariff.
+
+**Findings.**
+1. **The vulnerability, restated as best response:** without an incentive layer, lying is
+   individually profitable at every pool (−14..−24 pts* net for the deviator, −21..−39* for its
+   best-effort jobs) and dumps +6..+10* violation pts on other users' prod jobs.
+2. **The layer works, through the designed channel:** at 120-lump the net deviation gain is
+   statistically zero at every pool, because the lie now significantly damages the deviator's
+   OWN prod jobs (+15*) — the purse the lying best-effort jobs drain is the purse the user's
+   critical jobs need. Externality internalised; victim harm goes ns.
+3. **Incentive compatibility has a price, and it's a monotone frontier:** the honest world pays
+   rationing (+3..+9 prodSLA pts at the neutralising tariff, worse at tighter ones, absurd at
+   30+0.8). Anonymous budgets cannot deter for free — the spend-level probe shows honest-heavy
+   users (spend up to 196) OVERLAP liars (124–160): spend tracks contested residence, not
+   truthfulness (Exp 13's identification limit reappearing at user level). Deterrence operates
+   on the deviator's own counterfactual delta, which is exactly what best-response IC needs —
+   identification is not required, but neither is it available, so honest heavy users share the
+   rationing.
+4. **What pricing can NOT do: rescue the all-liars world.** System prodSLA collapse under
+   universal lying (+23..+36*) persists at every non-degenerate tariff — when every declaration
+   is 'critical' there is no information left for any anonymous mechanism to recover. The
+   incentive layer's claim is deterrence (honesty is a Nash-consistent best response), not
+   robustness to a coordinated all-liar population.
+
+**Honest read / caveats.** One deviation strategy (BE→critical; class-mix deviations like
+"everything high" unprobed); 4 users × 4 jobs → deviator rates are coarse (quantised at 1/4),
+CIs honest but wide; frozen-class committed auction from Exp 11 world (synthetic workload, not
+trace replay); the budget is exogenous and equal per user — sizing it (or income r) IS the
+operator's fairness policy, and the frontier table is exactly that policy's menu; no LLM tier —
+the natural interpretability follow-up is an LLM user-agent that must *decide whether to lie*
+given the tariff (does it discover honesty? can it explain why?).
+
+**Reproduce.**
+```bash
+cd Research
+.venv/bin/python -m pins.incentive_sim            # 32 seeds, pools {6,8,12}, tariff ladder
+.venv/bin/python -m pins.incentive_sim --seeds 8 --budgets none,120 --pools 8   # quick
+```
+`make_user_budget_committed` / `assign_users` / `declare_for` in `pins/incentive_sim.py`;
+per-seed data in `pins/results_incentive.json`; `simulate(return_jobs=True)` added to
+`negotiation_sim.py` (default unchanged).
