@@ -1185,3 +1185,95 @@ cd Research
    −1.8 ±2.7 SLA / −2.4 ±4.1 prodSLA vs the rule tier's −2.7*/−4.7*): the LLM agents' extra
    decision variance widens the CIs. The "negotiation cushions prediction error" claim should be
    stated as rule-tier-significant, direction-consistent at 3b.
+
+## Experiment 31 — UNCERTAINTY SIZES THE REQUEST: agents ask for a quantile of the predicted interval
+
+**Date:** 2026-07-07
+
+**Why.** Exp 30's own caveat: the P50 was a *point* request while `pred_job_gpu.csv` carries a
+per-job [P10, P90] interval that sat unused. The request quantile is a newsvendor choice —
+under-request starves the job (rate < 1 even fully granted), over-request hoards GPUs it cannot
+convert into progress — and the interval lets a job *choose where to sit* on that trade-off,
+which a point predictor cannot. This is the thesis sentence ("uncertainty sizes the margin")
+finally tested with REAL Stage-1 intervals at the system level. Note the hedge is automatically
+width-sized: after rounding+clipping, P90 raises the request on ~40% of jobs (mean +0.81 quanta)
+and P10 lowers it on ~70% (mean −1.37) — jobs with wide intervals hedge more.
+
+**Method.** One knob: `trace_replay --caps predicted --quantile p10|p50|p90` picks which column
+of `pred_job_gpu.csv` the agents request. Coverage (the key set) is identical for every
+quantile, so windows — and therefore seeds — stay perfectly paired across all pred tiers AND
+the Exp-30 oracle tier. Rule tier, 32 seeds, pools {4,6,8}; tiers `rule+pred-p10` /
+`rule+pred-p90` land beside Exp 30's `rule+pred` (P50) and `rule+oracle`.
+
+**Result (paired by seed, n=32; * = 95% CI excludes 0).**
+
+Quantile vs the P50 request, negotiated policy (+ = quantile worse):
+
+| pool | p10 − p50 | p90 − p50 |
+|---|---|---|
+| 4 | ΔSLA **+5.3 ±4.3*** · Δutil −10.5* | ΔSLA −1.6 ±3.5 · ΔprodSLA **−6.7 ±6.3*** |
+| 6 | ΔSLA **+10.7 ±4.6*** · Δutil −14.1* | ΔSLA +0.0 ±3.8 · ΔprodSLA −5.4 ±6.0 |
+| 8 | ΔSLA **+17.2 ±6.4*** · ΔprodSLA **+14.5 ±8.9*** | ΔSLA −1.6 ±4.0 · Δslow **+3.1 ±1.6*** |
+
+(No-llm floor and single-llm show the same pattern; p10 is +5..+17 SLA pts worse for every
+policy at every pool.)
+
+Does the hedge buy back the prediction-error cost? p90-pred − oracle (same windows):
+
+| pool | policy | ΔSLA | ΔprodSLA |
+|---|---|---|---|
+| 4 | negotiated | +2.5 ±3.7 | −2.6 ±6.3 |
+| 6 | negotiated | +5.7 ±3.6* | +4.7 ±7.4 |
+| 8 | negotiated | +4.5 ±3.4* | +1.7 ±5.6 |
+
+vs Exp 30's P50-pred − oracle prodSLA cost of +4 to +10 pts*: **on prodSLA, the P90 hedge is
+statistically indistinguishable from the oracle at every pool and every policy** — hedging
+recovers essentially the whole prediction-error cost for the protected tier. Overall SLA still
+pays (+4.5..+6.6* at pools 6/8) and best-effort slowdown worsens (+2.3..+3.0* at slack).
+
+Negotiated − floor *within* each request world (does negotiation still earn its keep?):
+
+| world | pool 4 | pool 8 |
+|---|---|---|
+| p10 | ΔprodSLA **−3.9 ±2.9*** | ΔprodSLA **−3.8 ±3.1*** · Δslow −0.5* |
+| p50 (Exp 30) | ΔprodSLA −3.1 ±4.1 | ΔprodSLA **−6.2 ±4.3*** |
+| p90 | ΔSLA **−2.0 ±1.8*** · Δslow **−2.2 ±1.9*** | ΔprodSLA −1.2 ±4.0 |
+
+**Findings.**
+1. **The quantile choice is violently asymmetric.** Requesting P10 is catastrophic (+5..+17 SLA
+   pts, worst at slack where there was room it refused to ask for); requesting P90 is roughly
+   free on overall SLA and *buys* 2–8 prodSLA pts. With CAP_CLIP and pool clipping, the system
+   sits on the flat side of the newsvendor curve: over-asking is cheap, under-asking is not.
+2. **The P90 hedge buys back the prod tier entirely**: p90-pred ≈ oracle on prodSLA everywhere
+   (Exp 30's +4..+10* prodSLA error cost → n.s.). The price is best-effort slowdown (+3 ticks
+   at slack) and hoarded GPUs (util +4..+10* is *held*, not productive). "Uncertainty sizes the
+   margin" is now a measured system-level claim, not a slogan.
+3. **The hedge and the negotiation are (partial) substitutes for prod protection.** In the P90
+   world the negotiated reserve's pool-8 prodSLA win disappears (−1.2 n.s. vs P50's −6.2*) —
+   once every request already carries its insurance, the reserve has little left to protect.
+   Conversely in the P10 world negotiation protects prod significantly at EVERY pool: the
+   negotiated margins (extra GPUs above base) literally repair under-request, pushing grants
+   back toward true demand. Negotiation is insurance against *mis-sized* requests, whichever
+   direction they miss.
+4. **At saturation + P90, negotiation shows its first significant overall-SLA win at pool 4**
+   (−2.0* SLA, −2.2* slowdown vs floor): when everyone over-asks, contention is partly
+   artificial, and the mechanism that rations margins and reserves headroom wastes less of it.
+
+**Honest read / caveats.** Rule tier only (Exp 29/30 suggest LLM tiers track it); the quantile
+is applied uniformly to all jobs — a per-job newsvendor rule (hedge only prod / only wide
+intervals) is the refinement, and finding 3 says it should target the jobs the reserve can't
+cover; util counts held GPUs, so the P90 util gain is partly hoarding by construction;
+CAP_CLIP=8 + pool clipping compress the hedge for big jobs (the asymmetry may soften with a
+higher clip). The GBT intervals are plain quantile regression (NOT conformal-calibrated — that
+was Exp 17's runtime track; porting its calibration here is cheap if coverage proves off), and
+the P90 is still a *requested-plan_gpu* quantile, same framing as Exp 30.
+
+**Reproduce.**
+```bash
+cd Research
+.venv/bin/python -m pins.trace_replay --seeds 32 --caps predicted --quantile p90
+.venv/bin/python -m pins.trace_replay --seeds 32 --caps predicted --quantile p10
+.venv/bin/python -m pins.trace_replay --stats   # cross-tier pairs incl. rule+pred-p10/-p90
+```
+`--quantile` + quantile-aware `load_predicted_quanta` in `pins/trace_replay.py`; tiers
+`rule+pred-p10` / `rule+pred-p90` in `pins/results_trace_replay.json`.

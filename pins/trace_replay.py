@@ -62,10 +62,15 @@ def load_trace(path: str = REPLAY_CSV) -> list[tuple[int, int, int, str]]:
     return rows
 
 
-def load_predicted_quanta(path: str = PRED_CSV) -> dict[str, float]:
-    """Exp 30: job_name -> Stage-1 predicted P50 quanta (test-split jobs of predict_gpu)."""
+def load_predicted_quanta(path: str = PRED_CSV, quantile: str = "p50") -> dict[str, float]:
+    """Exp 30/31: job_name -> Stage-1 predicted quanta (test-split jobs of predict_gpu).
+
+    Exp 31: `quantile` picks WHERE on the predicted [p10,p90] interval the agents request —
+    the newsvendor knob prediction intervals buy that a point predictor cannot: under-request
+    starves the job, over-request hoards GPUs it cannot use. Coverage (the key set) is the
+    same for every quantile, so windows — and therefore seeds — stay perfectly paired."""
     with open(path) as f:
-        return {r["job_name"]: float(r["p50"]) for r in csv.DictReader(f)}
+        return {r["job_name"]: float(r[quantile]) for r in csv.DictReader(f)}
 
 
 def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, oracle=False
@@ -189,16 +194,18 @@ def cross_tier_stats(policy: str = "negotiated") -> None:
 
 
 def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
-          caps_mode: str = "real") -> None:
+          caps_mode: str = "real", quantile: str = "p50") -> None:
     trace = load_trace()
-    pred = load_predicted_quanta() if caps_mode != "real" else None
+    pred = load_predicted_quanta(quantile=quantile) if caps_mode != "real" else None
     oracle = caps_mode == "oracle"
     dist = load_uncertainty_distribution()
     cache: dict = load_cache()
     decisions: list = []
     seen: set = set()
-    tag = ("rule" if not use_llm else model) + {"real": "", "predicted": "+pred",
-                                                "oracle": "+oracle"}[caps_mode]
+    suffix = {"real": "", "predicted": "+pred", "oracle": "+oracle"}[caps_mode]
+    if caps_mode == "predicted" and quantile != "p50":
+        suffix = f"+pred-{quantile}"          # 'rule+pred' stays the Exp-30 P50 tier
+    tag = ("rule" if not use_llm else model) + suffix
 
     rows = [
         ("no-llm",     lambda: policy_none),
@@ -271,13 +278,15 @@ def main() -> None:
     ap.add_argument("--caps", default="real", choices=("real", "predicted", "oracle"),
                     help="Exp 30: agents request Stage-1 PREDICTED demand (dynamics stay true); "
                          "'oracle' = truth requested on the same prediction-covered windows")
+    ap.add_argument("--quantile", default="p50", choices=("p10", "p50", "p90"),
+                    help="Exp 31: which predicted quantile the agents request (--caps predicted)")
     a = ap.parse_args()
     if a.stats:
         cross_tier_stats()
         return
     sweep([int(p) for p in a.pools.split(",")], n_jobs=16, horizon=300,
           seeds=list(range(a.seeds)), scale=a.scale, spike_max=a.spike,
-          use_llm=a.llm, model=a.model, caps_mode=a.caps)
+          use_llm=a.llm, model=a.model, caps_mode=a.caps, quantile=a.quantile)
 
 
 if __name__ == "__main__":
