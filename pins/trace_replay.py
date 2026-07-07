@@ -68,9 +68,15 @@ def load_predicted_quanta(path: str = PRED_CSV, quantile: str = "p50") -> dict[s
     Exp 31: `quantile` picks WHERE on the predicted [p10,p90] interval the agents request —
     the newsvendor knob prediction intervals buy that a point predictor cannot: under-request
     starves the job, over-request hoards GPUs it cannot use. Coverage (the key set) is the
-    same for every quantile, so windows — and therefore seeds — stay perfectly paired."""
+    same for every quantile, so windows — and therefore seeds — stay perfectly paired.
+
+    'prod-p90' is the per-job newsvendor rule (Exp 31 finding 3): values become (p50, p90)
+    tuples and make_trace_workload picks p90 for prod jobs, p50 for best-effort."""
     with open(path) as f:
-        return {r["job_name"]: float(r[quantile]) for r in csv.DictReader(f)}
+        rows = list(csv.DictReader(f))
+    if quantile == "prod-p90":
+        return {r["job_name"]: (float(r["p50"]), float(r["p90"])) for r in rows}
+    return {r["job_name"]: float(r[quantile]) for r in rows}
 
 
 def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, oracle=False
@@ -109,8 +115,13 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
         j = Job(f"r{i:02d}", arrival, ["train"], [work], urgency, deadline, tier)
         jobs.append(j)
         true_cap_map[j.jid] = min(quanta, CAP_CLIP)
-        cap_map[j.jid] = true_cap_map[j.jid] if pred is None or oracle else \
-            min(max(1, round(pred[name])), CAP_CLIP)
+        if pred is None or oracle:
+            cap_map[j.jid] = true_cap_map[j.jid]
+        else:
+            p = pred[name]
+            if isinstance(p, tuple):                       # prod-p90: hedge only prod jobs
+                p = p[1] if tier == "prod" else p[0]
+            cap_map[j.jid] = min(max(1, round(p)), CAP_CLIP)
     return jobs, cap_map, true_cap_map
 
 
@@ -278,8 +289,9 @@ def main() -> None:
     ap.add_argument("--caps", default="real", choices=("real", "predicted", "oracle"),
                     help="Exp 30: agents request Stage-1 PREDICTED demand (dynamics stay true); "
                          "'oracle' = truth requested on the same prediction-covered windows")
-    ap.add_argument("--quantile", default="p50", choices=("p10", "p50", "p90"),
-                    help="Exp 31: which predicted quantile the agents request (--caps predicted)")
+    ap.add_argument("--quantile", default="p50", choices=("p10", "p50", "p90", "prod-p90"),
+                    help="Exp 31: which predicted quantile the agents request (--caps predicted); "
+                         "'prod-p90' = per-job rule: prod hedges to p90, best-effort stays p50")
     a = ap.parse_args()
     if a.stats:
         cross_tier_stats()

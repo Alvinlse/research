@@ -1277,3 +1277,28 @@ cd Research
 ```
 `--quantile` + quantile-aware `load_predicted_quanta` in `pins/trace_replay.py`; tiers
 `rule+pred-p10` / `rule+pred-p90` in `pins/results_trace_replay.json`.
+
+**Addendum (2026-07-07, follow-up l): the per-job newsvendor rule `prod-p90` — hedge only prod.**
+`--quantile prod-p90` (prod jobs request P90, best-effort request P50; ~1/3 of jobs hedge, tier
+`rule+pred-prod-p90`, same seed-paired windows). 32 seeds, rule tier. Both hypotheses confirmed:
+
+1. **Recovery retained, price collapsed.** prod-p90 ≈ oracle on prodSLA (negotiated: −0.1/+4.2/
+   −0.3, all ns) — same recovery as uniform P90 — while vs uniform P90 the price drops
+   significantly: slowdown −0.9/−2.0* (pools 6/8), util −3..−7* (less hoarding). Net vs the P50
+   baseline: prodSLA −3.1..−7.7 (significant in 5/9 cells), SLA ns everywhere, and the residual
+   price is ~+1 tick slowdown* and only +1..+3 util pts (uniform P90 paid +3* and +4..+10*).
+   Hedging the third of jobs that matter captures essentially all the value of hedging everyone.
+2. **Hedge and reserve become complements again.** Within the prod-p90 world, negotiated − floor
+   on prodSLA regains significance at pool 8 (−3.8 ±3.4*; was −1.2 ns under uniform P90) — with
+   best-effort no longer carrying insurance, the negotiated reserve adds protection ON TOP of
+   the targeted hedge instead of duplicating it. Some substitution remains (p50 world was −6.2*).
+
+Thesis-ready statement: *size the request hedge from the prediction interval, but only for the
+tier you protect; let the negotiation insure the rest.* Caveats as Exp 31 (rule tier only,
+intervals not conformal-calibrated); one asymmetry unexplained: single-llm pool 6 prod-p90 −
+oracle prodSLA +6.1* (the lone cell where the targeted hedge misses oracle — single-llm's
+over-commitment interacts with the un-hedged best-effort majority there).
+
+```bash
+.venv/bin/python -m pins.trace_replay --seeds 32 --caps predicted --quantile prod-p90
+```
