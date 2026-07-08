@@ -1,6 +1,7 @@
 {
   "n_train": 777809,
   "n_test": 259276,
+  "target": "plan_gpu",
   "no_cpu_mem": false,
   "metrics": {
     "global": {
@@ -31,8 +32,6 @@
       "width": 70.02984424323462
     }
   },
-  "delta_mae_pct": 7.5737541826626735,
-  "delta_logrmse_pct": 17.620233239162374,
   "per_job_gpu": [
     [
       10.0,
@@ -10034,5 +10033,7 @@
       100.0,
       100.0
     ]
-  ]
+  ],
+  "delta_mae_pct": 7.5737541826626735,
+  "delta_logrmse_pct": 17.620233239162374
 }

@@ -13,3 +13,4 @@ __pycache__/
 .pytest_cache/
 .ipynb_checkpoints/
 pins/eval/pred_job_gpu.csv
+pins/eval/pred_job_usage.csv

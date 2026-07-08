@@ -43,6 +43,7 @@ from pins.uncertainty_sim import assign, load_uncertainty_distribution
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPLAY_CSV = os.path.join(HERE, "..", "data", "alibaba-gpu-v2020", "replay_jobs.csv")
 PRED_CSV = os.path.join(HERE, "eval", "pred_job_gpu.csv")
+USAGE_CSV = os.path.join(HERE, "eval", "pred_job_usage.csv")
 
 TICK_S = 120         # one sim tick = 2 real minutes -> median trace job ≈ 9 ticks of work
 WORK_CLAMP = (1, 60)
@@ -79,7 +80,28 @@ def load_predicted_quanta(path: str = PRED_CSV, quantile: str = "p50") -> dict[s
     return {r["job_name"]: float(r[quantile]) for r in rows}
 
 
-def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, oracle=False
+def load_usage_quanta(path: str = USAGE_CSV, quantile: str = "p50"
+                      ) -> tuple[dict[str, float], dict[str, float]]:
+    """Exp 36: (pred, truth) usage-quanta maps from predict_gpu --target gpu_util.
+
+    THE USAGE WORLD: the trace's plan_gpu is a DECLARATION, and Exp 35 measured how little it
+    tracks reality (median ask 50% of a GPU vs median actual util 0.22%, rho 0.23). Here the
+    job's TRUE need (progress denominator) becomes its measured usage; what changes between
+    arms is only what the agents REQUEST: the declaration, the Stage-1 usage prediction, or
+    the usage oracle. Same csv carries pred + truth, so all arms share one key set and seeds
+    stay window-paired."""
+    with open(path) as f:
+        rows = list(csv.DictReader(f))
+    truth = {r["job_name"]: float(r["truth"]) for r in rows}
+    if quantile == "prod-p90":
+        pred = {r["job_name"]: (float(r["p50"]), float(r["p90"])) for r in rows}
+    else:
+        pred = {r["job_name"]: float(r[quantile]) for r in rows}
+    return pred, truth
+
+
+def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, oracle=False,
+                        true_map=None, declared=False
                         ) -> tuple[list[Job], dict[str, int], dict[str, int]]:
     """n_jobs real jobs thinned from a random 10-hour trace window, on ONE clock.
 
@@ -92,6 +114,10 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
     (what the agents request/negotiate over) next to true_cap_map = the trace's real demand
     (what the job actually needs to progress). `oracle=True` keeps the same restricted window
     but requests the truth — the matched-window control. pred=None: Exp 28/29, request==truth.
+
+    Exp 36 (usage world): `true_map` = {job_name: usage quanta} replaces the trace's plan_gpu
+    quanta as the TRUE need; `declared=True` makes the agents request the trace's plan_gpu
+    declaration anyway (today's practice — the over-provisioning baseline).
     """
     rng = random.Random(f"replay-{seed}")
     window_s = int(horizon * ARRIVAL_FRAC) * TICK_S        # arrivals within first 60%
@@ -114,8 +140,11 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
         tier = "prod" if urgency >= 1.667 else "besteffort"
         j = Job(f"r{i:02d}", arrival, ["train"], [work], urgency, deadline, tier)
         jobs.append(j)
-        true_cap_map[j.jid] = min(quanta, CAP_CLIP)
-        if pred is None or oracle:
+        true_cap_map[j.jid] = min(quanta, CAP_CLIP) if true_map is None else \
+            min(max(1, round(true_map[name])), CAP_CLIP)
+        if declared:
+            cap_map[j.jid] = min(quanta, CAP_CLIP)         # request the plan_gpu declaration
+        elif pred is None or oracle:
             cap_map[j.jid] = true_cap_map[j.jid]
         else:
             p = pred[name]
@@ -205,9 +234,15 @@ def cross_tier_stats(policy: str = "negotiated") -> None:
 
 
 def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
-          caps_mode: str = "real", quantile: str = "p50") -> None:
+          caps_mode: str = "real", quantile: str = "p50", truth_mode: str = "plan") -> None:
     trace = load_trace()
-    pred = load_predicted_quanta(quantile=quantile) if caps_mode != "real" else None
+    true_map = None
+    declared = False
+    if truth_mode == "usage":                 # Exp 36: true need = measured usage
+        pred, true_map = load_usage_quanta(quantile=quantile)   # pred keys restrict windows
+        declared = caps_mode == "real"        # 'real' here = request the plan_gpu declaration
+    else:
+        pred = load_predicted_quanta(quantile=quantile) if caps_mode != "real" else None
     oracle = caps_mode == "oracle"
     dist = load_uncertainty_distribution()
     cache: dict = load_cache()
@@ -216,6 +251,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
     suffix = {"real": "", "predicted": "+pred", "oracle": "+oracle"}[caps_mode]
     if caps_mode == "predicted" and quantile != "p50":
         suffix = f"+pred-{quantile}"          # 'rule+pred' stays the Exp-30 P50 tier
+    if truth_mode == "usage":
+        suffix = ("+decl" if caps_mode == "real" else suffix) + "@usage"
     tag = ("rule" if not use_llm else model) + suffix
 
     rows = [
@@ -230,7 +267,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
     print(f"{'='*86}")
     print(f"{n_jobs} real jobs/window from {len(trace):,} trace jobs, horizon {horizon}, "
           f"mean of {len(seeds)} seeds (window per seed) | spike_max={spike_max} scale={scale} "
-          f"| caps = real plan_gpu quanta clipped at {CAP_CLIP}")
+          f"| truth={truth_mode} caps={caps_mode} clip={CAP_CLIP}")
     header = (f"{'pool':>4}  {'policy':<12} {'SLA':>7} {'prodSLA':>8} {'util':>6} "
               f"{'slowdown':>9} {'fb':>6} {'done':>8}")
     all_per_seed: dict[str, dict[str, list[dict]]] = {}
@@ -241,7 +278,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         for name, factory in rows:
             per_seed: list[dict] = []
             for s in seeds:
-                jobs, cap_map, tcap = make_trace_workload(trace, n_jobs, s, horizon, pred, oracle)
+                jobs, cap_map, tcap = make_trace_workload(trace, n_jobs, s, horizon, pred,
+                                                          oracle, true_map, declared)
                 cap_map = {k: min(v, gpus) for k, v in cap_map.items()}  # feasible at this pool
                 tcap = {k: min(v, gpus) for k, v in tcap.items()}
                 u_map, spike_map = assign(jobs, s, dist, spike_max)
@@ -292,13 +330,18 @@ def main() -> None:
     ap.add_argument("--quantile", default="p50", choices=("p10", "p50", "p90", "prod-p90"),
                     help="Exp 31: which predicted quantile the agents request (--caps predicted); "
                          "'prod-p90' = per-job rule: prod hedges to p90, best-effort stays p50")
+    ap.add_argument("--truth", default="plan", choices=("plan", "usage"),
+                    help="Exp 36: 'usage' = a job's TRUE need is its measured GPU usage "
+                         "(pred_job_usage.csv); --caps then picks the request: real=the plan_gpu "
+                         "DECLARATION, predicted=Stage-1 usage prediction, oracle=true usage")
     a = ap.parse_args()
     if a.stats:
         cross_tier_stats()
         return
     sweep([int(p) for p in a.pools.split(",")], n_jobs=16, horizon=300,
           seeds=list(range(a.seeds)), scale=a.scale, spike_max=a.spike,
-          use_llm=a.llm, model=a.model, caps_mode=a.caps, quantile=a.quantile)
+          use_llm=a.llm, model=a.model, caps_mode=a.caps, quantile=a.quantile,
+          truth_mode=a.truth)
 
 
 if __name__ == "__main__":

@@ -119,6 +119,12 @@
     "class": "high",
     "justification": "Job is important for production and has a tight deadline."
   },
+  "joint|high|high|ahead|ample|few|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "justification": "High demand and spike risk warrant heavy GPU margins to protect imminent deadlines; light reservation allows some idle headroom for incoming prod jobs without starving other users.",
+    "margin": "heavy",
+    "reserve": "light"
+  },
   "joint|high|high|ahead|ample|many|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "justification": "High spike risk threatens deadlines while ensuring some headroom for incoming critical jobs.",
@@ -256,6 +262,12 @@
     "justification": "High demand spike risk demands heavy GPU margins while light reservation allows some idle headroom for incoming prod jobs without starving other tasks.",
     "margin": "heavy",
     "reserve": "light"
+  },
+  "joint|high|high|behind|ample|many|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "justification": "High demand and spike risk warrant heavy GPU margins to protect deadlines while holding onto idle headroom for incoming prod jobs.",
+    "margin": "heavy",
+    "reserve": "heavy"
   },
   "joint|high|high|behind|ample|none|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
@@ -419,6 +431,12 @@
     "margin": "heavy",
     "reserve": "light"
   },
+  "joint|high|high|ontrack|moderate|few|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "justification": "High demand spike risk requires heavy GPU margin hedging, while light reserve allows some idle headroom for incoming prod jobs without starving other tasks.",
+    "margin": "heavy",
+    "reserve": "light"
+  },
   "joint|high|high|ontrack|moderate|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "High spike risk justifies heavy margin for job deadlines; light reserve to accommodate incoming prod jobs.",
@@ -458,6 +476,12 @@
   "joint|high|high|ontrack|scarce|few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "justification": "High spike risk threatens deadlines despite low contention.",
+    "margin": "heavy",
+    "reserve": "light"
+  },
+  "joint|high|high|ontrack|scarce|few|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "justification": "High demand uncertainty and spike risk warrant heavy GPU margin allocation to protect deadlines, while light reservation allows some idle headroom for incoming prod jobs without starving other users.",
     "margin": "heavy",
     "reserve": "light"
   },
@@ -2692,6 +2716,11 @@
     "hedge": "some",
     "justification": "High spike risk warrants some insurance, despite low contention and being ahead of schedule."
   },
+  "marg|high|high|small|behind|high|besteffort|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "hedge": "heavy",
+    "justification": "Despite a small predicted GPU request, the high spike risk and being behind schedule warrant a heavy safety margin to protect against potential overbooking in the besteffort priority tier despite high"
+  },
   "marg|high|high|small|behind|high|prod|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "hedge": "heavy",
@@ -2706,6 +2735,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "High spike risk and being behind schedule justify some hedging, even with a small request under high contention."
+  },
+  "marg|high|high|small|behind|low|besteffort|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "hedge": "heavy",
+    "justification": "Despite a small predicted GPU request, the high uncertainty and spike risk necessitate heavy hedging to ensure meeting the deadline even if a large demand spike occurs."
   },
   "marg|high|high|small|behind|low|prod|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -2722,6 +2756,11 @@
     "hedge": "some",
     "justification": "High spike risk and being behind schedule justify some hedging, despite the small request size and current low contention."
   },
+  "marg|high|high|small|ontrack|high|besteffort|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "hedge": "some",
+    "justification": "Despite the low base ask, the high spike risk warrants a moderate safety margin to ensure timely job completion without missing the deadline."
+  },
   "marg|high|high|small|ontrack|high|prod|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "hedge": "some",
@@ -2736,6 +2775,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "High spike risk and small request size warrant some insurance, even with high contention and on-track schedule."
+  },
+  "marg|high|high|small|ontrack|low|besteffort|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "hedge": "some",
+    "justification": "Despite the small predicted GPU request, the high uncertainty and spike risk warrant a moderate safety margin to ensure timely job execution."
   },
   "marg|high|high|small|ontrack|low|prod|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -4761,6 +4805,11 @@
     "_source": "llm:qwen2.5:3b",
     "hedge": "some",
     "justification": "Despite a small predicted GPU request, the medium spike risk and being behind schedule warrant some extra GPUs to mitigate potential demand spikes without significantly impacting others."
+  },
+  "marg|medium|medium|small|behind|low|prod|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "hedge": "some",
+    "justification": "Despite a small predicted GPU request, the medium spike risk and deadline pressure necessitate some extra GPUs to mitigate potential overcommitment risks."
   },
   "marg|medium|medium|small|ontrack|high|besteffort|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",

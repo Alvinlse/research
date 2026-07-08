@@ -1525,3 +1525,164 @@ cd Research
 .venv-forecast/bin/python -m pins.eval.predict_real --skip-llm # deterministic arms only
 ```
 Per-job data in `pins/eval/results_real.json`.
+
+## Experiment 35 — RETARGET STAGE-1: predict what the submission script does NOT already say
+
+**Date:** 2026-07-08
+
+**Why.** The GBT track's target, `plan_gpu`, is a USER-DECLARED field — it sits in the
+submission script next to `plan_cpu`/`plan_mem`, so at decision time the scheduler already
+has it. Predicting it is imputation, not demand prediction (the standing Exp 30/31 caveat).
+The genuinely unknown-at-submission quantities in the v2020 trace are the task's **runtime**
+(task table `end_time − start_time`) and its **actual usage** (`pai_sensor_table`,
+downloaded here: 1.06 GB, 82% task coverage). Rule adopted: **declared fields are features,
+not targets** — `plan_gpu` moves into the feature set for every new target.
+
+**Method.** `predict_gpu.py` gains `--target {plan_gpu,runtime,gpu_util,gpu_mem}`; one
+harness, same quantile-GBT machinery, same by-job split, same gbt-full-vs-gbt-num gate. The
+`plan_gpu` default is byte-identical (re-ran it: metrics and `pred_job_gpu.csv` match Exp 30
+exactly, so Exp 30/31 stay reproducible). New targets: `runtime` = Terminated GPU tasks,
+y = end−start (732,691 tasks, median 615 s); `gpu_util` = mean `gpu_wrk_util` over the
+task's workers; `gpu_mem` = max `max_gpu_wrk_mem` (both: inner join sensor→task on
+(job_name, task_name), 850,068/1,037,085 tasks, zeros KEPT — idle-GPU tasks are the
+over-provisioning signal). Features = [inst_num, plan_cpu, plan_mem, **plan_gpu**] + the
+same semantic tags (gpu_type, task_name, workload).
+
+**Result (test split, ~183k–213k tasks; gate = does gbt-full beat gbt-num).**
+
+| target | global floor | gbt-num | gbt-full | gate |
+|---|---|---|---|---|
+| runtime (s) | MAE 5140 · rho −0.01 · w2x 22% | MAE 4600 · rho 0.48 | **MAE 4497 · rho 0.55 · w2x 41%** | PASS +2.2% MAE |
+| gpu_util (%) | MAE 10.8 · rho −0.04 · w2x 3% | MAE 8.71 · rho 0.53 | **MAE 8.34 · rho 0.60** | PASS +4.2% MAE |
+| gpu_mem (GB) | MAE 2.16 · rho −0.05 · w2x 23% | MAE 1.75 · rho 0.55 | **MAE 1.60 · rho 0.63 · w2x 53%** | PASS +8.5% MAE |
+
+**Findings.**
+1. **All three unknown-at-submission targets are predictable from the submission bundle**
+   (rho 0.55–0.63 vs a rank-dead floor) and the semantic-tags gate passes on every one —
+   the Stage-1 claim now stands on targets a scheduler could not simply read off the script.
+2. **Runtime is the hardest** (within-2x only 41%) — consistent with the scheduling
+   literature; the P10–P90 interval (width ≈ 12k s vs median 615 s) is doing honest work here,
+   which is exactly what the Exp 31 hedge machinery wants as input.
+3. **The declared-vs-actual gap is enormous and now measured in-trace:** median request is
+   50% of a GPU, median actual utilization is **0.22%**; 55.9% of GPU-requesting tasks use
+   <1%; spearman(plan_gpu, actual util) = **0.23**. The user's declaration barely tracks
+   reality — this is the over-provisioning premise the whole PINS pitch rests on, and it is
+   also Exp 32/33's unpriced over-claiming observed in the wild at trace scale.
+4. plan_gpu-as-feature + tags predict actual usage far better than plan_gpu alone (rho 0.60
+   vs 0.23) — a supply agent using this predictor can *discount* inflated requests, the
+   Stage-1→incentive-layer bridge.
+
+**Honest read / caveats.** Usage aggregation hides worker-level heterogeneity (mean/max per
+task); sensor join covers 82% (missingness plausibly biased toward short tasks); runtime is
+Terminated-only (survivor bias vs Failed); logRMSE/within-2x on usage targets are distorted
+by the (deliberately kept) near-zero truths — MAE/rho/coverage are the meaningful columns;
+intervals are plain quantile regression, not conformal. **Stage-2 is NOT rewired:**
+trace_replay still negotiates over plan_gpu predictions (`pred_job_gpu.csv` unchanged);
+moving the replay world to usage-based demand changes the truth definition (a job that
+requested 4 GPUs but uses 0.1 should arguably not *need* 4 quanta to progress) and is the
+natural next experiment.
+
+**Reproduce.**
+```bash
+cd Research
+.venv/bin/python data/fetch_alibaba_gpu.py --tables pai_sensor_table   # 1.06 GB, once
+.venv/bin/python -m pins.eval.predict_gpu --target runtime
+.venv/bin/python -m pins.eval.predict_gpu --target gpu_util
+.venv/bin/python -m pins.eval.predict_gpu --target gpu_mem
+.venv/bin/python -m pins.eval.predict_gpu                               # plan_gpu, unchanged
+```
+`--target` + target-aware `build_features` in `pins/eval/predict_gpu.py`; results in
+`pins/eval/results_{gpu_runtime,gpu_util,gpu_mem}.json`.
+
+## Experiment 36 — THE USAGE WORLD: Stage-1 usage prediction wired into the two-sided negotiation
+
+**Date:** 2026-07-08
+
+**Why.** Exp 35 retargeted Stage-1 to what the submission script does NOT say and measured
+the wedge: median declaration 50% of a GPU vs median actual utilization 0.22%, rho 0.23.
+But trace_replay still negotiated over plan_gpu — both the requests AND the truth. This
+experiment moves the replay world onto the retargeted prediction: a job's TRUE need
+(progress denominator) becomes its measured usage, and the only thing that varies between
+arms is what the agents request — the plan_gpu DECLARATION (today's practice), the Stage-1
+P50 USAGE PREDICTION, or the usage ORACLE. This is the right-sizing question end-to-end:
+does predicting actual demand, instead of trusting the user's ask, buy system value through
+the negotiation?
+
+**Method.** `predict_gpu --target gpu_util` now exports `pred_job_usage.csv` (209,336 test
+jobs: p10/p50/p90 predicted usage quanta + usage truth, same `sum(util·inst_num)/25` recipe
+as replay_jobs.csv). `trace_replay --truth usage` swaps `true_cap_map` to usage quanta
+(floor 1, clip CAP_CLIP); `--caps real|predicted|oracle` picks the request = declaration /
+prediction / truth. One csv carries pred+truth so all arms share one key set — windows, and
+therefore seeds, stay perfectly paired across the three arms (NOT with plan-world tiers,
+whose window restriction differs). 83% of jobs truly need ≤1 quantum; the median declaration
+is ~4. Rule tier + qwen2.5:3b tier (fb=0% everywhere — the LLM really decided), 32 seeds,
+pools {4,6,8}. Plan-world paths byte-untouched.
+
+**Result (paired by seed, n=32; * = 95% CI excludes 0).**
+
+Declared − predicted (the value of right-sizing; + = declaration worse), negotiated policy:
+
+| pool | rule | qwen2.5:3b |
+|---|---|---|
+| 4 | ΔSLA **+11.5 ±6.5*** · Δutil +16.1* · Δslow +3.1* | ΔSLA **+14.5 ±6.2*** · Δutil +10.4* · Δslow +4.8* |
+| 6 | ΔSLA **+7.8 ±5.6*** · Δutil +22.9* · Δslow +2.0* | ΔSLA **+12.5 ±4.9*** · Δutil +20.0* · Δslow +2.9* |
+| 8 | ΔSLA **+5.9 ±4.6*** · Δutil +24.6* · Δslow +1.4* | ΔSLA **+8.6 ±4.1*** · Δutil +22.4* · Δslow +1.6* |
+
+(The greedy floor shows the same or bigger gaps: +8..+16 SLA pts*. Note Δutil's sign: the
+DECLARED arm's higher "utilization" is hoarding-by-construction — quanta granted to jobs
+that cannot convert them into progress — while its SLA and slowdown are strictly worse.)
+
+Predicted − oracle (cost of the GBT's remaining error), negotiated: rule +5.5/+8.2/+10.7
+SLA pts* (prodSLA +7.9/+8.9/+12.4*); 3b similar (+5.1/+6.1/+9.0*).
+
+Negotiated − floor WITHIN each request world (does negotiation still earn its keep?):
+
+| world | rule | qwen2.5:3b |
+|---|---|---|
+| declared | SLA −3.3..−4.5* · prodSLA −6.3..−10.8* | SLA −3.5..−5.5* · prodSLA **−10.2..−16.2*** |
+| predicted | SLA ns/ns/−2.0* · prodSLA ns | SLA **−3.9/−6.2/−5.5*** · prodSLA **−4.4/−6.7/−3.9*** · util +7..+9* · slow ≤0 |
+| oracle | SLA ns · prodSLA −7.6*/ns/−6.1* | SLA ns/ns/−2.9* · prodSLA −13.5/−5.5/−5.8* |
+
+**Findings.**
+1. **Right-sizing from the Stage-1 usage prediction dominates trusting the declaration** at
+   every pool for every policy: −6..−16 SLA violation pts, slowdown roughly halved at
+   saturation (8.2 vs 5.1 ticks, rule negotiated pool 4), and 10–26 pts of the pool freed
+   from hoarded grants. The Exp-35 wedge (declarations barely track usage) converts directly
+   into scheduler value through the existing negotiation — no mechanism change needed.
+2. **Prediction error still costs +5..+12 SLA pts vs the usage oracle** — the imperfect GBT
+   recovers roughly a third to two-thirds of the declared→oracle gap depending on pool.
+   Better usage predictors have direct system-level payoff here (unlike the plan world,
+   where Exp 31's hedging had already saturated the prod tier).
+3. **The 3b LLM negotiation and the prediction are complements**: under predicted-usage
+   requests, negotiated@3b beats its floor on BOTH overall SLA (−3.9/−6.2/−5.5*) and prodSLA
+   (−4.4/−6.7/−3.9*) at every pool, with HIGHER productive utilization (+7..+9*) and zero or
+   negative slowdown cost — the first world in this project where the negotiation wins every
+   headline metric simultaneously. The rule tier's negotiated advantage mostly evaporates
+   there (SLA ns at pools 4/6) — the LLM agents' state-dependent margins do real work that
+   the fixed rule does not, echoing the Exp-24/27 protocol-vs-scale pattern.
+4. Prod-protection compresses as requests get honest (decl −16.2* → pred −4.4* at 3b pool
+   4) — Exp 31's hedge/reserve substitution reappearing: an accurate request already carries
+   most of the insurance the reserve used to provide, and what negotiation adds shifts from
+   tier protection to overall efficiency.
+
+**Honest read / caveats.** "True need = measured mean utilization" is the OPTIMISTIC
+right-sizing assumption — it ignores GPU-memory residency and utilization burstiness (a job
+using 30% on average may still need the whole device resident; `gpu_mem`/max-based truth is
+one flag away and would shrink the wedge); usage quanta floor at 1 quantum; windows are
+restricted to predict_gpu's gpu_util test jobs, so usage-world tiers pair only with each
+other; 3b only (14b unrun); the declared arm's util is not comparable across arms (held ≠
+productive); intervals still not conformal, and the quantile knob (`--quantile p90` etc.)
+is wired but unexplored in the usage world.
+
+**Reproduce.**
+```bash
+cd Research
+.venv/bin/python -m pins.eval.predict_gpu --target gpu_util      # regenerates pred_job_usage.csv
+.venv/bin/python -m pins.trace_replay --seeds 32 --truth usage --caps real       # declaration
+.venv/bin/python -m pins.trace_replay --seeds 32 --truth usage --caps predicted  # Stage-1 P50
+.venv/bin/python -m pins.trace_replay --seeds 32 --truth usage --caps oracle     # matched control
+# + the same three with --llm --model qwen2.5:3b
+```
+`--truth` + `load_usage_quanta` + `true_map`/`declared` in `pins/trace_replay.py`; usage
+export in `pins/eval/predict_gpu.py`; tiers `{rule,qwen2.5:3b}+{decl,pred,oracle}@usage` in
+`pins/results_trace_replay.json`.
