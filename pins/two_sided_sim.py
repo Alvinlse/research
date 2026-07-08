@@ -121,7 +121,8 @@ def _record_outcome(trace, seen, tag, o):
 # --------------------------------------------------------------------------- #
 def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
              u_map: dict, spike_map: dict, scale: int, spike_max: float,
-             cap_map: dict[str, int], true_cap_map: dict[str, int] | None = None) -> dict:
+             cap_map: dict[str, int], true_cap_map: dict[str, int] | None = None,
+             belief_work: dict[str, float] | str | None = None) -> dict:
     """One run of a policy on a fresh workload copy. Rigid: a running job is never involuntarily
     preempted; it only shrinks VOLUNTARILY to its ceiling (cap0 + this tick's negotiated margin).
     Spikes: a train phase's true work is inflated; margin GPUs grant rate>1 to absorb it, capped at
@@ -131,7 +132,12 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
     `true_cap_map` (Exp 30): if given, `cap_map` is the demand the agents REQUEST/negotiate over
     (e.g. a Stage-1 prediction) while progress dynamics run on the job's TRUE train demand —
     under-prediction starves the job (rate<1 even fully granted), over-prediction hogs GPUs it
-    cannot convert into progress. If None, request == truth (Exp 27/28 behaviour, unchanged)."""
+    cannot convert into progress. If None, request == truth (Exp 27/28 behaviour, unchanged).
+
+    `belief_work` (Exp 38): what the DEMAND AGENT believes a job's total work is, for its
+    behind/ontrack/ahead deadline bucket only — dynamics and SLA stay on the truth. None =
+    oracle (true remaining, the pre-Exp-38 behaviour, unchanged); "blind" = no time signal
+    (every job reads "ontrack"); {jid: predicted total ticks} = Stage-1 predicted runtime."""
     jobs = [Job(j.jid, j.arrival, list(j.phases), list(j.need), j.urgency, j.deadline, j.tier)
             for j in jobs_proto]
     by_id = {j.jid: j for j in jobs}
@@ -179,7 +185,14 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
         # never enters `want`, so the negotiation no longer false-fallbacks on base oversubscription.
         demand: list[DemandJob] = []
         for j in active:
-            db = bridge.deadline_bucket(remaining(j), j.deadline - t)
+            if belief_work is None:                        # oracle time signal (unchanged)
+                rem = remaining(j)
+            elif belief_work == "blind":                   # no time signal
+                rem = None
+            else:                                          # believed remaining = predicted - done
+                rem = max(0.0, belief_work[j.jid]
+                          - (sum(j.need[:pidx[j.jid]]) + progress[j.jid]))
+            db = "ontrack" if rem is None else bridge.deadline_bucket(rem, j.deadline - t)
             ctx = bridge.margin_ctx(job_facts(j, u_map[j.jid], spike_max, cap_map[j.jid]),
                                     db, con_demand)
             rank = DORDER.get(db, 0) * 2 + (1 if j.tier == "prod" else 0)

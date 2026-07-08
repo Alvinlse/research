@@ -2476,6 +2476,11 @@
     "hedge": "heavy",
     "justification": "High spike risk and large forecast make a heavy hedge prudent to protect against missing the deadline, even with low contention."
   },
+  "marg|high|high|large|ahead|low|prod|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "hedge": "heavy",
+    "justification": "Despite low cluster contention, the high spike risk necessitates a heavy safety margin to ensure meeting the deadline even in case of a large demand spike."
+  },
   "marg|high|high|large|behind|high|besteffort|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "hedge": "heavy",
@@ -2625,6 +2630,11 @@
     "_source": "llm:qwen2.5:3b",
     "hedge": "heavy",
     "justification": "Given the high uncertainty and spike risk, even with low cluster contention, a heavy safety margin is warranted to protect against potential missed deadlines due to unexpected demand spikes."
+  },
+  "marg|high|high|medium|behind|low|prod|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "hedge": "heavy",
+    "justification": "Given the high forecast uncertainty and spike risk, even with a medium predicted request and low cluster contention, the likelihood of missing the deadline due to a demand spike is significant; thus, "
   },
   "marg|high|high|medium|ontrack|high|besteffort|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",

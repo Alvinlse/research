@@ -45,6 +45,7 @@ REPLAY_CSV = os.path.join(HERE, "..", "data", "alibaba-gpu-v2020", "replay_jobs.
 PRED_CSV = os.path.join(HERE, "eval", "pred_job_gpu.csv")
 USAGE_CSV = os.path.join(HERE, "eval", "pred_job_usage.csv")
 MEM_CSV = os.path.join(HERE, "eval", "pred_job_mem.csv")
+RUNTIME_CSV = os.path.join(HERE, "eval", "pred_job_runtime.csv")
 
 TICK_S = 120         # one sim tick = 2 real minutes -> median trace job ≈ 9 ticks of work
 WORK_CLAMP = (1, 60)
@@ -101,9 +102,16 @@ def load_usage_quanta(path: str = USAGE_CSV, quantile: str = "p50"
     return pred, truth
 
 
+def load_runtime_pred(path: str = RUNTIME_CSV) -> dict[str, float]:
+    """Exp 38: job_name -> Stage-1 predicted runtime (s, P50) from predict_gpu --target runtime."""
+    with open(path) as f:
+        return {r["job_name"]: float(r["p50"]) for r in csv.DictReader(f)}
+
+
 def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, oracle=False,
-                        true_map=None, declared=False
-                        ) -> tuple[list[Job], dict[str, int], dict[str, int]]:
+                        true_map=None, declared=False, time_pred=None, time_mode=None
+                        ) -> tuple[list[Job], dict[str, int], dict[str, int],
+                                   dict[str, float] | str | None]:
     """n_jobs real jobs thinned from a random 10-hour trace window, on ONE clock.
 
     Real (jointly, per job): arrival time within the window, duration, GPU quanta — all in
@@ -119,19 +127,31 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
     Exp 36 (usage world): `true_map` = {job_name: usage quanta} replaces the trace's plan_gpu
     quanta as the TRUE need; `declared=True` makes the agents request the trace's plan_gpu
     declaration anyway (today's practice — the over-provisioning baseline).
+
+    Exp 38 (time belief): `time_pred` = {job_name: predicted runtime s} restricts the window
+    to runtime-covered jobs (all three time arms share it → seed-paired); `time_mode` picks
+    the demand agent's deadline signal: "predicted" = belief map from time_pred, "blind" =
+    no signal, "oracle" = true work on the same restricted windows. None = pre-Exp-38.
     """
     rng = random.Random(f"replay-{seed}")
     window_s = int(horizon * ARRIVAL_FRAC) * TICK_S        # arrivals within first 60%
     t_lo, t_hi = trace[0][0], trace[-1][0] - window_s
     t0 = rng.randrange(t_lo, t_hi)
-    in_win = [r for r in trace if t0 <= r[0] < t0 + window_s and (pred is None or r[3] in pred)]
+    in_win = [r for r in trace if t0 <= r[0] < t0 + window_s and (pred is None or r[3] in pred)
+              and (time_pred is None or r[3] in time_pred)]
     if len(in_win) < n_jobs:                               # sparse stretch of the trace: reroll
-        return make_trace_workload(trace, n_jobs, seed + 7919, horizon, pred, oracle)
+        # BUG until Exp 37: this reroll dropped true_map/declared, silently reverting the
+        # rerolled seed to the plan world (request==prediction, plan truth) in every arm —
+        # 5/32 seeds in the Exp 36/37 sweeps. Forward EVERYTHING.
+        return make_trace_workload(trace, n_jobs, seed + 7919, horizon, pred, oracle,
+                                   true_map, declared, time_pred, time_mode)
     window = sorted(rng.sample(in_win, n_jobs), key=lambda r: r[:3])   # thin the arrival stream
 
     jobs: list[Job] = []
     cap_map: dict[str, int] = {}
     true_cap_map: dict[str, int] = {}
+    belief: dict[str, float] | str | None = "blind" if time_mode == "blind" else \
+        {} if time_mode == "predicted" else None           # "oracle"/None -> true remaining
     for i, (arr_s, dur_s, quanta, name) in enumerate(window):
         arrival = (arr_s - t0) // TICK_S
         work = float(min(WORK_CLAMP[1], max(WORK_CLAMP[0], round(dur_s / TICK_S))))
@@ -152,7 +172,10 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
             if isinstance(p, tuple):                       # prod-p90: hedge only prod jobs
                 p = p[1] if tier == "prod" else p[0]
             cap_map[j.jid] = min(max(1, round(p)), CAP_CLIP)
-    return jobs, cap_map, true_cap_map
+        if time_mode == "predicted":                       # believed total work, same clamp as work
+            belief[j.jid] = float(min(WORK_CLAMP[1],
+                                      max(WORK_CLAMP[0], round(time_pred[name] / TICK_S))))
+    return jobs, cap_map, true_cap_map, belief
 
 
 METRICS = ("sla", "prod_sla", "util", "slowdown", "finished", "fallback_rate")
@@ -235,7 +258,8 @@ def cross_tier_stats(policy: str = "negotiated") -> None:
 
 
 def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
-          caps_mode: str = "real", quantile: str = "p50", truth_mode: str = "plan") -> None:
+          caps_mode: str = "real", quantile: str = "p50", truth_mode: str = "plan",
+          time_mode: str | None = None) -> None:
     trace = load_trace()
     true_map = None
     declared = False
@@ -246,6 +270,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
     else:
         pred = load_predicted_quanta(quantile=quantile) if caps_mode != "real" else None
     oracle = caps_mode == "oracle"
+    time_pred = load_runtime_pred() if time_mode else None   # Exp 38: restricts windows too
     dist = load_uncertainty_distribution()
     cache: dict = load_cache()
     decisions: list = []
@@ -255,6 +280,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         suffix = f"+pred-{quantile}"          # 'rule+pred' stays the Exp-30 P50 tier
     if truth_mode != "plan":
         suffix = ("+decl" if caps_mode == "real" else suffix) + "@" + truth_mode
+    if time_mode:
+        suffix += f"+time-{time_mode}"
     tag = ("rule" if not use_llm else model) + suffix
 
     rows = [
@@ -280,13 +307,14 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         for name, factory in rows:
             per_seed: list[dict] = []
             for s in seeds:
-                jobs, cap_map, tcap = make_trace_workload(trace, n_jobs, s, horizon, pred,
-                                                          oracle, true_map, declared)
+                jobs, cap_map, tcap, belief = make_trace_workload(trace, n_jobs, s, horizon, pred,
+                                                                  oracle, true_map, declared,
+                                                                  time_pred, time_mode)
                 cap_map = {k: min(v, gpus) for k, v in cap_map.items()}  # feasible at this pool
                 tcap = {k: min(v, gpus) for k, v in tcap.items()}
                 u_map, spike_map = assign(jobs, s, dist, spike_max)
                 r = simulate(jobs, factory(), gpus, horizon, u_map, spike_map, scale,
-                             spike_max, cap_map, true_cap_map=tcap)
+                             spike_max, cap_map, true_cap_map=tcap, belief_work=belief)
                 per_seed.append({k: r[k] for k in METRICS})
             per_seed_pool[name] = per_seed
             results.append((name, {k: sum(row[k] for row in per_seed) / len(seeds)
@@ -338,6 +366,11 @@ def main() -> None:
                          "DECLARATION, predicted=Stage-1 usage prediction, oracle=true usage. "
                          "Exp 37: 'mem' = need is peak GPU-memory residency in card quanta "
                          "(pred_job_mem.csv) — the pessimistic right-sizing truth")
+    ap.add_argument("--time", default=None, choices=("predicted", "blind", "oracle"),
+                    help="Exp 38: the demand agent's deadline signal — 'predicted' = Stage-1 "
+                         "runtime P50 (pred_job_runtime.csv), 'blind' = none (always ontrack), "
+                         "'oracle' = true work on the same runtime-covered windows. Default "
+                         "(absent) = pre-Exp-38 oracle on unrestricted windows")
     a = ap.parse_args()
     if a.stats:
         cross_tier_stats()
@@ -345,7 +378,7 @@ def main() -> None:
     sweep([int(p) for p in a.pools.split(",")], n_jobs=16, horizon=300,
           seeds=list(range(a.seeds)), scale=a.scale, spike_max=a.spike,
           use_llm=a.llm, model=a.model, caps_mode=a.caps, quantile=a.quantile,
-          truth_mode=a.truth)
+          truth_mode=a.truth, time_mode=a.time)
 
 
 if __name__ == "__main__":

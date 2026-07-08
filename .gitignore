@@ -15,3 +15,4 @@ __pycache__/
 pins/eval/pred_job_gpu.csv
 pins/eval/pred_job_usage.csv
 pins/eval/pred_job_mem.csv
+pins/eval/pred_job_runtime.csv

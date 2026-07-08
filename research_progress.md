@@ -1624,46 +1624,52 @@ Declared − predicted (the value of right-sizing; + = declaration worse), negot
 
 | pool | rule | qwen2.5:3b |
 |---|---|---|
-| 4 | ΔSLA **+11.5 ±6.5*** · Δutil +16.1* · Δslow +3.1* | ΔSLA **+14.5 ±6.2*** · Δutil +10.4* · Δslow +4.8* |
-| 6 | ΔSLA **+7.8 ±5.6*** · Δutil +22.9* · Δslow +2.0* | ΔSLA **+12.5 ±4.9*** · Δutil +20.0* · Δslow +2.9* |
-| 8 | ΔSLA **+5.9 ±4.6*** · Δutil +24.6* · Δslow +1.4* | ΔSLA **+8.6 ±4.1*** · Δutil +22.4* · Δslow +1.6* |
+| 4 | ΔSLA **+13.1 ±6.6*** · Δutil +19.5* · Δslow +3.3* | ΔSLA **+17.0 ±6.2*** · Δutil +12.9* · Δslow +5.1* |
+| 6 | ΔSLA **+8.2 ±6.0*** · Δutil +27.5* · Δslow +2.0* | ΔSLA **+14.1 ±5.0*** · Δutil +24.2* · Δslow +2.9* |
+| 8 | ΔSLA **+5.3 ±4.8*** · Δutil +29.6* · Δslow +1.4* | ΔSLA **+9.2 ±4.0*** · Δutil +27.4* · Δslow +1.6* |
 
-(The greedy floor shows the same or bigger gaps: +8..+16 SLA pts*. Note Δutil's sign: the
+(The greedy floor shows the same or bigger gaps: +8..+18 SLA pts*. Note Δutil's sign: the
 DECLARED arm's higher "utilization" is hoarding-by-construction — quanta granted to jobs
 that cannot convert them into progress — while its SLA and slowdown are strictly worse.)
 
-Predicted − oracle (cost of the GBT's remaining error), negotiated: rule +5.5/+8.2/+10.7
-SLA pts* (prodSLA +7.9/+8.9/+12.4*); 3b similar (+5.1/+6.1/+9.0*).
+Predicted − oracle (cost of the GBT's remaining error), negotiated: rule +2.7ns/+5.5*/+6.4*
+SLA pts (prodSLA +3.6/+5.8 ns, +9.0*); 3b +2.3ns/+2.7*/+3.7* (prodSLA +6.2ns/+5.0*/+5.8*).
 
 Negotiated − floor WITHIN each request world (does negotiation still earn its keep?):
 
 | world | rule | qwen2.5:3b |
 |---|---|---|
-| declared | SLA −3.3..−4.5* · prodSLA −6.3..−10.8* | SLA −3.5..−5.5* · prodSLA **−10.2..−16.2*** |
-| predicted | SLA ns/ns/−2.0* · prodSLA ns | SLA **−3.9/−6.2/−5.5*** · prodSLA **−4.4/−6.7/−3.9*** · util +7..+9* · slow ≤0 |
-| oracle | SLA ns · prodSLA −7.6*/ns/−6.1* | SLA ns/ns/−2.9* · prodSLA −13.5/−5.5/−5.8* |
+| declared | SLA −4.9*/−3.1ns/−4.9* · prodSLA −8.4..−12.4* | SLA −6.2*/−2.5ns/−5.3* · prodSLA **−12.0..−19.7*** |
+| predicted | SLA ns/ns/−2.0* · prodSLA ns/ns/−3.1* | SLA **−4.9/−6.8/−6.2*** · prodSLA **−5.7/−6.8/−5.2*** · util +7..+9* · slow ≤0 |
+| oracle | SLA ns · prodSLA −7.7*/ns/−4.9* | SLA ns/−2.7*/ns · prodSLA −12.6/−5.5/−3.9* |
 
 **Findings.**
 1. **Right-sizing from the Stage-1 usage prediction dominates trusting the declaration** at
-   every pool for every policy: −6..−16 SLA violation pts, slowdown roughly halved at
-   saturation (8.2 vs 5.1 ticks, rule negotiated pool 4), and 10–26 pts of the pool freed
-   from hoarded grants. The Exp-35 wedge (declarations barely track usage) converts directly
-   into scheduler value through the existing negotiation — no mechanism change needed.
-2. **Prediction error still costs +5..+12 SLA pts vs the usage oracle** — the imperfect GBT
-   recovers roughly a third to two-thirds of the declared→oracle gap depending on pool.
-   Better usage predictors have direct system-level payoff here (unlike the plan world,
-   where Exp 31's hedging had already saturated the prod tier).
+   every pool for every policy: −5..−17 SLA violation pts, slowdown halved at saturation
+   (8.0 vs 4.7 ticks, rule negotiated pool 4; floor 8.9 vs 3.9), and 13–30 pts of the pool
+   freed from hoarded grants. The Exp-35 wedge (declarations barely track usage) converts
+   directly into scheduler value through the existing negotiation — no mechanism change needed.
+2. **Prediction error still costs +2..+6 SLA pts vs the usage oracle** (prodSLA up to +9*) —
+   the imperfect GBT recovers most of the declared→oracle gap. Better usage predictors keep
+   a direct system-level payoff here (unlike the plan world, where Exp 31's hedging had
+   already saturated the prod tier), but the bulk of the value is already banked at P50.
 3. **The 3b LLM negotiation and the prediction are complements**: under predicted-usage
-   requests, negotiated@3b beats its floor on BOTH overall SLA (−3.9/−6.2/−5.5*) and prodSLA
-   (−4.4/−6.7/−3.9*) at every pool, with HIGHER productive utilization (+7..+9*) and zero or
+   requests, negotiated@3b beats its floor on BOTH overall SLA (−4.9/−6.8/−6.2*) and prodSLA
+   (−5.7/−6.8/−5.2*) at every pool, with HIGHER productive utilization (+7..+9*) and zero or
    negative slowdown cost — the first world in this project where the negotiation wins every
    headline metric simultaneously. The rule tier's negotiated advantage mostly evaporates
    there (SLA ns at pools 4/6) — the LLM agents' state-dependent margins do real work that
    the fixed rule does not, echoing the Exp-24/27 protocol-vs-scale pattern.
-4. Prod-protection compresses as requests get honest (decl −16.2* → pred −4.4* at 3b pool
+4. Prod-protection compresses as requests get honest (decl −19.7* → pred −5.7* at 3b pool
    4) — Exp 31's hedge/reserve substitution reappearing: an accurate request already carries
    most of the insurance the reserve used to provide, and what negotiation adds shifts from
    tier protection to overall efficiency.
+
+**Bugfix (2026-07-08, later the same day).** All numbers above are the CORRECTED 32-seed
+values — the original run carried the window-reroll bug (see the bugfix note before Exp 38):
+5/32 seeds silently reverted to the plan world, zeroing their decl−pred diffs. Corrections
+strengthened the headline (e.g. 3b decl−pred +14.5/+12.5/+8.6 → +17.0/+14.1/+9.2*) and
+shrank pred−oracle (those 5 seeds had been measuring plan-world prediction error).
 
 **Honest read / caveats.** "True need = measured mean utilization" is the OPTIMISTIC
 right-sizing assumption — it ignores GPU-memory residency and utilization burstiness (a job
@@ -1719,43 +1725,50 @@ Declared − predicted (value of right-sizing; + = declaration worse), negotiate
 
 | pool | rule | qwen2.5:3b |
 |---|---|---|
-| 4 | ΔSLA **+10.0 ±5.9*** · Δutil +15.2* · Δslow +4.0* | ΔSLA **+13.5 ±6.1*** · Δutil +10.4* · Δslow +4.5* |
-| 6 | ΔSLA **+5.9 ±5.2*** · Δutil +20.8* · Δslow +1.2* | ΔSLA **+9.6 ±5.2*** · Δutil +18.8* · Δslow +1.9* |
-| 8 | ΔSLA +3.1 ±4.4 ns · Δutil +21.7* · Δslow +1.0* | ΔSLA **+6.4 ±4.5*** · Δutil +20.7* · Δslow +1.3* |
+| 4 | ΔSLA **+10.9 ±5.9*** · Δutil +17.5* · Δslow +4.1* | ΔSLA **+15.2 ±5.9*** · Δutil +12.0* · Δslow +4.7* |
+| 6 | ΔSLA **+6.6 ±5.4*** · Δutil +24.4* · Δslow +1.2* | ΔSLA **+11.5 ±5.3*** · Δutil +22.4* · Δslow +2.0* |
+| 8 | ΔSLA +3.1 ±4.5 ns · Δutil +25.6* · Δslow +1.0* | ΔSLA **+7.2 ±4.4*** · Δutil +24.7* · Δslow +1.3* |
 
-(Exp-36 usage-world reference, negotiated: rule +11.5*/+7.8*/+5.9*, 3b +14.5*/+12.5*/+8.6*.)
+(Exp-36 usage-world reference, negotiated: rule +13.1*/+8.2*/+5.3*, 3b +17.0*/+14.1*/+9.2*.)
 
-Predicted − oracle (cost of GBT error), negotiated: rule +6.6/+10.5/+12.1 SLA*
-(prodSLA +12.7/+11.9/+16.3*); 3b +5.1/+8.0/+10.2* (prodSLA +8.8/+12.8/+14.5*).
+Predicted − oracle (cost of GBT error), negotiated: rule +3.5/+7.4/+7.2 SLA*
+(prodSLA +8.6/+9.4/+12.2*); 3b +1.8ns/+4.5*/+5.1* (prodSLA +2.1ns/+9.9*/+9.7*).
 
 Negotiated − floor WITHIN the predicted-request world:
 
 | pool | rule | qwen2.5:3b |
 |---|---|---|
-| 4 | SLA +1.2 ns · prodSLA −3.6* | SLA −3.3 ±3.4 ns · prodSLA **−7.2*** · util +7.2* · slow −0.0 |
-| 6 | SLA −0.4 ns · prodSLA −2.4 ns | SLA **−5.9*** · prodSLA **−3.1*** · util +9.1* · slow −0.4* |
-| 8 | SLA −2.3* · prodSLA −3.1* | SLA **−5.7*** · prodSLA **−5.0*** · util +8.3* · slow −0.4* |
+| 4 | SLA +0.4 ns · prodSLA −3.6* | SLA **−3.7 ±3.6*** · prodSLA **−8.2*** · util +7.1* · slow −0.1 |
+| 6 | SLA −0.4 ns · prodSLA −2.4 ns | SLA **−6.2*** · prodSLA **−4.1*** · util +9.0* · slow −0.4* |
+| 8 | SLA −2.1* · prodSLA −3.1* | SLA **−5.9*** · prodSLA **−5.7*** · util +8.0* · slow −0.3* |
 
 **Findings.**
 1. **Right-sizing survives the pessimistic truth.** Declared−predicted stays positive and
-   significant at every pool for 3b (+6.4..+13.5 SLA*) and at pools 4/6 for the rule
-   (+5.9..+10.0*); the win attenuates ~2–3 pts vs the usage world and loses significance
+   significant at every pool for 3b (+7.2..+15.2 SLA*) and at pools 4/6 for the rule
+   (+6.6..+10.9*); the win attenuates ~2 pts vs the usage world and loses significance
    only at rule/pool-8. Exp 36's headline was not an artifact of the optimistic truth —
    reality, bracketed between the two worlds, keeps the win.
-2. **Exp-36 finding 3 (negotiation + prediction are complements) replicates:** under
-   predicted requests, negotiated@3b again beats its floor on SLA, prodSLA, productive
-   utilization (+7..+9*) and slowdown at pools 6/8, with only pool-4 overall SLA dropping to
-   ns (sign unchanged). The rule tier's advantage again mostly evaporates (SLA ns at 4/6) —
+2. **Exp-36 finding 3 (negotiation + prediction are complements) replicates at every
+   pool:** under predicted requests, negotiated@3b beats its floor on all four headline
+   metrics — SLA −3.7*/−6.2*/−5.9*, prodSLA −8.2*/−4.1*/−5.7*, productive utilization
+   +7..+9*, slowdown ≤0. The rule tier's advantage again mostly evaporates (SLA ns at 4/6) —
    the state-dependent LLM margins, not the protocol alone, carry the predicted-request world.
 3. **Memory misprediction is the costliest error so far for the protected tier:**
-   pred−oracle prodSLA +8.8..+16.3* (usage world: +7.9..+12.4). Under-predicting residency
-   starves a prod job outright rather than merely slowing it — better mem predictors (or a
-   prod-p90 hedge on the mem interval, wired but unrun) have the largest headroom here.
+   pred−oracle prodSLA +8.6..+12.2* at the rule tier (usage world: +3.6ns..+9.0*).
+   Under-predicting residency starves a prod job outright rather than merely slowing it —
+   better mem predictors (or a prod-p90 hedge on the mem interval, wired but unrun) have
+   the largest headroom here.
 4. **Declaration-as-accidental-hedge at slack:** decl−pred prodSLA turns negative-ns at
-   pool 8 (rule −5.2, 3b −1.8) — with GPUs to spare, the inflated ask shields prod jobs from
+   pool 8 (rule −6.5, 3b −1.3) — with GPUs to spare, the inflated ask shields prod jobs from
    under-prediction, exactly the hedge/reserve substitution of Exp 31/36 seen from the other
    side. Right-sizing is a contention-regime play; at slack it trades prod insurance for
    freed capacity.
+
+**Bugfix (2026-07-08, later the same day).** Numbers above are the CORRECTED 32-seed values
+(window-reroll bug, see the note before Exp 38; original run had 5/32 seeds zeroed on
+decl−pred and plan-world-contaminated on pred−oracle). Two claims moved: the complement
+finding upgraded from "pools 6/8" to ALL pools (pool-4 SLA −3.3ns → −3.7*), and pred−oracle
+shrank (was +5.1..+10.2* at 3b, now +1.8ns..+5.1*) while staying costliest-for-prod.
 
 **Honest read / caveats.** Card memory for MISC (67% of GPU tasks) is assumed 16 GB — the
 trace does not say; max-over-workers × inst_num over-counts heterogeneous gangs (the recipe
@@ -1777,3 +1790,101 @@ cd Research
 `GPU_MEM_GB` + mem export in `pins/eval/predict_gpu.py`; `MEM_CSV` + `--truth mem` in
 `pins/trace_replay.py`; tiers `{rule,qwen2.5:3b}+{decl,pred,oracle}@mem` in
 `pins/results_trace_replay.json`.
+
+## Bugfix — the window reroll dropped the world (Exp 36/37 tiers rerun, 2026-07-08)
+
+`make_trace_workload`'s sparse-window reroll (`trace_replay.py`) forwarded `pred`/`oracle`
+but DROPPED `true_map`/`declared` — so any seed whose first window had <16
+prediction-covered jobs silently reverted to the PLAN world: truth became plan-quanta and
+the "declared" arm requested the prediction. Deterministic check: exactly seeds
+{1, 9, 10, 15, 27} rerolled in the usage/mem worlds — confirmed in the stored per-seed data
+as decl≡pred byte-equal on those 5 seeds. Effect: decl−pred diffs diluted toward zero
+(headlines were UNDERSTATED), pred−oracle contaminated with plan-world error (overstated).
+Fix forwards everything; all 12 `@usage`/`@mem` tiers rerun at 32 seeds; both entries'
+tables corrected in place (original values in git history). Plan-world tiers never touched
+the reroll's dropped args and are unaffected. Lesson logged: a reroll/retry path must
+forward the FULL world spec — the silent fallback hid for two experiments because the
+contaminated arms still produced plausible numbers.
+
+## Experiment 38 — TIME BELIEF: de-oracling the deadline signal with the Stage-1 runtime prediction
+
+**Date:** 2026-07-08
+
+**Why.** The demand agent's stance driver — the behind/ontrack/ahead deadline bucket — has
+been computed from TRUE remaining work since Exp 22 (`two_sided_sim` fed
+`bridge.deadline_bucket(remaining(j), …)` the simulator's own state): an oracle time signal
+inside every negotiation result to date. Meanwhile Exp 35's runtime GBT (the weakest
+retargeted predictor: within-2x only 41%) was never wired into Stage-2. This experiment
+swaps the belief: what is the oracle worth, and does the noisy prediction keep it?
+
+**Method.** `predict_gpu --target runtime` exports `pred_job_runtime.csv` (178,815 test
+jobs; job runtime = MAX over its tasks — PAI gangs launch together, replay dur is
+max end − min start; Exp-35 metrics reproduced exactly). `trace_replay --time
+predicted|blind|oracle` + `belief_work` in `simulate()`: the deadline bucket (and the
+demand-table rank derived from it) now reads believed remaining = belief − progress-so-far,
+where belief is the Stage-1 P50 in ticks ("predicted"), nothing (bucket forced "ontrack",
+"blind"), or true work on the same windows ("oracle" = matched control; absent flag = old
+path, byte-identical). Dynamics, SLA scoring, and deadlines themselves stay on truth. Plan
+world, caps real — the time axis isolated from the request axis. Windows restricted to
+runtime-covered jobs (151,883/606k; zero rerolls), 32 seeds, pools {4,6,8}, rule + 3b
+(fb=0%). In sim units the belief is genuinely noisy: 52% within 2x of true work.
+
+**Result (negotiated policy, paired by seed, n=32).**
+
+| contrast | pool | rule | qwen2.5:3b |
+|---|---|---|---|
+| blind − oracle | 4 | ΔSLA −1.4 ±1.5 · ΔpSLA −2.1 ±2.6 | ΔSLA −0.2 ±0.4 · ΔpSLA −0.5 ±1.1 |
+|  | 6 | ΔSLA −1.6 ±1.6 · ΔpSLA −1.8 ±3.4 | ΔSLA −0.2 ±1.3 · ΔpSLA +2.6 ±3.3 |
+|  | 8 | ΔSLA −1.4 ±1.5 · ΔpSLA −1.9 ±2.2 | ΔSLA −0.6 ±0.7 · ΔpSLA −0.4 ±0.9 |
+| predicted − oracle | 4 | ΔSLA **+0.8 ±0.8*** · ΔpSLA +0.3 | ΔSLA −0.4 ±0.8 · ΔpSLA −0.3 |
+|  | 6 | ΔSLA +0.6 ±1.2 · ΔpSLA +0.0 | ΔSLA +0.4 ±0.8 · ΔpSLA +0.9 |
+|  | 8 | ΔSLA +0.8 ±1.2 · ΔpSLA +0.6 | ΔSLA −0.4 ±0.6 · ΔpSLA −1.5 |
+| blind − predicted | 4 | ΔSLA **−2.1 ±1.6*** · ΔpSLA −2.4 | ΔSLA +0.2 ±0.9 · ΔpSLA −0.2 |
+|  | 6 | ΔSLA −2.1 ±2.3 · ΔpSLA −1.8 | ΔSLA −0.6 ±1.6 · ΔpSLA +1.8 |
+|  | 8 | ΔSLA −2.1 ±2.3 · ΔpSLA **−2.5 ±2.5*** | ΔSLA −0.2 ±0.7 · ΔpSLA +1.0 |
+
+Negotiated − floor prodSLA within each time world: rule −1.9ns/−6.5*/−3.8ns (blind),
++0.5/−4.8/−1.3 ns (predicted), +0.2/−4.8/−1.9 ns (oracle);
+**3b −8.5*/−7.5*/−7.6* (blind), −8.2*/−9.3*/−8.7* (predicted), −7.9*/−10.2*/−7.2* (oracle)**.
+
+**Findings.**
+1. **The oracle time signal was worth almost nothing — de-oracling is free.** At 3b every
+   blind/predicted/oracle contrast is within ±2.6 pts and ns; at the rule tier the oracle
+   is worth at most ~2 ns pts. The retroactive worry about Exp 22–37 (all carried the
+   oracle deadline signal) is resolved: nothing load-bearing leaned on it.
+2. **Predicted ≈ oracle at both tiers** (|ΔSLA| ≤ 0.8, one marginal +0.8* at rule pool 4):
+   the coarse behind/ontrack/ahead bucket fully absorbs a predictor that is within 2x only
+   half the time. This is the project's signal-interface pattern at its cleanest — the LLM
+   consumes BUCKETS, and buckets forgive exactly the noise the runtime GBT has. A weak
+   predictor is sufficient because the interface is coarse by design.
+3. **The surprise: at the rule tier the time signal is mildly COUNTERPRODUCTIVE** — blind
+   beats predicted (SLA −2.1* at pool 4, prodSLA −2.5* at pool 8) and directionally beats
+   oracle everywhere. The fixed ladder over-reacts to "ahead" (hedging down releases GPUs
+   that then feed best-effort competitors of its own prod jobs); forcing a moderate
+   "ontrack" stance is better than reacting. The 3b LLM does NOT inherit this pathology
+   (all ≈ 0) — its stance depends on more than the deadline axis.
+4. **The negotiation's value is time-signal-independent:** negotiated@3b − floor prodSLA
+   is −7..−10* in ALL three time worlds. The brake + judgment carry the result; the
+   deadline belief — oracle, predicted, or absent — barely moves it.
+
+**Honest read / caveats.** Belief enters ONLY the deadline bucket: the frozen bid priority
+(`Job.bid`) still uses nominal need, and the supply agent still gets no time-to-free signal
+from incumbents' predicted completions — that (predicted releases sizing the reserve) is
+the genuinely new lever this opens, untested. P50 only (interval/newsvendor hedge in time
+unexplored); job runtime = max task runtime is a lower bound of wall clock; the time worlds
+pair only with each other (runtime-covered windows); deadlines/urgency remain synthetic
+constructs of the world; rule-tier negativity is small and mostly ns — a curiosity to
+re-test, not a claim.
+
+**Reproduce.**
+```bash
+cd Research
+.venv/bin/python -m pins.eval.predict_gpu --target runtime       # + pred_job_runtime.csv
+.venv/bin/python -m pins.trace_replay --seeds 32 --time blind
+.venv/bin/python -m pins.trace_replay --seeds 32 --time predicted
+.venv/bin/python -m pins.trace_replay --seeds 32 --time oracle
+# + the same three with --llm --model qwen2.5:3b
+```
+Runtime export in `pins/eval/predict_gpu.py`; `--time` + `load_runtime_pred` +
+`belief_work` plumbing in `pins/trace_replay.py` and `pins/two_sided_sim.py`; tiers
+`{rule,qwen2.5:3b}+time-{blind,predicted,oracle}` in `pins/results_trace_replay.json`.

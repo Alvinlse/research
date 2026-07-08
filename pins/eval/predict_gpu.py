@@ -284,6 +284,19 @@ def main():
         per_job.to_csv(usage_csv)
         print(f"per-job predicted+true usage quanta ({len(per_job):,} test jobs) -> {usage_csv}")
 
+    if args.target == "runtime":
+        # Exp 38: per-job predicted runtime for the TIME-BELIEF replay (trace_replay --time).
+        # Job wall-clock ≈ max over its tasks (PAI tasks are gangs launched together; the
+        # replay's dur is max end − min start, so max task runtime is the matching lower bound).
+        p10, p50, p90 = preds["gbt-full"]
+        agg = test[["job_name"]].copy()
+        for col, p in (("p10", p10), ("p50", p50), ("p90", p90), ("truth", truth)):
+            agg[col] = p
+        per_job = agg.groupby("job_name")[["p10", "p50", "p90", "truth"]].max().round(1)
+        rt_csv = os.path.join(HERE, "pred_job_runtime.csv")
+        per_job.to_csv(rt_csv)
+        print(f"per-job predicted+true runtime s ({len(per_job):,} test jobs) -> {rt_csv}")
+
     if args.target == "gpu_mem":
         # Exp 37: the PESSIMISTIC right-sizing truth (Exp 36 caveat) — a job's need is its
         # peak GPU-MEMORY residency, in quarter-GPU quanta of its own card: quanta per
