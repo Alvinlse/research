@@ -259,7 +259,8 @@ def cross_tier_stats(policy: str = "negotiated") -> None:
 
 def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           caps_mode: str = "real", quantile: str = "p50", truth_mode: str = "plan",
-          time_mode: str | None = None) -> None:
+          time_mode: str | None = None, ttf_mode: str | None = None) -> None:
+    assert not (time_mode and ttf_mode), "--time and --ttf are separate experiments"
     trace = load_trace()
     true_map = None
     declared = False
@@ -270,7 +271,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
     else:
         pred = load_predicted_quanta(quantile=quantile) if caps_mode != "real" else None
     oracle = caps_mode == "oracle"
-    time_pred = load_runtime_pred() if time_mode else None   # Exp 38: restricts windows too
+    time_pred = load_runtime_pred() if (time_mode or ttf_mode) else None  # restricts windows too
     dist = load_uncertainty_distribution()
     cache: dict = load_cache()
     decisions: list = []
@@ -282,6 +283,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         suffix = ("+decl" if caps_mode == "real" else suffix) + "@" + truth_mode
     if time_mode:
         suffix += f"+time-{time_mode}"
+    if ttf_mode:
+        suffix += f"+ttf-{ttf_mode}"      # control (no signal, same windows) = the time-oracle tier
     tag = ("rule" if not use_llm else model) + suffix
 
     rows = [
@@ -307,14 +310,19 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         for name, factory in rows:
             per_seed: list[dict] = []
             for s in seeds:
+                # ttf 'predicted' reuses the belief-map construction; the map routes to the
+                # SUPPLY signal (ttf_work) instead of the demand deadline belief (belief_work)
+                mk_mode = time_mode or ("predicted" if ttf_mode == "predicted" else None)
                 jobs, cap_map, tcap, belief = make_trace_workload(trace, n_jobs, s, horizon, pred,
                                                                   oracle, true_map, declared,
-                                                                  time_pred, time_mode)
+                                                                  time_pred, mk_mode)
                 cap_map = {k: min(v, gpus) for k, v in cap_map.items()}  # feasible at this pool
                 tcap = {k: min(v, gpus) for k, v in tcap.items()}
                 u_map, spike_map = assign(jobs, s, dist, spike_max)
+                ttf = "oracle" if ttf_mode == "oracle" else belief if ttf_mode == "predicted" else None
                 r = simulate(jobs, factory(), gpus, horizon, u_map, spike_map, scale,
-                             spike_max, cap_map, true_cap_map=tcap, belief_work=belief)
+                             spike_max, cap_map, true_cap_map=tcap,
+                             belief_work=belief if time_mode else None, ttf_work=ttf)
                 per_seed.append({k: r[k] for k in METRICS})
             per_seed_pool[name] = per_seed
             results.append((name, {k: sum(row[k] for row in per_seed) / len(seeds)
@@ -366,6 +374,11 @@ def main() -> None:
                          "DECLARATION, predicted=Stage-1 usage prediction, oracle=true usage. "
                          "Exp 37: 'mem' = need is peak GPU-memory residency in card quanta "
                          "(pred_job_mem.csv) — the pessimistic right-sizing truth")
+    ap.add_argument("--ttf", default=None, choices=("predicted", "oracle"),
+                    help="Exp 39: supply-side time-to-free — the reserve agent sees held GPUs of "
+                         "running jobs predicted to free within TTF_HORIZON ticks ('release' "
+                         "bucket). Control = the matching time-oracle tier (same windows, no "
+                         "signal). 'oracle' = true remaining work, 'predicted' = Stage-1 runtime")
     ap.add_argument("--time", default=None, choices=("predicted", "blind", "oracle"),
                     help="Exp 38: the demand agent's deadline signal — 'predicted' = Stage-1 "
                          "runtime P50 (pred_job_runtime.csv), 'blind' = none (always ontrack), "
@@ -378,7 +391,7 @@ def main() -> None:
     sweep([int(p) for p in a.pools.split(",")], n_jobs=16, horizon=300,
           seeds=list(range(a.seeds)), scale=a.scale, spike_max=a.spike,
           use_llm=a.llm, model=a.model, caps_mode=a.caps, quantile=a.quantile,
-          truth_mode=a.truth, time_mode=a.time)
+          truth_mode=a.truth, time_mode=a.time, ttf_mode=a.ttf)
 
 
 if __name__ == "__main__":

@@ -102,6 +102,13 @@ def incoming_prod_bucket(n_incoming_prod: int) -> str:
     return "none" if n_incoming_prod == 0 else "few" if n_incoming_prod <= 2 else "many"
 
 
+def release_bucket(upcoming_gpus: int) -> str:
+    """none / some / wave — held GPUs of RUNNING jobs predicted to free within the next
+    couple of ticks (Exp 39). Imminent releases can serve incoming prod instead of an idle
+    reserve; absolute thresholds match RESERVE_AMOUNT's 0/1/2 scale."""
+    return "none" if upcoming_gpus <= 0 else "some" if upcoming_gpus <= 2 else "wave"
+
+
 def contention_bucket(demand_gpus: float, total_gpus: int) -> str:
     """ample / moderate / scarce from aggregate demand vs pool (matches supply_sim's reserve gate)."""
     ratio = demand_gpus / max(total_gpus, 1)
@@ -127,10 +134,15 @@ def priority_ctx(facts: Stage1Facts, minutes_to_deadline: float) -> dict:
             "size": size_bucket(facts)}
 
 
-def reserve_ctx(contention: str, n_incoming_prod: int) -> dict:
+def reserve_ctx(contention: str, n_incoming_prod: int, upcoming_release: int | None = None) -> dict:
     """ctx for llm_reserve (supply-side headroom). Supply-side facts are cluster-level, not
-    per-job, so the bridge forwards the live contention + the predicted incoming-prod count."""
-    return {"contention": contention, "incoming_prod": incoming_prod_bucket(n_incoming_prod)}
+    per-job, so the bridge forwards the live contention + the predicted incoming-prod count.
+    Exp 39: `upcoming_release` (GPUs of running jobs predicted to free within TTF_HORIZON)
+    adds a `release` bucket; None keeps the pre-Exp-39 ctx/state-key byte-identical."""
+    ctx = {"contention": contention, "incoming_prod": incoming_prod_bucket(n_incoming_prod)}
+    if upcoming_release is not None:
+        ctx["release"] = release_bucket(upcoming_release)
+    return ctx
 
 
 # --------------------------------------------------------------------------- #

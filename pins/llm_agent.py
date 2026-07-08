@@ -408,7 +408,9 @@ SYSTEM_RESERVE = (
     "prod jobs are still INCOMING and the pool is NOT already scarce. Reserve 'none' when no prod "
     "is incoming (nothing to protect) OR when contention is HIGH (idle GPUs would starve the jobs "
     "already waiting and make SLA worse). Reserve 'light' in the moderate case; 'heavy' only when "
-    "much prod is incoming and there is slack. Justify in one sentence citing contention and load."
+    "much prod is incoming and there is slack. If told that running jobs will FREE GPUs within the "
+    "next couple of minutes, those imminent releases can serve incoming prod instead of an idle "
+    "reserve — reserve less. Justify in one sentence citing contention and load."
 )
 
 
@@ -417,18 +419,25 @@ def reserve_amount(level: str) -> int:
 
 
 def reserve_state_key(ctx: dict) -> str:
-    return f"{ctx['contention']}|{ctx['incoming_prod']}"
+    key = f"{ctx['contention']}|{ctx['incoming_prod']}"
+    if "release" in ctx:                                 # Exp 39: new axis, new key space —
+        key += f"|rel:{ctx['release']}"                  # absent -> pre-Exp-39 keys untouched
+    return key
 
 
 def _reserve_prompt(ctx: dict) -> str:
-    return (f"Cluster contention right now: {ctx['contention']}. "
-            f"High-priority (prod) jobs still INCOMING (not yet started): {ctx['incoming_prod']}. "
-            f"How much headroom should you reserve?")
+    p = (f"Cluster contention right now: {ctx['contention']}. "
+         f"High-priority (prod) jobs still INCOMING (not yet started): {ctx['incoming_prod']}. ")
+    if "release" in ctx:
+        p += (f"GPUs of already-running jobs that will FREE UP within the next couple of "
+              f"minutes: {ctx['release']}. ")
+    return p + "How much headroom should you reserve?"
 
 
 def _rule_reserve(ctx: dict) -> dict:
     """Deterministic fallback encoding the Exp-14 finding: reserve only at moderate contention with
-    prod incoming; never when scarce or when nothing is coming."""
+    prod incoming; never when scarce or when nothing is coming. Exp 39: imminent releases
+    SUBSTITUTE for the reserve — 'wave' zeroes it, 'some' steps it down one level."""
     inc, con = ctx["incoming_prod"], ctx["contention"]
     if inc == "none" or con == "scarce":
         lvl = "none"
@@ -436,8 +445,13 @@ def _rule_reserve(ctx: dict) -> dict:
         lvl = "light"
     else:                                                # ample slack + prod incoming
         lvl = "light" if inc == "few" else "heavy"
-    return {"reserve": lvl, "justification": f"rule: {con} contention, {inc} prod incoming",
-            "_source": "rule"}
+    rel = ctx.get("release")
+    if rel == "wave":
+        lvl = "none"
+    elif rel == "some" and lvl != "none":
+        lvl = RESERVE_LEVELS[RESERVE_LEVELS.index(lvl) - 1]
+    why = f"rule: {con} contention, {inc} prod incoming" + (f", {rel} imminent release" if rel else "")
+    return {"reserve": lvl, "justification": why, "_source": "rule"}
 
 
 def llm_reserve(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,

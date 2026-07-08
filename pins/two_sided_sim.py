@@ -43,6 +43,7 @@ from pins.uncertainty_sim import (assign, assign_gpu, load_gpu_distribution,
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DORDER = {"ahead": 0, "ontrack": 1, "behind": 2}
+TTF_HORIZON = 2      # Exp 39: "imminent" release = believed remaining work <= this many ticks
 
 
 # --------------------------------------------------------------------------- #
@@ -122,7 +123,8 @@ def _record_outcome(trace, seen, tag, o):
 def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
              u_map: dict, spike_map: dict, scale: int, spike_max: float,
              cap_map: dict[str, int], true_cap_map: dict[str, int] | None = None,
-             belief_work: dict[str, float] | str | None = None) -> dict:
+             belief_work: dict[str, float] | str | None = None,
+             ttf_work: dict[str, float] | str | None = None) -> dict:
     """One run of a policy on a fresh workload copy. Rigid: a running job is never involuntarily
     preempted; it only shrinks VOLUNTARILY to its ceiling (cap0 + this tick's negotiated margin).
     Spikes: a train phase's true work is inflated; margin GPUs grant rate>1 to absorb it, capped at
@@ -137,7 +139,13 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
     `belief_work` (Exp 38): what the DEMAND AGENT believes a job's total work is, for its
     behind/ontrack/ahead deadline bucket only — dynamics and SLA stay on the truth. None =
     oracle (true remaining, the pre-Exp-38 behaviour, unchanged); "blind" = no time signal
-    (every job reads "ontrack"); {jid: predicted total ticks} = Stage-1 predicted runtime."""
+    (every job reads "ontrack"); {jid: predicted total ticks} = Stage-1 predicted runtime.
+
+    `ttf_work` (Exp 39): the SUPPLY AGENT's time-to-free signal — held GPUs of running jobs
+    whose believed remaining work is <= TTF_HORIZON ticks enter reserve_ctx as a `release`
+    bucket (imminent releases substitute for idle reserve). None = no signal (pre-Exp-39,
+    byte-identical); "oracle" = true realised remaining; {jid: predicted total ticks} =
+    Stage-1 runtime. Remaining WORK is the proxy for remaining TIME (assumes rate ~1)."""
     jobs = [Job(j.jid, j.arrival, list(j.phases), list(j.need), j.urgency, j.deadline, j.tier)
             for j in jobs_proto]
     by_id = {j.jid: j for j in jobs}
@@ -177,7 +185,16 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
         con_supply = bridge.contention_bucket(demand_gpus, total_gpus)
         con_demand = "high" if demand_gpus >= total_gpus else "low"
         n_inc = sum(1 for jj in jobs if jj.tier == "prod" and jj.arrival > t)
-        supply_ctx = bridge.reserve_ctx(con_supply, n_inc)
+        upcoming = None
+        if ttf_work is not None:                         # Exp 39: imminent-release signal
+            def ttf_rem(j):
+                if ttf_work == "oracle":                 # true realised remaining work
+                    return (work[j.jid][pidx[j.jid]] - progress[j.jid]
+                            + sum(work[j.jid][pidx[j.jid] + 1:]))
+                return max(0.0, ttf_work[j.jid] - (sum(j.need[:pidx[j.jid]]) + progress[j.jid]))
+            upcoming = sum(held[j.jid] for j in active
+                           if held[j.jid] > 0 and ttf_rem(j) <= TTF_HORIZON)
+        supply_ctx = bridge.reserve_ctx(con_supply, n_inc, upcoming)
         # Contested slice: only jobs already RUNNING their full base contest the free GPUs for a
         # speed-up margin — a waiting/ramping job can't spend a margin GPU, it needs base first (the
         # auction's job). So the margin table is the running train jobs, contesting `free_now` (the

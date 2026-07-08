@@ -1888,3 +1888,76 @@ cd Research
 Runtime export in `pins/eval/predict_gpu.py`; `--time` + `load_runtime_pred` +
 `belief_work` plumbing in `pins/trace_replay.py` and `pins/two_sided_sim.py`; tiers
 `{rule,qwen2.5:3b}+time-{blind,predicted,oracle}` in `pins/results_trace_replay.json`.
+
+## Experiment 39 — SUPPLY-SIDE TIME-TO-FREE: the last plausible slot for runtime prediction
+
+**Date:** 2026-07-08
+
+**Why.** Exp 38 closed the demand-side slot (deadline belief: oracle worth nothing). The
+genuinely NEW thing runtime prediction could enable is on the supply side: the reserve
+agent decides how much idle headroom to hold knowing only {contention, incoming-prod} —
+it cannot see that a running job is about to release its GPUs. Imminent releases should
+SUBSTITUTE for idle reserve ("a 2-GPU job frees up in ~2 ticks — don't hold GPUs idle,
+the arrivals can ride the release"). Is that information worth anything?
+
+**Method.** `reserve_ctx` gains an optional `release` bucket (none/some/wave = 0 / 1–2 /
+≥3 held GPUs of running jobs with believed remaining work ≤ TTF_HORIZON=2 ticks);
+`_rule_reserve` steps the reserve down one level on "some", zeroes it on "wave";
+SYSTEM_RESERVE states the substitution principle; state keys extend only when the signal
+is present (signal-off path byte-identical, verified). `trace_replay --ttf
+predicted|oracle` (Stage-1 runtime P50 vs true realised remaining; remaining WORK proxies
+remaining time). CONTROL = the Exp-38 `time-oracle` tiers — same runtime-covered windows,
+no supply signal, so all arms stay seed-paired for free. 32 seeds, pools {4,6,8},
+rule + 3b, fb=0%.
+
+**Result (negotiated policy vs control, paired, n=32).**
+
+| contrast | rule | qwen2.5:3b |
+|---|---|---|
+| ttf-oracle − control | ΔSLA −0.6/−1.0/−0.8 ns · ΔpSLA ns · Δutil +0.2..0.3* | **exactly 0 on every metric, every seed** |
+| ttf-predicted − control | ΔSLA **−2.9*/−2.1*/−1.4ns** · ΔpSLA ns · Δutil +0.6..1.0* | **exactly 0** |
+| ttf-predicted − ttf-oracle | ΔSLA −2.3*/−1.2ns/−0.6ns | exactly 0 |
+
+**Findings.**
+1. **A PERFECT time-to-free signal is worth ~nothing** (rule: −0.6..−1.0 SLA ns). The
+   reserve lever it modulates is small by construction (0–2 GPUs, already gated off at
+   scarce contention per Exp 14) — there is not enough conservatism to save. Combined
+   with Exp 38: runtime prediction has now been tested in BOTH plausible Stage-2 slots
+   (demand deadline belief, supply time-to-free) and both are near-zero-value. The
+   negotiation is robust to time information — full stop. Runtime prediction's remaining
+   role is the EASY-backfilling baseline (open item k), where it is the core fuel.
+2. **The noisy prediction beats the oracle at the rule tier** (pred−oracle −2.3* at
+   pool 4; pred−control −2.9*/−2.1*): the GBT's P50 under-predicts long right-skewed
+   jobs, so "release imminent" fires EARLY and cuts the reserve more aggressively —
+   accidental de-conservatism, not information (Exp 38 already showed this world punishes
+   supply-side caution). An honest negative: the "value of the signal" here is really the
+   value of holding less reserve, which a constant policy could capture without any
+   predictor.
+3. **3b is signal-blind on this axis: byte-identical decisions in ALL 27 release states**
+   (hence exactly-zero diffs — the sims replayed identically). The justifications show it
+   is not even parsing the field: a rel:wave state is justified with "there are no
+   imminent GPU releases". Third rung of the legibility ladder — Exp 23 (3b bottleneck
+   hints worse than none), Exp 33 (3b confabulates state), now a secondary supply axis
+   invisible at 3b. The tariff (Exp 33) was legible where this is not: incentives pointed
+   at the agent's OWN objective get parsed; contextual second-order signals do not.
+4. Prod protection is untouched everywhere (ΔpSLA ns even with the reserve cut) — the
+   margins, not the reserve, carry tier protection in this world, consistent with the
+   Exp 31/36 hedge-reserve substitution.
+
+**Honest read / caveats.** TTF_HORIZON=2 and the absolute none/some/wave thresholds are
+untuned; reserve amounts are only 0/1/2 GPUs so the lever's ceiling is inherently low —
+a redesign where the reserve is REPLACED by `max(0, need − upcoming)` (rather than
+stepped down) could give the signal a bigger surface; remaining work proxies remaining
+time (rate≈1 assumed); 14b unrun (the legibility question — does scale read the release
+field? — is open and is the interesting follow-up); 3b ttf tiers are redundant with their
+control by construction (kept in the json for the record).
+
+**Reproduce.**
+```bash
+cd Research
+.venv/bin/python -m pins.trace_replay --seeds 32 --ttf predicted   # + --ttf oracle
+# + the same with --llm --model qwen2.5:3b; control = the time-oracle tiers
+```
+`release_bucket`/`reserve_ctx` in `pins/bridge.py`; prompt/rule/state-key in
+`pins/llm_agent.py`; `TTF_HORIZON` + `ttf_work` in `pins/two_sided_sim.py`; `--ttf` in
+`pins/trace_replay.py`; tiers `{rule,qwen2.5:3b}+ttf-{predicted,oracle}`.
