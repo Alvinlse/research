@@ -1686,3 +1686,94 @@ cd Research
 `--truth` + `load_usage_quanta` + `true_map`/`declared` in `pins/trace_replay.py`; usage
 export in `pins/eval/predict_gpu.py`; tiers `{rule,qwen2.5:3b}+{decl,pred,oracle}@usage` in
 `pins/results_trace_replay.json`.
+
+## Experiment 37 — THE MEMORY WORLD: does right-sizing survive the pessimistic residency truth?
+
+**Date:** 2026-07-08
+
+**Why.** Exp 36's headline rested on the OPTIMISTIC truth definition its own honest-read
+flagged: "true need = mean utilization" lets a job averaging 0.2% util be right-sized to one
+quantum even if it keeps 10 GB resident the whole time. The promised one-flag counter-world:
+true need = **peak GPU-memory residency**, in quarter-GPU quanta of the job's own card. If
+the right-sizing win was an artifact of the optimistic truth, it should collapse here.
+
+**Method.** `predict_gpu --target gpu_mem` now exports `pred_job_mem.csv` (same 209,336 test
+jobs as the usage csv — identical key set, so mem-world windows sample the same job
+population): per-instance quanta = `mem_GB / (card_GB/4)`, card memory from `gpu_type`
+(V100M32 = 32 GB, T4/P100/V100/MISC = 16 GB), × inst_num, summed per job. Underlying GBT
+byte-identical to Exp 35 (re-ran: MAE 1.60 GB, rho 0.628, gate PASS +8.5% — reproduced
+exactly). `trace_replay --truth mem` reuses the whole Exp-36 path (`load_usage_quanta` with
+a different csv); tiers land as `*@mem`, usage/plan worlds untouched. Same design: 32 seeds,
+pools {4,6,8}, arms = request {declaration, Stage-1 P50, oracle}, tiers {rule, qwen2.5:3b}
+(fb=0% everywhere).
+
+**The wedge, remeasured under memory.** Raw mem-need is ~10× heavier than util-need (median
+0.166 vs 0.015 quanta) — but after the floor-at-1 + CAP_CLIP the worlds nearly coincide:
+**78.8% of jobs need ≤1 quantum under memory vs 82.7% under utilization** (declaration
+median ≈ 4). Peak residency, not just average burn, is far below the ask for most jobs —
+the over-provisioning premise is NOT an artifact of the optimistic truth.
+
+**Result (paired by seed, n=32; * = 95% CI excludes 0).**
+
+Declared − predicted (value of right-sizing; + = declaration worse), negotiated policy:
+
+| pool | rule | qwen2.5:3b |
+|---|---|---|
+| 4 | ΔSLA **+10.0 ±5.9*** · Δutil +15.2* · Δslow +4.0* | ΔSLA **+13.5 ±6.1*** · Δutil +10.4* · Δslow +4.5* |
+| 6 | ΔSLA **+5.9 ±5.2*** · Δutil +20.8* · Δslow +1.2* | ΔSLA **+9.6 ±5.2*** · Δutil +18.8* · Δslow +1.9* |
+| 8 | ΔSLA +3.1 ±4.4 ns · Δutil +21.7* · Δslow +1.0* | ΔSLA **+6.4 ±4.5*** · Δutil +20.7* · Δslow +1.3* |
+
+(Exp-36 usage-world reference, negotiated: rule +11.5*/+7.8*/+5.9*, 3b +14.5*/+12.5*/+8.6*.)
+
+Predicted − oracle (cost of GBT error), negotiated: rule +6.6/+10.5/+12.1 SLA*
+(prodSLA +12.7/+11.9/+16.3*); 3b +5.1/+8.0/+10.2* (prodSLA +8.8/+12.8/+14.5*).
+
+Negotiated − floor WITHIN the predicted-request world:
+
+| pool | rule | qwen2.5:3b |
+|---|---|---|
+| 4 | SLA +1.2 ns · prodSLA −3.6* | SLA −3.3 ±3.4 ns · prodSLA **−7.2*** · util +7.2* · slow −0.0 |
+| 6 | SLA −0.4 ns · prodSLA −2.4 ns | SLA **−5.9*** · prodSLA **−3.1*** · util +9.1* · slow −0.4* |
+| 8 | SLA −2.3* · prodSLA −3.1* | SLA **−5.7*** · prodSLA **−5.0*** · util +8.3* · slow −0.4* |
+
+**Findings.**
+1. **Right-sizing survives the pessimistic truth.** Declared−predicted stays positive and
+   significant at every pool for 3b (+6.4..+13.5 SLA*) and at pools 4/6 for the rule
+   (+5.9..+10.0*); the win attenuates ~2–3 pts vs the usage world and loses significance
+   only at rule/pool-8. Exp 36's headline was not an artifact of the optimistic truth —
+   reality, bracketed between the two worlds, keeps the win.
+2. **Exp-36 finding 3 (negotiation + prediction are complements) replicates:** under
+   predicted requests, negotiated@3b again beats its floor on SLA, prodSLA, productive
+   utilization (+7..+9*) and slowdown at pools 6/8, with only pool-4 overall SLA dropping to
+   ns (sign unchanged). The rule tier's advantage again mostly evaporates (SLA ns at 4/6) —
+   the state-dependent LLM margins, not the protocol alone, carry the predicted-request world.
+3. **Memory misprediction is the costliest error so far for the protected tier:**
+   pred−oracle prodSLA +8.8..+16.3* (usage world: +7.9..+12.4). Under-predicting residency
+   starves a prod job outright rather than merely slowing it — better mem predictors (or a
+   prod-p90 hedge on the mem interval, wired but unrun) have the largest headroom here.
+4. **Declaration-as-accidental-hedge at slack:** decl−pred prodSLA turns negative-ns at
+   pool 8 (rule −5.2, 3b −1.8) — with GPUs to spare, the inflated ask shields prod jobs from
+   under-prediction, exactly the hedge/reserve substitution of Exp 31/36 seen from the other
+   side. Right-sizing is a contention-regime play; at slack it trades prod insurance for
+   freed capacity.
+
+**Honest read / caveats.** Card memory for MISC (67% of GPU tasks) is assumed 16 GB — the
+trace does not say; max-over-workers × inst_num over-counts heterogeneous gangs (the recipe
+mirrors the usage world's mean×inst_num, biased the opposite, pessimistic direction);
+residency truth still floors at 1 quantum and clips at 8; peak residency ≠ exclusive need
+either (PAI ran GPU sharing — the true requirement lies between mean-util and peak-mem, so
+the two worlds bracket it); mem-world tiers pair only with each other (gpu_mem test-job
+windows); 14b unrun; quantile knob still unexplored outside the plan world.
+
+**Reproduce.**
+```bash
+cd Research
+.venv/bin/python -m pins.eval.predict_gpu --target gpu_mem       # + pred_job_mem.csv export
+.venv/bin/python -m pins.trace_replay --seeds 32 --truth mem --caps real       # declaration
+.venv/bin/python -m pins.trace_replay --seeds 32 --truth mem --caps predicted  # Stage-1 P50
+.venv/bin/python -m pins.trace_replay --seeds 32 --truth mem --caps oracle     # matched control
+# + the same three with --llm --model qwen2.5:3b
+```
+`GPU_MEM_GB` + mem export in `pins/eval/predict_gpu.py`; `MEM_CSV` + `--truth mem` in
+`pins/trace_replay.py`; tiers `{rule,qwen2.5:3b}+{decl,pred,oracle}@mem` in
+`pins/results_trace_replay.json`.

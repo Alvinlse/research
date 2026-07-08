@@ -78,6 +78,8 @@ NUM_FEATS = ["inst_num", "plan_cpu", "plan_mem"]
 TAG_FEATS = ["gpu_type", "task_name", "workload"]
 CATEGORICAL = {"gpu_type", "task_name", "workload"}
 
+GPU_MEM_GB = {"V100M32": 32.0}   # per-card memory; the other types (T4/P100/V100/MISC) are 16 GB
+
 TASK_COLS = ["job_name", "task_name", "inst_num", "status", "start_time", "end_time",
              "plan_cpu", "plan_mem", "plan_gpu", "gpu_type"]
 JOB_COLS = ["job_name", "inst_id", "user", "status", "start_time", "end_time"]
@@ -116,6 +118,7 @@ def build_features(target: str = "plan_gpu") -> pd.DataFrame:
         t = t.merge(agg, on=["job_name", "task_name"], how="inner")
         t = t[t[target].notna()].copy()   # keep zeros: idle-GPU tasks ARE the signal
         t["y"] = t[target]
+        t["gpu_mem_cap"] = t.gpu_type.map(GPU_MEM_GB).fillna(16.0)   # captured before cat codes
         print(f"  sensor join: {len(t):,}/{n0:,} tasks ({100*len(t)/n0:.1f}%) carry {target}",
               flush=True)
 
@@ -280,6 +283,21 @@ def main():
         usage_csv = os.path.join(HERE, "pred_job_usage.csv")
         per_job.to_csv(usage_csv)
         print(f"per-job predicted+true usage quanta ({len(per_job):,} test jobs) -> {usage_csv}")
+
+    if args.target == "gpu_mem":
+        # Exp 37: the PESSIMISTIC right-sizing truth (Exp 36 caveat) — a job's need is its
+        # peak GPU-MEMORY residency, in quarter-GPU quanta of its own card: quanta per
+        # instance = mem_GB / (card_GB/4). A job averaging 0.2% util but resident at 10 GB
+        # is NOT right-sizable to 1 quantum under this truth.
+        p10, p50, p90 = preds["gbt-full"]
+        per_quantum_gb = (test.gpu_mem_cap / 4.0).to_numpy()
+        agg = test[["job_name", "inst_num"]].copy()
+        for col, p in (("p10", p10), ("p50", p50), ("p90", p90), ("truth", truth)):
+            agg[col] = p / per_quantum_gb * agg.inst_num
+        per_job = agg.groupby("job_name")[["p10", "p50", "p90", "truth"]].sum().round(4)
+        mem_csv = os.path.join(HERE, "pred_job_mem.csv")
+        per_job.to_csv(mem_csv)
+        print(f"per-job predicted+true memory quanta ({len(per_job):,} test jobs) -> {mem_csv}")
 
     base, full = results["gbt-num"], results["gbt-full"]
     d_mae = (base["MAE"] - full["MAE"]) / base["MAE"] * 100

@@ -44,6 +44,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 REPLAY_CSV = os.path.join(HERE, "..", "data", "alibaba-gpu-v2020", "replay_jobs.csv")
 PRED_CSV = os.path.join(HERE, "eval", "pred_job_gpu.csv")
 USAGE_CSV = os.path.join(HERE, "eval", "pred_job_usage.csv")
+MEM_CSV = os.path.join(HERE, "eval", "pred_job_mem.csv")
 
 TICK_S = 120         # one sim tick = 2 real minutes -> median trace job ≈ 9 ticks of work
 WORK_CLAMP = (1, 60)
@@ -238,8 +239,9 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
     trace = load_trace()
     true_map = None
     declared = False
-    if truth_mode == "usage":                 # Exp 36: true need = measured usage
-        pred, true_map = load_usage_quanta(quantile=quantile)   # pred keys restrict windows
+    if truth_mode != "plan":                  # Exp 36 usage / Exp 37 mem: true need measured
+        path = USAGE_CSV if truth_mode == "usage" else MEM_CSV
+        pred, true_map = load_usage_quanta(path, quantile=quantile)  # pred keys restrict windows
         declared = caps_mode == "real"        # 'real' here = request the plan_gpu declaration
     else:
         pred = load_predicted_quanta(quantile=quantile) if caps_mode != "real" else None
@@ -251,8 +253,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
     suffix = {"real": "", "predicted": "+pred", "oracle": "+oracle"}[caps_mode]
     if caps_mode == "predicted" and quantile != "p50":
         suffix = f"+pred-{quantile}"          # 'rule+pred' stays the Exp-30 P50 tier
-    if truth_mode == "usage":
-        suffix = ("+decl" if caps_mode == "real" else suffix) + "@usage"
+    if truth_mode != "plan":
+        suffix = ("+decl" if caps_mode == "real" else suffix) + "@" + truth_mode
     tag = ("rule" if not use_llm else model) + suffix
 
     rows = [
@@ -330,10 +332,12 @@ def main() -> None:
     ap.add_argument("--quantile", default="p50", choices=("p10", "p50", "p90", "prod-p90"),
                     help="Exp 31: which predicted quantile the agents request (--caps predicted); "
                          "'prod-p90' = per-job rule: prod hedges to p90, best-effort stays p50")
-    ap.add_argument("--truth", default="plan", choices=("plan", "usage"),
+    ap.add_argument("--truth", default="plan", choices=("plan", "usage", "mem"),
                     help="Exp 36: 'usage' = a job's TRUE need is its measured GPU usage "
                          "(pred_job_usage.csv); --caps then picks the request: real=the plan_gpu "
-                         "DECLARATION, predicted=Stage-1 usage prediction, oracle=true usage")
+                         "DECLARATION, predicted=Stage-1 usage prediction, oracle=true usage. "
+                         "Exp 37: 'mem' = need is peak GPU-memory residency in card quanta "
+                         "(pred_job_mem.csv) — the pessimistic right-sizing truth")
     a = ap.parse_args()
     if a.stats:
         cross_tier_stats()
