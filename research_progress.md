@@ -1961,3 +1961,162 @@ cd Research
 `release_bucket`/`reserve_ctx` in `pins/bridge.py`; prompt/rule/state-key in
 `pins/llm_agent.py`; `TTF_HORIZON` + `ttf_work` in `pins/two_sided_sim.py`; `--ttf` in
 `pins/trace_replay.py`; tiers `{rule,qwen2.5:3b}+ttf-{predicted,oracle}`.
+
+## Experiment 40 — MODEL-FAMILY ABLATION: llama3:8b vs qwen2.5:{3b,14b} on paired windows
+
+**Date:** 2026-07-09
+
+**Why.** Every LLM tier so far is qwen2.5. Two confounds remained: (a) the 3b≥14b
+"sufficiency" comparisons (Exp 27/29) were run at different times on different sampled
+windows; (b) nothing says the negotiation's value survives a change of model FAMILY.
+`--time predicted` (the de-oracled Exp-38 world) is the honest default going forward, so
+the ablation ran there.
+
+**Method.** `trace_replay --llm --time predicted` at llama3:8b and qwen2.5:14b, plus a
+3b RERUN so all three tiers share the exact same windows (floor identical by seed:
+60.9/45.3/41.4 mean SLA at pools 4/6/8). Old Exp-38 3b tier backed up to
+`results_trace_replay.pre-3b-rerun.bak.json` (its floor was 67.4/53.5/47.3 — different
+windows, which is exactly why the rerun was needed). 8 seeds, fb=0% everywhere.
+
+**Result (negotiated policy, paired vs own floor, n=8; pools 4/6/8).**
+
+| model | dSLA | dprodSLA |
+|---|---|---|
+| qwen2.5:3b | +5.5ns / −0.8ns / **−3.9*** | −0.4 / −8.5 / **−12.2*** |
+| qwen2.5:14b | +5.5ns / +2.4ns / −1.6ns | −0.4 / +2.5 / −3.8 (all ns) |
+| llama3:8b | **+14.1*** / +3.1ns / +0.8ns | −1.1 / +0.4 / −1.7 (all ns) |
+
+**Findings.**
+1. **3b is the only tier that significantly beats the floor anywhere** (pool 8: SLA −3.9*,
+   prodSLA −12.2*). The 3b≥14b sufficiency claim now holds ON PAIRED WINDOWS in the
+   predicted-time world — scale buys nothing here.
+2. **llama3:8b actively hurts at contention** (negotiated +14.1* vs floor at pool 4;
+   isolated worse still, +16.4*). Model FAMILY (instruction-following / format compliance
+   in the protocol) matters more than parameter count: llama3:8b sits between the qwens
+   in size and below both in outcome.
+3. **The protocol cushions but cannot rescue a weak model**: negotiated < isolated for
+   llama3 at every pool (e.g. 75.0% vs 77.3% at pool 4), consistent with the
+   protocol-substitutes-for-scale arc — but the cushion stops short of the floor.
+4. Oddity for the log: llama3 single-llm is best-in-pool at 8 (39.8%*), the reverse of
+   the qwen ordering (Exp 24). n=8; unexplained, likely noise.
+
+**Caveats.** n=8 (pool-4 CIs are wide); one non-qwen family only; llama3's decisions came
+from fresh Ollama calls (cache was cold) — cost not compared.
+
+**Reproduce.**
+```bash
+.venv/bin/python -m pins.trace_replay --llm --model llama3:8b    --time predicted
+.venv/bin/python -m pins.trace_replay --llm --model qwen2.5:14b  --time predicted
+.venv/bin/python -m pins.trace_replay --llm --model qwen2.5:3b   --time predicted
+```
+Tiers `{qwen2.5:3b,qwen2.5:14b,llama3:8b}+time-predicted` in `results_trace_replay.json`.
+
+## Experiment 41 — EASY BACKFILLING: the classical baseline, fuelled by the runtime prediction
+
+**Date:** 2026-07-09
+
+**Why.** research_plan.md's baseline row demands FCFS + EASY backfilling; Exp 38/39 closed
+both negotiation-side slots for the runtime predictor and concluded its remaining role is
+EASY's reservation/backfill estimate — the one classical scheduler that CANNOT run without
+a runtime estimate. Two questions: does the negotiation beat the classical discipline, and
+what does the GBT's prediction error cost EASY?
+
+**Method.** New `simulate_backfill()` in `two_sided_sim.py` — a sibling loop, not a
+policy (EASY is a different allocation DISCIPLINE: FCFS order, all-or-nothing grants at
+the requested cap held to completion, tier/urgency-blind, head-of-queue reservation from
+believed remaining runtimes, backfill only jobs that provably don't delay the reservation;
+no margins ever, so no spike-absorption lever). Progress dynamics copied verbatim from
+`simulate` — the discipline is the only difference. `trace_replay --baseline easy --time
+predicted`: `easy-pred` believes the Stage-1 runtime P50, `easy-oracle` the true spiked
+work. Floor reproduced exactly (60.9/45.3/41.4) → seed-paired with the Exp-40 tiers.
+`--compare TIER/POL,TIER/POL` added for arbitrary paired tier contrasts.
+
+**Result (paired, n=8; pools 4/6/8).**
+
+| contrast | dSLA | dprodSLA | dslow |
+|---|---|---|---|
+| easy-pred − floor | **+11.7*** / **+11.7*** / +8.6ns | +10.1 / +8.5 / +8.8 ns | **+9.8*** / +2.9 / +2.9 |
+| easy-oracle − floor | +1.6ns / +6.2ns / +3.1ns | ns | **+6.8*** / +1.6 / +0.9 |
+| negotiated@3b − easy-pred | −6.2ns / **−12.5*** / **−12.5*** | −10.5ns / **−16.9*** / **−21.0*** | **−9.7*** / −3.1 / −4.2 |
+| negotiated@3b − easy-oracle | +3.9ns / −7.0ns / −7.0ns | −0.1 / −14.4 / −18.5 ns | **−6.7*** / −1.8 / −2.1 |
+
+**Findings.**
+1. **EASY loses to everything here** — even the rigid no-llm floor beats it (all-or-nothing
+   grants waste holes: util 73/70/65% vs the floor's 90/82/76%; FCFS head-blocking sends
+   slowdown to 14.5 at pool 4). The workload is exactly EASY's bad case: elastic partial
+   grants are legal and the floor exploits them.
+2. **negotiated@3b beats easy-pred decisively** (SLA −12.5* at pools 6/8; prodSLA up to
+   −21.0*) and nominally beats even easy-ORACLE everywhere but pool-4 SLA. The negotiation
+   claim survives its first classical baseline.
+3. **Prediction error costs EASY 5–10 SLA points** (pred vs oracle) — the first Stage-2
+   slot where runtime-prediction quality MATTERS (Exp 38/39 found it null in both
+   negotiation slots). P50 under-estimates of right-skewed runtimes let backfilled jobs
+   overstay the head's reservation — the classical EASY failure mode, measured.
+4. Honest framing for the thesis: the floor-vs-EASY gap is mostly the elastic-vs-rigid
+   grant model, not intelligence; the fair sentence is "in an elastic-GPU world, the
+   negotiated policy beats the classical runtime-estimate discipline even when that
+   discipline gets oracle runtimes".
+
+**Caveats.** EASY implemented for the single-phase trace workload (multi-phase
+`make_workload` jobs would need a per-phase request schedule); conservative-backfill
+variant untried; n=8.
+
+**Reproduce.**
+```bash
+.venv/bin/python -m pins.trace_replay --baseline easy --time predicted
+.venv/bin/python -m pins.trace_replay --compare "qwen2.5:3b+time-predicted/negotiated,easy+time-predicted/easy-pred"
+```
+Tier `easy+time-predicted`; `simulate_backfill` in `pins/two_sided_sim.py`.
+
+## Experiment 42 — TABULAR Q-LEARNING: a learned policy in the LLM's own interface
+
+**Date:** 2026-07-09
+
+**Why.** The plan's "one learning-based scheduler" baseline, scoped (scope decision,
+plan item 5) to the question the thesis actually needs: is the LLM's decision quality
+just something a cheap learned table could match? Full DeepRM/Decima-style DRL owns a
+different (whole-allocator) action space and weeks of training budget — out of scope,
+defended in research_plan.md.
+
+**Method.** New `pins/qlearn.py`: two Q-tables over EXACTLY the LLM's discretised
+interface — `margin_state_key` states × hedge{none,some,heavy}, `reserve_state_key` ×
+reserve{none,light,heavy}. Episodic Monte-Carlo (contextual bandit: every state-action
+visited in an episode shares the return −(sla+prod_sla)), ε=0.2, α=0.1, 900 episodes on
+trace windows from seeds 100+ (disjoint from eval 0–7), same world as eval (`--time
+predicted`, pools 4/6/8 cycled). Unvisited states fall back to the deterministic rule at
+eval. Greedy eval is deterministic (rerun byte-identical). 179 margin / 9 reserve states
+discovered; return plateaus ~−1.15 (window-difficulty noise dominates).
+
+**Result (paired, n=8; pools 4/6/8).**
+
+| contrast | dSLA | dprodSLA |
+|---|---|---|
+| qlearn − floor | **+17.2*** / **+16.4*** / **+7.0*** | −0.7 / +7.5 / +0.8 ns |
+| negotiated@3b − qlearn | **−11.7*** / **−17.2*** / **−10.9*** | +0.3 / −16.0ns / **−13.0*** |
+
+**Findings.**
+1. **The learned table is significantly WORSE than the rule floor at every pool** and
+   loses to negotiated@3b by 11–17 SLA points*. In the same interface, with the same
+   information, learned-from-returns ≪ rule ≈ LLM-negotiated.
+2. Why it fails is the finding: episode-level returns are dominated by window difficulty,
+   so ~45 noisy samples per state-action cannot rank three actions per state — the
+   credit-assignment problem the rule (priors) and the LLM (language-encoded priors)
+   simply don't have. This is the written defense for scoping full DRL out: the failure
+   is structural to learning-from-returns at feasible sample sizes, and a policy-gradient
+   agent on the same episodes would face the same variance.
+3. Together with Exp 40/41 this completes the baseline triangle: negotiated@3b ≥ floor >
+   {easy-oracle, easy-pred, qlearn} on SLA at contention, and negotiated is the only
+   policy that also protects prodSLA (−12.2* at pool 8).
+
+**Caveats.** Tabular MC is the WEAKEST reasonable learner (no bootstrapping, no function
+approximation, no per-decision credit); a tuned contextual bandit with counterfactual
+baselines might close some gap — the claim is "cheap learning doesn't match priors here",
+not "RL can't". Reserve table has only 9 states (its lever is tiny, Exp 39). n=8.
+
+**Reproduce.**
+```bash
+.venv/bin/python -m pins.qlearn                                    # train -> qlearn_table.json
+.venv/bin/python -m pins.trace_replay --baseline qlearn --time predicted
+.venv/bin/python -m pins.trace_replay --compare "qwen2.5:3b+time-predicted/negotiated,qlearn+time-predicted/qlearn"
+```
+Tier `qlearn+time-predicted`; trainer/policy in `pins/qlearn.py`.

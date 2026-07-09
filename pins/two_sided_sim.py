@@ -288,6 +288,131 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
 
 
 # --------------------------------------------------------------------------- #
+#  EASY-backfilling baseline (Exp 40)                                            #
+# --------------------------------------------------------------------------- #
+def simulate_backfill(jobs_proto: list[Job], total_gpus: int, horizon: int,
+                      u_map: dict, spike_map: dict, scale: int, spike_max: float,
+                      cap_map: dict[str, int], true_cap_map: dict[str, int] | None = None,
+                      belief_work: dict[str, float] | str = "oracle") -> dict:
+    """The classical FCFS + EASY-backfilling scheduler (research_plan.md 'Baselines' row) on the
+    SAME workload/dynamics as `simulate`, so results are seed-paired with every policy tier.
+
+    Deliberately NOT a `policy`: EASY is a different allocation DISCIPLINE — all-or-nothing
+    grants at the requested cap, hold to completion, tier/urgency-blind FCFS order, a
+    reservation for the queue head, and backfill of jobs that provably (by runtime ESTIMATE)
+    don't delay that reservation. The margins/reserve hook can't express that, so it gets a
+    sibling loop; the progress dynamics below are copied from `simulate` verbatim so the
+    discipline is the only difference. No margins ever: EASY has no spike-absorption lever.
+
+    `belief_work` is the runtime estimate the reservation/backfill rule runs on — the input
+    EASY cannot exist without, and exactly the live Stage-2 role Exp 38/39 concluded is left
+    for the Stage-1 runtime predictor: {jid: predicted total ticks} (easy-pred) or "oracle" =
+    the realised spiked work (easy-oracle prices the prediction error).
+
+    Written for the trace-replay workload (single 'train' phase, request = cap_map); multi-
+    phase `make_workload` jobs would need a per-phase request schedule EASY doesn't model."""
+    jobs = [Job(j.jid, j.arrival, list(j.phases), list(j.need), j.urgency, j.deadline, j.tier)
+            for j in jobs_proto]
+    work = {j.jid: true_need(j, spike_map[j.jid]) for j in jobs}
+    useful = {j.jid: round(u_map[j.jid] * scale) for j in jobs}
+    held = {j.jid: 0 for j in jobs}
+    progress = {j.jid: 0.0 for j in jobs}
+    pidx = {j.jid: 0 for j in jobs}
+    done_at: dict[str, int | None] = {j.jid: None for j in jobs}
+    started: set[str] = set()
+    busy_sum = 0.0
+    busy_steps = 0
+
+    def req(j) -> int:                                   # all-or-nothing request, held to completion
+        return max(1, cap_map[j.jid])
+
+    def believed_total(j) -> float:                      # scheduler's estimate of TOTAL work (ticks)
+        return sum(work[j.jid]) if belief_work == "oracle" else belief_work[j.jid]
+
+    def believed_remaining(j) -> float:                  # running job: estimate minus done (rate~1)
+        if belief_work == "oracle":
+            return (work[j.jid][pidx[j.jid]] - progress[j.jid]
+                    + sum(work[j.jid][pidx[j.jid] + 1:]))
+        return max(1.0, belief_work[j.jid] - (sum(j.need[:pidx[j.jid]]) + progress[j.jid]))
+
+    for t in range(horizon):
+        active = [j for j in jobs if j.arrival <= t and done_at[j.jid] is None]
+        if not active:
+            if all(done_at[j.jid] is not None for j in jobs) and any(j.arrival <= t for j in jobs):
+                break
+            continue
+
+        # --- EASY scheduling pass: FCFS start, head reservation, estimate-gated backfill -------
+        running = [j for j in active if j.jid in started]
+        queue = sorted((j for j in active if j.jid not in started),
+                       key=lambda j: (j.arrival, j.jid))
+        free = total_gpus - sum(held[j.jid] for j in running)
+        while queue and req(queue[0]) <= free:           # plain FCFS while the head fits
+            head = queue.pop(0)
+            started.add(head.jid)
+            held[head.jid] = req(head)
+            running.append(head)
+            free -= req(head)
+        if queue:                                        # head blocked: reserve its start
+            need = req(queue[0]) - free                  # GPUs the head still lacks
+            t_reserve = float("inf")
+            shadow = free                                # spare GPUs AT the reserved start
+            acc = 0
+            for j in sorted(running, key=believed_remaining):
+                acc += held[j.jid]
+                if acc >= need:                          # earliest believed time free >= request
+                    t_reserve = believed_remaining(j)
+                    shadow = free + acc - req(queue[0])
+                    break
+            for k in queue[1:]:                          # backfill: must not delay the reservation
+                rq = req(k)
+                if rq <= free and (believed_total(k) <= t_reserve or rq <= shadow):
+                    started.add(k.jid)
+                    held[k.jid] = rq
+                    free -= rq
+                    if believed_total(k) > t_reserve:    # outlives the reservation: eats the spare
+                        shadow -= rq
+
+        # --- advance: dynamics copied from `simulate` (no margins, grant == request) ------------
+        busy_sum += sum(held[j.jid] for j in active) / total_gpus
+        busy_steps += 1
+        tcap = true_cap_map or cap_map
+        for j in active:
+            c0 = tcap[j.jid] if j.phases[min(pidx[j.jid], len(j.phases) - 1)] == "train" \
+                else PHASE_PROFILES[j.phases[min(pidx[j.jid], len(j.phases) - 1)]][0]
+            g = held[j.jid]
+            if c0 == 0:
+                rate = 1.0
+            else:
+                rate = min(g, c0 + useful[j.jid]) / c0
+            progress[j.jid] += rate
+            while done_at[j.jid] is None and progress[j.jid] >= work[j.jid][pidx[j.jid]] - 1e-9:
+                progress[j.jid] -= work[j.jid][pidx[j.jid]]
+                pidx[j.jid] += 1
+                if pidx[j.jid] >= len(j.phases):
+                    done_at[j.jid] = t
+                    break
+            if done_at[j.jid] is not None:
+                held[j.jid] = 0
+
+    def violated(j):
+        return done_at[j.jid] is None or done_at[j.jid] > j.deadline
+
+    prod = [j for j in jobs if j.tier == "prod"]
+    fin = [j for j in jobs if done_at[j.jid] is not None]
+    slow = [(done_at[j.jid] - j.arrival) / j.nominal for j in fin if j.nominal > 0]
+    return {
+        "sla": sum(1 for j in jobs if violated(j)) / len(jobs),
+        "prod_sla": sum(1 for j in prod if violated(j)) / max(len(prod), 1),
+        "util": busy_sum / max(busy_steps, 1),
+        "slowdown": sum(slow) / max(len(slow), 1),
+        "finished": float(len(fin)),
+        "n_jobs": float(len(jobs)),
+        "fallback_rate": 0.0,
+    }
+
+
+# --------------------------------------------------------------------------- #
 #  Sweep                                                                        #
 # --------------------------------------------------------------------------- #
 def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model) -> None:

@@ -37,7 +37,8 @@ import random
 from pins.llm_agent import load_cache, save_cache
 from pins.negotiation_sim import Job
 from pins.two_sided_sim import (make_policy_isolated, make_policy_negotiated,
-                                make_policy_single, policy_none, simulate)
+                                make_policy_single, policy_none, simulate,
+                                simulate_backfill)
 from pins.uncertainty_sim import assign, load_uncertainty_distribution
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -257,10 +258,36 @@ def cross_tier_stats(policy: str = "negotiated") -> None:
                 print(f"    pool {pool:>2} (n={len(ra)}):  " + "  ".join(parts))
 
 
+def compare_tiers(spec: str) -> None:
+    """Exp 40/41: paired-by-seed deltas between two ARBITRARY tier/policy arms, e.g.
+    --compare 'qwen2.5:3b+time-predicted/negotiated,easy+time-predicted/easy-pred'.
+    Valid only between tiers built on the same windows (same suffix -> same seeds)."""
+    (ta, pa), (tb, pb) = (s.rsplit("/", 1) for s in spec.split(","))
+    tiers = load_results()["tiers"]
+    A, B = tiers[ta]["per_seed"], tiers[tb]["per_seed"]
+    print(f"\nPaired stats: {ta}/{pa}  MINUS  {tb}/{pb} (negative = first is better):")
+    for pool in sorted(set(A) & set(B), key=int):
+        ra, rb = A[pool].get(pa), B[pool].get(pb)
+        if not ra or not rb or len(ra) != len(rb):
+            continue
+        parts = []
+        for metric, label, pct in (("sla", "dSLA", True), ("prod_sla", "dprodSLA", True),
+                                   ("slowdown", "dslow", False)):
+            diffs = [x[metric] - y[metric] for x, y in zip(ra, rb)]
+            m, h = paired_ci(diffs)
+            u = 100.0 if pct else 1.0
+            sig = "*" if h < abs(m) else " "
+            parts.append(f"{label} {m*u:+6.1f} ±{h*u:4.1f}{sig}")
+        print(f"  pool {pool:>2} (n={len(ra)}):  " + "  ".join(parts))
+
+
 def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           caps_mode: str = "real", quantile: str = "p50", truth_mode: str = "plan",
-          time_mode: str | None = None, ttf_mode: str | None = None) -> None:
+          time_mode: str | None = None, ttf_mode: str | None = None,
+          baseline: str | None = None) -> None:
     assert not (time_mode and ttf_mode), "--time and --ttf are separate experiments"
+    assert baseline is None or time_mode == "predicted", \
+        "--baseline needs --time predicted (EASY's runtime estimate + window pairing)"
     trace = load_trace()
     true_map = None
     declared = False
@@ -285,14 +312,22 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         suffix += f"+time-{time_mode}"
     if ttf_mode:
         suffix += f"+ttf-{ttf_mode}"      # control (no signal, same windows) = the time-oracle tier
-    tag = ("rule" if not use_llm else model) + suffix
+    tag = (baseline or ("rule" if not use_llm else model)) + suffix
 
-    rows = [
-        ("no-llm",     lambda: policy_none),
-        ("isolated",   lambda: make_policy_isolated(use_llm, model, cache, decisions, seen)),
-        ("negotiated", lambda: make_policy_negotiated(use_llm, model, cache, decisions, seen)),
-        ("single-llm", lambda: make_policy_single(use_llm, model, cache, decisions, seen)),
-    ]
+    if baseline == "easy":        # Exp 40: rows are allocation DISCIPLINES, not policies
+        rows = [("no-llm", lambda: policy_none), ("easy-pred", None), ("easy-oracle", None)]
+    elif baseline == "qlearn":    # Exp 41: learned table in the LLM's own policy interface
+        from pins.qlearn import load_table, make_policy_qlearn
+        table = load_table()
+        rows = [("no-llm", lambda: policy_none),
+                ("qlearn", lambda: make_policy_qlearn(table))]
+    else:
+        rows = [
+            ("no-llm",     lambda: policy_none),
+            ("isolated",   lambda: make_policy_isolated(use_llm, model, cache, decisions, seen)),
+            ("negotiated", lambda: make_policy_negotiated(use_llm, model, cache, decisions, seen)),
+            ("single-llm", lambda: make_policy_single(use_llm, model, cache, decisions, seen)),
+        ]
 
     print(f"\n{'='*86}")
     print(f"TRACE REPLAY (Alibaba gpu-v2020) — two-sided sim on real jobs; agents={tag}")
@@ -320,9 +355,15 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                 tcap = {k: min(v, gpus) for k, v in tcap.items()}
                 u_map, spike_map = assign(jobs, s, dist, spike_max)
                 ttf = "oracle" if ttf_mode == "oracle" else belief if ttf_mode == "predicted" else None
-                r = simulate(jobs, factory(), gpus, horizon, u_map, spike_map, scale,
-                             spike_max, cap_map, true_cap_map=tcap,
-                             belief_work=belief if time_mode else None, ttf_work=ttf)
+                if name.startswith("easy"):
+                    r = simulate_backfill(jobs, gpus, horizon, u_map, spike_map, scale,
+                                          spike_max, cap_map, true_cap_map=tcap,
+                                          belief_work="oracle" if name == "easy-oracle"
+                                          else belief)
+                else:
+                    r = simulate(jobs, factory(), gpus, horizon, u_map, spike_map, scale,
+                                 spike_max, cap_map, true_cap_map=tcap,
+                                 belief_work=belief if time_mode else None, ttf_work=ttf)
                 per_seed.append({k: r[k] for k in METRICS})
             per_seed_pool[name] = per_seed
             results.append((name, {k: sum(row[k] for row in per_seed) / len(seeds)
@@ -384,14 +425,26 @@ def main() -> None:
                          "runtime P50 (pred_job_runtime.csv), 'blind' = none (always ontrack), "
                          "'oracle' = true work on the same runtime-covered windows. Default "
                          "(absent) = pre-Exp-38 oracle on unrestricted windows")
+    ap.add_argument("--baseline", default=None, choices=("easy", "qlearn"),
+                    help="Exp 40/41: classical baselines instead of the LLM policies — "
+                         "'easy' = FCFS + EASY backfilling (easy-pred uses the Stage-1 runtime "
+                         "P50 as its reservation estimate, easy-oracle the true spiked work); "
+                         "'qlearn' = the trained tabular-Q policy (pins/qlearn.py). "
+                         "Requires --time predicted (pairs windows with the model tiers)")
+    ap.add_argument("--compare", default=None, metavar="TIER/POL,TIER/POL",
+                    help="no sim: paired deltas between two tier/policy arms sharing windows, "
+                         "e.g. 'qwen2.5:3b+time-predicted/negotiated,easy+time-predicted/easy-pred'")
     a = ap.parse_args()
     if a.stats:
         cross_tier_stats()
         return
+    if a.compare:
+        compare_tiers(a.compare)
+        return
     sweep([int(p) for p in a.pools.split(",")], n_jobs=16, horizon=300,
           seeds=list(range(a.seeds)), scale=a.scale, spike_max=a.spike,
           use_llm=a.llm, model=a.model, caps_mode=a.caps, quantile=a.quantile,
-          truth_mode=a.truth, time_mode=a.time, ttf_mode=a.ttf)
+          truth_mode=a.truth, time_mode=a.time, ttf_mode=a.ttf, baseline=a.baseline)
 
 
 if __name__ == "__main__":

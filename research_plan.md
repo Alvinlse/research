@@ -345,7 +345,7 @@ locked pipeline (negotiate → committed-auction → ILP placement) and measured
 
 **Still unbuilt:** incentive-compatible clearing (Exp 13: priority reports are gameable, a flat
 budget does not fix it; payments / uniform-price clearing open) and the classical-scheduler
-baselines from the evaluation plan (EASY backfilling, DRL) — scope in or out explicitly.
+baselines from the evaluation plan — now scoped and run (Exp 41 EASY, Exp 42 tabular-Q; full DRL out, see decision 5).
 
 ---
 
@@ -369,7 +369,7 @@ baselines from the evaluation plan (EASY backfilling, DRL) — scope in or out e
 
 | Phase | Name | Description | Status |
 |-------|------|-------------|--------|
-| **Phase 1** | Foundation | Load a trace; reproduce a baseline scheduler's utilization / SLA as a yardstick. | **done for Alibaba v2020 (Exp 28 trace replay: real arrivals/durations/demand vs no-LLM floor)**; EASY/DRL yardsticks unscoped |
+| **Phase 1** | Foundation | Load a trace; reproduce a baseline scheduler's utilization / SLA as a yardstick. | **done for Alibaba v2020 (Exp 28 trace replay: real arrivals/durations/demand vs no-LLM floor)**; EASY + tabular-Q yardsticks done (Exp 41/42) |
 | **Phase 2** | Predictor | Local-LLM metadata + ST-attention + quantile regression; validate P10/P50/P90 intervals (uncertainty sizes the margin). | **quantile + conformal calibration + margin + LLM-hedge done (Exp 16-17)**; local-LLM metadata extraction remains |
 | **Phase 3a** | Mechanism + demand agent | Sealed-bid / committed auction + demand-side LLM bidding & priority. | **done (Exp 9–13)** |
 | **Phase 3b** | Supply agent + protocol | Asymmetric supply LLM (headroom reservation); regime-gated to rigid incumbents; malleability-aware reservation. | **done (Exp 14–15)** · protocol → one-shot (Exp 11) |
@@ -392,6 +392,14 @@ baselines from the evaluation plan (EASY backfilling, DRL) — scope in or out e
    end-to-end prediction→negotiation claim (Exp 28's own caveat).
 4. **Incentives (open since Exp 13):** design a payments/uniform-price clearing rule so truthful
    priority declaration is optimal; the flat budget is proven not to work.
-5. **Scope decision:** EASY-backfilling / DRL baselines — in or out, with a written defense.
+5. **Scope decision (RESOLVED, Exp 41/42):** EASY-backfilling IN (built on the Stage-1 runtime
+   prediction — its one live Stage-2 role after Exp 38/39; negotiated@3b beats it, even with
+   oracle runtimes, Exp 41). Learning-based baseline IN as tabular Q-learning over the LLM's
+   own discretised state/action interface (loses to rule and negotiation at every pool, Exp 42).
+   Full DeepRM/Decima-style DRL OUT — defense: it owns a different (whole-allocator) action
+   space, so it cannot isolate the decision-rule question; and Exp 42 shows the binding
+   constraint is return-variance at feasible sample sizes (~10^3 episodes), which
+   policy-gradient training on the same episode budget would share, while published DRL
+   schedulers train on 10^5-10^6 episodes — a compute budget outside this thesis.
 6. **Prediction leftovers:** local-LLM metadata extraction for cold-start; derive spike-risk from
    the forecaster's P90/P50 ratio for a fully end-to-end signal.
