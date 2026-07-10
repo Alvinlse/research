@@ -137,6 +137,12 @@
     "margin": "heavy",
     "reserve": "light"
   },
+  "joint|high|high|ahead|ample|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Prioritize protecting jobs from imminent deadline pressure with a heavy margin while reserving some headroom for incoming high-priority jobs.",
+    "margin": "heavy",
+    "reserve": "light"
+  },
   "joint|high|high|ahead|ample|many|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To mitigate the high risk of demand spikes and protect job deadlines, I prioritize a heavy safety margin while still reserving some headroom for incoming high-priority production jobs.",
@@ -167,6 +173,12 @@
     "margin": "heavy",
     "reserve": "light"
   },
+  "joint|high|high|ahead|moderate|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Prioritize protecting tight deadlines against potential spikes while reserving some capacity for upcoming production jobs.",
+    "margin": "heavy",
+    "reserve": "light"
+  },
   "joint|high|high|ahead|moderate|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To mitigate the high spike risk and protect deadlines, I prioritize a heavy margin while still reserving some headroom for incoming prod jobs.",
@@ -188,6 +200,12 @@
   "joint|high|high|ahead|moderate|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "High spike risk justifies heavy margin for job deadlines; light reserve as prod jobs are incoming but contention is moderate.",
+    "margin": "heavy",
+    "reserve": "light"
+  },
+  "joint|high|high|ahead|moderate|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Prioritize protecting tight deadlines against potential spikes while reserving some capacity for upcoming production jobs.",
     "margin": "heavy",
     "reserve": "light"
   },
@@ -233,6 +251,12 @@
     "margin": "heavy",
     "reserve": "none"
   },
+  "joint|high|high|ahead|scarce|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Prioritize protecting jobs from potential spikes while still reserving some capacity for upcoming production jobs.",
+    "margin": "heavy",
+    "reserve": "light"
+  },
   "joint|high|high|ahead|scarce|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To protect against the high demand spike risk, I prioritize a heavy margin while still reserving some headroom for incoming prod jobs to ensure timely arrival.",
@@ -257,6 +281,12 @@
     "margin": "heavy",
     "reserve": "light"
   },
+  "joint|high|high|ahead|scarce|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Prioritize protecting jobs from potential spikes while still reserving some capacity for upcoming high-priority tasks.",
+    "margin": "heavy",
+    "reserve": "light"
+  },
   "joint|high|high|ahead|scarce|many|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To mitigate the high spike risk and protect deadlines, I prioritize a heavy margin while still reserving some headroom for incoming prod jobs.",
@@ -278,6 +308,12 @@
   "joint|high|high|ahead|scarce|many|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "High spike risk justifies heavy margin for job deadlines; light reserve to not starve waiting prod jobs.",
+    "margin": "heavy",
+    "reserve": "light"
+  },
+  "joint|high|high|ahead|scarce|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Prioritize protecting jobs from potential spikes with a heavy margin while reserving some headroom for incoming high-priority jobs.",
     "margin": "heavy",
     "reserve": "light"
   },
@@ -308,6 +344,12 @@
   "joint|high|high|behind|ample|few|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
     "justification": "High demand spike risk demands heavy GPU margins while light reservation allows some idle headroom for incoming prod jobs without starving other tasks.",
+    "margin": "heavy",
+    "reserve": "light"
+  },
+  "joint|high|high|behind|ample|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Prioritize protecting jobs from imminent deadline pressure with a heavy margin while reserving some headroom for incoming high-priority jobs.",
     "margin": "heavy",
     "reserve": "light"
   },
@@ -350,6 +392,12 @@
   "joint|high|high|behind|moderate|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "High spike risk justifies heavy margin for job deadlines; light reserve as prod jobs are incoming but contention is moderate.",
+    "margin": "heavy",
+    "reserve": "light"
+  },
+  "joint|high|high|behind|moderate|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Prioritize protecting jobs from potential spikes while still reserving some capacity for incoming production jobs.",
     "margin": "heavy",
     "reserve": "light"
   },
@@ -413,6 +461,12 @@
     "margin": "heavy",
     "reserve": "light"
   },
+  "joint|high|high|behind|scarce|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Prioritize protecting jobs from potential spikes while still reserving some capacity for upcoming high-priority tasks.",
+    "margin": "heavy",
+    "reserve": "light"
+  },
   "joint|high|high|behind|scarce|many|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To mitigate the high spike risk and protect deadlines, I prioritize a heavy margin while still reserving some headroom for incoming prod jobs.",
@@ -434,6 +488,12 @@
   "joint|high|high|behind|scarce|many|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "High spike risk justifies heavy margin for job deadlines; light reserve to not starve waiting prod jobs.",
+    "margin": "heavy",
+    "reserve": "light"
+  },
+  "joint|high|high|behind|scarce|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Prioritize protecting jobs from potential spikes with a heavy margin while reserving some headroom for incoming high-priority jobs.",
     "margin": "heavy",
     "reserve": "light"
   },
@@ -479,6 +539,12 @@
     "margin": "heavy",
     "reserve": "light"
   },
+  "joint|high|high|ontrack|ample|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Prioritize protecting jobs from potential spikes while still reserving some capacity for upcoming production jobs.",
+    "margin": "heavy",
+    "reserve": "light"
+  },
   "joint|high|high|ontrack|ample|many|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To protect against the high demand spike risk, I prioritize a heavy safety margin while still reserving some headroom for incoming high-priority prod jobs.",
@@ -506,6 +572,12 @@
   "joint|high|high|ontrack|ample|none|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
     "justification": "High demand spike risk requires heavy GPU margin hedging, while light reserve allows some idle headroom for incoming prod jobs without starving other tasks.",
+    "margin": "heavy",
+    "reserve": "light"
+  },
+  "joint|high|high|ontrack|moderate|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Prioritize protecting jobs from potential spikes while still reserving some capacity for upcoming production jobs.",
     "margin": "heavy",
     "reserve": "light"
   },
@@ -563,6 +635,12 @@
     "margin": "heavy",
     "reserve": "none"
   },
+  "joint|high|high|ontrack|scarce|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Prioritize protecting jobs from potential spikes while still reserving some capacity for upcoming production jobs.",
+    "margin": "heavy",
+    "reserve": "light"
+  },
   "joint|high|high|ontrack|scarce|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To mitigate the high spike risk and protect deadlines, I prioritize a heavy margin while still reserving some headroom for incoming prod jobs.",
@@ -605,6 +683,12 @@
     "margin": "heavy",
     "reserve": "light"
   },
+  "joint|high|high|ontrack|scarce|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Prioritize protecting jobs from potential spikes while reserving some capacity for upcoming production jobs.",
+    "margin": "heavy",
+    "reserve": "light"
+  },
   "joint|high|high|ontrack|scarce|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To mitigate the high spike risk and protect deadlines, I prioritize a heavy margin while still reserving some headroom for incoming prod jobs.",
@@ -629,6 +713,12 @@
     "margin": "heavy",
     "reserve": "none"
   },
+  "joint|high|medium|ahead|ample|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|high|medium|ahead|ample|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I'm allocating some safety margin to protect against potential spikes while also reserving a light amount of headroom for future high-priority arrivals.",
@@ -650,6 +740,12 @@
   "joint|high|medium|ahead|ample|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Some margin to hedge against medium spike risk given uncertain demand, while light reserve allows for occasional prod job arrivals.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|high|medium|ahead|ample|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
     "margin": "some",
     "reserve": "light"
   },
@@ -677,6 +773,12 @@
     "margin": "some",
     "reserve": "light"
   },
+  "joint|high|medium|ahead|ample|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future production job needs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|high|medium|ahead|ample|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I'll allocate some safety margin to protect against potential spikes while also reserving a light amount of headroom for future high-priority arrivals.",
@@ -698,6 +800,12 @@
   "joint|high|medium|ahead|ample|none|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Some margin to hedge against medium spike risk given uncertain demand, as prod jobs are incoming but contention is not scarce.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|high|medium|ahead|moderate|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future production job needs.",
     "margin": "some",
     "reserve": "light"
   },
@@ -725,6 +833,12 @@
     "margin": "some",
     "reserve": "light"
   },
+  "joint|high|medium|ahead|moderate|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|high|medium|ahead|moderate|many|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I'll allocate some safety margin to protect against potential spikes while also reserving a light amount of headroom for incoming high-priority prod jobs.",
@@ -746,6 +860,12 @@
   "joint|high|medium|ahead|moderate|many|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Balancing medium spike risk with imminent queue deadlines while accommodating incoming prod jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|high|medium|ahead|moderate|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance the need for some margin against the incoming prod jobs.",
     "margin": "some",
     "reserve": "light"
   },
@@ -773,6 +893,12 @@
     "margin": "some",
     "reserve": "none"
   },
+  "joint|high|medium|ahead|scarce|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|high|medium|ahead|scarce|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I'll allocate some safety margin to protect against potential spikes while also reserving a light amount of headroom for incoming high-priority prod jobs.",
@@ -794,6 +920,12 @@
   "joint|high|medium|ahead|scarce|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Protecting against medium spike risk given high demand uncertainty is more urgent than reserving for incoming prod jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|high|medium|ahead|scarce|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
     "margin": "some",
     "reserve": "light"
   },
@@ -821,6 +953,12 @@
     "margin": "some",
     "reserve": "heavy"
   },
+  "joint|high|medium|ahead|scarce|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|high|medium|ahead|scarce|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I will grant some safety margin to protect against potential spikes while also reserving a light amount of headroom for future high-priority prod jobs.",
@@ -845,6 +983,12 @@
     "margin": "some",
     "reserve": "none"
   },
+  "joint|high|medium|behind|ample|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Provide some buffer against potential spikes while reserving a small amount for upcoming production jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|high|medium|behind|ample|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I'll allocate some safety margin to protect against potential spikes while also reserving a light amount of headroom for future high-priority arrivals.",
@@ -866,6 +1010,12 @@
   "joint|high|medium|behind|ample|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Balance margin for deadline protection with light reserve to handle incoming prod jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|high|medium|behind|ample|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline protection with future high-priority job capacity.",
     "margin": "some",
     "reserve": "light"
   },
@@ -893,6 +1043,12 @@
     "margin": "some",
     "reserve": "light"
   },
+  "joint|high|medium|behind|ample|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Provide some buffer against potential spikes while reserving headroom for incoming production jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|high|medium|behind|ample|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the demand uncertainty with the available supply, I will grant some safety margin to protect against potential spikes while also reserving a light amount of headroom for future high-priorit",
@@ -914,6 +1070,12 @@
   "joint|high|medium|behind|ample|none|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Balancing medium spike risk with some margin while keeping supply ample for light prod reservation.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|high|medium|behind|moderate|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future production needs.",
     "margin": "some",
     "reserve": "light"
   },
@@ -941,6 +1103,12 @@
     "margin": "some",
     "reserve": "light"
   },
+  "joint|high|medium|behind|moderate|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|high|medium|behind|moderate|many|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I'll allocate some safety margin to protect against potential spikes while also reserving a light amount of headroom for future high-priority arrivals.",
@@ -962,6 +1130,12 @@
   "joint|high|medium|behind|moderate|many|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Moderate contention and incoming prod jobs justify light reservation while some margin protects against deadline pressures.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|high|medium|behind|moderate|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future production needs.",
     "margin": "some",
     "reserve": "light"
   },
@@ -989,6 +1163,12 @@
     "margin": "some",
     "reserve": "none"
   },
+  "joint|high|medium|behind|scarce|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Provide some buffer against potential spikes while reserving a small amount for upcoming production jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|high|medium|behind|scarce|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I'll allocate some safety margin to protect against potential spikes while also reserving a light amount of headroom for incoming high-priority prod jobs.",
@@ -1010,6 +1190,12 @@
   "joint|high|medium|behind|scarce|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Protecting against medium spike risk given the uncertain demand while holding some headroom for imminent prod jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|high|medium|behind|scarce|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with the need to accommodate future high-priority arrivals.",
     "margin": "some",
     "reserve": "light"
   },
@@ -1037,6 +1223,12 @@
     "margin": "some",
     "reserve": "heavy"
   },
+  "joint|high|medium|behind|scarce|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Provide some buffer against potential spikes while reserving capacity for upcoming production jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|high|medium|behind|scarce|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I'll allocate some safety margin to protect against potential spikes while also reserving a light amount of headroom for incoming high-priority prod jobs.",
@@ -1058,6 +1250,12 @@
   "joint|high|medium|behind|scarce|none|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Protecting against medium spike risk given the uncertain demand while keeping some headroom for incoming prod jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|high|medium|ontrack|ample|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline protection with future high-priority job capacity.",
     "margin": "some",
     "reserve": "light"
   },
@@ -1085,6 +1283,12 @@
     "margin": "some",
     "reserve": "light"
   },
+  "joint|high|medium|ontrack|ample|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline protection with future high-priority job capacity.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|high|medium|ontrack|ample|many|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I'll allocate some safety margin to hedge against potential spikes while also reserving a light amount of headroom for future high-priority arrivals.",
@@ -1106,6 +1310,12 @@
   "joint|high|medium|ontrack|ample|many|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Balancing medium spike risk with ongoing prod job arrivals.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|high|medium|ontrack|ample|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline protection with future high-priority job capacity.",
     "margin": "some",
     "reserve": "light"
   },
@@ -1133,6 +1343,12 @@
     "margin": "some",
     "reserve": "light"
   },
+  "joint|high|medium|ontrack|moderate|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline protection with future high-priority job capacity.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|high|medium|ontrack|moderate|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I'll allocate some safety margin to protect against potential spikes while also reserving a light amount of headroom for incoming high-priority prod jobs.",
@@ -1154,6 +1370,12 @@
   "joint|high|medium|ontrack|moderate|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Moderate contention and incoming prod jobs justify light reservation while some margin protects against uncertainty.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|high|medium|ontrack|moderate|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline protection with future high-priority job capacity.",
     "margin": "some",
     "reserve": "light"
   },
@@ -1181,6 +1403,12 @@
     "margin": "some",
     "reserve": "heavy"
   },
+  "joint|high|medium|ontrack|moderate|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance the risk of demand spikes with the need to accommodate incoming production jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|high|medium|ontrack|moderate|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "A balanced approach is taken to hedge against demand spikes while also reserving some headroom for future high-priority arrivals.",
@@ -1205,6 +1433,12 @@
     "margin": "some",
     "reserve": "none"
   },
+  "joint|high|medium|ontrack|scarce|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline protection with future high-priority job capacity.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|high|medium|ontrack|scarce|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I'll allocate some safety margin to protect against potential spikes while also reserving a light amount of headroom for incoming high-priority prod jobs.",
@@ -1226,6 +1460,12 @@
   "joint|high|medium|ontrack|scarce|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Balance demand unpredictability with imminent prod job arrivals.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|high|medium|ontrack|scarce|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline protection with future high-priority job capacity.",
     "margin": "some",
     "reserve": "light"
   },
@@ -1253,6 +1493,12 @@
     "margin": "some",
     "reserve": "heavy"
   },
+  "joint|high|medium|ontrack|scarce|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance the risk of demand spikes with the need to accommodate future high-priority arrivals.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|high|medium|ontrack|scarce|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I'll allocate some safety margin to protect against potential spikes while also reserving a light amount of headroom for incoming high-priority prod jobs.",
@@ -1277,6 +1523,12 @@
     "margin": "some",
     "reserve": "light"
   },
+  "joint|low|low|ahead|ample|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Margin is unnecessary with low spike risk, but reserving some headroom for incoming prod jobs is prudent.",
+    "margin": "none",
+    "reserve": "light"
+  },
   "joint|low|low|ahead|ample|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "Given the predictable demand and ample supply, I prioritize granting no safety margin to current jobs while reserving a light headroom for future high-priority arrivals.",
@@ -1298,6 +1550,12 @@
   "joint|low|low|ahead|ample|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Low spike risk and ample supply allow minimal reservation for imminent prod jobs.",
+    "margin": "none",
+    "reserve": "light"
+  },
+  "joint|low|low|ahead|ample|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Maintain headroom for incoming high-priority jobs while current demand is manageable.",
     "margin": "none",
     "reserve": "light"
   },
@@ -1325,6 +1583,12 @@
     "margin": "none",
     "reserve": "heavy"
   },
+  "joint|low|low|ahead|ample|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Margin is unnecessary with low spike risk, but reserving headroom for incoming prod jobs is prudent.",
+    "margin": "none",
+    "reserve": "light"
+  },
   "joint|low|low|ahead|ample|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "Given the predictable demand and ample supply, I prioritize granting no safety margin to current jobs while reserving some headroom for future high-priority arrivals.",
@@ -1346,6 +1610,12 @@
   "joint|low|low|ahead|ample|none|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "No need for safety margin with low spike risk, but light reservation needed for incoming prod jobs.",
+    "margin": "none",
+    "reserve": "light"
+  },
+  "joint|low|low|ahead|moderate|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Moderate contention warrants some headroom for incoming prod jobs while current deadlines are manageable.",
     "margin": "none",
     "reserve": "light"
   },
@@ -1373,6 +1643,12 @@
     "margin": "none",
     "reserve": "light"
   },
+  "joint|low|low|ahead|moderate|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Moderate contention warrants some headroom for incoming high-priority jobs.",
+    "margin": "none",
+    "reserve": "light"
+  },
   "joint|low|low|ahead|moderate|many|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "Given the predictable demand and ahead-of-schedule deadlines, I prioritize reserving some headroom for future high-priority arrivals while keeping a safety net minimal to avoid unnecessary GPU allocat",
@@ -1397,6 +1673,12 @@
     "margin": "none",
     "reserve": "heavy"
   },
+  "joint|low|low|ahead|moderate|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Moderate contention warrants some headroom for incoming prod jobs while current deadlines are manageable.",
+    "margin": "none",
+    "reserve": "light"
+  },
   "joint|low|low|ahead|moderate|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "Given the predictable demand and moderate contention, I prioritize granting some safety margin to protect job deadlines while also reserving a small amount of headroom for future high-priority arrival",
@@ -1418,6 +1700,12 @@
   "joint|low|low|ahead|moderate|none|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Balancing low demand uncertainty and no immediate deadline pressure with ongoing prod job arrivals.",
+    "margin": "none",
+    "reserve": "light"
+  },
+  "joint|low|low|ahead|scarce|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Margin is unnecessary with low spike risk, but reserving some headroom for incoming prod jobs is prudent.",
     "margin": "none",
     "reserve": "light"
   },
@@ -1445,6 +1733,12 @@
     "margin": "none",
     "reserve": "light"
   },
+  "joint|low|low|ahead|scarce|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Prioritize reserving headroom for incoming high-priority jobs while maintaining a minimal safety margin.",
+    "margin": "none",
+    "reserve": "light"
+  },
   "joint|low|low|ahead|scarce|many|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "Given the predictable demand and ahead-of-schedule deadlines, I prioritize reserving headroom for incoming high-priority prod jobs to ensure timely execution.",
@@ -1469,6 +1763,12 @@
     "margin": "none",
     "reserve": "heavy"
   },
+  "joint|low|low|ahead|scarce|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Margin is unnecessary with low spike risk, but reserving headroom for incoming prod jobs is prudent.",
+    "margin": "none",
+    "reserve": "light"
+  },
   "joint|low|low|ahead|scarce|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "Given the predictable demand and ahead-of-schedule deadlines, I prioritize reserving some headroom for future high-priority arrivals while keeping a safety net minimal.",
@@ -1490,6 +1790,12 @@
   "joint|low|low|ahead|scarce|none|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "No need for safety margin with low spike risk, but light reservation helps pending prods.",
+    "margin": "none",
+    "reserve": "light"
+  },
+  "joint|low|low|behind|ample|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Margin is unnecessary with low spike risk, but reserving some headroom for incoming prod jobs is prudent.",
     "margin": "none",
     "reserve": "light"
   },
@@ -1517,6 +1823,12 @@
     "margin": "none",
     "reserve": "light"
   },
+  "joint|low|low|behind|ample|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Reserve headroom for incoming high-priority jobs while maintaining a flexible pool.",
+    "margin": "none",
+    "reserve": "light"
+  },
   "joint|low|low|behind|ample|many|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "Given the predictable demand and ample supply, I prioritize reserving some headroom for future high-priority arrivals while keeping a safety net minimal to avoid unnecessary GPU allocation.",
@@ -1541,6 +1853,12 @@
     "margin": "none",
     "reserve": "heavy"
   },
+  "joint|low|low|behind|ample|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "With ample headroom and incoming prod jobs, prioritize reserving capacity for future demand.",
+    "margin": "none",
+    "reserve": "light"
+  },
   "joint|low|low|behind|ample|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "Given the predictable demand and ample supply, I prioritize reserving some headroom for future high-priority arrivals while keeping a safety net of none for the current jobs.",
@@ -1562,6 +1880,12 @@
   "joint|low|low|behind|ample|none|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Reserving light headroom to cover potential prod arrivals while not overcommitting due to ample contention and low deadline pressure.",
+    "margin": "none",
+    "reserve": "light"
+  },
+  "joint|low|low|behind|moderate|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Moderate contention warrants some headroom for incoming prod jobs while current deadlines are not immediately threatened.",
     "margin": "none",
     "reserve": "light"
   },
@@ -1589,6 +1913,12 @@
     "margin": "none",
     "reserve": "light"
   },
+  "joint|low|low|behind|moderate|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Moderate contention warrants some headroom for incoming high-priority jobs.",
+    "margin": "none",
+    "reserve": "light"
+  },
   "joint|low|low|behind|moderate|many|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "With predictable demand and moderate contention, I'll allocate some safety margin to protect against minor spikes while also reserving a light amount of headroom for incoming high-priority prod jobs.",
@@ -1613,6 +1943,12 @@
     "margin": "none",
     "reserve": "heavy"
   },
+  "joint|low|low|behind|moderate|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Moderate contention warrants some headroom for incoming prod jobs while current deadlines are not immediately threatened.",
+    "margin": "none",
+    "reserve": "light"
+  },
   "joint|low|low|behind|moderate|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "Given the predictable demand and moderate contention, I prioritize granting some safety margin to running jobs while reserving a light amount of headroom for future high-priority arrivals.",
@@ -1634,6 +1970,12 @@
   "joint|low|low|behind|moderate|none|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Balancing low demand uncertainty and no imminent deadline pressure with some future prod job arrivals.",
+    "margin": "none",
+    "reserve": "light"
+  },
+  "joint|low|low|behind|scarce|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Prioritize reserving headroom for upcoming high-priority jobs while maintaining minimal safety margins due to low demand uncertainty.",
     "margin": "none",
     "reserve": "light"
   },
@@ -1661,6 +2003,12 @@
     "margin": "none",
     "reserve": "light"
   },
+  "joint|low|low|behind|scarce|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Reserve some headroom for incoming high-priority jobs while keeping margins low due to predictable demand.",
+    "margin": "none",
+    "reserve": "light"
+  },
   "joint|low|low|behind|scarce|many|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "Given the predictable demand and scarcity of resources, I prioritize reserving headroom for incoming high-priority prod jobs to ensure timely execution.",
@@ -1685,6 +2033,12 @@
     "margin": "none",
     "reserve": "heavy"
   },
+  "joint|low|low|behind|scarce|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Reserve some headroom for incoming prod jobs while keeping margins low due to predictable demand.",
+    "margin": "none",
+    "reserve": "light"
+  },
   "joint|low|low|behind|scarce|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "Given the predictable demand and scarcity of resources, I prioritize reserving some headroom for incoming high-priority prod jobs while keeping a safety net to zero.",
@@ -1706,6 +2060,12 @@
   "joint|low|low|behind|scarce|none|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Low demand uncertainty and no imminent deadline pressures allow for minimal safety margin while reserving some headroom for incoming prod jobs.",
+    "margin": "none",
+    "reserve": "light"
+  },
+  "joint|low|low|ontrack|ample|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Margin is unnecessary with low spike risk, but reserving some headroom for incoming prod jobs is prudent.",
     "margin": "none",
     "reserve": "light"
   },
@@ -1733,6 +2093,12 @@
     "margin": "none",
     "reserve": "light"
   },
+  "joint|low|low|ontrack|ample|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Maintain some headroom for incoming high-priority jobs while keeping the current workload running smoothly.",
+    "margin": "none",
+    "reserve": "light"
+  },
   "joint|low|low|ontrack|ample|many|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "Given the predictable demand and ample supply, I prioritize reserving some headroom for future high-priority arrivals while keeping a safety net of none to avoid unnecessary GPU allocation.",
@@ -1754,6 +2120,12 @@
   "joint|low|low|ontrack|ample|many|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Reserving light headroom to accommodate incoming prod jobs while ample contention allows some flexibility.",
+    "margin": "none",
+    "reserve": "light"
+  },
+  "joint|low|low|ontrack|ample|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "With ample resources and predictable demand, prioritize reserving headroom for future production jobs.",
     "margin": "none",
     "reserve": "light"
   },
@@ -1781,6 +2153,12 @@
     "margin": "none",
     "reserve": "light"
   },
+  "joint|low|low|ontrack|moderate|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Moderate contention warrants some headroom for incoming prod jobs while current deadlines are manageable.",
+    "margin": "none",
+    "reserve": "light"
+  },
   "joint|low|low|ontrack|moderate|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "A moderate margin is needed to account for minor fluctuations in demand, while reserving some headroom allows for flexibility when accommodating incoming high-priority jobs.",
@@ -1802,6 +2180,12 @@
   "joint|low|low|ontrack|moderate|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Balancing moderate contention and some future prod jobs, light reservation ensures readiness while not overcommitting during low spike risk.",
+    "margin": "none",
+    "reserve": "light"
+  },
+  "joint|low|low|ontrack|moderate|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Moderate contention warrants some headroom for incoming prod jobs while deadlines are currently manageable.",
     "margin": "none",
     "reserve": "light"
   },
@@ -1829,6 +2213,12 @@
     "margin": "none",
     "reserve": "heavy"
   },
+  "joint|low|low|ontrack|moderate|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Moderate contention warrants some headroom for incoming prod jobs while deadlines are currently manageable.",
+    "margin": "none",
+    "reserve": "light"
+  },
   "joint|low|low|ontrack|moderate|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "Given the predictable demand and moderate contention, I prioritize granting some safety margin to protect against minor spikes while also reserving a small amount of headroom for incoming high-priorit",
@@ -1850,6 +2240,12 @@
   "joint|low|low|ontrack|moderate|none|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Balancing low demand uncertainty and no imminent deadline pressure with some future prod job arrivals.",
+    "margin": "none",
+    "reserve": "light"
+  },
+  "joint|low|low|ontrack|scarce|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Margin is unnecessary with low spike risk, but reserving some headroom for incoming prod jobs is prudent.",
     "margin": "none",
     "reserve": "light"
   },
@@ -1877,6 +2273,12 @@
     "margin": "none",
     "reserve": "light"
   },
+  "joint|low|low|ontrack|scarce|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Maintain some headroom for incoming high-priority jobs while keeping the current workload running smoothly.",
+    "margin": "none",
+    "reserve": "light"
+  },
   "joint|low|low|ontrack|scarce|many|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "Given the predictable demand and no immediate deadline pressure, I prioritize reserving headroom for incoming high-priority prod jobs to ensure timely execution.",
@@ -1900,6 +2302,12 @@
     "justification": "Reserving headroom for incoming prod jobs is critical given the scarcity of idle GPUs.",
     "margin": "none",
     "reserve": "heavy"
+  },
+  "joint|low|low|ontrack|scarce|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Margin is unnecessary with low spike risk, but reserving headroom for incoming prod jobs is prudent.",
+    "margin": "none",
+    "reserve": "light"
   },
   "joint|low|low|ontrack|scarce|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -1925,6 +2333,12 @@
     "margin": "none",
     "reserve": "light"
   },
+  "joint|medium|low|ahead|ample|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Provide some buffer against potential spikes while reserving a small amount for upcoming high-priority jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|low|ahead|ample|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "A moderate margin is needed to account for the medium forecast uncertainty, while a light reserve ensures some headroom for upcoming high-priority jobs without starving other running jobs.",
@@ -1946,6 +2360,12 @@
   "joint|medium|low|ahead|ample|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Balancing medium demand uncertainty with ample supply allows for some margin while reserving light headroom for imminent prod arrivals.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|medium|low|ahead|ample|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Provide some buffer against potential spikes while reserving capacity for upcoming high-priority jobs.",
     "margin": "some",
     "reserve": "light"
   },
@@ -1973,6 +2393,12 @@
     "margin": "some",
     "reserve": "light"
   },
+  "joint|medium|low|ahead|ample|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Provide some buffer against potential spikes while reserving a small amount for future production jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|low|ahead|ample|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "A moderate margin is needed to account for the medium forecast uncertainty, while a light reserve ensures some headroom for upcoming high-priority jobs without starving other running tasks.",
@@ -1997,6 +2423,12 @@
     "margin": "some",
     "reserve": "none"
   },
+  "joint|medium|low|ahead|moderate|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Provide some buffer against potential spikes while reserving a small amount for upcoming high-priority jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|low|ahead|moderate|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "A balanced approach is taken to hedge against potential demand spikes while also reserving some headroom for incoming high-priority production jobs.",
@@ -2018,6 +2450,12 @@
   "joint|medium|low|ahead|moderate|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Balancing moderate contention and some future prod job arrivals.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|medium|low|ahead|moderate|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
     "margin": "some",
     "reserve": "light"
   },
@@ -2045,6 +2483,12 @@
     "margin": "some",
     "reserve": "light"
   },
+  "joint|medium|low|ahead|moderate|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Provide some buffer against potential spikes while reserving capacity for upcoming production jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|low|ahead|moderate|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "A balanced approach is taken to hedge against potential demand spikes while also reserving some headroom for incoming high-priority production jobs.",
@@ -2069,6 +2513,12 @@
     "margin": "some",
     "reserve": "none"
   },
+  "joint|medium|low|ahead|scarce|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Provide some buffer against potential spikes while reserving a small amount for upcoming high-priority jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|low|ahead|scarce|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "A moderate margin is needed to account for the medium forecast uncertainty, while a light reserve ensures some headroom for upcoming high-priority jobs without starving other jobs.",
@@ -2090,6 +2540,12 @@
   "joint|medium|low|ahead|scarce|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Balancing moderate uncertainty with scarce contention, prioritize some margin for upcoming deadlines while reserving light headroom for incoming prod jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|medium|low|ahead|scarce|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance the need for some protection against potential spikes with reserving headroom for upcoming high-priority jobs.",
     "margin": "some",
     "reserve": "light"
   },
@@ -2117,6 +2573,12 @@
     "margin": "none",
     "reserve": "heavy"
   },
+  "joint|medium|low|ahead|scarce|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Provide some buffer against potential demand spikes while reserving capacity for upcoming production jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|low|ahead|scarce|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "Granting some safety margin to hedge against potential demand spikes while reserving a light amount of headroom for incoming high-priority prod jobs.",
@@ -2141,6 +2603,12 @@
     "margin": "some",
     "reserve": "none"
   },
+  "joint|medium|low|behind|ample|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Provide some buffer against potential spikes while reserving a small amount for upcoming high-priority jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|low|behind|ample|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "A moderate margin is needed to account for the medium forecast uncertainty, while a light reserve ensures some headroom for upcoming high-priority jobs without starving other jobs.",
@@ -2158,6 +2626,12 @@
     "justification": "High demand uncertainty requires a moderate GPU hedge to protect against potential spikes without starving future high-priority jobs.",
     "margin": "some",
     "reserve": "heavy"
+  },
+  "joint|medium|low|behind|ample|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Provide some buffer against potential spikes while reserving capacity for upcoming high-priority jobs.",
+    "margin": "some",
+    "reserve": "light"
   },
   "joint|medium|low|behind|ample|many|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -2180,6 +2654,12 @@
   "joint|medium|low|behind|ample|many|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Light reservation to accommodate incoming prod jobs, as contention is ample.",
+    "margin": "none",
+    "reserve": "light"
+  },
+  "joint|medium|low|behind|ample|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Maintain some headroom for incoming prod jobs while prioritizing running jobs' deadlines.",
     "margin": "none",
     "reserve": "light"
   },
@@ -2216,6 +2696,12 @@
   "joint|medium|low|behind|moderate|few|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
     "justification": "High demand uncertainty warrants some safety margin while reserving idle headroom for incoming prod jobs without causing GPU scarcity.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|medium|low|behind|moderate|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline protection with future high-priority job needs.",
     "margin": "some",
     "reserve": "light"
   },
@@ -2261,6 +2747,12 @@
     "margin": "some",
     "reserve": "none"
   },
+  "joint|medium|low|behind|scarce|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Provide some buffer against potential spikes while reserving a small amount for upcoming high-priority jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|low|behind|scarce|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "A moderate margin is needed to account for the medium forecast uncertainty, while a light reserve ensures some headroom for upcoming high-priority jobs without starving other jobs.",
@@ -2283,6 +2775,12 @@
     "_source": "llm:qwen2.5:7b",
     "justification": "Light reservation to support incoming prod jobs in the scarce contention while maintaining flexibility for unpredictable demand.",
     "margin": "none",
+    "reserve": "light"
+  },
+  "joint|medium|low|behind|scarce|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Provide some buffer against potential spikes while reserving capacity for upcoming high-priority jobs.",
+    "margin": "some",
     "reserve": "light"
   },
   "joint|medium|low|behind|scarce|many|llm:llama3:8b": {
@@ -2309,6 +2807,12 @@
     "margin": "none",
     "reserve": "heavy"
   },
+  "joint|medium|low|behind|scarce|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Margin is unnecessary with low spike risk, but reserving headroom for incoming prod jobs is prudent.",
+    "margin": "none",
+    "reserve": "light"
+  },
   "joint|medium|low|behind|scarce|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "A moderate margin is needed to account for the medium forecast uncertainty, while a light reserve ensures some headroom for upcoming high-priority jobs without starving other running jobs.",
@@ -2331,6 +2835,12 @@
     "_source": "llm:qwen2.5:7b",
     "justification": "Balancing low spike risk with imminent prod job arrivals.",
     "margin": "none",
+    "reserve": "light"
+  },
+  "joint|medium|low|ontrack|ample|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Provide some buffer against potential spikes while reserving a small amount for upcoming high-priority jobs.",
+    "margin": "some",
     "reserve": "light"
   },
   "joint|medium|low|ontrack|ample|few|llm:llama3:8b": {
@@ -2357,6 +2867,12 @@
     "margin": "none",
     "reserve": "light"
   },
+  "joint|medium|low|ontrack|ample|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance the need for some protection against potential spikes with reserving headroom for incoming high-priority jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|low|ontrack|ample|many|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "A moderate margin is needed to account for the medium forecast uncertainty, while reserving some headroom allows for flexibility in accommodating incoming high-priority prod jobs without starving othe",
@@ -2378,6 +2894,12 @@
   "joint|medium|low|ontrack|ample|many|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Light reservation to accommodate incoming prod jobs, as contention is ample.",
+    "margin": "none",
+    "reserve": "light"
+  },
+  "joint|medium|low|ontrack|ample|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Moderate demand uncertainty warrants a light reserve for incoming production jobs while current deadlines are manageable.",
     "margin": "none",
     "reserve": "light"
   },
@@ -2423,6 +2945,12 @@
     "margin": "some",
     "reserve": "light"
   },
+  "joint|medium|low|ontrack|moderate|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance the need for some protection against potential spikes with reserving headroom for incoming high-priority jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|low|ontrack|moderate|many|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "A balanced approach is taken to hedge against potential demand spikes while also reserving some headroom for incoming high-priority production jobs.",
@@ -2447,6 +2975,12 @@
     "margin": "none",
     "reserve": "heavy"
   },
+  "joint|medium|low|ontrack|moderate|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Provide some buffer against potential spikes while reserving capacity for upcoming production jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|low|ontrack|moderate|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "A balanced approach is taken to account for the medium forecast uncertainty while keeping some headroom for potential spikes, while also reserving a light amount of idle GPUs for incoming prod jobs.",
@@ -2469,6 +3003,12 @@
     "_source": "llm:qwen2.5:7b",
     "justification": "Balancing moderate contention and no imminent high-priority job arrivals.",
     "margin": "none",
+    "reserve": "light"
+  },
+  "joint|medium|low|ontrack|scarce|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Provide some buffer against potential spikes while reserving a small amount for upcoming high-priority jobs.",
+    "margin": "some",
     "reserve": "light"
   },
   "joint|medium|low|ontrack|scarce|few|llm:llama3:8b": {
@@ -2495,6 +3035,12 @@
     "margin": "none",
     "reserve": "light"
   },
+  "joint|medium|low|ontrack|scarce|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance the need for some protection against potential spikes with reserving headroom for upcoming high-priority jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|low|ontrack|scarce|many|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I prioritize some safety margin to hedge against potential demand spikes while also reserving a significant portion of idle headroom for incoming high-priority prod j",
@@ -2518,6 +3064,12 @@
     "justification": "Reserving headroom is crucial given the scarcity and ongoing prod job arrivals.",
     "margin": "none",
     "reserve": "heavy"
+  },
+  "joint|medium|low|ontrack|scarce|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Margin is unnecessary with low spike risk, but reserving headroom for incoming prod jobs is prudent.",
+    "margin": "none",
+    "reserve": "light"
   },
   "joint|medium|low|ontrack|scarce|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -2543,6 +3095,12 @@
     "margin": "none",
     "reserve": "light"
   },
+  "joint|medium|medium|ahead|ample|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|medium|ahead|ample|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I'll allocate some safety margin to protect against potential spikes while also reserving a light amount of headroom for future high-priority prod jobs.",
@@ -2564,6 +3122,12 @@
   "joint|medium|medium|ahead|ample|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Balancing medium spike risk with some margin while reserving light headroom for imminent prod jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|medium|medium|ahead|ample|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
     "margin": "some",
     "reserve": "light"
   },
@@ -2591,6 +3155,12 @@
     "margin": "some",
     "reserve": "light"
   },
+  "joint|medium|medium|ahead|ample|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|medium|ahead|ample|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the medium demand uncertainty and spike risk with the ample supply and incoming prod jobs, I will grant some safety margin to protect against deadline pressure while reserving a light amoun",
@@ -2615,6 +3185,12 @@
     "margin": "some",
     "reserve": "none"
   },
+  "joint|medium|medium|ahead|moderate|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|medium|ahead|moderate|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I'll grant some safety margin to protect against potential spikes while also reserving a light amount of headroom for incoming high-priority prod jobs.",
@@ -2636,6 +3212,12 @@
   "joint|medium|medium|ahead|moderate|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Balancing medium spike risk with imminent queue deadlines while accommodating\u5c11\u8bb8\u751f\u4ea7\u4f5c\u4e1a\u7684\u5165\u961f\uff0c\u907f\u514d\u8fc7\u5ea6\u9884\u7559\u3002",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|medium|medium|ahead|moderate|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
     "margin": "some",
     "reserve": "light"
   },
@@ -2663,6 +3245,12 @@
     "margin": "some",
     "reserve": "heavy"
   },
+  "joint|medium|medium|ahead|moderate|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|medium|ahead|moderate|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I'll allocate some safety margin to protect against potential spikes while also reserving a light amount of headroom for future high-priority prod jobs.",
@@ -2687,6 +3275,12 @@
     "margin": "some",
     "reserve": "none"
   },
+  "joint|medium|medium|ahead|scarce|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|medium|ahead|scarce|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I'll grant some safety margin to protect against potential spikes while also reserving a light amount of headroom for incoming high-priority prod jobs.",
@@ -2708,6 +3302,12 @@
   "joint|medium|medium|ahead|scarce|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Balancing medium spike risk with imminent queue deadlines while accommodating scarce contention and incoming prod jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|medium|medium|ahead|scarce|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
     "margin": "some",
     "reserve": "light"
   },
@@ -2735,6 +3335,12 @@
     "margin": "some",
     "reserve": "heavy"
   },
+  "joint|medium|medium|ahead|scarce|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|medium|ahead|scarce|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I'll allocate some safety margin to protect against potential spikes while also reserving a light amount of headroom for incoming high-priority prod jobs.",
@@ -2759,6 +3365,12 @@
     "margin": "some",
     "reserve": "none"
   },
+  "joint|medium|medium|behind|ample|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|medium|behind|ample|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "A moderate margin is needed to hedge against the medium spike risk, while reserving a light amount of headroom allows for some flexibility in accommodating incoming high-priority prod jobs without sta",
@@ -2780,6 +3392,12 @@
   "joint|medium|medium|behind|ample|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Balancing medium spike risk with some margin while reserving light headroom for imminent prod jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|medium|medium|behind|ample|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline protection with future high-priority job capacity.",
     "margin": "some",
     "reserve": "light"
   },
@@ -2807,6 +3425,12 @@
     "margin": "some",
     "reserve": "light"
   },
+  "joint|medium|medium|behind|ample|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|medium|behind|ample|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the medium demand uncertainty and spike risk with the ample supply and incoming prod jobs, I will grant some safety margin to protect against deadline pressure while reserving a light amoun",
@@ -2831,6 +3455,12 @@
     "margin": "some",
     "reserve": "none"
   },
+  "joint|medium|medium|behind|moderate|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|medium|behind|moderate|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "A balanced approach is taken to hedge against demand spikes while also reserving some headroom for incoming high-priority prod jobs.",
@@ -2852,6 +3482,12 @@
   "joint|medium|medium|behind|moderate|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Balancing medium spike risk with imminent prod job arrivals.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|medium|medium|behind|moderate|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with the need to accommodate future high-priority arrivals.",
     "margin": "some",
     "reserve": "light"
   },
@@ -2879,6 +3515,12 @@
     "margin": "some",
     "reserve": "heavy"
   },
+  "joint|medium|medium|behind|moderate|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|medium|behind|moderate|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "A balanced approach is taken to hedge against demand spikes while also reserving some headroom for incoming high-priority production jobs.",
@@ -2903,6 +3545,12 @@
     "margin": "some",
     "reserve": "none"
   },
+  "joint|medium|medium|behind|scarce|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|medium|behind|scarce|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "A moderate margin is needed to hedge against demand spikes, while reserving some headroom for incoming high-priority prod jobs without starving other jobs.",
@@ -2924,6 +3572,12 @@
   "joint|medium|medium|behind|scarce|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Balancing medium spike risk with imminent prod job arrivals.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|medium|medium|behind|scarce|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with the need to accommodate future high-priority arrivals.",
     "margin": "some",
     "reserve": "light"
   },
@@ -2951,6 +3605,12 @@
     "margin": "some",
     "reserve": "heavy"
   },
+  "joint|medium|medium|behind|scarce|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline pressure with future high-priority job needs.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|medium|behind|scarce|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I'll allocate some safety margin to protect against potential spikes while also reserving a light amount of headroom for incoming high-priority prod jobs.",
@@ -2975,6 +3635,12 @@
     "margin": "some",
     "reserve": "none"
   },
+  "joint|medium|medium|ontrack|ample|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline protection with future high-priority job capacity.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|medium|ontrack|ample|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "A moderate margin is needed to hedge against potential demand spikes, while reserving a light amount of headroom allows for some flexibility in accommodating incoming high-priority prod jobs without s",
@@ -2996,6 +3662,12 @@
   "joint|medium|medium|ontrack|ample|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Balancing medium spike risk with some margin while reserving light headroom for imminent prod jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|medium|medium|ontrack|ample|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline protection with future high-priority job capacity.",
     "margin": "some",
     "reserve": "light"
   },
@@ -3023,6 +3695,12 @@
     "margin": "some",
     "reserve": "light"
   },
+  "joint|medium|medium|ontrack|ample|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline protection with future high-priority job capacity.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|medium|ontrack|ample|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "A moderate margin is needed to hedge against potential demand spikes, while reserving a light amount of headroom allows for some flexibility in accommodating incoming high-priority prod jobs without s",
@@ -3040,6 +3718,12 @@
     "justification": "High spike risk and moderate demand uncertainty warrant a safety margin while reserving idle headroom for incoming prod jobs to avoid future contention.",
     "margin": "some",
     "reserve": "heavy"
+  },
+  "joint|medium|medium|ontrack|moderate|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline protection with future high-priority job capacity.",
+    "margin": "some",
+    "reserve": "light"
   },
   "joint|medium|medium|ontrack|moderate|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -3062,6 +3746,12 @@
   "joint|medium|medium|ontrack|moderate|few|llm:qwen2.5:7b": {
     "_source": "llm:qwen2.5:7b",
     "justification": "Balancing medium spike risk with some margin while reserving light headroom for imminent prod jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|medium|medium|ontrack|moderate|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline protection with future high-priority job capacity.",
     "margin": "some",
     "reserve": "light"
   },
@@ -3089,6 +3779,12 @@
     "margin": "some",
     "reserve": "heavy"
   },
+  "joint|medium|medium|ontrack|moderate|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance the need for some buffer against potential spikes with a light reservation for future high-priority arrivals.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|medium|ontrack|moderate|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "A balanced approach is taken to hedge against demand spikes while also reserving some headroom for future high-priority arrivals.",
@@ -3104,6 +3800,12 @@
   "joint|medium|medium|ontrack|moderate|none|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
     "justification": "Moderate demand and supply suggest a balanced approach with some safety margin while holding light idle headroom for incoming production jobs.",
+    "margin": "some",
+    "reserve": "light"
+  },
+  "joint|medium|medium|ontrack|scarce|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline protection with future high-priority job capacity.",
     "margin": "some",
     "reserve": "light"
   },
@@ -3131,6 +3833,12 @@
     "margin": "some",
     "reserve": "light"
   },
+  "joint|medium|medium|ontrack|scarce|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline protection with future high-priority job capacity.",
+    "margin": "some",
+    "reserve": "light"
+  },
   "joint|medium|medium|ontrack|scarce|many|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "To balance the competing demands, I'll allocate some safety margin to protect against potential spikes while also reserving a light amount of headroom for incoming high-priority prod jobs.",
@@ -3154,6 +3862,12 @@
     "justification": "Protecting imminent deadlines with some margin while reserving heavy headroom for incoming prod jobs due to scarce contention.",
     "margin": "some",
     "reserve": "heavy"
+  },
+  "joint|medium|medium|ontrack|scarce|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Balance immediate deadline protection with future high-priority job capacity.",
+    "margin": "some",
+    "reserve": "light"
   },
   "joint|medium|medium|ontrack|scarce|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -3179,6 +3893,11 @@
     "margin": "some",
     "reserve": "none"
   },
+  "marg|high|high|large|ahead|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "High spike risk and cluster contention outweigh the large request size and ahead-of-schedule status."
+  },
   "marg|high|high|large|ahead|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "heavy",
@@ -3198,6 +3917,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "High spike risk and large request size warrant some insurance, despite being ahead of schedule and facing high contention."
+  },
+  "marg|high|high|large|ahead|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "High spike risk and cluster contention outweigh the large request size and ahead-of-schedule status."
   },
   "marg|high|high|large|ahead|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -3224,6 +3948,11 @@
     "hedge": "heavy",
     "justification": "High spike risk and large forecast make a heavy hedge prudent to protect against missing the deadline, even with low contention."
   },
+  "marg|high|high|large|ahead|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Despite being ahead of schedule, the high spike risk necessitates some insurance against a potential demand surge."
+  },
   "marg|high|high|large|ahead|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "heavy",
@@ -3238,6 +3967,11 @@
     "_source": "llm:qwen2.5:3b",
     "hedge": "heavy",
     "justification": "Despite low cluster contention, the high spike risk necessitates a heavy safety margin to ensure meeting the deadline even in case of a large demand spike."
+  },
+  "marg|high|high|large|behind|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "heavy",
+    "justification": "High spike risk and a large request size necessitate a heavy hedge despite the tight deadline and high contention."
   },
   "marg|high|high|large|behind|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -3283,6 +4017,11 @@
     "_source": "llm:qwen2.5:3b",
     "hedge": "heavy",
     "justification": "Given the high uncertainty and spike risk, even with low cluster contention, a heavy safety margin is warranted to protect against potential missed deadlines due to unexpected demand spikes."
+  },
+  "marg|high|high|large|ontrack|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "High spike risk and cluster contention outweigh the need for a safety margin with a large request."
   },
   "marg|high|high|large|ontrack|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -3339,6 +4078,11 @@
     "hedge": "some",
     "justification": "High spike risk and large request size warrant some insurance, despite low contention and being on track."
   },
+  "marg|high|high|medium|ahead|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "High spike risk and high contention mean a small request size can be safely run without extra GPUs."
+  },
   "marg|high|high|medium|ahead|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "heavy",
@@ -3363,6 +4107,11 @@
     "_source": "llm:qwen2.5:3b",
     "hedge": "heavy",
     "justification": "Given the high uncertainty and spike risk, even though your request size is medium and you are ahead of schedule, the high priority tier and current high cluster contention warrant a heavy safety marg"
+  },
+  "marg|high|high|medium|ahead|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Moderate spike risk warrants some insurance, even with a medium request and low contention."
   },
   "marg|high|high|medium|ahead|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -3414,6 +4163,11 @@
     "hedge": "heavy",
     "justification": "Given the high uncertainty and spike risk, even with low cluster contention, a heavy safety margin is warranted to protect against potential missed deadlines due to unexpected demand spikes."
   },
+  "marg|high|high|medium|behind|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "heavy",
+    "justification": "High spike risk and being behind schedule necessitate a heavy hedge despite low contention."
+  },
   "marg|high|high|medium|behind|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "heavy",
@@ -3459,6 +4213,11 @@
     "hedge": "some",
     "justification": "Despite low cluster contention, the high uncertainty and spike risk warrant a moderate safety margin to ensure timely job execution."
   },
+  "marg|high|high|small|ahead|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Despite high contention, the small request size and high spike risk warrant some insurance."
+  },
   "marg|high|high|small|ahead|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "heavy",
@@ -3478,6 +4237,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "High spike risk and small request size justify some insurance, despite high contention and being ahead of schedule."
+  },
+  "marg|high|high|small|ahead|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "High spike risk warrants some insurance despite high contention and a small request size."
   },
   "marg|high|high|small|ahead|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -3499,6 +4263,11 @@
     "hedge": "some",
     "justification": "High spike risk and small request size warrant some insurance, despite high contention and being ahead of schedule."
   },
+  "marg|high|high|small|ahead|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Despite being ahead of schedule, the high spike risk warrants some insurance against a potential demand surge."
+  },
   "marg|high|high|small|ahead|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "heavy",
@@ -3519,6 +4288,11 @@
     "hedge": "some",
     "justification": "High spike risk warrants some insurance, despite low contention and being ahead of schedule."
   },
+  "marg|high|high|small|ahead|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Despite being ahead of schedule, the high spike risk warrants some insurance against a potential demand surge."
+  },
   "marg|high|high|small|ahead|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "heavy",
@@ -3538,6 +4312,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "High spike risk warrants some insurance, despite low contention and being ahead of schedule."
+  },
+  "marg|high|high|small|behind|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "High spike risk necessitates some margin despite high contention and a small request size because we are behind schedule."
   },
   "marg|high|high|small|behind|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -3569,6 +4348,11 @@
     "hedge": "some",
     "justification": "High spike risk and being behind schedule justify some hedging, even with a small request under high contention."
   },
+  "marg|high|high|small|behind|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Given the high spike risk and being behind schedule, some margin is needed despite low contention."
+  },
   "marg|high|high|small|behind|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "heavy",
@@ -3599,6 +4383,11 @@
     "hedge": "some",
     "justification": "High spike risk and being behind schedule justify some hedging, despite the small request size and current low contention."
   },
+  "marg|high|high|small|ontrack|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Given the high spike risk and moderate request size, some safety margin is warranted despite high contention."
+  },
   "marg|high|high|small|ontrack|high|besteffort|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "hedge": "some",
@@ -3608,6 +4397,11 @@
     "_source": "llm:qwen2.5:3b",
     "hedge": "some",
     "justification": "Despite the low base ask, the high spike risk warrants a moderate safety margin to ensure timely job completion without missing the deadline."
+  },
+  "marg|high|high|small|ontrack|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "High spike risk warrants some insurance even with high contention and a small request size."
   },
   "marg|high|high|small|ontrack|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -3629,6 +4423,11 @@
     "hedge": "some",
     "justification": "High spike risk and small request size warrant some insurance, even with high contention and on-track schedule."
   },
+  "marg|high|high|small|ontrack|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Given the high spike risk and small request size, some margin is warranted despite low contention."
+  },
   "marg|high|high|small|ontrack|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "heavy",
@@ -3643,6 +4442,11 @@
     "_source": "llm:qwen2.5:3b",
     "hedge": "some",
     "justification": "Despite the small predicted GPU request, the high uncertainty and spike risk warrant a moderate safety margin to ensure timely job execution."
+  },
+  "marg|high|high|small|ontrack|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Moderate spike risk warrants some insurance, even with low contention and a small request."
   },
   "marg|high|high|small|ontrack|low|prod|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -3669,6 +4473,11 @@
     "hedge": "heavy",
     "justification": "Despite the low spike risk, being behind schedule and facing high cluster contention warrant a heavy safety margin to protect against any unforeseen spikes that could jeopardize hitting the deadline."
   },
+  "marg|high|medium|large|ahead|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "The moderate spike risk and ahead-of-schedule status allow for no extra GPUs given the large request size and high cluster contention."
+  },
   "marg|high|medium|large|ahead|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -3688,6 +4497,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "Medium spike risk and large request size warrant some insurance, despite being ahead of schedule and facing high contention."
+  },
+  "marg|high|medium|large|ahead|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "High contention and a large request size outweigh the medium spike risk, as we are ahead of schedule."
   },
   "marg|high|medium|large|ahead|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -3709,6 +4523,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and large request size warrant some insurance, despite being ahead of schedule and facing high contention."
   },
+  "marg|high|medium|large|ahead|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a large request size, combined with being ahead of schedule, mean no extra GPUs are needed."
+  },
   "marg|high|medium|large|ahead|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -3728,6 +4547,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "Medium spike risk and large request size warrant some insurance, despite being ahead of schedule and facing low contention."
+  },
+  "marg|high|medium|large|ahead|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a large request size, combined with being ahead of schedule, mean no extra GPUs are needed."
   },
   "marg|high|medium|large|ahead|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -3749,6 +4573,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and being ahead of schedule justify a modest hedge, despite the low contention."
   },
+  "marg|high|medium|large|behind|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "The high spike risk and large request size necessitate a conservative approach, but the high contention and best-effort priority suggest minimal hedging."
+  },
   "marg|high|medium|large|behind|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -3769,6 +4598,11 @@
     "hedge": "heavy",
     "justification": "High spike risk, large request, behind schedule, and high contention warrant a heavy hedge to protect the deadline."
   },
+  "marg|high|medium|large|behind|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Medium spike risk and a large request size warrant some hedging despite high contention."
+  },
   "marg|high|medium|large|behind|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -3788,6 +4622,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "heavy",
     "justification": "High spike risk, large request, behind schedule, and high contention demand a heavy hedge."
+  },
+  "marg|high|medium|large|behind|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Moderate spike risk and a large request size warrant some hedging despite the low contention."
   },
   "marg|high|medium|large|behind|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -3819,6 +4658,11 @@
     "hedge": "heavy",
     "justification": "Given the high uncertainty and medium spike risk, along with being behind schedule and facing a large predicted GPU request in a low-contention cluster, hedging heavily ensures protection against pote"
   },
+  "marg|high|medium|large|ontrack|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "The high contention and large request size outweigh the medium spike risk."
+  },
   "marg|high|medium|large|ontrack|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -3839,6 +4683,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and a large base ask under high contention justify some extra insurance, though the on-track schedule allows for some flexibility."
   },
+  "marg|high|medium|large|ontrack|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "High contention and a large request size outweigh the medium spike risk."
+  },
   "marg|high|medium|large|ontrack|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -3858,6 +4707,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "Medium spike risk and a large base ask under high contention justify some extra insurance, though the on-track status allows for slightly less than heavy hedging."
+  },
+  "marg|high|medium|large|ontrack|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Medium spike risk warrants some insurance, even with a large request and low contention."
   },
   "marg|high|medium|large|ontrack|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -3894,6 +4748,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and a large base ask justify some hedging, especially given the high uncertainty despite being on track and with low contention."
   },
+  "marg|high|medium|medium|ahead|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "The medium spike risk and ahead-of-schedule status allow for no extra GPUs due to high cluster contention."
+  },
   "marg|high|medium|medium|ahead|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -3913,6 +4772,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "Medium spike risk and being ahead of schedule justify a some hedge, despite high contention."
+  },
+  "marg|high|medium|medium|ahead|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "The medium spike risk and ahead-of-schedule status allow for no additional margin given the high cluster contention."
   },
   "marg|high|medium|medium|ahead|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -3934,6 +4798,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and being ahead of schedule justify a some hedge despite high contention, as the request size is medium."
   },
+  "marg|high|medium|medium|ahead|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a medium request size, combined with being ahead of schedule, allow for no additional margin."
+  },
   "marg|high|medium|medium|ahead|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -3953,6 +4822,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "You are ahead of schedule, the spike risk is medium, and contention is low, so no additional safety margin is needed."
+  },
+  "marg|high|medium|medium|ahead|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a head start on the deadline allow for no extra GPUs."
   },
   "marg|high|medium|medium|ahead|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -3974,6 +4848,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and being ahead of schedule justify a some hedge, despite low contention."
   },
+  "marg|high|medium|medium|behind|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Medium spike risk and a behind schedule deadline warrant some insurance against demand spikes, despite high contention."
+  },
   "marg|high|medium|medium|behind|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -3993,6 +4872,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "Medium spike risk and being behind schedule warrant some insurance, even with high contention."
+  },
+  "marg|high|medium|medium|behind|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Medium spike risk and a behind schedule deadline warrant some insurance against demand spikes, despite high contention."
   },
   "marg|high|medium|medium|behind|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4014,6 +4898,11 @@
     "hedge": "heavy",
     "justification": "Heavy hedge due to high uncertainty, medium spike risk, being behind schedule, and high contention."
   },
+  "marg|high|medium|medium|behind|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Medium spike risk warrants some insurance, even with low contention and a medium request size."
+  },
   "marg|high|medium|medium|behind|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -4034,6 +4923,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and being behind schedule warrant some insurance, despite low contention."
   },
+  "marg|high|medium|medium|behind|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Medium spike risk and a behind schedule deadline warrant some insurance despite low contention."
+  },
   "marg|high|medium|medium|behind|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -4048,6 +4942,11 @@
     "_source": "llm:qwen2.5:3b",
     "hedge": "heavy",
     "justification": "Despite low cluster contention, the high uncertainty and medium spike risk necessitate a heavy safety margin to protect against potential demand spikes that could jeopardize hitting the behind-schedul"
+  },
+  "marg|high|medium|medium|ontrack|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "The medium spike risk and high contention make it unwise to add a safety margin."
   },
   "marg|high|medium|medium|ontrack|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4069,6 +4968,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and on-track schedule allow some hedging despite high contention, as a modest margin is worth it to protect against the medium-sized potential demand spike."
   },
+  "marg|high|medium|medium|ontrack|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "The medium spike risk and high cluster contention outweigh the need for a safety margin with a medium request size."
+  },
   "marg|high|medium|medium|ontrack|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -4089,6 +4993,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and on-track schedule allow for a modest hedge despite high contention, as the request size is medium."
   },
+  "marg|high|medium|medium|ontrack|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Medium spike risk and a medium request size warrant some insurance against potential demand increases."
+  },
   "marg|high|medium|medium|ontrack|low|besteffort|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "hedge": "some",
@@ -4103,6 +5012,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "Medium spike risk and on-track schedule allow for a modest hedge, despite low contention."
+  },
+  "marg|high|medium|medium|ontrack|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Medium spike risk warrants some insurance, even with low contention."
   },
   "marg|high|medium|medium|ontrack|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4124,6 +5038,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and on-track schedule allow for a modest hedge, despite low contention."
   },
+  "marg|high|medium|small|ahead|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a small request size allow us to avoid hedging with high contention."
+  },
   "marg|high|medium|small|ahead|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -4143,6 +5062,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "You are ahead of schedule, the spike risk is medium, and your request size is small, so the contention does not warrant an additional safety margin."
+  },
+  "marg|high|medium|small|ahead|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a small request size allow us to avoid extra GPUs under high contention while remaining ahead of schedule."
   },
   "marg|high|medium|small|ahead|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4164,6 +5088,11 @@
     "hedge": "none",
     "justification": "Your forecast uncertainty is high, but your spike risk is medium and you are ahead of schedule, so the demand for extra GPUs can be absorbed by the slack."
   },
+  "marg|high|medium|small|ahead|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a small request size, combined with being ahead of schedule and low contention, mean no extra margin is needed."
+  },
   "marg|high|medium|small|ahead|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -4183,6 +5112,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Ahead of schedule and low contention, so no need for insurance given medium spike risk."
+  },
+  "marg|high|medium|small|ahead|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a small request size, combined with being ahead of schedule, allow for no safety margin."
   },
   "marg|high|medium|small|ahead|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4204,6 +5138,11 @@
     "hedge": "none",
     "justification": "You are ahead of schedule, the spike risk is medium, and the cluster contention is low, so there's no need to add a safety margin."
   },
+  "marg|high|medium|small|behind|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Moderate spike risk and a small request size warrant some hedging despite high contention."
+  },
   "marg|high|medium|small|behind|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -4223,6 +5162,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "Medium spike risk and being behind schedule warrant some insurance, even with a small request size, to protect the missed deadline under high contention."
+  },
+  "marg|high|medium|small|behind|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Moderate spike risk and a small request size warrant some hedging despite high contention."
   },
   "marg|high|medium|small|behind|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4244,6 +5188,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and being behind schedule warrant some insurance, even with a small request size, to avoid missing the deadline in highly contended conditions."
   },
+  "marg|high|medium|small|behind|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Moderate spike risk and a small request size warrant some hedging despite the low contention."
+  },
   "marg|high|medium|small|behind|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -4264,6 +5213,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and being behind schedule warrant some insurance, even with a small request size and low contention."
   },
+  "marg|high|medium|small|behind|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Moderate spike risk and a small request size warrant some hedging despite the low contention."
+  },
   "marg|high|medium|small|behind|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -4283,6 +5237,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "Medium spike risk and being behind schedule warrant some insurance, even with a small request size and low contention."
+  },
+  "marg|high|medium|small|ontrack|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "The low spike risk and small request size allow us to avoid a safety margin due to high cluster contention."
   },
   "marg|high|medium|small|ontrack|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4319,6 +5278,11 @@
     "hedge": "none",
     "justification": "Your forecast uncertainty is high, but your spike risk is medium and you are on track with a small request size, so the contention makes it inadvisable to add extra GPUs."
   },
+  "marg|high|medium|small|ontrack|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Moderate spike risk and a small request size warrant some insurance against potential demand increases."
+  },
   "marg|high|medium|small|ontrack|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -4354,6 +5318,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and a small request size warrant some insurance, especially since the cluster is not contended."
   },
+  "marg|low|low|large|ahead|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and being ahead of schedule allow for no additional margin despite high contention."
+  },
   "marg|low|low|large|ahead|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "none",
@@ -4373,6 +5342,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and ahead of schedule justify no extra margin, even with high contention and a large request."
+  },
+  "marg|low|low|large|ahead|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and being ahead of schedule allow for no extra GPUs despite high contention."
   },
   "marg|low|low|large|ahead|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4394,6 +5368,11 @@
     "hedge": "none",
     "justification": "Low spike risk and ahead of schedule justify no additional safety margin, even with a large request under high contention."
   },
+  "marg|low|low|large|ahead|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a large request size, combined with being ahead of schedule and low contention, mean no extra margin is needed."
+  },
   "marg|low|low|large|ahead|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "none",
@@ -4413,6 +5392,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and ahead of schedule justify no additional safety margin, even with a large request in a contended environment."
+  },
+  "marg|low|low|large|ahead|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk, a large request size, and being ahead of schedule allow for no additional margin."
   },
   "marg|low|low|large|ahead|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4434,6 +5418,11 @@
     "hedge": "none",
     "justification": "Low spike risk and ahead of schedule justify no additional safety margin, even with a large request size, due to low contention."
   },
+  "marg|low|low|large|behind|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and high contention make a small request unlikely to be granted with extra GPUs."
+  },
   "marg|low|low|large|behind|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -4453,6 +5442,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "Low spike risk and large request justify some hedge despite high contention and being behind schedule."
+  },
+  "marg|low|low|large|behind|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and high contention make a small ask unlikely to be granted, so no extra GPUs are needed."
   },
   "marg|low|low|large|behind|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4474,6 +5468,11 @@
     "hedge": "some",
     "justification": "Low spike risk and a large base ask, but being behind schedule and high contention warrant some insurance."
   },
+  "marg|low|low|large|behind|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and low contention allow us to forgo a safety margin despite being behind schedule."
+  },
   "marg|low|low|large|behind|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -4493,6 +5492,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "Low spike risk and large request justify some margin despite low contention, as being behind schedule leaves no slack to absorb a potential spike."
+  },
+  "marg|low|low|large|behind|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and low contention allow for a no-margin approach despite being behind schedule due to the large request size."
   },
   "marg|low|low|large|behind|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4514,6 +5518,11 @@
     "hedge": "some",
     "justification": "Low spike risk and large request justify some margin despite low uncertainty, to protect against the deadline pressure even with low contention."
   },
+  "marg|low|low|large|ontrack|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a large request size under high contention mean no extra GPUs are needed."
+  },
   "marg|low|low|large|ontrack|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "none",
@@ -4533,6 +5542,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and on-track schedule allow skipping insurance, even with a large request under high contention."
+  },
+  "marg|low|low|large|ontrack|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and high cluster contention make a safety margin unnecessary despite the large request size."
   },
   "marg|low|low|large|ontrack|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4554,6 +5568,11 @@
     "hedge": "none",
     "justification": "Low spike risk and on-track schedule allow skipping insurance, even with a large request under high contention."
   },
+  "marg|low|low|large|ontrack|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a large request size under low contention allow for no extra margin."
+  },
   "marg|low|low|large|ontrack|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "none",
@@ -4573,6 +5592,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and on-track schedule justify no extra margin, especially with a large base request in a low-contention environment."
+  },
+  "marg|low|low|large|ontrack|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a large request size under low contention allow for no additional margin."
   },
   "marg|low|low|large|ontrack|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4594,6 +5618,11 @@
     "hedge": "none",
     "justification": "Low spike risk and on-track schedule justify no additional safety margin, especially with a large base request in a low-contention environment."
   },
+  "marg|low|low|medium|ahead|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and being ahead of schedule allow for no additional margin under high contention."
+  },
   "marg|low|low|medium|ahead|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "none",
@@ -4613,6 +5642,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and uncertainty, ahead of schedule, with a medium request size, and high contention make additional insurance unnecessary."
+  },
+  "marg|low|low|medium|ahead|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and being ahead of schedule allow for no additional margin under high contention."
   },
   "marg|low|low|medium|ahead|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4634,6 +5668,11 @@
     "hedge": "none",
     "justification": "Low spike risk and ahead of schedule allow for no additional safety margin under high contention."
   },
+  "marg|low|low|medium|ahead|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and being ahead of schedule allow for no additional margin."
+  },
   "marg|low|low|medium|ahead|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "none",
@@ -4653,6 +5692,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and uncertainty, ahead of schedule, medium request size, and low contention justify no additional safety margin."
+  },
+  "marg|low|low|medium|ahead|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and being ahead of schedule allow for no additional margin."
   },
   "marg|low|low|medium|ahead|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4674,6 +5718,11 @@
     "hedge": "none",
     "justification": "Low spike risk and ahead of schedule allow for no additional safety margin."
   },
+  "marg|low|low|medium|behind|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and high contention mean a small ask doesn't warrant extra GPUs."
+  },
   "marg|low|low|medium|behind|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -4693,6 +5742,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "Low spike risk and medium request size, but being behind schedule warrants some insurance even under high contention."
+  },
+  "marg|low|low|medium|behind|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and high contention mean a small ask doesn't warrant extra GPUs."
   },
   "marg|low|low|medium|behind|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4714,6 +5768,11 @@
     "hedge": "some",
     "justification": "Low spike risk and medium request size justify some hedge despite high contention and being behind schedule."
   },
+  "marg|low|low|medium|behind|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and low contention allow for no extra GPUs despite being behind schedule."
+  },
   "marg|low|low|medium|behind|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -4734,6 +5793,11 @@
     "hedge": "some",
     "justification": "Low spike risk and medium request size warrant some margin despite being behind schedule, given the low contention."
   },
+  "marg|low|low|medium|behind|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Low spike risk and a medium request size warrant some hedging despite being behind schedule."
+  },
   "marg|low|low|medium|behind|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -4748,6 +5812,11 @@
     "_source": "llm:qwen2.5:3b",
     "hedge": "some",
     "justification": "Despite low uncertainty and spike risk, being behind schedule warrants a modest hedge to ensure timely job execution."
+  },
+  "marg|low|low|medium|ontrack|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and high cluster contention mean a small request size doesn't warrant extra GPUs."
   },
   "marg|low|low|medium|ontrack|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4769,6 +5838,11 @@
     "hedge": "none",
     "justification": "Low spike risk and on-track schedule allow skipping insurance, even with high contention."
   },
+  "marg|low|low|medium|ontrack|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and high cluster contention mean a small request size doesn't warrant extra GPUs."
+  },
   "marg|low|low|medium|ontrack|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "none",
@@ -4788,6 +5862,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and on-track schedule allow for no additional safety margin, even with high contention."
+  },
+  "marg|low|low|medium|ontrack|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a medium request size, with low contention, allow for no additional safety margin."
   },
   "marg|low|low|medium|ontrack|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4824,6 +5903,11 @@
     "hedge": "none",
     "justification": "Low spike risk and on-track schedule allow for no additional safety margin."
   },
+  "marg|low|low|small|ahead|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a small request size allow us to avoid hedging under high contention while remaining ahead of schedule."
+  },
   "marg|low|low|small|ahead|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "none",
@@ -4843,6 +5927,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and small request size allow skipping insurance, especially with a low-uncertainty forecast and being ahead of schedule."
+  },
+  "marg|low|low|small|ahead|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a small request size allow us to avoid hedging with high contention."
   },
   "marg|low|low|small|ahead|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4864,6 +5953,11 @@
     "hedge": "none",
     "justification": "Low spike risk and small request size allow skipping insurance, especially with a high contention and being ahead of schedule."
   },
+  "marg|low|low|small|ahead|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a small request size, combined with being ahead of schedule and low contention, mean no extra margin is needed."
+  },
   "marg|low|low|small|ahead|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "none",
@@ -4883,6 +5977,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk, small request size, and being ahead of schedule allow for no additional safety margin."
+  },
+  "marg|low|low|small|ahead|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk, small request size, and a low-contention environment allow for no additional margin."
   },
   "marg|low|low|small|ahead|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4904,6 +6003,11 @@
     "hedge": "none",
     "justification": "Low spike risk and small request size allow for no additional margin despite being ahead of schedule."
   },
+  "marg|low|low|small|behind|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a small request size allow us to avoid hedging despite being behind schedule due to high contention."
+  },
   "marg|low|low|small|behind|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -4923,6 +6027,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and small request size justify no extra margin, even with high contention and being behind schedule."
+  },
+  "marg|low|low|small|behind|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a small request size allow us to avoid hedging despite being behind schedule due to high contention."
   },
   "marg|low|low|small|behind|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4944,6 +6053,11 @@
     "hedge": "some",
     "justification": "Low spike risk and small request size allow a modest hedge, even under high contention since being behind schedule leaves no slack to absorb a spike."
   },
+  "marg|low|low|small|behind|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Low spike risk and a small request size warrant some hedging despite being behind schedule with low contention."
+  },
   "marg|low|low|small|behind|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -4963,6 +6077,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and small request size justify no extra margin, even though you are behind schedule."
+  },
+  "marg|low|low|small|behind|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Low spike risk and a small request size warrant some hedging despite being behind schedule with low contention."
   },
   "marg|low|low|small|behind|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -4984,6 +6103,11 @@
     "hedge": "some",
     "justification": "Low spike risk and small request size allow for a modest hedge, even under low contention, to protect against being behind schedule."
   },
+  "marg|low|low|small|ontrack|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a small request size allow us to avoid hedging under high contention."
+  },
   "marg|low|low|small|ontrack|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "none",
@@ -5003,6 +6127,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and small request size justify no extra margin under high contention and on-track schedule."
+  },
+  "marg|low|low|small|ontrack|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and high cluster contention make a safety margin unnecessary for this small request."
   },
   "marg|low|low|small|ontrack|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5024,6 +6153,11 @@
     "hedge": "none",
     "justification": "Low spike risk and small request size justify no extra margin, even with high contention and on-track schedule."
   },
+  "marg|low|low|small|ontrack|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a small request size allow for no additional margin under low contention."
+  },
   "marg|low|low|small|ontrack|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "none",
@@ -5043,6 +6177,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and small request size justify no extra margin under low contention."
+  },
+  "marg|low|low|small|ontrack|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a small request size allow for no additional margin under low contention."
   },
   "marg|low|low|small|ontrack|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5064,6 +6203,11 @@
     "hedge": "none",
     "justification": "Low spike risk and small request size justify no additional safety margin under low contention."
   },
+  "marg|medium|low|large|ahead|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and being ahead of schedule allow for no extra GPUs despite high contention."
+  },
   "marg|medium|low|large|ahead|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -5083,6 +6227,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and large base ask under high contention make additional insurance unnecessary, especially with an ahead-of-schedule deadline."
+  },
+  "marg|medium|low|large|ahead|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and being ahead of schedule allow for no extra GPUs despite high contention."
   },
   "marg|medium|low|large|ahead|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5104,6 +6253,11 @@
     "hedge": "none",
     "justification": "Low spike risk and being ahead of schedule allow for no additional safety margin under high contention."
   },
+  "marg|medium|low|large|ahead|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk, a large request size, and low contention allow for no additional margin while remaining ahead of schedule."
+  },
   "marg|medium|low|large|ahead|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -5123,6 +6277,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and large base ask under low contention do not warrant a safety margin, especially given the best-effort priority."
+  },
+  "marg|medium|low|large|ahead|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk, a large request size, and low contention allow us to proceed without extra GPUs as we are ahead of schedule."
   },
   "marg|medium|low|large|ahead|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5144,6 +6303,11 @@
     "hedge": "none",
     "justification": "Low spike risk and large base ask make additional GPUs unnecessary under low contention, especially since you are ahead of schedule."
   },
+  "marg|medium|low|large|behind|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "The low spike risk and high contention make it unwise to add a safety margin despite being behind schedule."
+  },
   "marg|medium|low|large|behind|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -5163,6 +6327,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "Medium spike risk, large request size, behind schedule, and high contention warrant a modest hedge."
+  },
+  "marg|medium|low|large|behind|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and high contention make it unwise to add a safety margin despite being behind schedule."
   },
   "marg|medium|low|large|behind|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5184,6 +6353,11 @@
     "hedge": "some",
     "justification": "Medium spike risk, large request size, behind schedule, and high contention warrant a modest hedge."
   },
+  "marg|medium|low|large|behind|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and low contention allow us to avoid a safety margin despite being behind schedule."
+  },
   "marg|medium|low|large|behind|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -5203,6 +6377,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "Medium spike risk and being behind schedule warrant some insurance, even with a large request size, to avoid missing the deadline."
+  },
+  "marg|medium|low|large|behind|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Low spike risk and a large request size warrant some hedging despite the low contention."
   },
   "marg|medium|low|large|behind|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5224,6 +6403,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and being behind schedule warrant some insurance, even with a large request size, to avoid missing the deadline."
   },
+  "marg|medium|low|large|ontrack|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and high cluster contention make a safety margin unnecessary despite the large request size."
+  },
   "marg|medium|low|large|ontrack|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -5244,6 +6428,11 @@
     "hedge": "none",
     "justification": "The spike risk is low and the base request is large, making it expensive to add margin under high contention; being ontrack schedule allows absorbing any minor spikes with slack."
   },
+  "marg|medium|low|large|ontrack|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and high cluster contention make a safety margin unnecessary despite the large request size."
+  },
   "marg|medium|low|large|ontrack|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -5263,6 +6452,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and a large base ask under high contention make adding extra GPUs unnecessary, especially since you are on track."
+  },
+  "marg|medium|low|large|ontrack|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a large request size under low contention allow for no extra margin."
   },
   "marg|medium|low|large|ontrack|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5299,6 +6493,11 @@
     "hedge": "none",
     "justification": "Low spike risk and medium uncertainty with a large base request, but low contention and being on track allows absorbing any minor spikes."
   },
+  "marg|medium|low|medium|ahead|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and being ahead of schedule allow for no extra GPUs despite high contention."
+  },
   "marg|medium|low|medium|ahead|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "none",
@@ -5318,6 +6517,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and being ahead of schedule allow for no additional safety margin under medium contention."
+  },
+  "marg|medium|low|medium|ahead|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and being ahead of schedule allow for no extra GPUs despite high contention."
   },
   "marg|medium|low|medium|ahead|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5339,6 +6543,11 @@
     "hedge": "none",
     "justification": "Low spike risk and being ahead of schedule allow for no additional safety margin under high contention."
   },
+  "marg|medium|low|medium|ahead|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and being ahead of schedule allow for no additional margin."
+  },
   "marg|medium|low|medium|ahead|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -5358,6 +6567,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and being ahead of schedule allow for no additional safety margin."
+  },
+  "marg|medium|low|medium|ahead|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and being ahead of schedule allow for no additional margin."
   },
   "marg|medium|low|medium|ahead|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5379,6 +6593,11 @@
     "hedge": "none",
     "justification": "Low spike risk and being ahead of schedule allow for no additional safety margin."
   },
+  "marg|medium|low|medium|behind|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and high cluster contention outweigh the need for a safety margin despite being behind schedule."
+  },
   "marg|medium|low|medium|behind|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -5398,6 +6617,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "Medium spike risk and being behind schedule warrant some insurance, even with high contention."
+  },
+  "marg|medium|low|medium|behind|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and high cluster contention outweigh the need for a safety margin despite being behind schedule."
   },
   "marg|medium|low|medium|behind|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5444,6 +6668,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and being behind schedule warrant some insurance, even with low contention."
   },
+  "marg|medium|low|medium|ontrack|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and high cluster contention mean a small ask doesn't need extra GPUs."
+  },
   "marg|medium|low|medium|ontrack|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -5463,6 +6692,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Ontrack schedule, low spike risk, and high contention make additional insurance unnecessary."
+  },
+  "marg|medium|low|medium|ontrack|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and high cluster contention make a safety margin unnecessary."
   },
   "marg|medium|low|medium|ontrack|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5499,6 +6733,11 @@
     "hedge": "none",
     "justification": "Ontrack schedule, low spike risk, medium contention, and medium request size suggest no need for extra insurance."
   },
+  "marg|medium|low|medium|ontrack|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a small predicted request size allow for no additional margin under low contention."
+  },
   "marg|medium|low|medium|ontrack|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -5518,6 +6757,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and on-track schedule allow for no additional safety margin."
+  },
+  "marg|medium|low|small|ahead|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a small request size allow us to avoid hedging with high cluster contention."
   },
   "marg|medium|low|small|ahead|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5539,6 +6783,11 @@
     "hedge": "none",
     "justification": "Low spike risk and small request size allow skipping insurance, especially with a high-contention cluster."
   },
+  "marg|medium|low|small|ahead|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a small request size allow us to avoid adding a safety margin under high contention while remaining ahead of schedule."
+  },
   "marg|medium|low|small|ahead|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "none",
@@ -5558,6 +6807,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and small request size allow skipping insurance, especially with a high contention and being ahead of schedule."
+  },
+  "marg|medium|low|small|ahead|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk, a small request size, and being ahead of schedule allow for no additional margin."
   },
   "marg|medium|low|small|ahead|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5579,6 +6833,11 @@
     "hedge": "none",
     "justification": "Low spike risk and small request size allow for no additional margin under low contention and ahead-of-schedule timing."
   },
+  "marg|medium|low|small|ahead|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a small request size, combined with being ahead of schedule and low contention, mean no extra margin is needed."
+  },
   "marg|medium|low|small|ahead|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -5598,6 +6857,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and small request size allow for no additional margin despite being ahead of schedule."
+  },
+  "marg|medium|low|small|behind|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and high cluster contention make a safety margin unnecessary despite being behind schedule."
   },
   "marg|medium|low|small|behind|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5619,6 +6883,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and being behind schedule warrant some insurance, even with a small request size, to avoid missing the deadline in high contention."
   },
+  "marg|medium|low|small|behind|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and high cluster contention outweigh the need for a safety margin despite being behind schedule."
+  },
   "marg|medium|low|small|behind|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -5638,6 +6907,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "Medium spike risk and being behind schedule warrant some insurance, even with a small request size, to avoid missing the deadline in highly contended conditions."
+  },
+  "marg|medium|low|small|behind|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Low spike risk and a small request size warrant some hedging despite being behind schedule with low contention."
   },
   "marg|medium|low|small|behind|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5659,6 +6933,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and being behind schedule warrant some insurance, despite the low contention and small request size."
   },
+  "marg|medium|low|small|behind|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Low spike risk and a small request size warrant some hedging despite being behind schedule due to low contention."
+  },
   "marg|medium|low|small|behind|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -5678,6 +6957,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "Medium spike risk and being behind schedule warrant some insurance, despite the low contention and small request size."
+  },
+  "marg|medium|low|small|ontrack|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and high cluster contention make a safety margin unnecessary for this small request."
   },
   "marg|medium|low|small|ontrack|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5699,6 +6983,11 @@
     "hedge": "none",
     "justification": "The spike risk is low and the request size is small, so additional GPUs would likely be wasted under high contention."
   },
+  "marg|medium|low|small|ontrack|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and high cluster contention make a safety margin unnecessary."
+  },
   "marg|medium|low|small|ontrack|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -5718,6 +7007,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Low spike risk and a small request size make additional GPUs unnecessary, especially under high contention."
+  },
+  "marg|medium|low|small|ontrack|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a small request size allow for no additional margin under low contention."
   },
   "marg|medium|low|small|ontrack|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5754,6 +7048,11 @@
     "hedge": "none",
     "justification": "Low spike risk and small request size justify no additional safety margin under low contention."
   },
+  "marg|medium|medium|large|ahead|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "The large request size and high contention make a small hedge unlikely to be granted, and the medium spike risk is manageable with our ahead-of-schedule status."
+  },
   "marg|medium|medium|large|ahead|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -5773,6 +7072,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "You are ahead of schedule and the spike risk is medium, so no additional safety margin is needed given the high contention."
+  },
+  "marg|medium|medium|large|ahead|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "High contention and a large request size outweigh the medium spike risk, as we are ahead of schedule."
   },
   "marg|medium|medium|large|ahead|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5794,6 +7098,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and ahead of schedule justify some insurance, despite high contention and a large base request."
   },
+  "marg|medium|medium|large|ahead|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Moderate spike risk and a large request size warrant some insurance despite the low contention."
+  },
   "marg|medium|medium|large|ahead|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -5813,6 +7122,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "You are ahead of schedule, the spike risk and forecast uncertainty are medium, the request size is large, and cluster contention is low."
+  },
+  "marg|medium|medium|large|ahead|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Moderate spike risk and a large request size warrant some hedging despite the low contention."
   },
   "marg|medium|medium|large|ahead|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5834,6 +7148,11 @@
     "hedge": "none",
     "justification": "Medium spike risk and ahead of schedule allow for no extra margin under low contention, even with a large base request."
   },
+  "marg|medium|medium|large|behind|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "The large request size and high contention make a heavy hedge too expensive, despite the medium spike risk."
+  },
   "marg|medium|medium|large|behind|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -5854,6 +7173,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and being behind schedule warrant some insurance, even with high contention."
   },
+  "marg|medium|medium|large|behind|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Moderate spike risk and a large request size warrant some hedging despite high contention."
+  },
   "marg|medium|medium|large|behind|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -5873,6 +7197,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "heavy",
     "justification": "Heavy hedge due to medium spike risk, large request size, being behind schedule, and high contention."
+  },
+  "marg|medium|medium|large|behind|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Moderate spike risk and a large request size warrant some hedging despite low contention."
   },
   "marg|medium|medium|large|behind|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5909,6 +7238,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and being behind schedule warrant some insurance, even with low contention."
   },
+  "marg|medium|medium|large|ontrack|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "The large request size and high contention make a small hedge unlikely to be granted, despite the medium spike risk."
+  },
   "marg|medium|medium|large|ontrack|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -5929,6 +7263,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and on-track schedule allow a modest hedge, considering the large request size and high contention."
   },
+  "marg|medium|medium|large|ontrack|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "High contention and a large request size outweigh the medium spike risk."
+  },
   "marg|medium|medium|large|ontrack|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -5948,6 +7287,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "Medium spike risk and on-track schedule allow a modest hedge, despite high contention and large request size."
+  },
+  "marg|medium|medium|large|ontrack|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Moderate spike risk and a large request size warrant some insurance despite low contention."
   },
   "marg|medium|medium|large|ontrack|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -5984,6 +7328,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and on-track schedule allow for a modest hedge, despite the low contention."
   },
+  "marg|medium|medium|medium|ahead|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "The moderate spike risk and ahead-of-schedule status allow for no additional margin given the high cluster contention."
+  },
   "marg|medium|medium|medium|ahead|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -6008,6 +7357,11 @@
     "_source": "llm:qwen2.5:3b",
     "hedge": "heavy",
     "justification": "Despite moderate forecast uncertainty and spike risk, being ahead of schedule means a demand spike could still jeopardize the deadline, warranting a heavy safety margin to protect against potential ov"
+  },
+  "marg|medium|medium|medium|ahead|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a medium-sized request, combined with being ahead of schedule and low contention, mean no extra margin is needed."
   },
   "marg|medium|medium|medium|ahead|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -6068,6 +7422,11 @@
     "_source": "llm:qwen2.5:3b",
     "hedge": "heavy",
     "justification": "Given the medium spike risk and deadline pressure, a heavy hedge protects against potential large spikes that could jeopardize hitting the behind-schedule deadline in a highly contested cluster."
+  },
+  "marg|medium|medium|medium|behind|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Moderate spike risk and a behind-schedule deadline warrant some safety margin despite low contention."
   },
   "marg|medium|medium|medium|behind|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -6149,6 +7508,11 @@
     "hedge": "some",
     "justification": "Medium forecast uncertainty and spike risk warrant a moderate safety margin, given the current low cluster contention allows for some flexibility without overprovisioning."
   },
+  "marg|medium|medium|small|ahead|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "The low spike risk and small request size, combined with being ahead of schedule, mean no extra GPUs are needed despite high contention."
+  },
   "marg|medium|medium|small|ahead|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -6168,6 +7532,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "You are ahead of schedule, the spike risk and forecast uncertainty are medium, the request size is small, and contention is high, so no additional insurance is needed."
+  },
+  "marg|medium|medium|small|ahead|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "The low spike risk and ahead-of-schedule status allow for no extra GPUs despite high contention."
   },
   "marg|medium|medium|small|ahead|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -6189,6 +7558,11 @@
     "hedge": "none",
     "justification": "Medium spike risk and ahead of schedule allow for no extra margin despite high contention."
   },
+  "marg|medium|medium|small|ahead|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a small request size, combined with being ahead of schedule and low contention, mean no extra margin is needed."
+  },
   "marg|medium|medium|small|ahead|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -6208,6 +7582,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Medium spike risk and ahead of schedule allow for no extra margin with a small request size in low contention."
+  },
+  "marg|medium|medium|small|ahead|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "Low spike risk and a small request size, combined with being ahead of schedule, mean no extra GPUs are needed."
   },
   "marg|medium|medium|small|ahead|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -6229,6 +7608,11 @@
     "hedge": "none",
     "justification": "Uncertainty and spike risk are medium, but the request size is small, and you are ahead of schedule with low contention."
   },
+  "marg|medium|medium|small|behind|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Moderate spike risk and a small request size warrant some hedging despite high contention."
+  },
   "marg|medium|medium|small|behind|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -6248,6 +7632,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "Medium spike risk and being behind schedule warrant some insurance, even with high contention."
+  },
+  "marg|medium|medium|small|behind|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Moderate spike risk and a small request size warrant some hedging despite high contention."
   },
   "marg|medium|medium|small|behind|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -6269,6 +7658,11 @@
     "hedge": "some",
     "justification": "Medium spike risk and being behind schedule warrant some insurance, even with high contention."
   },
+  "marg|medium|medium|small|behind|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Moderate spike risk and a small request size warrant some insurance despite low contention."
+  },
   "marg|medium|medium|small|behind|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -6284,6 +7678,11 @@
     "hedge": "some",
     "justification": "Despite a small predicted GPU request, the medium spike risk and being behind schedule warrant some extra GPUs to mitigate potential demand spikes without significantly impacting others."
   },
+  "marg|medium|medium|small|behind|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Moderate spike risk and a small request size warrant some hedging despite the low contention."
+  },
   "marg|medium|medium|small|behind|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -6298,6 +7697,11 @@
     "_source": "llm:qwen2.5:3b",
     "hedge": "some",
     "justification": "Despite a small predicted GPU request, the medium spike risk and deadline pressure necessitate some extra GPUs to mitigate potential overcommitment risks."
+  },
+  "marg|medium|medium|small|ontrack|high|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "The small request size and on-track deadline allow us to avoid a safety margin despite medium spike risk due to high cluster contention."
   },
   "marg|medium|medium|small|ontrack|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -6319,6 +7723,11 @@
     "hedge": "none",
     "justification": "On-track schedule, medium spike risk, small request size, and high contention make it unnecessary to add a safety margin."
   },
+  "marg|medium|medium|small|ontrack|high|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "none",
+    "justification": "The small request size and high contention mean a modest hedge is unlikely to be granted, so we'll take our chances with the forecast."
+  },
   "marg|medium|medium|small|ontrack|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -6339,6 +7748,11 @@
     "hedge": "none",
     "justification": "The forecast uncertainty and spike risk are medium, but the request size is small, making it expensive to add a margin under high contention. Being on track with no deadline pressure also supports not"
   },
+  "marg|medium|medium|small|ontrack|low|besteffort|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Moderate spike risk and a small request size warrant some insurance against potential demand surges, given the low contention."
+  },
   "marg|medium|medium|small|ontrack|low|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "hedge": "some",
@@ -6358,6 +7772,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "none",
     "justification": "Ontrack schedule, medium spike risk, small request size, and low contention justify no additional safety margin."
+  },
+  "marg|medium|medium|small|ontrack|low|prod|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "hedge": "some",
+    "justification": "Moderate spike risk and a small request size warrant some insurance against potential demand surges, given the low contention."
   },
   "marg|medium|medium|small|ontrack|low|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -6431,6 +7850,11 @@
     "justification": "Large production job with a tight deadline is most at risk and deserving of highest priority protection.",
     "priority": "critical"
   },
+  "resv|ample|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "A light reserve balances incoming prod needs with current ample cluster contention.",
+    "reserve": "light"
+  },
   "resv|ample|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "With ample contention, reserving some headroom is reasonable to protect the occasional incoming prod job without starving running jobs.",
@@ -6464,6 +7888,11 @@
   "resv|ample|few|rel:wave|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
     "justification": "Cluster contention is ample and there are currently few high-priority jobs INCOMING, allowing for a light reserve to protect future prod job runs without over-provisioning.",
+    "reserve": "light"
+  },
+  "resv|ample|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Moderate prod demand warrants some idle headroom despite ample current contention.",
     "reserve": "light"
   },
   "resv|ample|many|llm:llama3:8b": {
@@ -6501,6 +7930,11 @@
     "justification": "Cluster contention is ample and there are no imminent releases to free up GPUs, allowing for a light reserve to protect incoming prod jobs.",
     "reserve": "light"
   },
+  "resv|ample|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "There is ample cluster contention and no incoming prod jobs.",
+    "reserve": "none"
+  },
   "resv|ample|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "No need to reserve with no incoming prod and ample contention, as idle GPUs would not be wasted.",
@@ -6536,6 +7970,11 @@
     "justification": "Cluster contention is ample and there are no incoming high-priority jobs to protect, so no headroom needs to be reserved.",
     "reserve": "none"
   },
+  "resv|moderate|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Moderate contention warrants a light reserve to accommodate incoming prod jobs.",
+    "reserve": "light"
+  },
   "resv|moderate|few|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "Moderate contention requires some idle headroom to protect incoming prod jobs, but not too much since there are only a few in the pipeline.",
@@ -6569,6 +8008,11 @@
   "resv|moderate|few|rel:wave|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
     "justification": "Cluster contention is moderate and high-priority prod jobs are still incoming, warranting a light reserve to protect future jobs without starving current running ones.",
+    "reserve": "light"
+  },
+  "resv|moderate|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Moderate contention warrants a light reserve to accommodate incoming prod jobs.",
     "reserve": "light"
   },
   "resv|moderate|many|llm:llama3:8b": {
@@ -6606,6 +8050,11 @@
     "justification": "Cluster contention is moderate but high-priority prod jobs are still incoming, warranting a light reserve to protect future jobs without starving current running ones.",
     "reserve": "light"
   },
+  "resv|moderate|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "No incoming prod jobs and moderate cluster contention.",
+    "reserve": "none"
+  },
   "resv|moderate|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "Moderate contention requires some idle headroom to protect incoming prod jobs, but not too much since there are no running prod jobs yet.",
@@ -6639,6 +8088,11 @@
   "resv|moderate|none|rel:wave|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
     "justification": "Cluster contention is moderate and there are no incoming high-priority jobs, so reserving light headroom to protect future prod jobs without over-provisioning or starving existing jobs.",
+    "reserve": "light"
+  },
+  "resv|scarce|few|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "Some prod jobs are incoming, but the cluster is scarce so light reservation helps without starving current jobs.",
     "reserve": "light"
   },
   "resv|scarce|few|llm:llama3:8b": {
@@ -6676,6 +8130,11 @@
     "justification": "Cluster contention is scarce, and with only a few high-priority jobs still incoming, reserving light headroom will protect against future demand without overprovisioning.",
     "reserve": "light"
   },
+  "resv|scarce|many|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "High prod demand warrants a large idle reserve despite current scarcity.",
+    "reserve": "heavy"
+  },
   "resv|scarce|many|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "High contention and a large number of incoming prod jobs require reserving significant idle headroom to ensure timely execution.",
@@ -6710,6 +8169,11 @@
     "_source": "llm:qwen2.5:3b",
     "justification": "High contention and incoming prod jobs warrant heavy GPU headroom to ensure sufficient resources for new arrivals without starving existing running jobs.",
     "reserve": "heavy"
+  },
+  "resv|scarce|none|llm:gemma2:9b": {
+    "_source": "llm:gemma2:9b",
+    "justification": "High cluster contention means prioritizing existing jobs over idle reserves.",
+    "reserve": "none"
   },
   "resv|scarce|none|llm:llama3:8b": {
     "_source": "llm:llama3:8b",

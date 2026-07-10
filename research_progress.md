@@ -18,7 +18,7 @@
 | 8 | The LLM does not earn its cost as a numeric predictor (runtime: retrieval wins; DAG demand: GBT/one-line rules win); its measured value is judgement + justification in the agent layer | Exp 19-21 | solid (negative for the LLM) |
 | 9 | The two-sided split beats the single-LLM-both-objectives baseline: the concession ladder is the brake a lone agent lacks (single-llm over-commits at every scale) | Exp 22, 24, 27-29 | solid |
 | 10 | On real trace replay, negotiation buys significant prod-SLA protection (-4..-8 pts, 95% CI) at no measurable overall-SLA or slowdown cost; "beats the floor on overall SLA" was 8-seed noise | Exp 28 -> **Exp 29** | solid (n=32) |
-| 11 | The bounded protocol substitutes for scale: base world = statistical EQUIVALENCE (TOST ±3 pts, pre-registered) of rule ~ 3b ~ 7b ~ 14b on SLA at contention (pool-4 14b edge is the slack exception); predicted-time world = 3b genuinely BETTER (only arm beating floor, prodSLA −8..−9* all pools, beats 14b directly*) because scale buys conformity to a ladder that noisy time signals make harmful; family > scale (llama3:8b worse than 3b at every pool*); un-braked single-llm still needs scale and still loses | Exp 27-29 -> **Exp 43** | solid (n=32, TOST) |
+| 11 | The bounded protocol substitutes for scale: base world = statistical EQUIVALENCE (TOST ±3 pts, pre-registered) of rule ~ 3b ~ 7b ~ 14b on SLA at contention (pool-4 14b edge is the slack exception); predicted-time world = 3b genuinely BETTER (only arm beating floor, prodSLA −8..−9* all pools, beats 14b directly*) because scale buys conformity to a ladder that noisy time signals make harmful; family is a THRESHOLD not a ranking — qwen and gemma2:9b clear it (gemma buys prodSLA −7..−10* at all pools, not qwen-specific), llama3:8b does not (worse than 3b at every pool*, worse than gemma at slack*); un-braked single-llm still needs scale and still loses | Exp 27-29 -> **Exp 43-44** | solid (n=32, TOST, 2 families) |
 | 12 | With Stage-1 predicted demand in the loop, prediction error costs every policy, yet prod-SLA protection survives it at every pool (rule AND 3b tiers); the slack-regime cushion vs the floor is significant at the rule tier, direction-consistent at 3b | Exp 30 | solid (rule + 3b) |
 | 13 | Naive per-state LLM reflection does not converge (period-2 limit cycle) — the deterministic ladder, not reflection, is what makes a small model safe | Exp 26 | negative |
 
@@ -2209,3 +2209,49 @@ ladder below 3b (where does sufficiency break?), a second non-qwen family, a sec
 ```
 Tiers `{rule,qwen2.5:3b,qwen2.5:14b,llama3:8b}+time-predicted` now n=32 in
 `results_trace_replay.json`; TOST helpers `t90`/`tost_line` in `pins/trace_replay.py`.
+
+## Experiment 44 — SECOND FAMILY: gemma2:9b joins the paired predicted-time windows (Exp-43 caveat, family leg)
+
+**Date:** 2026-07-10
+
+**Why.** Exp 43's "family matters more than scale" rested on ONE non-qwen family; with
+n=1 a reviewer can read llama3:8b as "one broken model", or the whole negotiation value
+as qwen-specific. gemma2:9b (same mid-size band) disambiguates. The sub-3b ladder
+(qwen2.5:0.5b/1.5b, already pulled) is DEFERRED to a later session by user decision.
+
+**Method.** Same recipe as Exp 43: `trace_replay --seeds 32 --llm --model gemma2:9b
+--time predicted` on the identical paired windows (floor 67.4/53.5/47.3 by seed);
+714 fresh decisions (fully cold cache, ~28 min); fb=0%.
+
+**Result (negotiated, paired, n=32; dSLA / dprodSLA).**
+vs own floor: pool 4 +3.1 ±3.3 / **−10.0 ±7.0***; pool 6 +2.1 ±2.4 / **−9.7 ±7.4***;
+pool 8 −1.2 ±2.5 / **−7.2 ±6.5***.
+gemma−3b: SLA **+2.3*/+2.0*** at pools 6/8 (3b better, ~2 pts), pool 4 EQ±3; prodSLA ns.
+gemma−llama3: pool 4 SLA **−3.9*** (gemma better), pools 6/8 EQ±2; prodSLA −2..−4 ns.
+gemma−14b: prodSLA **−8.4*** at pool 4 (gemma better; −6.1/−4.9 same direction, pool-6
+90%CI excludes 0), SLA +2.0* at pool 6, else ns/EQ.
+
+**Findings.**
+1. **The negotiation's value is NOT qwen-specific.** gemma2:9b buys the prod-tier
+   protection at every pool (−7..−10*, the 3b pattern, vs 14b's ns everywhere) and never
+   significantly hurts overall SLA vs the floor. llama3:8b is now the OUTLIER: gemma
+   beats it outright at pool 4 (−3.9*) where llama pays +7.0* vs floor.
+2. **"Family/instruction-following matters" sharpens to a threshold, not a ranking**:
+   two families clear the bar (qwen, gemma), one does not (llama3) — parameter count
+   predicts none of this (8b < 9b < the working 3b).
+3. **qwen2.5:3b keeps a small real edge over gemma** (+2 pts SLA at contention*) and
+   stays the only model beating the floor on overall SLA (pool 8). The headline model
+   remains 3b; gemma is the existence proof that the mechanism travels across families.
+4. Exp-43 conditional resolved: gemma WORKS → the informative extra point is
+   **gemma2:2b** (cross-family "small suffices"), not 27b (nothing to rescue). Deferred
+   with the ladder.
+
+**Caveats.** Still one trace/recipe/prompt set; all models at ollama default q4 quant;
+prodSLA cross-model CIs remain wide (±3.5-7); n=2 working families, n=1 failing.
+
+**Reproduce.**
+```bash
+.venv/bin/python -m pins.trace_replay --seeds 32 --llm --model gemma2:9b --time predicted
+.venv/bin/python -m pins.trace_replay --compare "gemma2:9b+time-predicted/negotiated,qwen2.5:3b+time-predicted/negotiated"
+```
+Tier `gemma2:9b+time-predicted` (n=32) in `results_trace_replay.json`.
