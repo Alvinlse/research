@@ -2255,3 +2255,41 @@ prodSLA cross-model CIs remain wide (±3.5-7); n=2 working families, n=1 failing
 .venv/bin/python -m pins.trace_replay --compare "gemma2:9b+time-predicted/negotiated,qwen2.5:3b+time-predicted/negotiated"
 ```
 Tier `gemma2:9b+time-predicted` (n=32) in `results_trace_replay.json`.
+
+### Exp 44 addendum — gemma2:27b: the scale leg inside the second family (2026-07-10)
+
+**Why.** Finding 4 above deferred 27b as "nothing to rescue" — but running it anyway
+closes the scale axis WITHIN gemma: if 27b beat 9b, "family is a threshold" would need a
+scale asterisk. (A base-world 27b run at n=8 existed first, tier `gemma2:27b`; it showed
+the same vs-floor prodSLA pattern at −5.7..−7.7* but is not window-paired with Exp 43/44 —
+superseded by this run.)
+
+**Method.** Identical recipe: `trace_replay --seeds 32 --llm --model gemma2:27b --time
+predicted`, same paired windows; fb=0%.
+
+**Result (negotiated, paired, n=32; dSLA / dprodSLA).**
+vs own floor: pool 4 +3.5 ±3.6 / **−8.1 ±6.6***; pool 6 +1.6 ±2.5 / **−6.9 ±6.6***;
+pool 8 −2.0 ±2.7 / **−7.0 ±5.9***.
+27b−9b: prodSLA **+2.8 ±2.7*** at pool 6 (27b WORSE), everything else ns (SLA within ±1).
+27b−3b: SLA **+1.8*/+1.2*** at pools 6/8 (3b better), prodSLA ns everywhere.
+
+**Findings.**
+1. **3× scale inside the working family buys nothing**: 27b clears the threshold exactly
+   like 9b (prod protection −7..−8* at every pool, SLA never significantly hurt) but never
+   beats 9b — and is significantly worse once (pool-6 prodSLA). The threshold picture
+   survives its strongest in-family scale test.
+2. **qwen2.5:3b ≥ 27b**: the 2-pt SLA edge at contention that 3b held over 9b holds
+   verbatim over 27b (+1.8*/+1.2* at pools 6/8). The headline model is unchanged.
+3. Combined with Exp 40/43/44: scale is now null across THREE spans (qwen 3b→14b, gemma
+   9b→27b, and cross-family 8b/9b vs 3b). What predicts success is family/instruction-
+   following, and it is binary.
+
+**Caveats.** Same as Exp 44 (one trace/recipe/prompt set, q4 quant); the pool-6 27b<9b
+star is a single significant cell out of six — read as "no gain", not "scale hurts".
+
+**Reproduce.**
+```bash
+.venv/bin/python -m pins.trace_replay --seeds 32 --llm --model gemma2:27b --time predicted
+.venv/bin/python -m pins.trace_replay --compare "gemma2:27b+time-predicted/negotiated,gemma2:9b+time-predicted/negotiated"
+```
+Tier `gemma2:27b+time-predicted` (n=32) in `results_trace_replay.json`.
