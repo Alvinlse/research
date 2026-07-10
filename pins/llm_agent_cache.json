@@ -125,6 +125,12 @@
     "justification": "As a production job with a comfortable deadline, I'll maintain a balanced approach to secure the necessary GPUs while leaving room for other jobs in this low-contention cluster.",
     "stance": "balanced"
   },
+  "eval|cap2|ontrack|low|prod|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "focus_gpus": 1,
+    "justification": "On track with low cluster contention; focusing on one GPU to be ready for future spikes.",
+    "stance": "balanced"
+  },
   "joint|high|high|ahead|ample|few|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
     "justification": "High demand and spike risk warrant heavy GPU margins to protect imminent deadlines; light reservation allows some idle headroom for incoming prod jobs without starving other users.",
@@ -3223,6 +3229,11 @@
     "hedge": "heavy",
     "justification": "Given the high spike risk and large request size, I need to heavily hedge to ensure I don't miss my deadline, even though I'm ahead of schedule and there's currently low contention."
   },
+  "marg|high|high|large|ahead|low|prod|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "hedge": "some",
+    "justification": "High spike risk and being ahead of schedule justify some insurance, despite low contention."
+  },
   "marg|high|high|large|ahead|low|prod|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
     "hedge": "heavy",
@@ -3408,6 +3419,11 @@
     "hedge": "heavy",
     "justification": "Given the high spike risk and being behind schedule, I need to heavily hedge to ensure I meet my deadline, even with a medium-sized request and low cluster contention."
   },
+  "marg|high|high|medium|behind|low|prod|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "hedge": "heavy",
+    "justification": "High spike risk and being behind schedule necessitate heavy hedging, especially with low contention."
+  },
   "marg|high|high|medium|behind|low|prod|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
     "hedge": "heavy",
@@ -3528,6 +3544,11 @@
     "hedge": "heavy",
     "justification": "Given the high spike risk, being behind schedule, and high cluster contention, I need to heavily hedge to ensure I meet my deadline, even if it means sacrificing some efficiency."
   },
+  "marg|high|high|small|behind|high|besteffort|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "hedge": "heavy",
+    "justification": "High spike risk and being behind schedule necessitate heavy hedging despite high contention."
+  },
   "marg|high|high|small|behind|high|besteffort|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
     "hedge": "heavy",
@@ -3553,6 +3574,11 @@
     "hedge": "heavy",
     "justification": "Given the high spike risk and being behind schedule, I need to heavily hedge to ensure I meet my deadline, even with a small request size and low cluster contention."
   },
+  "marg|high|high|small|behind|low|besteffort|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "hedge": "heavy",
+    "justification": "High spike risk and being behind schedule necessitate heavy hedging, especially with low contention."
+  },
   "marg|high|high|small|behind|low|besteffort|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
     "hedge": "heavy",
@@ -3572,6 +3598,11 @@
     "_source": "llm:qwen2.5:7b",
     "hedge": "some",
     "justification": "High spike risk and being behind schedule justify some hedging, despite the small request size and current low contention."
+  },
+  "marg|high|high|small|ontrack|high|besteffort|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "hedge": "some",
+    "justification": "High spike risk necessitates a hedge, but the large contention and small request size suggest a moderate rather than heavy insurance."
   },
   "marg|high|high|small|ontrack|high|besteffort|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
@@ -3603,6 +3634,11 @@
     "hedge": "heavy",
     "justification": "Given the high spike risk and uncertainty, I need to heavily hedge to ensure I don't miss my deadline, even with a small request size and low cluster contention."
   },
+  "marg|high|high|small|ontrack|low|besteffort|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "hedge": "some",
+    "justification": "High spike risk and low contention justify a moderate insurance, despite being on track."
+  },
   "marg|high|high|small|ontrack|low|besteffort|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
     "hedge": "some",
@@ -3627,6 +3663,11 @@
     "_source": "llm:llama3:8b",
     "hedge": "some",
     "justification": "Given the high uncertainty and being behind schedule, I need to hedge against a potential spike to ensure I meet my deadline, but since the spike risk is low, I don't need to go all out with 'heavy' h"
+  },
+  "marg|high|low|medium|behind|high|prod|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "hedge": "heavy",
+    "justification": "Despite the low spike risk, being behind schedule and facing high cluster contention warrant a heavy safety margin to protect against any unforeseen spikes that could jeopardize hitting the deadline."
   },
   "marg|high|medium|large|ahead|high|besteffort|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
@@ -6344,24 +6385,50 @@
     "justification": "As a best-effort job running behind schedule in a low-contention cluster, I need to aggressively pursue the available GPU to quickly catch up.",
     "stance": "aggressive"
   },
+  "preprocess|cap1|behind|low|besteffort|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "focus_gpus": 1,
+    "justification": "Behind schedule; cluster contention is low but job tier is production.",
+    "stance": "aggressive"
+  },
   "prio|besteffort|loose|small|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "As a best-effort job with a loose deadline, it has flexibility in its scheduling needs.",
     "priority": "low"
+  },
+  "prio|besteffort|loose|small|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "justification": "Best effort jobs with loose deadlines are not as critical as those requiring tight deadlines or large workloads.",
+    "priority": "normal"
   },
   "prio|besteffort|tight|large|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "As a best-effort job with a tight deadline, it has limited priority in the event of GPU scarcity.",
     "priority": "low"
   },
+  "prio|besteffort|tight|large|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "justification": "Large, tight deadline job requires immediate GPU allocation.",
+    "priority": "high"
+  },
   "prio|prod|loose|small|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "As a production job with a loose deadline, it's not critical but still deserves normal priority to ensure timely completion.",
     "priority": "normal"
   },
+  "prio|prod|loose|small|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "justification": "Prod jobs with a loose deadline are still critical but not as urgent as those with tight deadlines.",
+    "priority": "high"
+  },
   "prio|prod|tight|large|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "justification": "As a production job with a tight deadline, it requires immediate attention to ensure timely completion of critical tasks.",
+    "priority": "critical"
+  },
+  "prio|prod|tight|large|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "justification": "Large production job with a tight deadline is most at risk and deserving of highest priority protection.",
     "priority": "critical"
   },
   "resv|ample|few|llm:llama3:8b": {
@@ -6685,10 +6752,22 @@
     "justification": "As a best-effort job with no strict deadline, I'll concede some GPUs to allow others to make progress while still keeping a small buffer for any unexpected delays.",
     "stance": "concede"
   },
+  "train|cap8|ahead|high|besteffort|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "focus_gpus": 4,
+    "justification": "Ahead of deadline; focusing on fewer GPUs to avoid spreading thin.",
+    "stance": "balanced"
+  },
   "train|cap8|behind|high|prod|llm:llama3:8b": {
     "_source": "llm:llama3:8b",
     "focus_gpus": 4,
     "justification": "As a production job behind schedule in a highly contested cluster, I need to aggressively pursue the necessary GPUs to stay on track.",
+    "stance": "aggressive"
+  },
+  "train|cap8|behind|high|prod|llm:qwen2.5:3b": {
+    "_source": "llm:qwen2.5:3b",
+    "focus_gpus": 4,
+    "justification": "Behind schedule; concentrating on fewer GPUs to fight cluster contention and stay on track.",
     "stance": "aggressive"
   }
 }

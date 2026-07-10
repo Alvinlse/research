@@ -191,14 +191,39 @@ def t95(df: int) -> float:
     return 12.71
 
 
-def paired_ci(diffs: list[float]) -> tuple[float, float]:
-    """Mean paired difference and 95% CI half-width."""
+def t90(df: int) -> float:
+    """Two-sided 90% Student-t critical value (= one-sided 5%; the TOST CI)."""
+    for lo, t in ((60, 1.671), (30, 1.697), (20, 1.725), (10, 1.812), (5, 2.015), (2, 2.920)):
+        if df >= lo:
+            return t
+    return 6.314
+
+
+def paired_ci(diffs: list[float], tcrit=t95) -> tuple[float, float]:
+    """Mean paired difference and 95% CI half-width (pass tcrit=t90 for the TOST CI)."""
     n = len(diffs)
     m = sum(diffs) / n
     if n < 2:
         return m, float("inf")
     var = sum((d - m) ** 2 for d in diffs) / (n - 1)
-    return m, t95(n - 1) * (var / n) ** 0.5
+    return m, tcrit(n - 1) * (var / n) ** 0.5
+
+
+# Exp 43 TOST equivalence: 90% CI of the paired diff inside ±margin ⇒ the two arms are
+# statistically EQUIVALENT within that margin at α=0.05 (stronger than a ns 95% CI, which
+# is only failure-to-find-a-difference). Margin ±3 SLA pts pre-registered 2026-07-10
+# (below the smallest effect of interest, the −4..−8 pt prodSLA protection); ±2 stricter.
+EQ_MARGINS = (3.0, 2.0)
+
+
+def tost_line(diffs_by_label: list[tuple[str, list[float]]]) -> str:
+    """One 'TOST: ...' line for the given per-metric paired diffs (already in pts)."""
+    parts = []
+    for label, diffs in diffs_by_label:
+        m, h = paired_ci(diffs, t90)
+        tags = " ".join(f"EQ±{g:.0f}" for g in EQ_MARGINS if -g < m - h and m + h < g)
+        parts.append(f"{label} 90%CI[{m-h:+5.1f},{m+h:+5.1f}] {tags or 'not-equiv'}")
+    return "TOST: " + "   ".join(parts)
 
 
 def print_paired_vs_floor(per_seed_pool: dict[str, list[dict]]) -> None:
@@ -247,7 +272,7 @@ def cross_tier_stats(policy: str = "negotiated") -> None:
                 rb = tiers[b]["per_seed"].get(str(pool), {}).get(policy)
                 if not ra or not rb or len(ra) != len(rb):
                     continue
-                parts = []
+                parts, eq = [], []
                 for metric, label, pct in (("sla", "dSLA", True), ("prod_sla", "dprodSLA", True),
                                            ("slowdown", "dslow", False)):
                     diffs = [x[metric] - y[metric] for x, y in zip(ra, rb)]
@@ -255,7 +280,10 @@ def cross_tier_stats(policy: str = "negotiated") -> None:
                     u = 100.0 if pct else 1.0
                     sig = "*" if h < abs(m) else " "
                     parts.append(f"{label} {m*u:+6.1f} ±{h*u:4.1f}{sig}")
+                    if pct:
+                        eq.append((label, [d * u for d in diffs]))
                 print(f"    pool {pool:>2} (n={len(ra)}):  " + "  ".join(parts))
+                print(f"                    {tost_line(eq)}")
 
 
 def compare_tiers(spec: str) -> None:
@@ -270,7 +298,7 @@ def compare_tiers(spec: str) -> None:
         ra, rb = A[pool].get(pa), B[pool].get(pb)
         if not ra or not rb or len(ra) != len(rb):
             continue
-        parts = []
+        parts, eq = [], []
         for metric, label, pct in (("sla", "dSLA", True), ("prod_sla", "dprodSLA", True),
                                    ("slowdown", "dslow", False)):
             diffs = [x[metric] - y[metric] for x, y in zip(ra, rb)]
@@ -278,7 +306,10 @@ def compare_tiers(spec: str) -> None:
             u = 100.0 if pct else 1.0
             sig = "*" if h < abs(m) else " "
             parts.append(f"{label} {m*u:+6.1f} ±{h*u:4.1f}{sig}")
+            if pct:
+                eq.append((label, [d * u for d in diffs]))
         print(f"  pool {pool:>2} (n={len(ra)}):  " + "  ".join(parts))
+        print(f"                  {tost_line(eq)}")
 
 
 def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,

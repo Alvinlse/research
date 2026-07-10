@@ -18,7 +18,7 @@
 | 8 | The LLM does not earn its cost as a numeric predictor (runtime: retrieval wins; DAG demand: GBT/one-line rules win); its measured value is judgement + justification in the agent layer | Exp 19-21 | solid (negative for the LLM) |
 | 9 | The two-sided split beats the single-LLM-both-objectives baseline: the concession ladder is the brake a lone agent lacks (single-llm over-commits at every scale) | Exp 22, 24, 27-29 | solid |
 | 10 | On real trace replay, negotiation buys significant prod-SLA protection (-4..-8 pts, 95% CI) at no measurable overall-SLA or slowdown cost; "beats the floor on overall SLA" was 8-seed noise | Exp 28 -> **Exp 29** | solid (n=32) |
-| 11 | The bounded protocol substitutes for scale as SUFFICIENCY: negotiated rule ~ 3b ~ 7b ~ 14b, all statistically indistinguishable (the earlier "3b beats 14b" was noise); the un-braked single-llm still needs scale and still loses at every size tried | Exp 27-28 -> **Exp 29 (+7b addendum)** | solid (n=32) |
+| 11 | The bounded protocol substitutes for scale: base world = statistical EQUIVALENCE (TOST ±3 pts, pre-registered) of rule ~ 3b ~ 7b ~ 14b on SLA at contention (pool-4 14b edge is the slack exception); predicted-time world = 3b genuinely BETTER (only arm beating floor, prodSLA −8..−9* all pools, beats 14b directly*) because scale buys conformity to a ladder that noisy time signals make harmful; family > scale (llama3:8b worse than 3b at every pool*); un-braked single-llm still needs scale and still loses | Exp 27-29 -> **Exp 43** | solid (n=32, TOST) |
 | 12 | With Stage-1 predicted demand in the loop, prediction error costs every policy, yet prod-SLA protection survives it at every pool (rule AND 3b tiers); the slack-regime cushion vs the floor is significant at the rule tier, direction-consistent at 3b | Exp 30 | solid (rule + 3b) |
 | 13 | Naive per-state LLM reflection does not converge (period-2 limit cycle) — the deterministic ladder, not reflection, is what makes a small model safe | Exp 26 | negative |
 
@@ -1964,6 +1964,10 @@ cd Research
 
 ## Experiment 40 — MODEL-FAMILY ABLATION: llama3:8b vs qwen2.5:{3b,14b} on paired windows
 
+> **Upgraded to n=32 in Exp 43:** findings 1-3 all survive (3b's floor win extends to
+> prodSLA at every pool; llama3 penalty shrinks to +7.0* but holds); the finding-4
+> single-llm oddity was n=8 noise (+0.4 ns at n=32).
+
 **Date:** 2026-07-09
 
 **Why.** Every LLM tier so far is qwen2.5. Two confounds remained: (a) the 3b≥14b
@@ -2120,3 +2124,88 @@ not "RL can't". Reserve table has only 9 states (its lever is tiny, Exp 39). n=8
 .venv/bin/python -m pins.trace_replay --compare "qwen2.5:3b+time-predicted/negotiated,qlearn+time-predicted/qlearn"
 ```
 Tier `qlearn+time-predicted`; trainer/policy in `pins/qlearn.py`.
+
+## Experiment 43 — GENERALITY OF "SMALL MODEL SUFFICES": TOST equivalence + the Exp-40 world at n=32
+
+**Date:** 2026-07-10
+
+**Why.** The 3b-vs-14b story rested on two legs of different strength: (a) Exp 29's
+"statistical tie" is only *failure to find a difference* — an underpowered study would say
+the same, so it cannot be claimed as equivalence; (b) Exp 40's "3b is the only tier to beat
+the floor" in the predicted-time world was n=8. Before "the bounded protocol makes a small
+model enough" becomes a thesis headline, close both: run TOST equivalence on the existing
+32-seed data, and upgrade the predicted-time comparison to 32 paired windows.
+**Margin pre-registered before the rerun: ±3 SLA pts** (below the smallest effect of
+interest, the −4..−8 pt prodSLA protection); a stricter ±2 verdict reported alongside.
+
+**Method.** (1) `t90()` + a `TOST:` line added to `--stats`/`--compare` in
+`trace_replay.py`: the paired diff is *equivalent within ±m* iff its 90% CI lies inside
+(−m,+m) (two one-sided tests at α=0.05); verdicts cross-checked against scipy. Existing
+95%-CI output unchanged (Exp 29 numbers reproduce digit-for-digit). (2) 32-seed sweeps of
+rule / qwen2.5:3b / qwen2.5:14b / llama3:8b at `--time predicted` on paired windows
+(floor identical by seed: 67.4/53.5/47.3 SLA at pools 4/6/8); old n=8 tiers backed up to
+`results_trace_replay.pre-exp43.bak.json`. fb=0% everywhere; `test_mechanism` green.
+
+**Result A — TOST on the base world (Exp 29/addendum data, negotiated, n=32).**
+Overall SLA: 3b≡14b within ±3 at pools 6/8 (pool 6 even ±2: 90%CI[−1.7,+0.1]); 3b≡7b
+within ±3 at all pools; 14b≡rule within ±3 on BOTH metrics at all pools. Pool-4 3b-vs-14b
+stays a real 14b edge (−2.9 ±2.8*, not equivalent) — the slack-regime exception stands.
+prodSLA between LLM sizes: CIs ±3.2–4.7, too wide to certify ±3-equivalence at n=32 —
+there the claim remains "no detectable difference", not "equivalent".
+
+**Result B — predicted-time world, n=32 paired windows (negotiated vs own floor,
+dSLA / dprodSLA; * = 95% CI excludes 0).**
+
+| pool | rule | qwen2.5:3b | qwen2.5:14b | llama3:8b |
+|---|---|---|---|---|
+| 4 | **+3.3*** / +0.5 | +2.1 / **−8.2*** | +2.3 / −1.6 | **+7.0*** / **−5.6*** |
+| 6 | +2.0 / −4.8 | −0.2 / **−9.3*** | +0.2 / −3.6 | +2.1 / −5.3 |
+| 8 | +0.4 / −1.3 | **−3.1*** / **−8.7*** | −1.4 / −2.3 | −1.4 / **−5.2*** |
+
+Head-to-head (paired): 3b−14b prodSLA **−6.6 ±6.3*** / −5.7 ±7.0 / **−6.4 ±5.8***
+(3b better, same direction everywhere); SLA equivalent within ±3 at pools 4/6, 3b-lean at
+8 (90%CI[−3.5,−0.0]). 14b−rule: −1..−2 pts, mostly ns — 14b still *concurs with the
+ladder*. 3b−rule: pool-8 SLA **−3.5*** and prodSLA **−7.4***, pool-4 prodSLA **−8.8***.
+llama3:8b−3b: SLA **+4.9*/+2.3*/+1.8*** — worse at every pool.
+
+**Findings.**
+1. **The sufficiency claim is upgraded from "tie" to "statistical equivalence"** (TOST,
+   ±3 pts, pre-registered): on overall SLA at contention, 3b ≡ 7b ≡ 14b ≡ rule in the
+   base world. The pool-4 14b edge survives as the known exception — the claim is never
+   "smaller is better" there.
+2. **In the honest predicted-time world, small is genuinely BETTER on prod protection.**
+   Exp 40's n=8 hint survives n=32 and sharpens: negotiated@3b is the only arm beating
+   the floor (pool-8 BOTH metrics; prodSLA −8..−9* at ALL pools), and beats 14b directly
+   on prodSLA (2/3 pools*, same direction at the third). Mechanism, consistent with
+   Exp 29 finding 5 + Exp 38: scale buys *conformity to the deterministic ladder*
+   (14b−rule ≈ 0), the ladder's reactivity is mildly harmful under a noisy time signal
+   (rule pool-4 +3.3* vs floor), and 3b's deviation from it is where the value lives.
+3. **Family beats scale, now at n=32 and every pool**: llama3:8b (between the qwens in
+   size) is significantly worse than 3b at all pools and significantly worse than the
+   floor at pool 4 (+7.0*) — though the protocol still cushions it (negotiated +7.0* vs
+   isolated +8.4*) and even llama buys some prod protection (−5.6*/−5.2* at 4/8).
+   Exp 40's finding-4 oddity (llama single-llm best at pool 8) did NOT survive
+   (+0.4 ±2.9 ns) — it was n=8 noise, as suspected.
+4. Un-braked single-llm@14b pool 4 posts the biggest prodSLA number (−13.6*) but pays
+   where the negotiated arm doesn't: util 84% vs floor 93%, done 13.0 vs 13.6 — the
+   brake, not scale, is still what makes the protection cheap.
+
+**Honest read / caveats.** One trace, one contention recipe, one prompt set; the 3b>14b
+prodSLA stars are 2-of-3 pools with no multiple-comparison correction (the same-direction-
+everywhere pattern is the safe part, per Exp 29 practice); prodSLA equivalence between
+sizes is NOT certifiable at ±3 (CIs too wide at n=32 — would need ~4× the seeds). The
+"3b beats 14b under prediction error" result is world-dependent: in the oracle-time base
+world it is equivalence with a slack-regime 14b edge. Deferred robustness axes: size
+ladder below 3b (where does sufficiency break?), a second non-qwen family, a second trace.
+
+**Reproduce.**
+```bash
+.venv/bin/python -m pins.trace_replay --stats        # TOST lines on base-world tiers
+.venv/bin/python -m pins.trace_replay --seeds 32 --time predicted
+.venv/bin/python -m pins.trace_replay --seeds 32 --llm --model qwen2.5:3b  --time predicted
+.venv/bin/python -m pins.trace_replay --seeds 32 --llm --model qwen2.5:14b --time predicted
+.venv/bin/python -m pins.trace_replay --seeds 32 --llm --model llama3:8b   --time predicted
+.venv/bin/python -m pins.trace_replay --compare "qwen2.5:3b+time-predicted/negotiated,qwen2.5:14b+time-predicted/negotiated"
+```
+Tiers `{rule,qwen2.5:3b,qwen2.5:14b,llama3:8b}+time-predicted` now n=32 in
+`results_trace_replay.json`; TOST helpers `t90`/`tost_line` in `pins/trace_replay.py`.
