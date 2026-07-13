@@ -2429,3 +2429,44 @@ the deterministic ladder on SLA", not "emits garbage".
 .venv/bin/python -m pins.trace_replay --compare "qwen2.5:1.5b+time-predicted/negotiated,qwen2.5:3b+time-predicted/negotiated"
 ```
 Tiers `qwen2.5:{1.5b,0.5b}+time-predicted`, `gemma2:2b+time-predicted` (n=32).
+
+## Experiment 47 — SECOND TRACE (MIT Supercloud): the mechanism's applicability BOUNDARY (2026-07-13)
+
+**Why.** Every replay number so far is one trace (Alibaba v2020). Exp 47 replays the MIT
+Supercloud slurm log (`--trace supercloud`, commit 125e720): university HPC batch, whole
+V100s, jobs ~14x longer (tick 900 s keeps median work ≈ 9 ticks — same sim regime,
+different world). Base world only (request == truth, oracle time); Stage-1 CSVs are
+v2020-keyed. Tiers `rule+supercloud`, `qwen2.5:3b+supercloud`, n=32, pools 4/6/8.
+
+**Result (paired, n=32).** NOT a replication — a boundary. At pool 4 (1 whole-GPU slot)
+every 3b arm LOSES SLA to its own floor (negotiated **+7.2 ±3.7***; floor runs 100% util);
+pools 6/8 are a wash (negotiated +1.4/+2.1 ns; prodSLA −3.2/−2.4 ns, CIs ±7). 3b vs rule:
+worse at pool 4 (+3.7*), TOST-EQ±3 at 6/8. Rule tier vs floor: ns everywhere.
+**Slot-count control** (pools 16/24/32 = same jobs, 4-8 whole GPUs; json backed up —
+`--pools` is not in the tier tag): ALL deltas collapse to ~0 (|dSLA| ≤ 0.6 ±1.1, ns) —
+with enough whole-GPU slots and thinned load, the mechanism is INERT, not harmful.
+
+**Findings.**
+1. **The v2020 headline does not transfer to whole-GPU HPC batch**: hedging costs SLA when
+   a margin/reserve eats a whole slot on a 1-2-slot pool, and does nothing when jobs fit.
+   The mechanism's value requires demand FINER than the allocation quantum — v2020's
+   quarter-GPU quanta gave margins sub-slot room; Supercloud's whole GPUs do not.
+2. This turns the scope sentence added to `research_plan.md` (elastic fractional-GPU ML
+   workloads; rigid whole-allocation batch out of scope) from a disclaimer into a
+   **measured boundary** — the honest thesis form: "here is where it works, here is where
+   it measurably stops".
+3. prodSLA stays directionally protective on Supercloud (−2..−5, ns) — the priority
+   serialisation survives; it's the margin/reserve HEDGING that has no room.
+
+**Caveats.** Contended many-slot Supercloud regime untested (needs an n_jobs knob — at
+pools 16-32 the thinned 16-job load undershoots contention); deadlines/urgency/tiers stay
+synthetic (the make_workload recipe) on this trace too; base world only.
+
+**Reproduce.**
+```bash
+.venv/bin/python data/build_supercloud_replay.py
+.venv/bin/python -m pins.trace_replay --trace supercloud --seeds 32
+.venv/bin/python -m pins.trace_replay --trace supercloud --seeds 32 --llm --model qwen2.5:3b
+.venv/bin/python -m pins.trace_replay --compare "qwen2.5:3b+supercloud/negotiated,rule+supercloud/negotiated"
+```
+Tiers `rule+supercloud`, `qwen2.5:3b+supercloud` (n=32) in `results_trace_replay.json`.
