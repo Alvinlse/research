@@ -116,7 +116,7 @@ def load_runtime_pred(path: str = RUNTIME_CSV) -> dict[str, float]:
 
 def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, oracle=False,
                         true_map=None, declared=False, time_pred=None, time_mode=None,
-                        tick: int = TICK_S
+                        tick: int = TICK_S, quantum: int = 1
                         ) -> tuple[list[Job], dict[str, int], dict[str, int],
                                    dict[str, float] | str | None]:
     """n_jobs real jobs thinned from a random 10-hour trace window, on ONE clock.
@@ -139,6 +139,12 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
     to runtime-covered jobs (all three time arms share it → seed-paired); `time_mode` picks
     the demand agent's deadline signal: "predicted" = belief map from time_pred, "blind" =
     no signal, "oracle" = true work on the same restricted windows. None = pre-Exp-38.
+
+    Exp 48 (allocation quantum): `quantum` = pool units per trace quarter-GPU quantum
+    divisor — 1 = the native quarter-GPU units (byte-identical to every prior tier), 4 =
+    WHOLE-GPU units: a job's cap becomes max(1, round(quanta/4)), so every sub-GPU job
+    rounds up to a full card and the pool/margins/reserve all move in whole GPUs. Window
+    sampling is quantum-independent, so quarter/whole tiers stay seed-paired.
     """
     rng = random.Random(f"replay-{seed}")
     window_s = int(horizon * ARRIVAL_FRAC) * tick        # arrivals within first 60%
@@ -151,7 +157,7 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
         # rerolled seed to the plan world (request==prediction, plan truth) in every arm —
         # 5/32 seeds in the Exp 36/37 sweeps. Forward EVERYTHING.
         return make_trace_workload(trace, n_jobs, seed + 7919, horizon, pred, oracle,
-                                   true_map, declared, time_pred, time_mode, tick)
+                                   true_map, declared, time_pred, time_mode, tick, quantum)
     window = sorted(rng.sample(in_win, n_jobs), key=lambda r: r[:3])   # thin the arrival stream
 
     jobs: list[Job] = []
@@ -159,7 +165,9 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
     true_cap_map: dict[str, int] = {}
     belief: dict[str, float] | str | None = "blind" if time_mode == "blind" else \
         {} if time_mode == "predicted" else None           # "oracle"/None -> true remaining
+    clip = max(1, round(CAP_CLIP / quantum))               # same physical clip in pool units
     for i, (arr_s, dur_s, quanta, name) in enumerate(window):
+        quanta = min(max(1, round(quanta / quantum)), clip)  # trace quanta -> pool units
         arrival = (arr_s - t0) // tick
         work = float(min(WORK_CLAMP[1], max(WORK_CLAMP[0], round(dur_s / tick))))
         urgency = round(rng.uniform(0.6, 2.2), 3)          # make_workload recipe verbatim
@@ -322,8 +330,11 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           caps_mode: str = "real", quantile: str = "p50", truth_mode: str = "plan",
           time_mode: str | None = None, ttf_mode: str | None = None,
           baseline: str | None = None, dyncap: str | None = None,
-          trace_name: str = "v2020") -> None:
+          trace_name: str = "v2020", quantum: int = 1) -> None:
     assert not (time_mode and ttf_mode), "--time and --ttf are separate experiments"
+    assert quantum == 1 or (caps_mode == "real" and truth_mode == "plan" and
+                            not (time_mode or ttf_mode or baseline or dyncap)), \
+        "--quantum whole supports only the base world (caps in native trace quanta otherwise)"
     assert dyncap is None or (caps_mode == "predicted" and truth_mode == "plan" and
                               baseline is None), \
         "--dyncap is the Exp-30 world only: needs --caps predicted, plan truth, no baseline"
@@ -363,6 +374,10 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         suffix += f"+dyn-{dyncap}"        # Exp 45: telemetry-corrected dynamic cap
     if trace_name != "v2020":
         suffix += f"+{trace_name}"        # second trace: tiers must not collide with v2020
+    if quantum != 1:
+        suffix += "+qwhole"               # Exp 48: whole-GPU allocation quantum
+    if n_jobs != 16:
+        suffix += f"+n{n_jobs}"           # Exp 48: scale-up tiers must not collide
     tag = (baseline or ("rule" if not use_llm else model)) + suffix
 
     if baseline == "easy":        # Exp 40: rows are allocation DISCIPLINES, not policies
@@ -401,7 +416,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                 mk_mode = time_mode or ("predicted" if ttf_mode == "predicted" else None)
                 jobs, cap_map, tcap, belief = make_trace_workload(trace, n_jobs, s, horizon, pred,
                                                                   oracle, true_map, declared,
-                                                                  time_pred, mk_mode, tick)
+                                                                  time_pred, mk_mode, tick,
+                                                                  quantum)
                 cap_map = {k: min(v, gpus) for k, v in cap_map.items()}  # feasible at this pool
                 tcap = {k: min(v, gpus) for k, v in tcap.items()}
                 dyn_map = None
@@ -459,6 +475,12 @@ def main() -> None:
     ap.add_argument("--scale", type=int, default=3)
     ap.add_argument("--seeds", type=int, default=8)
     ap.add_argument("--pools", default="4,6,8", help="real caps are heavier (median 4 quanta)")
+    ap.add_argument("--n-jobs", type=int, default=16,
+                    help="jobs thinned per window (scale-up knob; tier gets a +nN suffix)")
+    ap.add_argument("--quantum", default="quarter", choices=("quarter", "whole"),
+                    help="Exp 48: smallest negotiable element — 'quarter' = the trace's native "
+                         "quarter-GPU quanta (pool units = quanta, unchanged); 'whole' = whole "
+                         "GPUs (caps round up to full cards, pool/margins/reserve in GPUs)")
     ap.add_argument("--stats", action="store_true",
                     help="no sim: cross-tier paired stats from results_trace_replay.json")
     ap.add_argument("--caps", default="real", choices=("real", "predicted", "oracle"),
@@ -508,11 +530,11 @@ def main() -> None:
     if a.compare:
         compare_tiers(a.compare)
         return
-    sweep([int(p) for p in a.pools.split(",")], n_jobs=16, horizon=300,
+    sweep([int(p) for p in a.pools.split(",")], n_jobs=a.n_jobs, horizon=300,
           seeds=list(range(a.seeds)), scale=a.scale, spike_max=a.spike,
           use_llm=a.llm, model=a.model, caps_mode=a.caps, quantile=a.quantile,
           truth_mode=a.truth, time_mode=a.time, ttf_mode=a.ttf, baseline=a.baseline,
-          dyncap=a.dyncap, trace_name=a.trace)
+          dyncap=a.dyncap, trace_name=a.trace, quantum={"quarter": 1, "whole": 4}[a.quantum])
 
 
 if __name__ == "__main__":

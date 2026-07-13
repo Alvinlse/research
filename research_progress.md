@@ -2470,3 +2470,69 @@ synthetic (the make_workload recipe) on this trace too; base world only.
 .venv/bin/python -m pins.trace_replay --compare "qwen2.5:3b+supercloud/negotiated,rule+supercloud/negotiated"
 ```
 Tiers `rule+supercloud`, `qwen2.5:3b+supercloud` (n=32) in `results_trace_replay.json`.
+
+## Experiment 48 — ALLOCATION QUANTUM at scale: whole GPUs vs quarter quanta, 30 GPUs / 500 jobs (2026-07-13)
+
+**Why.** Exp 47's boundary finding ("the mechanism's value requires demand FINER than the
+allocation quantum") came from a *different trace*, so quantum and workload were confounded;
+its caveat also flagged the contended many-slot regime as untested (no n_jobs knob). And the
+scale-up question (queued 2026-07-13) was still open: does the negotiated win survive 30
+GPUs / hundreds of jobs? Exp 48 de-confounds and scales in one shot: the SAME v2020 jobs on
+the SAME 30 physical GPUs, with only the smallest negotiable element changed — the trace's
+native quarter-GPU quanta (pool 120 units) vs whole GPUs (pool 30 units; every sub-GPU job
+rounds up to a full card, caps collapse {1,2,4,8}→{1,2}, physical demand +27%). New
+`trace_replay.py` knobs: `--quantum {quarter,whole}`, `--n-jobs` (tier suffixes `+qwhole`,
+`+nN`; `--quantum whole` is base-world-only; default path verified byte-identical, window
+sampling untouched so all four arms share seeds/windows). Saturated regime: util 96–98%,
+floor SLA 65–75%, n=32.
+
+**Result (paired, n=32).** Negotiated beats its own floor in EVERY arm — but the whole-GPU
+*world* itself fails, and no policy inside it recovers that:
+
+| arm (30 phys GPUs, 500 jobs)   | negotiated vs floor dSLA | dprodSLA |
+|---|---|---|
+| quarter, rule (`rule+n500`)             | **−1.2 ±0.3\*** | **−3.2 ±0.9\*** |
+| quarter, 3b (`qwen2.5:3b+n500`)         | **−1.7 ±0.6\*** | **−6.2 ±1.4\*** |
+| whole, rule (`rule+qwhole+n500`)        | **−2.3 ±0.5\*** | **−7.1 ±1.3\*** |
+| whole, 3b (`qwen2.5:3b+qwhole+n500`)    | **−1.6 ±0.5\*** | **−5.6 ±1.3\*** |
+
+Cross-quantum (paired by seed, same jobs, same hardware): whole-GPU allocation costs the
+floor **+9.9 ±2.2\* SLA pts, +11.8 ±2.9\* prodSLA, −70 ±14\* finished jobs**; the BEST
+whole-GPU arm (negotiated@3b, 73.3%) is still **+8.2 ±2.3\*** SLA worse than the quarter
+world's own *floor* (65.1%). Breaking demand into quarter quanta rescues what negotiation
+cannot: negotiated recovers ~1.6 of the ~10 points whole-GPU packing loses.
+
+**Findings.**
+1. **The quantum's cost is a packing property of the WORLD, not a negotiation property.**
+   Rounding sub-GPU demand (75% of v2020 jobs ask ≤1 GPU) up to whole cards burns ~10 SLA
+   pts / 70 finished jobs that no allocation policy inside the whole-GPU world gets back.
+   "The LLM negotiates harder" is not a substitute for a finer allocation quantum — the
+   mechanism-design fix (fractional quanta) dominates any policy fix, the cleanest possible
+   statement of the thesis's scope sentence, now measured on the headline trace itself.
+2. **Exp 47's boundary is refined**: at 30 whole-GPU slots the negotiated delta is intact
+   (−1.6..−2.3\*) — what killed Supercloud pool 4 was the hedge being 25–100% of the pool
+   (1–2 slots), i.e. quantum coarseness *relative to pool size*, not whole-GPU-ness per se.
+   Fractional quanta matter for what the WORKLOAD wastes; slot count for what the HEDGE costs.
+3. **Scale-up TODO closed — the win survives and the protocol becomes load-bearing.** At
+   500 jobs the arms finally separate: negotiated@3b is the ONLY 3b arm improving both
+   metrics (−1.7\*/−6.2\*); isolated agents now HURT SLA (+1.2\*, they trade prodSLA by
+   abandoning best-effort wholesale: done 336 vs 377) and single-llm is a disaster
+   (+7.2\*/+4.2\*, worse still at whole quantum +9.5\*/+14.9\*). The two-sided protocol —
+   not just LLM hedging — is what scales; Open-Q #5's control keeps losing harder as n grows.
+
+**Caveats.** The whole-GPU arm's +27% demand inflation IS the effect under study (that is
+what whole-GPU allocation does to fractional askers), but it means regime saturation also
+rises (floor 75% vs 65%) — the negotiated-delta comparison across quanta is between regimes
+as well as quanta. Deadlines/urgency/tiers stay synthetic (make_workload recipe); base world
+only (request == truth); single pool per arm (tier tag excludes `--pools`).
+
+**Reproduce.**
+```bash
+.venv/bin/python -m pins.trace_replay --n-jobs 500 --pools 120 --seeds 32
+.venv/bin/python -m pins.trace_replay --n-jobs 500 --pools 30  --seeds 32 --quantum whole
+.venv/bin/python -m pins.trace_replay --n-jobs 500 --pools 120 --seeds 32 --llm --model qwen2.5:3b
+.venv/bin/python -m pins.trace_replay --n-jobs 500 --pools 30  --seeds 32 --llm --model qwen2.5:3b --quantum whole
+```
+Tiers `rule+n500`, `rule+qwhole+n500`, `qwen2.5:3b+n500`, `qwen2.5:3b+qwhole+n500` (n=32)
+in `results_trace_replay.json`; cross-quantum deltas via paired_ci over per_seed (pool keys
+differ, so `--compare` does not apply).
