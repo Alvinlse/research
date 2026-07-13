@@ -2384,3 +2384,48 @@ constant truth; one trace).
 .venv/bin/python -m pins.trace_replay --compare "qwen2.5:3b+pred+dyn-oracle/negotiated,qwen2.5:3b+pred/negotiated"
 ```
 Tier `qwen2.5:3b+pred+dyn-oracle` (n=32) in `results_trace_replay.json`.
+
+## Experiment 46 — SUB-3B LADDER + gemma2:2b: where "small suffices" stops (2026-07-13)
+
+**Why.** Exp 43/44 established sufficiency at 3b and a family threshold (qwen/gemma pass,
+llama3 fails) but left the deferred queue: how far DOWN does sufficiency extend, and does
+the second family pass at small scale too? qwen2.5:{1.5b,0.5b} + gemma2:2b, all
+`--seeds 32 --time predicted` (the honest-default world), same paired windows.
+
+**Result (paired, n=32; dSLA / dprodSLA, negotiated arm).**
+vs own floor (pool 8): 1.5b **−2.7* / −5.6***; 0.5b +0.6 / −5.6 (ns), its single-llm arm
+HURTS (+6.6* SLA); gemma2:2b **−2.9* / −8.3***.
+vs 3b head-to-head: 1.5b SLA TOST-EQ±3 at ALL pools (±2 at 4/8) but pays prodSLA (+4.4*
+pool 6); 0.5b SLA WORSE at all pools (**+2.5*/+3.5*/+3.7***); gemma2:2b EQ±3/±2 at pools
+6/8, worse at slack (+3.3* pool 4).
+vs deterministic rule ladder: 1.5b better (SLA −3.1*/−3.1* pools 6/8, prodSLA −5.9*/−4.3*
+pools 4/8); 0.5b SLA ns everywhere (EQ at 6/8) — no SLA value over the rule — though it
+still buys prod protection at slack (−12.1* pool 4); gemma2:2b better at contention
+(pool 8 −3.3*/−7.0*).
+
+**Findings.**
+1. **The sufficiency floor sits between 0.5b and 1.5b**: 1.5b is SLA-equivalent to 3b,
+   beats its own floor on both metrics at pool 8, and beats the deterministic ladder —
+   the full 3b pattern. 0.5b breaks it: worse than 3b on SLA everywhere, no SLA value
+   over the rule, and its single-llm arm actively damages the floor (+6.6*) — the first
+   qwen tier to hurt.
+2. **Cross-family "small suffices" confirmed at 2b**: gemma2:2b shows the 3b pattern at
+   contention (floor-beating both metrics at pool 8, SLA-equivalent to 3b at pools 6/8).
+   The family threshold of Exp 44 holds at the small end — it is not a big-gemma artifact.
+3. **3b stays the headline**: it keeps a prodSLA edge over 1.5b (+4.4* pool 6) and an SLA
+   edge over gemma2:2b at slack (+3.3* pool 4). The claim sharpens to: *sufficiency
+   extends down to ~1.5-2b in both working families; below that the LLM stops paying for
+   itself* — instruction-following quality, not scale, remains the predictor, but it has
+   a size floor.
+4. Exp-43/44 deferred queue CLOSED (ladder + gemma2:2b done); second trace is Exp 47.
+
+**Caveats.** One trace/recipe/prompt set, q4 quant; 0.5b's prod-tier protection at slack
+(−12.1*) says even the failing size extracts SOME signal — "fails" means "no longer beats
+the deterministic ladder on SLA", not "emits garbage".
+
+**Reproduce.**
+```bash
+.venv/bin/python -m pins.trace_replay --seeds 32 --llm --model qwen2.5:1.5b --time predicted
+.venv/bin/python -m pins.trace_replay --compare "qwen2.5:1.5b+time-predicted/negotiated,qwen2.5:3b+time-predicted/negotiated"
+```
+Tiers `qwen2.5:{1.5b,0.5b}+time-predicted`, `gemma2:2b+time-predicted` (n=32).
