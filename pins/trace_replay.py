@@ -49,6 +49,11 @@ MEM_CSV = os.path.join(HERE, "eval", "pred_job_mem.csv")
 RUNTIME_CSV = os.path.join(HERE, "eval", "pred_job_runtime.csv")
 
 TICK_S = 120         # one sim tick = 2 real minutes -> median trace job ≈ 9 ticks of work
+# Second trace (Exp 43/44 external-validity caveat): MIT Supercloud slurm log — university
+# HPC batch vs v2020's cloud PAI. Jobs are ~14x longer, so its tick is 900 s to keep median
+# work ≈ 9 ticks: SAME sim regime, different world. Built by data/build_supercloud_replay.py.
+TRACES = {"v2020": (REPLAY_CSV, TICK_S),
+          "supercloud": (os.path.join(HERE, "..", "data", "supercloud", "replay_jobs.csv"), 900)}
 WORK_CLAMP = (1, 60)
 CAP_CLIP = 8         # quanta (= 2 GPUs); ~80% of trace jobs are below; keeps pools sane
 ARRIVAL_FRAC = 0.6   # sample arrivals from the first 60% of the horizon (make_workload conv.)
@@ -110,7 +115,8 @@ def load_runtime_pred(path: str = RUNTIME_CSV) -> dict[str, float]:
 
 
 def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, oracle=False,
-                        true_map=None, declared=False, time_pred=None, time_mode=None
+                        true_map=None, declared=False, time_pred=None, time_mode=None,
+                        tick: int = TICK_S
                         ) -> tuple[list[Job], dict[str, int], dict[str, int],
                                    dict[str, float] | str | None]:
     """n_jobs real jobs thinned from a random 10-hour trace window, on ONE clock.
@@ -135,7 +141,7 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
     no signal, "oracle" = true work on the same restricted windows. None = pre-Exp-38.
     """
     rng = random.Random(f"replay-{seed}")
-    window_s = int(horizon * ARRIVAL_FRAC) * TICK_S        # arrivals within first 60%
+    window_s = int(horizon * ARRIVAL_FRAC) * tick        # arrivals within first 60%
     t_lo, t_hi = trace[0][0], trace[-1][0] - window_s
     t0 = rng.randrange(t_lo, t_hi)
     in_win = [r for r in trace if t0 <= r[0] < t0 + window_s and (pred is None or r[3] in pred)
@@ -145,7 +151,7 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
         # rerolled seed to the plan world (request==prediction, plan truth) in every arm —
         # 5/32 seeds in the Exp 36/37 sweeps. Forward EVERYTHING.
         return make_trace_workload(trace, n_jobs, seed + 7919, horizon, pred, oracle,
-                                   true_map, declared, time_pred, time_mode)
+                                   true_map, declared, time_pred, time_mode, tick)
     window = sorted(rng.sample(in_win, n_jobs), key=lambda r: r[:3])   # thin the arrival stream
 
     jobs: list[Job] = []
@@ -154,8 +160,8 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
     belief: dict[str, float] | str | None = "blind" if time_mode == "blind" else \
         {} if time_mode == "predicted" else None           # "oracle"/None -> true remaining
     for i, (arr_s, dur_s, quanta, name) in enumerate(window):
-        arrival = (arr_s - t0) // TICK_S
-        work = float(min(WORK_CLAMP[1], max(WORK_CLAMP[0], round(dur_s / TICK_S))))
+        arrival = (arr_s - t0) // tick
+        work = float(min(WORK_CLAMP[1], max(WORK_CLAMP[0], round(dur_s / tick))))
         urgency = round(rng.uniform(0.6, 2.2), 3)          # make_workload recipe verbatim
         slack = max(1.15, min(2.4, 2.5 - 0.65 * urgency))
         deadline = arrival + int(round(work * slack))
@@ -175,7 +181,7 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
             cap_map[j.jid] = min(max(1, round(p)), CAP_CLIP)
         if time_mode == "predicted":                       # believed total work, same clamp as work
             belief[j.jid] = float(min(WORK_CLAMP[1],
-                                      max(WORK_CLAMP[0], round(time_pred[name] / TICK_S))))
+                                      max(WORK_CLAMP[0], round(time_pred[name] / tick))))
     return jobs, cap_map, true_cap_map, belief
 
 
@@ -315,14 +321,21 @@ def compare_tiers(spec: str) -> None:
 def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           caps_mode: str = "real", quantile: str = "p50", truth_mode: str = "plan",
           time_mode: str | None = None, ttf_mode: str | None = None,
-          baseline: str | None = None, dyncap: str | None = None) -> None:
+          baseline: str | None = None, dyncap: str | None = None,
+          trace_name: str = "v2020") -> None:
     assert not (time_mode and ttf_mode), "--time and --ttf are separate experiments"
     assert dyncap is None or (caps_mode == "predicted" and truth_mode == "plan" and
                               baseline is None), \
         "--dyncap is the Exp-30 world only: needs --caps predicted, plan truth, no baseline"
+    # The Stage-1 prediction CSVs are keyed by v2020 job names — the second trace replays
+    # the BASE world only (request == truth, oracle time), the Exp 28/29 recipe.
+    assert trace_name == "v2020" or (caps_mode == "real" and truth_mode == "plan" and
+                                     not (time_mode or ttf_mode or baseline or dyncap)), \
+        "--trace supercloud supports only the base world (no pred/time/ttf/baseline/dyncap)"
     assert baseline is None or time_mode == "predicted", \
         "--baseline needs --time predicted (EASY's runtime estimate + window pairing)"
-    trace = load_trace()
+    trace_path, tick = TRACES[trace_name]
+    trace = load_trace(trace_path)
     true_map = None
     declared = False
     if truth_mode != "plan":                  # Exp 36 usage / Exp 37 mem: true need measured
@@ -348,6 +361,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         suffix += f"+ttf-{ttf_mode}"      # control (no signal, same windows) = the time-oracle tier
     if dyncap:
         suffix += f"+dyn-{dyncap}"        # Exp 45: telemetry-corrected dynamic cap
+    if trace_name != "v2020":
+        suffix += f"+{trace_name}"        # second trace: tiers must not collide with v2020
     tag = (baseline or ("rule" if not use_llm else model)) + suffix
 
     if baseline == "easy":        # Exp 40: rows are allocation DISCIPLINES, not policies
@@ -366,7 +381,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         ]
 
     print(f"\n{'='*86}")
-    print(f"TRACE REPLAY (Alibaba gpu-v2020) — two-sided sim on real jobs; agents={tag}")
+    print(f"TRACE REPLAY ({trace_name}) — two-sided sim on real jobs; agents={tag}")
     print(f"{'='*86}")
     print(f"{n_jobs} real jobs/window from {len(trace):,} trace jobs, horizon {horizon}, "
           f"mean of {len(seeds)} seeds (window per seed) | spike_max={spike_max} scale={scale} "
@@ -386,7 +401,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                 mk_mode = time_mode or ("predicted" if ttf_mode == "predicted" else None)
                 jobs, cap_map, tcap, belief = make_trace_workload(trace, n_jobs, s, horizon, pred,
                                                                   oracle, true_map, declared,
-                                                                  time_pred, mk_mode)
+                                                                  time_pred, mk_mode, tick)
                 cap_map = {k: min(v, gpus) for k, v in cap_map.items()}  # feasible at this pool
                 tcap = {k: min(v, gpus) for k, v in tcap.items()}
                 dyn_map = None
@@ -474,6 +489,10 @@ def main() -> None:
                          "P50 as its reservation estimate, easy-oracle the true spiked work); "
                          "'qlearn' = the trained tabular-Q policy (pins/qlearn.py). "
                          "Requires --time predicted (pairs windows with the model tiers)")
+    ap.add_argument("--trace", default="v2020", choices=tuple(TRACES),
+                    help="which trace to replay: 'supercloud' = MIT Supercloud slurm log "
+                         "(HPC batch, tick 900s), base world only — the second-trace "
+                         "external-validity check")
     ap.add_argument("--dyncap", default=None, choices=("oracle", "noisy"),
                     help="Exp 45: dynamic cap — after a job has run 3 ticks, its allocation "
                          "base switches from the Stage-1 predicted request to a telemetry-"
@@ -493,7 +512,7 @@ def main() -> None:
           seeds=list(range(a.seeds)), scale=a.scale, spike_max=a.spike,
           use_llm=a.llm, model=a.model, caps_mode=a.caps, quantile=a.quantile,
           truth_mode=a.truth, time_mode=a.time, ttf_mode=a.ttf, baseline=a.baseline,
-          dyncap=a.dyncap)
+          dyncap=a.dyncap, trace_name=a.trace)
 
 
 if __name__ == "__main__":
