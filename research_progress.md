@@ -2364,8 +2364,19 @@ prodSLA **−7.1*** (pool 8), isolated −9.2*, single-llm −8.4*.
 2. Exp-45 finding 2 upgraded: "orthogonal lever" now holds under the headline model, not
    just the rule fallback.
 
-**Caveats.** dyn-oracle only at 3b (noisy arm inferred from the rule tier's ~half-value);
-otherwise Exp 45's caveats.
+**Noisy leg (same day).** `--dyncap noisy --llm qwen2.5:3b` n=32: noisy − static (3b,
+negotiated) SLA −1.6 / **−3.9* / −5.3*** — nearly the full oracle win (−2.1/−4.5*/−6.6*),
+and noisy ≡ oracle on SLA by TOST ±3 at ALL pools (prodSLA +2..+2.6 ns). 3b − rule in the
+noisy world: prodSLA **−3.7* / −6.2*** (pools 6/8), SLA −2.9* (pool 8). Within-tier pool 8,
+negotiated vs floor: SLA **−3.3*** AND prodSLA **−10.4*** — both metrics significant, the
+strongest single cell of the dyn worlds.
+3. **The margin layer cushions telemetry noise**: at the rule tier ±25% noise cost the cap
+   lever its significance at pools 4/6; under 3b margins the noisy arm is TOST-equivalent
+   to the oracle arm on SLA everywhere. A realistic GBT read + LLM hedge ≈ perfect
+   telemetry — the complement works in the direction that matters for deployment.
+
+**Caveats.** Exp 45's caveats (3-tick delay and ±25% noise single design points; per-phase
+constant truth; one trace).
 
 **Reproduce.**
 ```bash
