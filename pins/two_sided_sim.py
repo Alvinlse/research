@@ -124,7 +124,8 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
              u_map: dict, spike_map: dict, scale: int, spike_max: float,
              cap_map: dict[str, int], true_cap_map: dict[str, int] | None = None,
              belief_work: dict[str, float] | str | None = None,
-             ttf_work: dict[str, float] | str | None = None) -> dict:
+             ttf_work: dict[str, float] | str | None = None,
+             dyn_cap_map: dict[str, int] | None = None, dyn_after: int = 3) -> dict:
     """One run of a policy on a fresh workload copy. Rigid: a running job is never involuntarily
     preempted; it only shrinks VOLUNTARILY to its ceiling (cap0 + this tick's negotiated margin).
     Spikes: a train phase's true work is inflated; margin GPUs grant rate>1 to absorb it, capped at
@@ -145,13 +146,22 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
     whose believed remaining work is <= TTF_HORIZON ticks enter reserve_ctx as a `release`
     bucket (imminent releases substitute for idle reserve). None = no signal (pre-Exp-39,
     byte-identical); "oracle" = true realised remaining; {jid: predicted total ticks} =
-    Stage-1 runtime. Remaining WORK is the proxy for remaining TIME (assumes rate ~1)."""
+    Stage-1 runtime. Remaining WORK is the proxy for remaining TIME (assumes rate ~1).
+
+    `dyn_cap_map` (Exp 45): a DYNAMIC train-phase cap — once a job has RUN for `dyn_after`
+    ticks (telemetry observed), its allocation base switches from cap_map (the static
+    admission request) to dyn_cap_map (a telemetry-corrected estimate of true need). The
+    user's declared request stays fixed; only the system's belief moves. A falling cap
+    triggers the existing voluntary-shrink path; a rising one makes the job a wanter again.
+    Negotiation facts (job_facts req_gpu) intentionally stay on cap_map — the margin layer
+    still negotiates over the admission request. None = pre-Exp-45, byte-identical."""
     jobs = [Job(j.jid, j.arrival, list(j.phases), list(j.need), j.urgency, j.deadline, j.tier)
             for j in jobs_proto]
     by_id = {j.jid: j for j in jobs}
     work = {j.jid: true_need(j, spike_map[j.jid]) for j in jobs}     # realised (spiked) work
     useful = {j.jid: round(u_map[j.jid] * scale) for j in jobs}      # extra GPUs a spike can use
     held = {j.jid: 0 for j in jobs}                                  # rigid: locked to the job
+    ran = {j.jid: 0 for j in jobs}                                   # ticks run (telemetry seen)
     progress = {j.jid: 0.0 for j in jobs}
     pidx = {j.jid: 0 for j in jobs}
     done_at: dict[str, int | None] = {j.jid: None for j in jobs}
@@ -168,7 +178,11 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
         # Train-phase base = the job's REAL Stage-1 predicted GPU request (forecast_cap); other
         # phases keep the profile (preprocess I/O-bound, eval moderate). This is where the
         # predicted requested GPU enters the negotiation as the non-negotiable base.
-        return cap_map[j.jid] if ph == "train" else PHASE_PROFILES[ph][0]
+        if ph != "train":
+            return PHASE_PROFILES[ph][0]
+        if dyn_cap_map is not None and ran[j.jid] >= dyn_after:
+            return dyn_cap_map[j.jid]                      # telemetry-corrected base (Exp 45)
+        return cap_map[j.jid]
 
     def remaining(j):
         return max(0.0, j.need[pidx[j.jid]] - progress[j.jid]) + sum(j.need[pidx[j.jid] + 1:])
@@ -255,6 +269,8 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
             # requested demand — the gap is exactly prediction error hitting outcomes
             c0 = tcap[j.jid] if phase_of(j) == "train" else PHASE_PROFILES[phase_of(j)][0]
             g = held[j.jid]
+            if g > 0:
+                ran[j.jid] += 1                            # a tick of telemetry accrues
             if c0 == 0:
                 rate = 1.0
             else:

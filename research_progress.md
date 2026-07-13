@@ -2293,3 +2293,83 @@ star is a single significant cell out of six — read as "no gain", not "scale h
 .venv/bin/python -m pins.trace_replay --compare "gemma2:27b+time-predicted/negotiated,gemma2:9b+time-predicted/negotiated"
 ```
 Tier `gemma2:27b+time-predicted` (n=32) in `results_trace_replay.json`.
+
+## Experiment 45 — DYNAMIC CAP: telemetry-corrected allocation base (rule tier) (2026-07-13)
+
+**Why.** Every world so far fixes a job's allocation base at admission (the request or a
+Stage-1 prediction). Real elastic GPU jobs emit telemetry, so a GBT could re-estimate true
+need *while the job runs* and let the system right-size continuously — the user's declared
+request stays fixed; only the system's belief moves. Before wiring a real telemetry
+predictor, this ablation bounds the value: after a job has RUN 3 ticks, its train-phase
+base switches from the Stage-1 predicted request to (a) the true need (`--dyncap oracle`,
+the telemetry upper bound) or (b) truth ±25% uniform (`--dyncap noisy`, a GBT-like read).
+Exp-30 world (`--caps predicted`, plan truth); negotiation facts stay on the admission
+request, so the margin layer is untouched — a clean cap-only lever.
+
+**Method.** `dyn_cap_map`/`dyn_after` in `two_sided_sim.simulate` (falling cap rides the
+existing voluntary-shrink path; rising cap makes the job a wanter again; `dyn_cap_map=None`
+is byte-identical pre-Exp-45). `--dyncap {oracle,noisy}` in `trace_replay`; rule tier,
+n=32 paired windows, pools 4/6/8.
+
+**Result (paired, n=32; dSLA / dprodSLA, negative = dynamic better).**
+dyn-oracle − static pred (negotiated): **−2.3* / −3.1* / −5.7*** SLA at pools 4/6/8
+(prodSLA ns). Same compare on the FLOOR arm: **−3.1* / −4.3* / −7.2*** (pool-8 prodSLA
+−5.6* too). dyn-noisy − static pred: −1.4 / −1.6 / **−3.5*** SLA. dyn-oracle − static
+ORACLE-at-admission: dyn worse or equal (+1.8/+2.5/+0.4 SLA; pool-6 prodSLA +5.8*).
+
+**Findings.**
+1. **Dynamic right-sizing is a real, growing-with-slack SLA lever**: correcting the cap
+   after 3 observed ticks recovers most of the prediction-error cost, biggest at pool 8
+   (−5.7* negotiated, −7.2* floor) where wrong caps waste the most elastic room.
+2. **It is mechanism-independent** — it helps the floor at least as much as the negotiated
+   tier, so it's an ORTHOGONAL lever (a Stage-1.5 telemetry loop), not a negotiation
+   interaction. Claims about the negotiation should not lean on it.
+3. **A ±25% telemetry read keeps roughly half the win** (significant only at slack);
+   telemetry quality matters more at contention.
+4. **Admission-time oracle ≥ dynamic oracle**: the 3-tick correction delay has a real cost
+   (pool-6 prodSLA +5.8*) — knowing need up front beats learning it, so dynamic caps
+   COMPLEMENT better Stage-1 predictions rather than replacing them.
+
+**Caveats.** Rule tier only (no LLM margins yet); truth is per-phase constant so this
+measures error-correction, not within-phase demand drift (the sim has none); 3-tick delay
+and ±25% noise are single design points; one trace.
+
+**Reproduce.**
+```bash
+.venv/bin/python -m pins.trace_replay --caps predicted --dyncap oracle --seeds 32
+.venv/bin/python -m pins.trace_replay --caps predicted --dyncap noisy  --seeds 32
+.venv/bin/python -m pins.trace_replay --compare "rule+pred+dyn-oracle/negotiated,rule+pred/negotiated"
+```
+Tiers `rule+pred+dyn-{oracle,noisy}` (n=32) in `results_trace_replay.json`.
+
+### Exp 45 addendum — 3b margins × dynamic cap: both levers keep full value (2026-07-13)
+
+**Why.** Exp 45 was rule-tier only; the proposed final stack is fixed request + GBT dynamic
+cap + LLM-negotiated margin, so the open question was interaction (Exp-31-style hedge/cap
+substitution was plausible). Same recipe at the headline model:
+`--caps predicted --dyncap oracle --seeds 32 --llm --model qwen2.5:3b`.
+
+**Result (paired, n=32; dSLA / dprodSLA).**
+3b − rule, both dyn-oracle: prodSLA **−4.0* / −2.8* / −4.0*** at pools 4/6/8 (SLA −2.1* at
+pool 8) — margins still pay after right-sizing. dyn − static, both 3b (negotiated): SLA
+−2.1 / **−4.5* / −6.6*** — the cap lever survives real margins, same growing-with-slack
+shape as the rule tier (−2.3*/−3.1*/−5.7*). Within the 3b dyn world, negotiated vs floor:
+prodSLA **−7.1*** (pool 8), isolated −9.2*, single-llm −8.4*.
+
+**Findings.**
+1. **No interaction — the levers are COMPLEMENTS**: dynamic caps fix *how much* a job
+   holds (SLA, all jobs), LLM margins fix *who is protected* (prodSLA); each keeps its
+   full Exp-45/Exp-29 value in the other's presence. The proposed stack (fixed request +
+   telemetry cap + negotiated margin) is validated end-to-end in sim.
+2. Exp-45 finding 2 upgraded: "orthogonal lever" now holds under the headline model, not
+   just the rule fallback.
+
+**Caveats.** dyn-oracle only at 3b (noisy arm inferred from the rule tier's ~half-value);
+otherwise Exp 45's caveats.
+
+**Reproduce.**
+```bash
+.venv/bin/python -m pins.trace_replay --caps predicted --dyncap oracle --seeds 32 --llm --model qwen2.5:3b
+.venv/bin/python -m pins.trace_replay --compare "qwen2.5:3b+pred+dyn-oracle/negotiated,qwen2.5:3b+pred/negotiated"
+```
+Tier `qwen2.5:3b+pred+dyn-oracle` (n=32) in `results_trace_replay.json`.

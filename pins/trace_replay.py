@@ -315,8 +315,11 @@ def compare_tiers(spec: str) -> None:
 def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           caps_mode: str = "real", quantile: str = "p50", truth_mode: str = "plan",
           time_mode: str | None = None, ttf_mode: str | None = None,
-          baseline: str | None = None) -> None:
+          baseline: str | None = None, dyncap: str | None = None) -> None:
     assert not (time_mode and ttf_mode), "--time and --ttf are separate experiments"
+    assert dyncap is None or (caps_mode == "predicted" and truth_mode == "plan" and
+                              baseline is None), \
+        "--dyncap is the Exp-30 world only: needs --caps predicted, plan truth, no baseline"
     assert baseline is None or time_mode == "predicted", \
         "--baseline needs --time predicted (EASY's runtime estimate + window pairing)"
     trace = load_trace()
@@ -343,6 +346,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         suffix += f"+time-{time_mode}"
     if ttf_mode:
         suffix += f"+ttf-{ttf_mode}"      # control (no signal, same windows) = the time-oracle tier
+    if dyncap:
+        suffix += f"+dyn-{dyncap}"        # Exp 45: telemetry-corrected dynamic cap
     tag = (baseline or ("rule" if not use_llm else model)) + suffix
 
     if baseline == "easy":        # Exp 40: rows are allocation DISCIPLINES, not policies
@@ -384,6 +389,12 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                                                                   time_pred, mk_mode)
                 cap_map = {k: min(v, gpus) for k, v in cap_map.items()}  # feasible at this pool
                 tcap = {k: min(v, gpus) for k, v in tcap.items()}
+                dyn_map = None
+                if dyncap:   # Exp 45: telemetry cap = truth ('oracle') or a ±25% GBT-like read
+                    drng = random.Random(f"dyn-{s}")     # same map across policy rows: paired
+                    dyn_map = {k: v if dyncap == "oracle" else
+                               min(max(1, round(v * drng.uniform(0.75, 1.25))), gpus)
+                               for k, v in tcap.items()}
                 u_map, spike_map = assign(jobs, s, dist, spike_max)
                 ttf = "oracle" if ttf_mode == "oracle" else belief if ttf_mode == "predicted" else None
                 if name.startswith("easy"):
@@ -394,7 +405,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                 else:
                     r = simulate(jobs, factory(), gpus, horizon, u_map, spike_map, scale,
                                  spike_max, cap_map, true_cap_map=tcap,
-                                 belief_work=belief if time_mode else None, ttf_work=ttf)
+                                 belief_work=belief if time_mode else None, ttf_work=ttf,
+                                 dyn_cap_map=dyn_map)
                 per_seed.append({k: r[k] for k in METRICS})
             per_seed_pool[name] = per_seed
             results.append((name, {k: sum(row[k] for row in per_seed) / len(seeds)
@@ -462,6 +474,11 @@ def main() -> None:
                          "P50 as its reservation estimate, easy-oracle the true spiked work); "
                          "'qlearn' = the trained tabular-Q policy (pins/qlearn.py). "
                          "Requires --time predicted (pairs windows with the model tiers)")
+    ap.add_argument("--dyncap", default=None, choices=("oracle", "noisy"),
+                    help="Exp 45: dynamic cap — after a job has run 3 ticks, its allocation "
+                         "base switches from the Stage-1 predicted request to a telemetry-"
+                         "corrected estimate ('oracle' = true need, 'noisy' = truth ±25%%). "
+                         "Requires --caps predicted (plan truth); user request stays fixed")
     ap.add_argument("--compare", default=None, metavar="TIER/POL,TIER/POL",
                     help="no sim: paired deltas between two tier/policy arms sharing windows, "
                          "e.g. 'qwen2.5:3b+time-predicted/negotiated,easy+time-predicted/easy-pred'")
@@ -475,7 +492,8 @@ def main() -> None:
     sweep([int(p) for p in a.pools.split(",")], n_jobs=16, horizon=300,
           seeds=list(range(a.seeds)), scale=a.scale, spike_max=a.spike,
           use_llm=a.llm, model=a.model, caps_mode=a.caps, quantile=a.quantile,
-          truth_mode=a.truth, time_mode=a.time, ttf_mode=a.ttf, baseline=a.baseline)
+          truth_mode=a.truth, time_mode=a.time, ttf_mode=a.ttf, baseline=a.baseline,
+          dyncap=a.dyncap)
 
 
 if __name__ == "__main__":

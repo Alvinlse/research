@@ -238,6 +238,12 @@ gracefully when the model is unavailable (rule-based fallback).
   incumbents and reclaims malleable ones on demand, capturing the rigid-fraction prodSLA win at
   near-zero utilisation cost (Exp 15). *(Earlier revs scoped rigid jobs out of v1; Exp 14-15 inverted
   that — rigidity is where the contribution lives.)*
+  **Headline job model (limitation):** the trace-replay world (`two_sided_sim`, Exp 28+) models jobs
+  as *moldable and grow-only* — never involuntarily preempted, but able to start below their full
+  request and ramp up, returning margin GPUs voluntarily. This matches **elastic GPU/ML workloads**
+  (TorchElastic-style rescaling; the containerized ML tasks of the Alibaba trace it replays), which
+  is the scoped target. It does **not** cover totally rigid fixed-communicator MPI jobs, whose
+  all-or-nothing discipline is represented by the EASY baseline (Exp 41) and deliberately not improved.
 - **Negotiation is best-effort, never on the critical path.** Time-boxed with a mandatory
   heuristic fallback; the ILP absorbs staleness. *Property: negotiation can only help or be
   neutral, never block a job.*
