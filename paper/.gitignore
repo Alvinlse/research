@@ -1,0 +1,10 @@
+*.aux
+*.log
+*.dvi
+*.fls
+*.fdb_latexmk
+*.bbl
+*.blg
+*.out
+*.toc
+main.pdf
