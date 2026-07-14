@@ -18,7 +18,7 @@ job-agent (MCP client + occasional LLM)  ─┘            ├─ state: GPU all
 | File | Role | Step |
 |---|---|---|
 | `mechanism.py` | pure sealed-bid uniform-price auctioneer + anti-thrashing gate | 3, 8 |
-| `predictor.py` | Stage-1 stub: phase → marginal-value curve (swap for the real hybrid predictor) | 5 |
+| `predictor.py` | demo-only stub: phase → marginal-value curve (the real Stage-1 reaches Stage-2 via `trace_replay.py`) | 5 |
 | `negotiation_server.py` | networked stateful MCP server: state + mechanism + round/barrier protocol | 2,3,6,7 |
 | `job_agent.py` | MCP client wrapping Ollama; reads market, bids, reads allocation | 4 |
 | `test_mechanism.py` | deterministic unit tests for the decider (no MCP/network) | — |
@@ -27,7 +27,7 @@ job-agent (MCP client + occasional LLM)  ─┘            ├─ state: GPU all
 ## Run
 
 ```bash
-# from the MCP/ project root
+# from the Research/ project root
 .venv/bin/python -m pins.test_mechanism      # verify the auctioneer (instant)
 bash pins/run_demo.sh                         # full negotiation, no LLM (fast, deterministic)
 bash pins/run_demo.sh --llm                   # same, with LLM justifications (needs Ollama)
@@ -46,10 +46,17 @@ Or by hand:
 - **Is:** a faithful, runnable substrate for Stage-2 negotiation — structured bids,
   a provable clearing rule, event/round triggering, anti-thrashing, concurrency-safe state.
 - **Isn't (yet):** connected to real actuation. `round_result` deltas would feed
-  TorchElastic/SLURM (below MCP, `research_plan.md:62`). The predictor is a stub.
+  TorchElastic/SLURM (below MCP, `research_plan.md:62`). `predictor.py` is a stub
+  used only by the demo.
+
+## Where the real Stage-1 enters
+
+Not through `predictor.py`. The evaluated pipeline is `trace_replay.py`, which replays
+real Alibaba v2020 jobs and feeds the negotiation the quantile-GBT predictions written
+to `eval/pred_job_{runtime,usage,mem}.csv` by `pins.eval.predict_gpu`. The P10–P90
+interval is what sizes the agents' request margin.
 
 ## Next steps
 
-- Replace `predictor.py` with the real hybrid forecaster (numeric + LLM cold-start).
 - Decide round-based auction vs. peer-to-peer bargaining (Open Decision #1).
 - Wire `deltas` to a (simulated first) TorchElastic rescale; measure goodput vs. baselines.

@@ -2,8 +2,8 @@
 Deterministic tests for the auctioneer — run with: python -m pins.test_mechanism
 No network, no MCP, no LLM. This is how we verify the "decider" in isolation.
 """
-from mechanism import clear, welfare
-from predictor import marginal_values
+from pins.mechanism import clear, welfare
+from pins.predictor import marginal_values
 
 
 def approx(a: float, b: float, eps: float = 1e-6) -> bool:

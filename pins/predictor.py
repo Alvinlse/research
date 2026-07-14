@@ -1,15 +1,16 @@
 """
 Stage-1 predictor stub (research_plan.md:47-51).
 
-The real Stage-1 is a hybrid: a numeric forecaster for warm jobs + an LLM
-cold-start profiler that reads the submission script. For the negotiation
-prototype we only need the *output contract*: given a job's current phase, emit a
-non-increasing marginal-value curve (value of the 1st, 2nd, ... GPU).
+This is the DEMO's synthetic predictor, not the real Stage-1. The real Stage-1 is a
+quantile GBT (pins.eval.predict_gpu) trained on the Alibaba v2020 trace, and it reaches
+the negotiation through trace_replay.py, not through this file. Kept because run_demo.sh
+needs a self-contained job that never touches the trace; here we only need the *output
+contract*: given a job's current phase, emit a non-increasing marginal-value curve
+(value of the 1st, 2nd, ... GPU).
 
 This stub encodes the premise of the whole project (research_plan.md:10): GPU
 demand VARIES BY PHASE. A job barely wants a GPU during preprocess, wants many
-during train, and something in between during eval. Swap this file for the real
-hybrid predictor later — the negotiation layer above it does not change.
+during train, and something in between during eval.
 """
 from __future__ import annotations
 

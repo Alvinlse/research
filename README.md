@@ -4,17 +4,19 @@ Bachelor's research project (Tohoku University).
 
 PINS combines two ideas to cut wasted GPU-hours on shared HPC clusters:
 
-1. **LLM-based resource prediction (Stage 1)** — an LLM predicts each job's
-   time-varying GPU/VRAM demand. The governing rule is *"the LLM reasons and
-   explains; deterministic code decides"* — the model emits per-layer shapes and
-   structured facts, and plain code does the final arithmetic. This consistently
-   beats letting the LLM emit the final number (error drops ~an order of
-   magnitude every time a figure moves from the LLM into code).
+1. **Resource prediction (Stage 1)** — a quantile gradient-boosted-tree model
+   predicts what a job's submission script does *not* already say: its runtime,
+   its actual GPU utilization, and its actual peak GPU memory. The governing
+   rule is *"declared fields are features, not targets"* — the user's requested
+   `plan_gpu` is an input, never a label, because the scheduler can just read it
+   off the script. Trained and evaluated on the Alibaba v2020 GPU trace. The
+   P10–P90 interval it emits is what sizes the margin in Stage 2.
 
-2. **Agent-negotiated allocation (Stage 2)** — job-agents negotiate GPU
-   allocation through a fast sealed-bid uniform-price auction, and jobs are
-   rescaled live. The auctioneer is pure, deterministic code; the LLM only
-   produces optional human-readable justifications.
+2. **Agent-negotiated allocation (Stage 2)** — demand- and supply-side LLM
+   agents negotiate GPU allocation, a sealed-bid uniform-price auction clears
+   it, and jobs are rescaled live. This is where the LLM lives: it *reasons and
+   explains*, while the auctioneer — pure, deterministic code — *decides*. The
+   LLM is never in the clearing hot loop.
 
 ## Documents
 
@@ -25,5 +27,5 @@ PINS combines two ideas to cut wasted GPU-hours on shared HPC clusters:
 
 ## Status
 
-Active research. Stage-1 prediction results are measured on a single
-A100-PCIE-40GB; the negotiation layer runs without a GPU.
+Active research. Stage-1 prediction is evaluated offline on the Alibaba v2020
+GPU trace; the negotiation layer runs in simulation. Neither needs a GPU.

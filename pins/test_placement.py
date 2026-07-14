@@ -4,10 +4,10 @@ Deterministic tests for the 2-D placement layer — run from inside pins/:
 Verifies (1) the auction's count grant can be unplaceable and gets repaired with measurable
 loss, and (2) the placement ILP never returns an infeasible/repaired allocation.
 """
-from ilp import allocate_placement
-from mechanism import welfare
-from placement import Cluster, is_feasible, place_ffd
-from predictor import marginal_values
+from pins.ilp import allocate_placement
+from pins.mechanism import welfare
+from pins.placement import Cluster, is_feasible, place_ffd
+from pins.predictor import marginal_values
 
 
 def approx(a: float, b: float, eps: float = 1e-6) -> bool:
@@ -46,7 +46,7 @@ def test_ilp_beats_auction_when_fragmented() -> None:
             "E1": marginal_values("eval", 0.9), "E2": marginal_values("eval", 0.9)}
     current = {"E1": 2, "E2": 2}                          # one on each node (fragmented)
     # auction path
-    from mechanism import clear
+    from pins.mechanism import clear
     counts = clear(bids, cluster.total, current=current, rescale_cost=2.0).allocation
     a_placed, _ = place_ffd(counts, cluster)
     a_welf = welfare(bids, a_placed)

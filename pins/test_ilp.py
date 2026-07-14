@@ -4,9 +4,9 @@ Deterministic tests for the ILP allocator — run from inside pins/:
 No network, no MCP, no LLM. Verifies the LLMSched-style decider in isolation and,
 crucially, against the auction it is meant to be compared with (pins/ilp.py).
 """
-from ilp import allocate
-from mechanism import clear, welfare
-from predictor import marginal_values
+from pins.ilp import allocate
+from pins.mechanism import clear, welfare
+from pins.predictor import marginal_values
 
 
 def approx(a: float, b: float, eps: float = 1e-6) -> bool:
