@@ -24,12 +24,15 @@ Cyberscience Center, Tohoku University
 
 # Breaking the Utilization–Service-Quality Tradeoff in HPC via AI-Agent Negotiation
 
-> **Focus.** The contribution is the **two-sided AI-agent negotiation layer**: a **demand
-> agent** (job queue) and a **supply agent** (resource pool) with *deliberately asymmetric*
-> objectives reason over cluster state and exchange valued, justified offers. A deterministic
-> **auction clears** the negotiation and an **ILP guarantees** feasibility against live state.
-> Uncertainty-aware prediction is a **supporting co-contribution** — it sizes each bid's
-> safety margin, but the negotiation is what allocates.
+> **Focus (updated 2026-07-16).** The contribution is the **referee-LLM allocator**: a
+> demand agent and a supply agent submit reasoned, justified statements, and a **referee LLM
+> applies the cluster's rules and judgment to output the allocation directly**. No ILP sits
+> behind the referee — deterministic code only *evaluates* (reports violations; an infeasible
+> tick falls to the floor and is charged to the referee). The previous contribution — the
+> two-sided negotiation cleared by a deterministic **auction** and guaranteed by an **ILP** —
+> is retained in full as the **baseline arm** the referee must beat. Uncertainty-aware
+> prediction remains a **supporting co-contribution**: it sizes the margins the agents ask
+> for, in both arms.
 
 ---
 
