@@ -126,9 +126,11 @@ flexibility pays — ideally *conditionally*, on the ticks where the rigid rule 
   including shortfall, and it is not parroting the rule referee — 10/24 scenes differ while
   feasible (egalitarian partial coverage vs all-or-nothing, stated rationales).
 - **In-sim (Exp 50, v2020 replay, pools 4/6/8, n=8):** r1:32b referee has **0% fallback**
-  and **ties** the floor and the negotiated arm (all deltas ns). At pool 6 it held the floor
-  exactly while the negotiated arm slipped (+1.6/+2.1 vs floor). 3b referee overcommits
-  45–58% of ticks yet still ties — the fallback floor protects it.
+  at every pool. Pools 4/6 tie the floor (pool 6 exactly — 6/8 seeds outcome-identical);
+  at pool 6 it held the floor while the negotiated arm slipped (+1.6/+2.1 vs floor).
+  **Pool 8 is the first nominal outcome win: prodSLA −10.4 vs floor (±16.1, ns) — double
+  the negotiated arm's −5.2 on the same windows, SLA flat.** 3b referee overcommits 45–58%
+  of ticks yet still ties — the fallback floor protects it.
 - **Transcript case study** (`pins/transcripts_seed23_pool6.txt`, replayable via
   `pins/replay_transcripts.py`): the two outcome-flipping windows are fully auditable —
   the referee **won** seed 3 by spending margins on prod jobs (incl. a stated *partial*
@@ -142,8 +144,8 @@ guarantee layer without loss and adds auditable rationales; it does not yet beat
 pipeline on averages.
 
 **Next steps.**
-1. Finish the r1:32b sweep (pool 8 running) → then **n=32 seeds** on the best pool so
-   ±7pp CI bands cannot hide a real effect.
+1. ~~Finish the r1:32b sweep~~ (done 2026-07-16) → **n=32 seeds at pool 8**, where the
+   nominal prodSLA win (−10.4 ±16.1) needs error bars four times tighter to be a claim.
 2. **Conditional (hard-tick) analysis:** split ticks by "the rigid rule decided badly here"
    and measure the referee's delta on that subset — the flexibility claim predicts the win
    lives there, diluted away in uniform averages.

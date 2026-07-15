@@ -2596,12 +2596,16 @@ finished ones (`trace_replay.py`), and reruns went one pool per background task.
 | arm | pool 4 | pool 6 | pool 8 | fb |
 |---|---|---|---|---|
 | referee@3b        | −1.6 / −11.9 | +2.3 / +5.2 | 0.0 / −10.4 | 45–58% |
-| referee@r1:32b    | +0.8 / −1.8  | **+0.0 ±3.0 / +0.0 ±0.0** | (running) | **0%** |
-| negotiated@r1:32b | +2.3 / −1.8  | +1.6 / +2.1 | (running) | 0% |
+| referee@r1:32b    | +0.8 / −1.8  | **+0.0 ±3.0 / +0.0 ±0.0** | +0.8 ±7.1 / **−10.4 ±16.1** | **0%** |
+| negotiated@r1:32b | +2.3 / −1.8  | +1.6 / +2.1 | +0.0 ±6.8 / −5.2 ±9.0 | 0% |
 
 All deltas ns at n=8. r1:32b pool 6 is an **exact tie with the floor**: 6/8 seeds
 outcome-identical; the two divergent seeds move exactly one job each (±6.25pp) and cancel.
-At pool 6 the referee **held the floor while the negotiated arm slipped**.
+At pool 6 the referee **held the floor while the negotiated arm slipped**. **Pool 8
+(2026-07-16) is the first nominal outcome win:** referee prodSLA 50.1% vs floor 60.6%
+(−10.4, ±16.1 ns) — double the negotiated arm's improvement (−5.2) on the same windows,
+SLA flat, fb 0%. Slack pool + margins-only demand = exactly the venue the flexibility
+argument predicts; ±16.1 at n=8 is the reason the seed sweep is next, aimed at pool 8.
 
 **Transcript case study** (`pins/transcripts_seed23_pool6.txt`, regenerable from the LLM
 cache via `pins/replay_transcripts.py`): the referee **won seed 3** by spending margins on
@@ -2620,8 +2624,9 @@ incoming load" at an empty pool vs granted mid-window) — situational judgment 
 3. The seed-2 failure mode is **promptable** (margin-priority under `incoming_prod=many` +
    tight pool), targetable without touching the seed-3 win.
 
-**Caveats.** n=8 (CI ±3–7pp SLA); pool 8 r1:32b still running; single trace, base world;
-statements fixed at 3b; wall-clock ~1–3 min per uncached referee call at 32b.
+**Caveats.** n=8 (CI ±3–7pp SLA, ±16pp prodSLA at pool 8); single trace, base world;
+statements fixed at 3b; wall-clock ~1–3 min per uncached referee call at 32b (each r1:32b
+pool ≈ 85–100 min on the login node, run one pool per background task).
 
 **Next.** Pool 8 → n=32 on the best pool; **conditional hard-tick analysis** (split ticks
 by "the rigid rule decided badly here" — the flexibility claim predicts the win lives
