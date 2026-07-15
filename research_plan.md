@@ -70,11 +70,16 @@ auditable**. That transcript is the interpretability edge over RL.
 
 ## Research Goal
 
-**1. Allocate by two-sided negotiation (the contribution)**
+**1. Allocate by referee LLM (the contribution — 2026-07-15 pivot)**
+A demand agent and a supply agent submit reasoned statements; a **referee LLM decides the
+allocation directly**, with deterministic code as evaluator only (violations → floor
+fallback, charged to the referee). Rationale: no fixed rule set covers every situation.
+
+**1b. The baseline arm (former contribution): two-sided negotiation**
 A demand agent and a supply agent turn their private state into reasoned offers; a
 deterministic mechanism (auction) clears the negotiation and an ILP reconciles it to live
 state — rationing scarce resources to the jobs that value them most *without* letting either
-LLM make the final, unguaranteed decision.
+LLM make the final, unguaranteed decision. Retained in full as the arm the referee must beat.
 
 **2. Predict workload (co-contribution)**
 Forecast each task's resource demand over the next T timesteps *with an explicit uncertainty
