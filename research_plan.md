@@ -9,6 +9,15 @@ Cyberscience Center, Tohoku University
 > (IEEE OJ-CS 2026). The single-orchestrator framing is superseded by a **demand-LLM ⇄
 > supply-LLM** negotiation cleared by an auction and guaranteed by an ILP.
 
+> *Rev. 2026-07-16:* **pivot — reason-then-referee (see the new section below).** The research
+> goal is now to **beat the rule/ILP-guaranteed pipeline with a referee LLM that decides
+> allocations directly**. The governing rule "LLMs reason, code decides" is deliberately
+> inverted: no mathematical rule set covers every situation, so the allocator itself must be a
+> flexible, situation-reasoning agent. Deterministic code is demoted to **evaluator** (it
+> reports violations, never repairs). Everything below the pivot section documents the
+> negotiate→auction→ILP pipeline, which remains fully valid as the **baseline arm** the
+> referee must beat.
+
 ---
 
 ## Research Topic
@@ -73,9 +82,70 @@ rate **competitive-or-better than every baseline** — classical, learning-based
 single-LLM proposer — *plus* an auditable justification for every allocation that RL cannot
 offer.
 
-**Governing design rule:** *the LLMs reason / explain; deterministic code decides.* The
-deciders are the **auction** (clears the negotiation) and the **ILP** (guarantees
-feasibility) — never the free-form LLM chat.
+**Governing design rule** *(superseded 2026-07-15 — kept for the baseline arm)*: *the LLMs
+reason / explain; deterministic code decides.* The deciders are the **auction** (clears the
+negotiation) and the **ILP** (guarantees feasibility) — never the free-form LLM chat.
+The referee pivot inverts this rule for the new headline arm; see the pivot section.
+
+---
+
+## Pivot (2026-07-15) — Reason-then-Referee: the LLM decides
+
+**Goal.** Beat the rule-based / ILP-guaranteed allocator with a **referee LLM agent** that
+outputs the allocation directly. **Rationale:** no mathematical equation or fixed rule set
+deals with every situation; the allocator must reason flexibly about the situation in front
+of it. The old pipeline's rigidity is now the thing under test, not the guarantee.
+
+**New flow.** Demand agent and supply agent each reason privately and submit statements
+(base need + requested margin + justification; requested reserve + justification) → a
+**third referee LLM** applies the supercomputer's rules and judgment → **outputs the
+allocation directly**. Deterministic code (`check_allocation`) only **evaluates**: an
+infeasible referee tick falls back to the floor and is charged to `fallback_rate` — code
+never repairs a decision.
+
+**Win condition.** Feasibility is table stakes (the rule arm is 100% feasible by
+construction); the win must show in **outcomes** (SLA / prodSLA / slowdown) where
+flexibility pays — ideally *conditionally*, on the ticks where the rigid rule decides badly.
+
+**Evidence so far** (`pins/referee.py`, `referee_eval.py` = Exp 49, `trace_replay
+--referee` = Exp 50; branch `referee_allocator`):
+
+- **Constraint enforcement, not arithmetic, is the chat-model failure.** All chat models
+  compute `total_awarded` correctly then ignore the ≤ comparison; on real v2020 scenes
+  feasibility collapses to 0% under scarcity — chat LLMs **won't say no** (they serve
+  everyone and blow the budget). A self-check prompt fixes toy scenes only.
+- **Reasoning models fix it: deepseek-r1:32b is 100% feasible** at every pool factor
+  including shortfall, and it is not parroting the rule referee — 10/24 scenes differ while
+  feasible (egalitarian partial coverage vs all-or-nothing, stated rationales).
+- **In-sim (Exp 50, v2020 replay, pools 4/6/8, n=8):** r1:32b referee has **0% fallback**
+  and **ties** the floor and the negotiated arm (all deltas ns). At pool 6 it held the floor
+  exactly while the negotiated arm slipped (+1.6/+2.1 vs floor). 3b referee overcommits
+  45–58% of ticks yet still ties — the fallback floor protects it.
+- **Transcript case study** (`pins/transcripts_seed23_pool6.txt`, replayable via
+  `pins/replay_transcripts.py`): the two outcome-flipping windows are fully auditable —
+  the referee **won** seed 3 by spending margins on prod jobs (incl. a stated *partial*
+  grant), and **lost** seed 2 by hedging ahead-of-schedule besteffort jobs so the pool was
+  empty when the prod job arrived. Same supply request gets opposite rulings depending on
+  cluster state ("no evidence of incoming load" at an empty pool vs granted mid-window) —
+  genuinely situational judgment, currently **unaimed** under scarcity.
+
+**Current read:** *sufficiency, not superiority* — a reasoning referee replaces the
+guarantee layer without loss and adds auditable rationales; it does not yet beat the rule
+pipeline on averages.
+
+**Next steps.**
+1. Finish the r1:32b sweep (pool 8 running) → then **n=32 seeds** on the best pool so
+   ±7pp CI bands cannot hide a real effect.
+2. **Conditional (hard-tick) analysis:** split ticks by "the rigid rule decided badly here"
+   and measure the referee's delta on that subset — the flexibility claim predicts the win
+   lives there, diluted away in uniform averages.
+3. **Aim the flexibility:** a margin-priority rule in `SYSTEM_REFEREE` (don't hedge
+   besteffort when `incoming_prod=many` and the pool is tight) targets the seed-2 failure
+   mode without touching the seed-3 win.
+4. Fallback-semantics honesty in the write-up: report `fallback_rate` alongside outcomes.
+5. If superiority does not materialize: the defensible headline is *"a reasoning LLM
+   replaces the guarantee layer without loss + auditable rationales"* (LLMsched needed an
+   ILP to make its LLM safe; the referee doesn't).
 
 ---
 
@@ -381,6 +451,7 @@ baselines from the evaluation plan — now scoped and run (Exp 41 EASY, Exp 42 t
 | **Phase 3b** | Supply agent + protocol | Asymmetric supply LLM (headroom reservation); regime-gated to rigid incumbents; malleability-aware reservation. | **done (Exp 14–15)** · protocol → one-shot (Exp 11) |
 | **Phase 3c** | ILP guarantee | Lightweight ILP repair / reconcile-to-live-state layer. | **done (Exp 18, 23, 25)** — ties auction in 1-D, fixes 2-D placement, makes LLM over-demand safe |
 | **Phase 4** | Integrate & evaluate | End-to-end in simulator; run all ablations incl. single-LLM baseline; compare vs baselines; thesis write-up. | **in progress (Exp 22–28)** — locked pipeline + single-LLM baseline measured; real caps (Exp 27) + trace replay (Exp 28); remaining: seed-swept statistics, prediction error in loop, incentives, write-up |
+| **Phase 5** | Referee allocator (pivot) | Referee LLM decides allocations directly; code demoted to evaluator; old pipeline = baseline arm. | **in progress (Exp 49–50)** — r1:32b 100% feasible, 0% fallback, ties floor/negotiated at n=8; remaining: pool 8, n=32 sweep, hard-tick conditional analysis, margin-priority prompt |
 
 *Master's entrance exam preparation runs in parallel with Phase 1.*
 
