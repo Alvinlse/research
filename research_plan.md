@@ -261,7 +261,7 @@ theater.
 
 ---
 
-## Methodology — Resource Allocation (the contribution)
+## Methodology — Resource Allocation (the baseline arm; former contribution)
 
 ### Demand agent (job side)
 Reasons over each job's predicted workload, deadline pressure, and priority tier to form a bid
