@@ -330,7 +330,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           caps_mode: str = "real", quantile: str = "p50", truth_mode: str = "plan",
           time_mode: str | None = None, ttf_mode: str | None = None,
           baseline: str | None = None, dyncap: str | None = None,
-          trace_name: str = "v2020", quantum: int = 1, referee: bool = False) -> None:
+          trace_name: str = "v2020", quantum: int = 1) -> None:
     assert not (time_mode and ttf_mode), "--time and --ttf are separate experiments"
     assert quantum == 1 or (caps_mode == "real" and truth_mode == "plan" and
                             not (time_mode or ttf_mode or baseline or dyncap)), \
@@ -376,8 +376,6 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         suffix += f"+{trace_name}"        # second trace: tiers must not collide with v2020
     if quantum != 1:
         suffix += "+qwhole"               # Exp 48: whole-GPU allocation quantum
-    if referee:
-        suffix += "+referee"              # Exp 50: referee-LLM allocator arm
     if n_jobs != 16:
         suffix += f"+n{n_jobs}"           # Exp 48: scale-up tiers must not collide
     tag = (baseline or ("rule" if not use_llm else model)) + suffix
@@ -389,14 +387,6 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         table = load_table()
         rows = [("no-llm", lambda: policy_none),
                 ("qlearn", lambda: make_policy_qlearn(table))]
-    elif referee:                 # Exp 50: referee-LLM decides vs the code-decides arms
-        from pins.referee import make_policy_referee
-        rows = [
-            ("no-llm",     lambda: policy_none),
-            ("referee",    lambda: make_policy_referee(use_llm, model, cache, decisions, seen,
-                                                       statement_model="qwen2.5:3b")),
-            ("negotiated", lambda: make_policy_negotiated(use_llm, model, cache, decisions, seen)),
-        ]
     else:
         rows = [
             ("no-llm",     lambda: policy_none),
@@ -467,10 +457,6 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
             save_cache(cache)
 
     data = load_results()   # merge per tier: rule / 3b / 14b runs no longer clobber each other
-    prev = data["tiers"].get(tag)
-    if prev:                 # resume: keep pools already done for this tier
-        all_per_seed = {**prev["per_seed"], **all_per_seed}
-        decisions = prev["decisions"] + decisions
     data["tiers"][tag] = {"use_llm": use_llm, "spike_max": spike_max, "scale": scale,
                           "cap_clip": CAP_CLIP, "n_seeds": len(seeds),
                           "per_seed": all_per_seed, "decisions": decisions}
@@ -519,10 +505,6 @@ def main() -> None:
                          "runtime P50 (pred_job_runtime.csv), 'blind' = none (always ontrack), "
                          "'oracle' = true work on the same runtime-covered windows. Default "
                          "(absent) = pre-Exp-38 oracle on unrestricted windows")
-    ap.add_argument("--referee", action="store_true",
-                    help="Exp 50: swap the policy rows for the referee-LLM allocator vs the "
-                         "no-llm floor and the negotiated (code-decides) arm; infeasible "
-                         "referee ticks fall back to the floor and count in fb")
     ap.add_argument("--baseline", default=None, choices=("easy", "qlearn"),
                     help="Exp 40/41: classical baselines instead of the LLM policies — "
                          "'easy' = FCFS + EASY backfilling (easy-pred uses the Stage-1 runtime "
@@ -552,8 +534,7 @@ def main() -> None:
           seeds=list(range(a.seeds)), scale=a.scale, spike_max=a.spike,
           use_llm=a.llm, model=a.model, caps_mode=a.caps, quantile=a.quantile,
           truth_mode=a.truth, time_mode=a.time, ttf_mode=a.ttf, baseline=a.baseline,
-          dyncap=a.dyncap, trace_name=a.trace, quantum={"quarter": 1, "whole": 4}[a.quantum],
-          referee=a.referee)
+          dyncap=a.dyncap, trace_name=a.trace, quantum={"quarter": 1, "whole": 4}[a.quantum])
 
 
 if __name__ == "__main__":

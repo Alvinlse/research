@@ -1,0 +1,2606 @@
+{
+  "rule": [
+    {
+      "seed": 0,
+      "factor": 1.25,
+      "free": 31,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 0,
+      "factor": 1.0,
+      "free": 25,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 0,
+      "factor": 0.75,
+      "free": 19,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 4,
+        "r04": 1,
+        "r05": 2
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 1,
+      "factor": 1.25,
+      "free": 12,
+      "alloc": {
+        "r00": 4,
+        "r01": 2,
+        "r02": 2,
+        "r03": 1,
+        "r04": 1,
+        "r05": 2
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 1,
+      "factor": 1.0,
+      "free": 10,
+      "alloc": {
+        "r00": 4,
+        "r01": 1,
+        "r02": 1,
+        "r03": 1,
+        "r04": 1,
+        "r05": 2
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 1,
+      "factor": 0.75,
+      "free": 8,
+      "alloc": {
+        "r00": 4,
+        "r01": 1,
+        "r02": 1,
+        "r03": 1,
+        "r04": 1,
+        "r05": 0
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 2,
+      "factor": 1.25,
+      "free": 38,
+      "alloc": {
+        "r00": 4,
+        "r01": 2,
+        "r02": 4,
+        "r03": 8,
+        "r04": 4,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 2,
+      "factor": 1.0,
+      "free": 30,
+      "alloc": {
+        "r00": 4,
+        "r01": 2,
+        "r02": 4,
+        "r03": 8,
+        "r04": 4,
+        "r05": 8
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 2,
+      "factor": 0.75,
+      "free": 22,
+      "alloc": {
+        "r00": 4,
+        "r01": 2,
+        "r02": 4,
+        "r03": 4,
+        "r04": 0,
+        "r05": 8
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 3,
+      "factor": 1.25,
+      "free": 29,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 2,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 3,
+      "factor": 1.0,
+      "free": 23,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 2,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 3,
+      "factor": 0.75,
+      "free": 17,
+      "alloc": {
+        "r00": 4,
+        "r01": 3,
+        "r02": 0,
+        "r03": 2,
+        "r04": 0,
+        "r05": 8
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 4,
+      "factor": 1.25,
+      "free": 36,
+      "alloc": {
+        "r00": 8,
+        "r01": 4,
+        "r02": 4,
+        "r03": 2,
+        "r04": 8,
+        "r05": 4
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 4,
+      "factor": 1.0,
+      "free": 29,
+      "alloc": {
+        "r00": 8,
+        "r01": 4,
+        "r02": 4,
+        "r03": 1,
+        "r04": 8,
+        "r05": 4
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 4,
+      "factor": 0.75,
+      "free": 22,
+      "alloc": {
+        "r00": 8,
+        "r01": 4,
+        "r02": 2,
+        "r03": 0,
+        "r04": 8,
+        "r05": 0
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 5,
+      "factor": 1.25,
+      "free": 45,
+      "alloc": {
+        "r00": 4,
+        "r01": 8,
+        "r02": 8,
+        "r03": 8,
+        "r04": 4,
+        "r05": 4
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 5,
+      "factor": 1.0,
+      "free": 36,
+      "alloc": {
+        "r00": 4,
+        "r01": 8,
+        "r02": 8,
+        "r03": 8,
+        "r04": 4,
+        "r05": 4
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 5,
+      "factor": 0.75,
+      "free": 27,
+      "alloc": {
+        "r00": 4,
+        "r01": 8,
+        "r02": 8,
+        "r03": 7,
+        "r04": 0,
+        "r05": 0
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 6,
+      "factor": 1.25,
+      "free": 39,
+      "alloc": {
+        "r00": 6,
+        "r01": 4,
+        "r02": 8,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 6,
+      "factor": 1.0,
+      "free": 31,
+      "alloc": {
+        "r00": 6,
+        "r01": 4,
+        "r02": 8,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 6,
+      "factor": 0.75,
+      "free": 23,
+      "alloc": {
+        "r00": 6,
+        "r01": 4,
+        "r02": 8,
+        "r03": 4,
+        "r04": 1,
+        "r05": 0
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 7,
+      "factor": 1.25,
+      "free": 38,
+      "alloc": {
+        "r00": 8,
+        "r01": 8,
+        "r02": 2,
+        "r03": 2,
+        "r04": 2,
+        "r05": 8
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 7,
+      "factor": 1.0,
+      "free": 30,
+      "alloc": {
+        "r00": 8,
+        "r01": 8,
+        "r02": 2,
+        "r03": 2,
+        "r04": 2,
+        "r05": 8
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 7,
+      "factor": 0.75,
+      "free": 22,
+      "alloc": {
+        "r00": 8,
+        "r01": 8,
+        "r02": 2,
+        "r03": 2,
+        "r04": 2,
+        "r05": 0
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    }
+  ],
+  "qwen2.5:3b": [
+    {
+      "seed": 0,
+      "factor": 1.25,
+      "free": 31,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying all jobs' base_gpus, then granting requested margins based on tier priority and justification.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 0,
+      "factor": 1.0,
+      "free": 25,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 26 > free 25"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by satisfying all jobs' base_gpus first, then granted requested margins based on tier priority and justification.",
+      "feasible": false,
+      "over": 1,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 0,
+      "factor": 0.75,
+      "free": 19,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 26 > free 19"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by satisfying all jobs' base_gpus first, then granted requested margins based on tier priority and justification.",
+      "feasible": false,
+      "over": 7,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 1,
+      "factor": 1.25,
+      "free": 12,
+      "alloc": {
+        "r00": 4,
+        "r01": 1,
+        "r02": 1,
+        "r03": 1,
+        "r04": 1,
+        "r05": 2
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Applied INDIVIDUAL RATIONALITY by satisfying all jobs' base_gpus first, then applied PRIORITY to serve prod tier jobs before besteffort. The reserve was granted based on the supply side's justification for incoming production workloads.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 1,
+      "factor": 1.0,
+      "free": 10,
+      "alloc": {
+        "r01": 2,
+        "r02": 2,
+        "r04": 2,
+        "r05": 2
+      },
+      "reserve": 1,
+      "violations": [
+        "base unmet for ['r00', 'r03'] while margin/reserve was granted"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying each job's base_gpus, then applied PRIORITY to grant prod tier jobs more GPUs before besteffort. The reserve was granted based on the supply side's request and justification.",
+      "feasible": false,
+      "over": 0,
+      "waste": 1,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 1,
+      "factor": 0.75,
+      "free": 8,
+      "alloc": {
+        "r00": 4,
+        "r01": 1,
+        "r02": 1,
+        "r03": 1,
+        "r04": 1,
+        "r05": 2
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 11 > free 8"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by satisfying all jobs' base_gpus first, then granted requested margins based on tier priority and justification. Applied ENVY-FREENESS to avoid giving one job more margin than another while a peer's base is unmet.",
+      "feasible": false,
+      "over": 3,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 2,
+      "factor": 1.25,
+      "free": 38,
+      "alloc": {
+        "r01": 3,
+        "r02": 4,
+        "r03": 5,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "base unmet for ['r00', 'r03', 'r04'] while margin/reserve was granted"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying all jobs' base_gpus, then granting requested margins based on tier and urgency, and adhered to ENVY-FREENESS by prioritizing jobs behind their deadlines.",
+      "feasible": false,
+      "over": 0,
+      "waste": 17,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 2,
+      "factor": 1.0,
+      "free": 30,
+      "alloc": {
+        "r01": 3,
+        "r02": 4,
+        "r03": 6,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "base unmet for ['r00', 'r03', 'r04'] while margin/reserve was granted"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying all jobs' base_gpus, then granting requested margins based on tier and urgency, ensuring prod-tier jobs are served before besteffort. Applied ENVY-FREENESS to avoid giving one job more than another within the same tier without a compelling justifica",
+      "feasible": false,
+      "over": 0,
+      "waste": 8,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 2,
+      "factor": 0.75,
+      "free": 22,
+      "alloc": {
+        "r01": 3,
+        "r02": 4,
+        "r03": 5,
+        "r05": 9
+      },
+      "reserve": 1,
+      "violations": [
+        "base unmet for ['r00', 'r03', 'r04'] while margin/reserve was granted"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying all jobs' base_gpus, then granting requested margins based on tier and urgency, ensuring no job is left without its minimum allocation. Applied PRIORITY to serve prod-tier jobs before besteffort ones.",
+      "feasible": false,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 3,
+      "factor": 1.25,
+      "free": 29,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 2,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "base unmet for ['r04'] while margin/reserve was granted"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying all jobs' base_gpus, then granting requested margins based on tier priority and justification.",
+      "feasible": false,
+      "over": 0,
+      "waste": 6,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 3,
+      "factor": 1.0,
+      "free": 23,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 2,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "base unmet for ['r04'] while margin/reserve was granted"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying all jobs' base_gpus, then granting requested margins based on tier priority and justification.",
+      "feasible": false,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 3,
+      "factor": 0.75,
+      "free": 17,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 2,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 23 > free 17",
+        "base unmet for ['r04'] while margin/reserve was granted"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying all jobs' base_gpus, then granting requested margins based on tier priority and justification.",
+      "feasible": false,
+      "over": 6,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 2
+    },
+    {
+      "seed": 4,
+      "factor": 1.25,
+      "free": 36,
+      "alloc": {
+        "r00": 9,
+        "r01": 5,
+        "r02": 4,
+        "r03": 2,
+        "r04": 9,
+        "r05": 5
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Applied rules to prioritize prod jobs, granted requested margins while ensuring no tier's base is unmet and the reserve does not exceed free GPUs.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 4,
+      "factor": 1.0,
+      "free": 29,
+      "alloc": {
+        "r00": 8,
+        "r01": 4,
+        "r02": 4,
+        "r03": 1,
+        "r04": 8,
+        "r05": 4
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 30 > free 29"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by satisfying all jobs' base_gpus first, then granted requested margins based on tier priority and justification.",
+      "feasible": false,
+      "over": 1,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 4,
+      "factor": 0.75,
+      "free": 22,
+      "alloc": {
+        "r00": 8,
+        "r01": 4,
+        "r02": 4,
+        "r03": 1,
+        "r04": 8,
+        "r05": 4
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 30 > free 22"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying all jobs' base_gpus, then granting requested margins based on tier priority and justification strength.",
+      "feasible": false,
+      "over": 8,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 5,
+      "factor": 1.25,
+      "free": 45,
+      "alloc": {
+        "r01": 8,
+        "r02": 9,
+        "r04": 5,
+        "r05": 5
+      },
+      "reserve": 1,
+      "violations": [
+        "base unmet for ['r00', 'r03'] while margin/reserve was granted",
+        "envy within tier 'besteffort': margin granted while a peer's base is unmet"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying all jobs' base_gpus, then applied PRIORITY to allocate extra GPUs to 'ontrack' prod jobs over 'ahead' ones. Applied ENVY-FREENESS to ensure no job is given more than its requested margin without a job being unmet.",
+      "feasible": false,
+      "over": 0,
+      "waste": 17,
+      "prodcov": 1.0,
+      "n_violations": 2
+    },
+    {
+      "seed": 5,
+      "factor": 1.0,
+      "free": 36,
+      "alloc": {
+        "r00": 4,
+        "r01": 8,
+        "r02": 9,
+        "r03": 8,
+        "r04": 5,
+        "r05": 5
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 40 > free 36"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by satisfying all jobs' base_gpus first, then granted requested margins based on tier priority and justification. Applied ENVY-FREENESS to avoid giving one job more than another within the same tier without a compelling reason.",
+      "feasible": false,
+      "over": 4,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 5,
+      "factor": 0.75,
+      "free": 27,
+      "alloc": {
+        "r00": 4,
+        "r01": 8,
+        "r02": 9,
+        "r03": 8,
+        "r04": 5,
+        "r05": 5
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 40 > free 27"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by satisfying all base_gpus first, then granted requested margins based on tier priority and justification. Applied ENVY-FREENESS to avoid giving one job more than another within the same tier without a compelling reason.",
+      "feasible": false,
+      "over": 13,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 6,
+      "factor": 1.25,
+      "free": 39,
+      "alloc": {
+        "r01": 4,
+        "r02": 8,
+        "r03": 4,
+        "r04": 1,
+        "r05": 9
+      },
+      "reserve": 1,
+      "violations": [
+        "base unmet for ['r00'] while margin/reserve was granted",
+        "envy within tier 'besteffort': margin granted while a peer's base is unmet"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying all jobs' base_gpus, then granting requested margins based on justification; applied PRIORITY to serve prod tier jobs before besteffort.",
+      "feasible": false,
+      "over": 0,
+      "waste": 12,
+      "prodcov": 1.0,
+      "n_violations": 2
+    },
+    {
+      "seed": 6,
+      "factor": 1.0,
+      "free": 31,
+      "alloc": {
+        "r01": 4,
+        "r02": 8,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "base unmet for ['r00'] while margin/reserve was granted"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying all jobs' base_gpus, then granting requested margins based on justification; applied PRIORITY to serve prod tier jobs before besteffort.",
+      "feasible": false,
+      "over": 0,
+      "waste": 5,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 6,
+      "factor": 0.75,
+      "free": 23,
+      "alloc": {
+        "r01": 4,
+        "r02": 8,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 26 > free 23",
+        "base unmet for ['r00'] while margin/reserve was granted"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying all jobs' base_gpus, then granting requested margins based on justification; applied ENVY-FREENESS to avoid giving one job more than another within the same tier without a valid reason.",
+      "feasible": false,
+      "over": 3,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 2
+    },
+    {
+      "seed": 7,
+      "factor": 1.25,
+      "free": 38,
+      "alloc": {
+        "r01": 9,
+        "r04": 2,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "base unmet for ['r00', 'r02', 'r03'] while margin/reserve was granted",
+        "envy within tier 'besteffort': margin granted while a peer's base is unmet"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying all jobs' base_gpus, then granted a small margin to r01 and r04 based on their deadlines and justification. Reserved 1 GPU for future unpredicted spikes.",
+      "feasible": false,
+      "over": 0,
+      "waste": 18,
+      "prodcov": 1.0,
+      "n_violations": 2
+    },
+    {
+      "seed": 7,
+      "factor": 1.0,
+      "free": 30,
+      "alloc": {
+        "r01": 9,
+        "r04": 2,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "base unmet for ['r00', 'r02', 'r03'] while margin/reserve was granted",
+        "envy within tier 'besteffort': margin granted while a peer's base is unmet"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying all jobs' base_gpus, then applied PRIORITY to allocate extra GPUs to 'ontrack' besteffort jobs (r01 and r04) before granting any reserve.",
+      "feasible": false,
+      "over": 0,
+      "waste": 10,
+      "prodcov": 1.0,
+      "n_violations": 2
+    },
+    {
+      "seed": 7,
+      "factor": 0.75,
+      "free": 22,
+      "alloc": {
+        "r01": 9,
+        "r04": 2,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "base unmet for ['r00', 'r02', 'r03'] while margin/reserve was granted",
+        "envy within tier 'besteffort': margin granted while a peer's base is unmet"
+      ],
+      "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying all jobs' base_gpus, then granted a small margin to r01 and r04 based on their deadlines and justification. Reserved 1 GPU for future unpredicted spikes.",
+      "feasible": false,
+      "over": 0,
+      "waste": 2,
+      "prodcov": 1.0,
+      "n_violations": 2
+    }
+  ],
+  "qwen2.5:14b": [
+    {
+      "seed": 0,
+      "factor": 1.25,
+      "free": 31,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Allocated base GPUs to all jobs first, then reserved some for incoming high-priority jobs as per supply side request.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 0,
+      "factor": 1.0,
+      "free": 25,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 26 > free 25"
+      ],
+      "justification": "Allocated base GPUs to all jobs first, then reserved one GPU for potential incoming high-priority jobs.",
+      "feasible": false,
+      "over": 1,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 0,
+      "factor": 0.75,
+      "free": 19,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 0,
+      "violations": [
+        "infeasible: awarded 25 > free 19"
+      ],
+      "justification": "The total awarded GPUs exceed the free pool, so base_gpus for besteffort jobs were reduced to fit within the available resources.",
+      "feasible": false,
+      "over": 6,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 1,
+      "factor": 1.25,
+      "free": 12,
+      "alloc": {
+        "r00": 4,
+        "r01": 1,
+        "r02": 1,
+        "r03": 1,
+        "r04": 1,
+        "r05": 2
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Allocated base GPUs to all jobs first, then reserved one GPU for incoming prod jobs as requested.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 1,
+      "factor": 1.0,
+      "free": 10,
+      "alloc": {
+        "r00": 4,
+        "r01": 1,
+        "r02": 1,
+        "r03": 1,
+        "r04": 1,
+        "r05": 2
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "All jobs' base GPU requirements are met first. Reserve is not granted due to lack of remaining GPUs after satisfying all bases.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 1,
+      "factor": 0.75,
+      "free": 8,
+      "alloc": {
+        "r00": 4,
+        "r01": 1,
+        "r02": 1,
+        "r04": 1,
+        "r05": 2
+      },
+      "reserve": 0,
+      "violations": [
+        "infeasible: awarded 9 > free 8"
+      ],
+      "justification": "Exceeded free_gpus by allocating base GPUs first and then assessing margins; reduced r00's margin to fit within the pool.",
+      "feasible": false,
+      "over": 1,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 2,
+      "factor": 1.25,
+      "free": 38,
+      "alloc": {
+        "r00": 4,
+        "r01": 3,
+        "r02": 4,
+        "r03": 8,
+        "r04": 4,
+        "r05": 9
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Allocated base GPUs first, then granted reasonable margins to prod and ontrack besteffort jobs while reserving minimal GPUs for incoming high-priority jobs.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 2,
+      "factor": 1.0,
+      "free": 30,
+      "alloc": {
+        "r00": 4,
+        "r01": 3,
+        "r02": 4,
+        "r03": 8,
+        "r04": 4,
+        "r05": 9
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 33 > free 30"
+      ],
+      "justification": "Allocated base GPUs first, then granted reasonable margins to prod and ontrack besteffort jobs while reserving minimal headroom for incoming high-priority tasks.",
+      "feasible": false,
+      "over": 3,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 2,
+      "factor": 0.75,
+      "free": 22,
+      "alloc": {
+        "r00": 4,
+        "r01": 3,
+        "r02": 4,
+        "r03": 8,
+        "r04": 4,
+        "r05": 9
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 33 > free 22"
+      ],
+      "justification": "Allocated base GPUs first, then added convincing margins for jobs with justifications citing high cluster contention and risk of missing deadlines. Reserved 1 GPU to protect incoming high-priority jobs.",
+      "feasible": false,
+      "over": 11,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 3,
+      "factor": 1.25,
+      "free": 29,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 2,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Allocated base GPUs to all jobs first, then reserved one GPU for incoming prod jobs as contention is moderate.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 3,
+      "factor": 1.0,
+      "free": 23,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 2,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 24 > free 23"
+      ],
+      "justification": "Allocated base GPUs to all jobs first, then reserved one GPU for incoming prod jobs as requested.",
+      "feasible": false,
+      "over": 1,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 3,
+      "factor": 0.75,
+      "free": 17,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 2,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 24 > free 17"
+      ],
+      "justification": "Adjusted allocations to fit within the free pool, prioritizing prod jobs and ensuring base GPU requirements are met.",
+      "feasible": false,
+      "over": 7,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 4,
+      "factor": 1.25,
+      "free": 36,
+      "alloc": {
+        "r00": 8,
+        "r01": 4,
+        "r02": 4,
+        "r03": 1,
+        "r04": 8,
+        "r05": 4
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Allocated base GPUs to all jobs first, then granted modest margins for prod jobs with convincing justifications while reserving minimal GPUs for incoming prod jobs.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 4,
+      "factor": 1.0,
+      "free": 29,
+      "alloc": {
+        "r00": 8,
+        "r01": 4,
+        "r02": 4,
+        "r03": 1,
+        "r04": 8,
+        "r05": 4
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 30 > free 29"
+      ],
+      "justification": "Allocated base GPUs to all jobs first, then granted modest margins for prod jobs and a small reserve as justified.",
+      "feasible": false,
+      "over": 1,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 4,
+      "factor": 0.75,
+      "free": 22,
+      "alloc": {
+        "r00": 8,
+        "r01": 4,
+        "r02": 4,
+        "r03": 1,
+        "r04": 8,
+        "r05": 4
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 30 > free 22"
+      ],
+      "justification": "Allocated base GPUs to all jobs first, then granted modest margins for prod jobs with convincing justifications while reserving minimal capacity for incoming production tasks.",
+      "feasible": false,
+      "over": 8,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 5,
+      "factor": 1.25,
+      "free": 45,
+      "alloc": {
+        "r00": 4,
+        "r01": 8,
+        "r02": 8,
+        "r03": 8,
+        "r04": 4,
+        "r05": 4
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Allocated base GPUs to all jobs first due to individual rationality and then reserved necessary headroom as per supply side request.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 5,
+      "factor": 1.0,
+      "free": 36,
+      "alloc": {
+        "r00": 4,
+        "r01": 8,
+        "r02": 8,
+        "r03": 8,
+        "r04": 4,
+        "r05": 4
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 37 > free 36"
+      ],
+      "justification": "Allocated base GPUs to all jobs as per INDIVIDUAL RATIONALITY and ENVY-FREENESS rules, then reserved minimal GPUs for future contention.",
+      "feasible": false,
+      "over": 1,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 5,
+      "factor": 0.75,
+      "free": 27,
+      "alloc": {
+        "r00": 4,
+        "r01": 8,
+        "r02": 8,
+        "r03": 8,
+        "r04": 4,
+        "r05": 4
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 37 > free 27"
+      ],
+      "justification": "Adjusted allocations to fit within the free_gpus limit while ensuring base GPU requirements are met and respecting the supply side's reserve request.",
+      "feasible": false,
+      "over": 10,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 6,
+      "factor": 1.25,
+      "free": 39,
+      "alloc": {
+        "r00": 6,
+        "r01": 4,
+        "r02": 8,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Allocated all GPUs to meet base requirements while reserving minimal headroom as requested.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 6,
+      "factor": 1.0,
+      "free": 31,
+      "alloc": {
+        "r00": 6,
+        "r01": 4,
+        "r02": 8,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 32 > free 31"
+      ],
+      "justification": "Adjusted allocations to fit within the free pool by reducing margins and reserve as necessary.",
+      "feasible": false,
+      "over": 1,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 6,
+      "factor": 0.75,
+      "free": 23,
+      "alloc": {
+        "r00": 6,
+        "r01": 4,
+        "r02": 8,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 32 > free 23"
+      ],
+      "justification": "The total awarded exceeds the free pool; reduced margins and reserve to fit.",
+      "feasible": false,
+      "over": 9,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 7,
+      "factor": 1.25,
+      "free": 38,
+      "alloc": {
+        "r00": 8,
+        "r01": 9,
+        "r02": 2,
+        "r03": 3,
+        "r04": 2,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Allocated base GPUs first due to individual rationality and then adjusted margins for jobs with ontrack deadlines while ensuring feasibility.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 7,
+      "factor": 1.0,
+      "free": 30,
+      "alloc": {
+        "r00": 8,
+        "r01": 9,
+        "r02": 2,
+        "r03": 3,
+        "r04": 2,
+        "r05": 8
+      },
+      "reserve": 0,
+      "violations": [
+        "infeasible: awarded 32 > free 30"
+      ],
+      "justification": "All base GPU requirements are met first due to INDIVIDUAL RATIONALITY. No reserve is granted as it would exceed the free pool while all jobs' bases are not fully allocated.",
+      "feasible": false,
+      "over": 2,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 7,
+      "factor": 0.75,
+      "free": 22,
+      "alloc": {
+        "r00": 8,
+        "r01": 9,
+        "r02": 2,
+        "r03": 3,
+        "r04": 2,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 33 > free 22"
+      ],
+      "justification": "Adjusted allocations to fit within the free pool while ensuring base GPU requirements are met and respecting forecasted contention.",
+      "feasible": false,
+      "over": 11,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    }
+  ],
+  "gemma2:27b": [
+    {
+      "seed": 0,
+      "factor": 1.25,
+      "free": 31,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Satisfied all prod base GPUs before besteffort; granted margin only when justified and prioritized on-track jobs",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 0,
+      "factor": 1.0,
+      "free": 25,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 26 > free 25"
+      ],
+      "justification": "Satisfied all prod base_gpus before besteffort; granted margin only when justified and prioritized on-track jobs",
+      "feasible": false,
+      "over": 1,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 0,
+      "factor": 0.75,
+      "free": 19,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 26 > free 19"
+      ],
+      "justification": "Satisfied all prod base_gpus before besteffort; granted margin only when justified and prioritized on-track jobs",
+      "feasible": false,
+      "over": 7,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 1,
+      "factor": 1.25,
+      "free": 12,
+      "alloc": {
+        "r01": 2,
+        "r02": 2,
+        "r04": 2
+      },
+      "reserve": 1,
+      "violations": [
+        "base unmet for ['r00', 'r03', 'r05'] while margin/reserve was granted"
+      ],
+      "justification": "Satisfied prod base gpus first, then besteffort bases. Reserve granted due to convincing justification of moderate contention.",
+      "feasible": false,
+      "over": 0,
+      "waste": 5,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 1,
+      "factor": 1.0,
+      "free": 10,
+      "alloc": {
+        "r00": 4,
+        "r01": 1,
+        "r02": 1,
+        "r03": 1,
+        "r04": 1,
+        "r05": 2
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 11 > free 10"
+      ],
+      "justification": "Satisfied prod base gpus first, then besteffort bases. Granted requested reserve as justification was convincing.",
+      "feasible": false,
+      "over": 1,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 1,
+      "factor": 0.75,
+      "free": 8,
+      "alloc": {
+        "r00": 4,
+        "r01": 1,
+        "r02": 1,
+        "r03": 1,
+        "r04": 1,
+        "r05": 2
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 11 > free 8"
+      ],
+      "justification": "Satisfied prod base gpus first, then besteffort bases.  Reserve granted due to convincing justification of moderate contention.",
+      "feasible": false,
+      "over": 3,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 2,
+      "factor": 1.25,
+      "free": 38,
+      "alloc": {
+        "r01": 3,
+        "r05": 9
+      },
+      "reserve": 1,
+      "violations": [
+        "base unmet for ['r00', 'r02', 'r03', 'r04'] while margin/reserve was granted"
+      ],
+      "justification": "Satisfied prod jobs' bases and margins before besteffort; granted a small reserve as justified.",
+      "feasible": false,
+      "over": 0,
+      "waste": 25,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 2,
+      "factor": 1.0,
+      "free": 30,
+      "alloc": {
+        "r01": 3,
+        "r05": 9
+      },
+      "reserve": 1,
+      "violations": [
+        "base unmet for ['r00', 'r02', 'r03', 'r04'] while margin/reserve was granted"
+      ],
+      "justification": "Satisfied prod base gpus first, then besteffort bases. Granted r01 margin due to ontrack deadline and moderate contention.",
+      "feasible": false,
+      "over": 0,
+      "waste": 17,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 2,
+      "factor": 0.75,
+      "free": 22,
+      "alloc": {
+        "r01": 3,
+        "r02": 4,
+        "r05": 9
+      },
+      "reserve": 1,
+      "violations": [
+        "base unmet for ['r00', 'r03', 'r04'] while margin/reserve was granted"
+      ],
+      "justification": "Satisfied prod base gpus first, then besteffort bases. Granted r02 margin due to ontrack deadline. Supply reserve granted as justified.",
+      "feasible": false,
+      "over": 0,
+      "waste": 5,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 3,
+      "factor": 1.25,
+      "free": 29,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 2,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Satisfied all prod base_gpus before besteffort; granted margin only when justified; reserved 1 GPU",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 3,
+      "factor": 1.0,
+      "free": 23,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 2,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 24 > free 23"
+      ],
+      "justification": "Satisfied all prod base gpus and besteffort base gpus. Granted requested margin only when justified. Granted reserve as it did not exceed the free pool.",
+      "feasible": false,
+      "over": 1,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 3,
+      "factor": 0.75,
+      "free": 17,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 2,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 24 > free 17"
+      ],
+      "justification": "Satisfied all prod base_gpus before besteffort; granted margin only when justified; reserved 1 GPU",
+      "feasible": false,
+      "over": 7,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 4,
+      "factor": 1.25,
+      "free": 36,
+      "alloc": {
+        "r00": 8,
+        "r01": 4,
+        "r02": 4,
+        "r03": 1,
+        "r04": 8,
+        "r05": 4
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Allocated base GPUs to all jobs, then granted margin to prod jobs based on deadline. Granted a reserve of 1 GPU as justified by the supply side.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 4,
+      "factor": 1.0,
+      "free": 29,
+      "alloc": {
+        "r00": 8,
+        "r01": 4,
+        "r02": 4,
+        "r03": 1,
+        "r04": 8,
+        "r05": 4
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 30 > free 29"
+      ],
+      "justification": "Allocated base GPUs to all jobs, then granted margin to prod jobs based on deadline. Granted a reserve of 1 GPU as justified by the supply side.",
+      "feasible": false,
+      "over": 1,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 4,
+      "factor": 0.75,
+      "free": 22,
+      "alloc": {
+        "r00": 8,
+        "r01": 4,
+        "r02": 4,
+        "r03": 1,
+        "r04": 8,
+        "r05": 4
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 30 > free 22"
+      ],
+      "justification": "Allocated base GPUs to all jobs, then granted margin to 'ontrack' prod jobs.  Reserve of 1 GPU granted due to moderate contention.",
+      "feasible": false,
+      "over": 8,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 5,
+      "factor": 1.25,
+      "free": 45,
+      "alloc": {
+        "r00": 4,
+        "r01": 8,
+        "r02": 9,
+        "r03": 8,
+        "r04": 5,
+        "r05": 5
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Satisfied all besteffort base GPUs and prioritized jobs behind their deadline. Granted a small reserve as justified by the supply side.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 5,
+      "factor": 1.0,
+      "free": 36,
+      "alloc": {
+        "r00": 4,
+        "r01": 8,
+        "r02": 9,
+        "r03": 8,
+        "r04": 5,
+        "r05": 5
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 40 > free 36"
+      ],
+      "justification": "Satisfied all besteffort base GPUs and prioritized jobs behind their deadline. Granted a small reserve as justified by the supply side.",
+      "feasible": false,
+      "over": 4,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 5,
+      "factor": 0.75,
+      "free": 27,
+      "alloc": {
+        "r00": 4,
+        "r01": 8,
+        "r02": 9,
+        "r03": 8,
+        "r04": 5,
+        "r05": 5
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 40 > free 27"
+      ],
+      "justification": "Satisfied all base_gpus before granting margins. Prioritized 'besteffort' jobs based on deadline and granted convincing margin requests.",
+      "feasible": false,
+      "over": 13,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 6,
+      "factor": 1.25,
+      "free": 39,
+      "alloc": {
+        "r00": 6,
+        "r01": 4,
+        "r02": 8,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Satisfied all base GPU requests and granted a reserve based on the supply side's justification. No besteffort margins were awarded due to limited resources.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 6,
+      "factor": 1.0,
+      "free": 31,
+      "alloc": {
+        "r00": 6,
+        "r01": 4,
+        "r02": 8,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 32 > free 31"
+      ],
+      "justification": "Satisfied all base GPU requests and granted a reserve based on the supply side's justification. No besteffort margins were awarded due to limited resources.",
+      "feasible": false,
+      "over": 1,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 6,
+      "factor": 0.75,
+      "free": 23,
+      "alloc": {
+        "r00": 6,
+        "r01": 4,
+        "r02": 8,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 32 > free 23"
+      ],
+      "justification": "All besteffort jobs' base gpus are met. The reserve is granted as contention exists but no prod jobs are incoming.",
+      "feasible": false,
+      "over": 9,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 7,
+      "factor": 1.25,
+      "free": 38,
+      "alloc": {
+        "r00": 8,
+        "r01": 9,
+        "r02": 2,
+        "r03": 3,
+        "r04": 2,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Satisfied all base GPU requests and prioritized 'ontrack' jobs for margin. Granted a small reserve as justified by the supply side.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 7,
+      "factor": 1.0,
+      "free": 30,
+      "alloc": {
+        "r00": 8,
+        "r01": 9,
+        "r02": 2,
+        "r03": 3,
+        "r04": 2,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 33 > free 30"
+      ],
+      "justification": "Satisfied all base GPU requests and prioritized 'ontrack' jobs for margin allocation. Granted a small reserve as justified by the supply side.",
+      "feasible": false,
+      "over": 3,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    },
+    {
+      "seed": 7,
+      "factor": 0.75,
+      "free": 22,
+      "alloc": {
+        "r00": 8,
+        "r01": 9,
+        "r02": 2,
+        "r03": 3,
+        "r04": 2,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [
+        "infeasible: awarded 33 > free 22"
+      ],
+      "justification": "Satisfied all base GPU requests before granting margins. Prioritized 'besteffort' jobs based on deadline proximity.",
+      "feasible": false,
+      "over": 11,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 1
+    }
+  ],
+  "deepseek-r1:32b": [
+    {
+      "seed": 0,
+      "factor": 1.25,
+      "free": 31,
+      "alloc": {
+        "r00": 5,
+        "r01": 4,
+        "r02": 5,
+        "r03": 5,
+        "r04": 2,
+        "r05": 9
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Allocated base GPUs first, granted prod margins due to convincing justifications, then allocated remaining margins to besteffort jobs prioritizing larger requests and ontrack deadlines while reserving 1 GPU.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 0,
+      "factor": 1.0,
+      "free": 25,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "Allocated all base GPUs as required by individual rationality, leaving no room for margins or reserve.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 0,
+      "factor": 0.75,
+      "free": 19,
+      "alloc": {
+        "r00": 4,
+        "r03": 4,
+        "r01": 4,
+        "r02": 4,
+        "r04": 1,
+        "r05": 2
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 1,
+      "factor": 1.25,
+      "free": 12,
+      "alloc": {
+        "r00": 4,
+        "r01": 1,
+        "r02": 2,
+        "r03": 1,
+        "r04": 1,
+        "r05": 2
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Allocated base GPUs first, granted the reserve due to convincing justification, and assigned remaining GPU as margin to r02 based on higher spike risk.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 1,
+      "factor": 1.0,
+      "free": 10,
+      "alloc": {
+        "r00": 4,
+        "r01": 1,
+        "r02": 1,
+        "r03": 1,
+        "r04": 1,
+        "r05": 2
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "Allocated base GPUs to all jobs as per individual rationality, with no room for margins or reserve due to feasibility constraints.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 1,
+      "factor": 0.75,
+      "free": 8,
+      "alloc": {
+        "r01": 1,
+        "r02": 1,
+        "r04": 1,
+        "r00": 4,
+        "r03": 1,
+        "r05": 0
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 2,
+      "factor": 1.25,
+      "free": 38,
+      "alloc": {
+        "r00": 4,
+        "r01": 3,
+        "r02": 5,
+        "r03": 9,
+        "r04": 4,
+        "r05": 9
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Allocated base GPUs first, granted margins to prod jobs with convincing justifications, and reserved 1 GPU as per supply's reasonable request.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 2,
+      "factor": 1.0,
+      "free": 30,
+      "alloc": {
+        "r01": 2,
+        "r05": 8,
+        "r00": 4,
+        "r02": 4,
+        "r03": 8,
+        "r04": 4
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 2,
+      "factor": 0.75,
+      "free": 22,
+      "alloc": {
+        "r01": 2,
+        "r05": 8,
+        "r00": 4,
+        "r02": 4,
+        "r04": 4
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "Allocated all available GPUs to satisfy prod and as many besteffort bases as possible, leaving no room for margins or reserve.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 3,
+      "factor": 1.25,
+      "free": 29,
+      "alloc": {
+        "r00": 5,
+        "r01": 5,
+        "r02": 5,
+        "r03": 3,
+        "r04": 1,
+        "r05": 9
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "All jobs' base GPU requirements were met first. Margins were allocated to 'prod' jobs before the supply reserve and besteffort margins, as their justifications were convincing.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 3,
+      "factor": 1.0,
+      "free": 23,
+      "alloc": {
+        "r00": 4,
+        "r01": 4,
+        "r02": 4,
+        "r03": 2,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "Allocated all base GPUs as total equals free_gpus, leaving no room for margins or reserve.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 3,
+      "factor": 0.75,
+      "free": 17,
+      "alloc": {
+        "r00": 4,
+        "r03": 2,
+        "r05": 8,
+        "r01": 3,
+        "r02": 0,
+        "r04": 0
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 4,
+      "factor": 1.25,
+      "free": 36,
+      "alloc": {
+        "r00": 9,
+        "r01": 5,
+        "r02": 6,
+        "r03": 1,
+        "r04": 9,
+        "r05": 5
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Allocated all base GPUs first, then granted margins to prod jobs before besteffort. Within besteffort, prioritized stronger justifications and deadlines while respecting the free GPU limit.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 4,
+      "factor": 1.0,
+      "free": 29,
+      "alloc": {
+        "r00": 8,
+        "r01": 4,
+        "r02": 4,
+        "r03": 1,
+        "r04": 8,
+        "r05": 4
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "All base GPU requirements were met, leaving no room for margins or reserve due to feasibility constraints.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 4,
+      "factor": 0.75,
+      "free": 22,
+      "alloc": {
+        "r00": 8,
+        "r01": 4,
+        "r02": 0,
+        "r03": 1,
+        "r04": 8,
+        "r05": 1
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "Allocated all prod base GPUs (20) and as much besteffort base as possible (2), leaving no room for reserve. Envy-freeness within tiers was maintained.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 5,
+      "factor": 1.25,
+      "free": 45,
+      "alloc": {
+        "r00": 4,
+        "r01": 8,
+        "r02": 9,
+        "r03": 8,
+        "r04": 5,
+        "r05": 5
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 5,
+      "factor": 1.0,
+      "free": 36,
+      "alloc": {
+        "r00": 4,
+        "r01": 8,
+        "r02": 8,
+        "r03": 8,
+        "r04": 4,
+        "r05": 4
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "Allocated all base GPUs as required by individual rationality, leaving no room for margins or reserve.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 5,
+      "factor": 0.75,
+      "free": 27,
+      "alloc": {
+        "r00": 4,
+        "r01": 8,
+        "r02": 8,
+        "r03": 7,
+        "r04": 0,
+        "r05": 0
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 6,
+      "factor": 1.25,
+      "free": 39,
+      "alloc": {
+        "r00": 6,
+        "r01": 5,
+        "r02": 9,
+        "r03": 4,
+        "r04": 1,
+        "r05": 9
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "Allocated all base GPUs, granted margins to r01, r02, and r05 due to convincing justifications, and reserved 1 GPU as per supply's request. Total awarded is within free_gpus.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 6,
+      "factor": 1.0,
+      "free": 31,
+      "alloc": {
+        "r00": 6,
+        "r01": 4,
+        "r02": 8,
+        "r03": 4,
+        "r04": 1,
+        "r05": 8
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "All base_gpus are satisfied as per Individual Rationality. No margins or reserve can be granted due to Feasibility constraints.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 6,
+      "factor": 0.75,
+      "free": 23,
+      "alloc": {
+        "r00": 6,
+        "r01": 4,
+        "r02": 8,
+        "r03": 4,
+        "r04": 1,
+        "r05": 0
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 7,
+      "factor": 1.25,
+      "free": 38,
+      "alloc": {
+        "r00": 8,
+        "r01": 9,
+        "r02": 2,
+        "r03": 3,
+        "r04": 2,
+        "r05": 8
+      },
+      "reserve": 1,
+      "violations": [],
+      "justification": "All base requirements were met, margins granted to jobs with convincing justifications, and a reserve allocated as per the supply's reasonable request.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 7,
+      "factor": 1.0,
+      "free": 30,
+      "alloc": {
+        "r00": 8,
+        "r01": 8,
+        "r02": 2,
+        "r03": 2,
+        "r04": 2,
+        "r05": 8
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "All base GPU requirements were met, leaving no room for margins or reserve without exceeding the free pool.",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    },
+    {
+      "seed": 7,
+      "factor": 0.75,
+      "free": 22,
+      "alloc": {
+        "r00": 8,
+        "r01": 8,
+        "r02": 2,
+        "r03": 2,
+        "r04": 2,
+        "r05": 0
+      },
+      "reserve": 0,
+      "violations": [],
+      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
+      "feasible": true,
+      "over": 0,
+      "waste": 0,
+      "prodcov": 1.0,
+      "n_violations": 0
+    }
+  ]
+}
