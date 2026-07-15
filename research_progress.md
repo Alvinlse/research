@@ -2536,3 +2536,102 @@ only (request == truth); single pool per arm (tier tag excludes `--pools`).
 Tiers `rule+n500`, `rule+qwhole+n500`, `qwen2.5:3b+n500`, `qwen2.5:3b+qwhole+n500` (n=32)
 in `results_trace_replay.json`; cross-quantum deltas via paired_ci over per_seed (pool keys
 differ, so `--compare` does not apply).
+
+## PIVOT (2026-07-15) — reason-then-referee: the LLM decides, code demoted to evaluator
+
+The goal is now to **beat the rule/ILP-guaranteed pipeline with a referee LLM that outputs
+the allocation directly**. Rationale: no mathematical rule set covers every situation; the
+allocator must reason flexibly about the situation in front of it. Demand/supply agents
+submit statements (base + requested margin + why; requested reserve + why) → the referee
+LLM decides → `check_allocation` **evaluates only** (violations → floor fallback, charged
+to `fallback_rate`; code never repairs — otherwise "the LLM can allocate" and "the ILP
+fixes the LLM" are indistinguishable and we have rebuilt LLMsched). Exp 22–48's pipeline
+stays as the baseline arm. Win condition: feasibility is table stakes (rule arm is 100% by
+construction); the win must show in outcomes, ideally on the ticks where the rigid rule
+decides badly. Branch: `referee_allocator`; plan updated (Focus, Goal 1/1b, Phase 5).
+
+## Experiment 49 — REFEREE SCENE EVAL: can an LLM allocate feasibly at all? (2026-07-15)
+
+**Why.** Before wiring a referee into the sim, measure the primitive: given statements and
+a free pool, does the LLM's direct allocation respect the budget and the tier rules?
+`pins/referee.py` (statements → referee → evaluator, scene-cached, rule-referee fallback)
++ `pins/referee_eval.py` (toy 3-job scenes + real v2020 scenes, 6 skewed jobs, pool factors
+from surplus to shortfall).
+
+**Result.**
+- **Toy scenes:** 3b 0/3 feasible (budget-blind), 14b 2/3, 27b 2/3; a SELF-CHECK prompt
+  line gets 14b to 3/3 but conservative. Every model computes `total_awarded` CORRECTLY,
+  then fails to act on the ≤ comparison — **constraint enforcement, not arithmetic, is the
+  failure**.
+- **Real v2020 scenes:** feasibility collapses to **0% at exact/shortfall pools for ALL
+  chat models** (even with self-check); prodcov 1.0 + overcommit 5–8 GPUs ⇒ **chat LLMs
+  won't say no under scarcity** — they serve everyone and blow the budget.
+- **deepseek-r1:32b flips it: 100% feasible at ALL pool factors incl. shortfall.** Not
+  parroting the rule referee: 10/24 scenes differ while feasible (egalitarian partial
+  coverage vs the rule's all-or-nothing; different victim choices, rationale stated).
+  Needed `num_predict` 4096 (the thinking channel ate the 300 budget); ~1–3 min/call.
+
+**Findings.** Feasibility under scarcity is a *reasoning-model* property, not a scale
+property (27b chat fails where 32b-reasoning passes). The referee thesis is alive but only
+above the reasoning threshold.
+
+**Reproduce.**
+```bash
+.venv/bin/python -m pins.referee_eval --models rule,qwen2.5:3b,qwen2.5:14b,gemma2:27b
+.venv/bin/python -m pins.referee_eval --models deepseek-r1:32b
+```
+Results in `pins/results_referee_eval.json`.
+
+## Experiment 50 — REFEREE IN-SIM: trace replay with the LLM as the allocator (2026-07-15/16)
+
+**Why.** Exp 49 measured scenes in isolation; the claim needs outcomes. `trace_replay
+--referee` swaps the policy rows for no-llm / **referee** / negotiated (statements pinned
+at 3b so referee-model ablations hold submissions fixed), honest fallback semantics
+(infeasible tick → floor, counted). Also: the 2026-07-15 run died mid-deepseek (login-node
+reaper); the tier save now **merges pools per tier** on resume instead of clobbering
+finished ones (`trace_replay.py`), and reruns went one pool per background task.
+
+**Result (v2020 base world, n=8, paired vs floor; SLA deltas in pp, lower better).**
+
+| arm | pool 4 | pool 6 | pool 8 | fb |
+|---|---|---|---|---|
+| referee@3b        | −1.6 / −11.9 | +2.3 / +5.2 | 0.0 / −10.4 | 45–58% |
+| referee@r1:32b    | +0.8 / −1.8  | **+0.0 ±3.0 / +0.0 ±0.0** | (running) | **0%** |
+| negotiated@r1:32b | +2.3 / −1.8  | +1.6 / +2.1 | (running) | 0% |
+
+All deltas ns at n=8. r1:32b pool 6 is an **exact tie with the floor**: 6/8 seeds
+outcome-identical; the two divergent seeds move exactly one job each (±6.25pp) and cancel.
+At pool 6 the referee **held the floor while the negotiated arm slipped**.
+
+**Transcript case study** (`pins/transcripts_seed23_pool6.txt`, regenerable from the LLM
+cache via `pins/replay_transcripts.py`): the referee **won seed 3** by spending margins on
+prod jobs (incl. a stated *partial* grant: asked 2, gave 1 + reserve) and **lost seed 2**
+by hedging ahead-of-schedule besteffort jobs so the pool was empty when the prod job
+arrived. Same supply request gets opposite rulings by cluster state ("no evidence of
+incoming load" at an empty pool vs granted mid-window) — situational judgment is real but
+**unaimed** under scarcity.
+
+**Findings.**
+1. **Exp 49's feasibility transfers perfectly to the sim** (r1:32b fb 0%) — failures are
+   now judgment failures, not constraint failures.
+2. **Sufficiency, not superiority (so far):** the reasoning referee replaces the guarantee
+   layer without loss and adds auditable rationales; it does not yet beat the rule pipeline
+   on averages. The 3b referee overcommits half its ticks and survives only via fallback.
+3. The seed-2 failure mode is **promptable** (margin-priority under `incoming_prod=many` +
+   tight pool), targetable without touching the seed-3 win.
+
+**Caveats.** n=8 (CI ±3–7pp SLA); pool 8 r1:32b still running; single trace, base world;
+statements fixed at 3b; wall-clock ~1–3 min per uncached referee call at 32b.
+
+**Next.** Pool 8 → n=32 on the best pool; **conditional hard-tick analysis** (split ticks
+by "the rigid rule decided badly here" — the flexibility claim predicts the win lives
+there); margin-priority prompt; report fallback_rate alongside outcomes always.
+
+**Reproduce.**
+```bash
+.venv/bin/python -m pins.trace_replay --referee --llm --model qwen2.5:3b --seeds 8 --pools 4,6,8
+.venv/bin/python -m pins.trace_replay --referee --llm --model deepseek-r1:32b --seeds 8 --pools 4   # then 6, 8 (one pool per task)
+PYTHONPATH=. .venv/bin/python pins/replay_transcripts.py   # seed 2/3 transcripts from cache
+```
+Tiers `rule+referee`, `qwen2.5:3b+referee`, `deepseek-r1:32b+referee` in
+`results_trace_replay.json`.
