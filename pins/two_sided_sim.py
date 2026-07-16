@@ -300,7 +300,8 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
         "finished": float(len(fin)),
         "n_jobs": float(len(jobs)),
         "fallback_rate": n_fallback / max(n_decisions, 1),
-    }
+        "done_at": dict(done_at),   # per-job completion tick (None = unfinished);
+    }                               # results files are unaffected (METRICS whitelist)
 
 
 # --------------------------------------------------------------------------- #
