@@ -194,7 +194,7 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
 
 
 METRICS = ("sla", "prod_sla", "util", "slowdown", "finished", "fallback_rate")
-RESULTS = os.path.join(HERE, "results_trace_replay.json")
+RESULTS = os.environ.get("PINS_RESULTS", os.path.join(HERE, "results_trace_replay.json"))
 
 
 def t95(df: int) -> float:
@@ -248,7 +248,7 @@ def print_paired_vs_floor(per_seed_pool: dict[str, list[dict]]) -> None:
             continue
         parts = []
         for metric, label, pct in (("sla", "dSLA", True), ("prod_sla", "dprodSLA", True),
-                                   ("slowdown", "dslow", False)):
+                                   ("util", "dutil", True), ("slowdown", "dslow", False)):
             diffs = [a[metric] - b[metric] for a, b in zip(rows_, floor)]
             m, h = paired_ci(diffs)
             u = 100.0 if pct else 1.0
@@ -314,7 +314,7 @@ def compare_tiers(spec: str) -> None:
             continue
         parts, eq = [], []
         for metric, label, pct in (("sla", "dSLA", True), ("prod_sla", "dprodSLA", True),
-                                   ("slowdown", "dslow", False)):
+                                   ("util", "dutil", True), ("slowdown", "dslow", False)):
             diffs = [x[metric] - y[metric] for x, y in zip(ra, rb)]
             m, h = paired_ci(diffs)
             u = 100.0 if pct else 1.0
@@ -330,7 +330,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           caps_mode: str = "real", quantile: str = "p50", truth_mode: str = "plan",
           time_mode: str | None = None, ttf_mode: str | None = None,
           baseline: str | None = None, dyncap: str | None = None,
-          trace_name: str = "v2020", quantum: int = 1, referee: bool = False) -> None:
+          trace_name: str = "v2020", quantum: int = 1, referee: bool = False,
+          manual: str | None = None) -> None:
     assert not (time_mode and ttf_mode), "--time and --ttf are separate experiments"
     assert quantum == 1 or (caps_mode == "real" and truth_mode == "plan" and
                             not (time_mode or ttf_mode or baseline or dyncap)), \
@@ -378,6 +379,12 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         suffix += "+qwhole"               # Exp 48: whole-GPU allocation quantum
     if referee:
         suffix += "+referee"              # Exp 50: referee-LLM allocator arm
+    manual = manual or os.environ.get("PINS_MANUAL")   # flag and env are the same arm
+    if manual:
+        assert referee, "--manual is a referee-arm option"
+        from pins.referee import load_manual
+        load_manual(manual)               # Exp 51: precedent block + cache-key hash
+        suffix += "+manual"               # tiers must never mix manual/vanilla rulings
     if n_jobs != 16:
         suffix += f"+n{n_jobs}"           # Exp 48: scale-up tiers must not collide
     tag = (baseline or ("rule" if not use_llm else model)) + suffix
@@ -449,6 +456,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                                  belief_work=belief if time_mode else None, ttf_work=ttf,
                                  dyn_cap_map=dyn_map)
                 per_seed.append({k: r[k] for k in METRICS})
+                if use_llm:
+                    save_cache(cache)   # per-seed: a reaped run loses at most one seed
             per_seed_pool[name] = per_seed
             results.append((name, {k: sum(row[k] for row in per_seed) / len(seeds)
                                    for k in METRICS}))
@@ -488,6 +497,9 @@ def main() -> None:
     ap.add_argument("--spike", type=float, default=0.6)
     ap.add_argument("--scale", type=int, default=3)
     ap.add_argument("--seeds", type=int, default=8)
+    ap.add_argument("--seed-start", type=int, default=0,
+                    help="first seed (exclusive end stays --seeds); lets parallel "
+                         "cache-warmers split one sweep into disjoint seed blocks")
     ap.add_argument("--pools", default="4,6,8", help="real caps are heavier (median 4 quanta)")
     ap.add_argument("--n-jobs", type=int, default=16,
                     help="jobs thinned per window (scale-up knob; tier gets a +nN suffix)")
@@ -523,6 +535,11 @@ def main() -> None:
                     help="Exp 50: swap the policy rows for the referee-LLM allocator vs the "
                          "no-llm floor and the negotiated (code-decides) arm; infeasible "
                          "referee ticks fall back to the floor and count in fb")
+    ap.add_argument("--manual", default=None, metavar="PATH",
+                    help="Exp 51: referee precedent manual (e.g. pins/referee_manual.md or "
+                         "the self-authored pins/referee_manual_learned.md) — appended to the "
+                         "referee's system prompt; tier gets '+manual'. PINS_MANUAL=<path> "
+                         "is equivalent. Requires --referee")
     ap.add_argument("--baseline", default=None, choices=("easy", "qlearn"),
                     help="Exp 40/41: classical baselines instead of the LLM policies — "
                          "'easy' = FCFS + EASY backfilling (easy-pred uses the Stage-1 runtime "
@@ -549,11 +566,11 @@ def main() -> None:
         compare_tiers(a.compare)
         return
     sweep([int(p) for p in a.pools.split(",")], n_jobs=a.n_jobs, horizon=300,
-          seeds=list(range(a.seeds)), scale=a.scale, spike_max=a.spike,
+          seeds=list(range(a.seed_start, a.seeds)), scale=a.scale, spike_max=a.spike,
           use_llm=a.llm, model=a.model, caps_mode=a.caps, quantile=a.quantile,
           truth_mode=a.truth, time_mode=a.time, ttf_mode=a.ttf, baseline=a.baseline,
           dyncap=a.dyncap, trace_name=a.trace, quantum={"quarter": 1, "whole": 4}[a.quantum],
-          referee=a.referee)
+          referee=a.referee, manual=a.manual)
 
 
 if __name__ == "__main__":

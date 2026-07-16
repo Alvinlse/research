@@ -28,11 +28,13 @@ Run:  .venv/bin/python -m pins.referee            # smoke: contested scene, LLM 
 """
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import sys
 from dataclasses import dataclass, field
 
-from pins.llm_agent import (DEFAULT_MODEL, HOST, _parse, llm_margin, llm_reserve,
+from pins.llm_agent import (CTX_OPT, DEFAULT_MODEL, HOST, _parse, llm_margin, llm_reserve,
                             load_cache, reserve_amount, save_cache)
 from pins.negotiation_protocol import HEDGE_GPUS, DemandJob
 
@@ -61,6 +63,26 @@ SYSTEM_REFEREE = (
 )
 
 PROMPT_VERSION = "v2"                 # busts the scene cache whenever SYSTEM_REFEREE changes
+
+_MANUAL = ""       # precedent block appended to SYSTEM_REFEREE (Exp 51 manual arm)
+_MANUAL_TAG = ""   # cache-key component: manual hash, so manual/vanilla rulings never mix
+
+
+def set_manual(text: str) -> None:
+    """Install the precedent block (raw text, no markers). Empty string turns the arm off."""
+    global _MANUAL, _MANUAL_TAG
+    _MANUAL = text.strip()
+    _MANUAL_TAG = f"|man:{hashlib.sha1(_MANUAL.encode()).hexdigest()[:8]}" if _MANUAL else ""
+
+
+def load_manual(path: str) -> None:
+    """Load a manual file: everything below its PROMPT-START marker is the block."""
+    text = open(path).read()
+    set_manual(text.split("PROMPT-START", 1)[1].split("-->", 1)[1])
+
+
+if os.environ.get("PINS_MANUAL"):     # e.g. PINS_MANUAL=pins/referee_manual_learned.md
+    load_manual(os.environ["PINS_MANUAL"])
 
 
 @dataclass
@@ -142,7 +164,8 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
     cache = load_cache() if cache is None else cache
     stmts = gather_statements(demand, supply_ctx, use_llm=use_llm,
                               model=statement_model or model, cache=cache)
-    key = f"{PROMPT_VERSION}|{_scene_key(stmts, free_gpus)}|{'llm:' + model if use_llm else 'rule'}"
+    key = (f"{PROMPT_VERSION}{_MANUAL_TAG}|{_scene_key(stmts, free_gpus)}"
+           f"|{'llm:' + model if use_llm else 'rule'}")
 
     out = cache.get(key)
     if out is None and use_llm:
@@ -151,9 +174,10 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
             client = ollama.Client(host=host)
             resp = client.chat(
                 model=model, format="json",
-                options={"temperature": 0, "num_predict": 4096},  # reasoning models (r1) spend
+                options={"temperature": 0, "num_predict": 4096, **CTX_OPT},  # reasoning models (r1) spend
                 # most of the budget in the thinking channel before emitting the JSON
-                messages=[{"role": "system", "content": SYSTEM_REFEREE},
+                messages=[{"role": "system",
+                           "content": SYSTEM_REFEREE + ("\n\n" + _MANUAL if _MANUAL else "")},
                           {"role": "user", "content": json.dumps(
                               {"free_gpus": free_gpus, "statements": stmts}, indent=1)}],
             )
