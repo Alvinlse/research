@@ -2640,3 +2640,42 @@ PYTHONPATH=. .venv/bin/python pins/replay_transcripts.py   # seed 2/3 transcript
 ```
 Tiers `rule+referee`, `qwen2.5:3b+referee`, `deepseek-r1:32b+referee` in
 `results_trace_replay.json`.
+
+### Exp 50 seed sweep — pool 8 at n=32 (2026-07-16): the referee's win is SIGNIFICANT
+
+**How.** `pins/run_parallel_sweep.sh`: ollama restarted with 4 parallel slots
+(`PINS_NUM_CTX=8192` per request keeps 4×KV + the ~20GB weights inside the 40GB A100),
+seeds warmed in waves of 4 with a cache-replay peek table between waves, then one
+canonical n=32 run writes the real results file (bit-identical to a serial sweep).
+~2.5h wall-clock, vs ~6h serial. Needed the flocked `save_cache` (parallel workers
+finishing together used to clobber each other's keys).
+
+**Result (v2020 base world, pool 8, paired vs floor, n=32; deltas in pp, lower better).**
+
+| arm | dSLA | dprodSLA | dutil | dslow | fb |
+|---|---|---|---|---|---|
+| referee@r1:32b   | +0.4 ± 2.4 | **−7.7 ± 5.4\*** | +2.2 ± 1.5\* | +1.3 ± 1.5 | 0% |
+| negotiated@r1:32b| +0.0 ± 2.2 | −4.0 ± 3.8\*     | +1.0 ± 0.8\* | +0.3 ± 1.2 | 0% |
+
+**First statistically significant outcome win for the referee allocator.** Prod SLA
+violations drop 7.7pp vs the rigid floor — nearly double the negotiated (code-decides)
+arm on the same windows — with utilisation +2.2pp\*, overall SLA flat, and zero
+infeasible ticks. The delta was stable as n grew (−7.5 @n=20 → −7.6\* @24 → −8.8\* @28
+→ −7.7\* @32), so this is convergence, not a lucky tail. Exp 50b's "sufficiency, not
+superiority" verdict is now superseded *at this venue*: slack pool + margins-only
+contested slice, exactly where the flexibility argument predicted the win. The price is
+visible and honest: prod protection is paid in besteffort slowdown (+1.3, ns) — the
+referee spends margins on prod jobs the rule arm would have left starving.
+
+**Next → Exp 51 (the manual).** Phase A: `pins/manual_author.py` — the r1 referee
+self-authors precedents on training windows (seeds 100+, disjoint from eval 0–31): after
+each window it reflects on its decisions vs the floor's outcome on the same jobs and
+proposes ≤1 manual change (code owns ids/cap/render/audit log). Phase B: freeze the
+manual, eval `--manual` (or `PINS_MANUAL=<path>`) at 3b/14b — tier `+manual`, manual
+hash in the scene-cache key — vs vanilla and the r1 ceiling: does the manual recover
+r1's judgment at chat-model latency?
+
+**Reproduce.**
+```bash
+MODEL=deepseek-r1:32b SEEDS=32 POOLS=8 WORKERS=4 bash pins/run_parallel_sweep.sh
+```
