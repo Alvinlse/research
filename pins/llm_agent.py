@@ -27,6 +27,7 @@ Run:  .venv/bin/python -m pins.llm_agent            # smoke: strategy + justific
 """
 from __future__ import annotations
 
+import fcntl
 import json
 import os
 import re
@@ -35,6 +36,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 CACHE_PATH = os.path.join(HERE, "llm_agent_cache.json")
 DEFAULT_MODEL = "qwen2.5:3b"          # project default; --model swaps it (e.g. a llama tag)
 HOST = "http://localhost:11434"
+# PINS_NUM_CTX shrinks each request's context so OLLAMA_NUM_PARALLEL slots fit in VRAM
+CTX_OPT = ({"num_ctx": int(os.environ["PINS_NUM_CTX"])}
+           if os.environ.get("PINS_NUM_CTX") else {})
 
 STANCES = ["aggressive", "balanced", "concede"]
 STANCE_MULT = {"aggressive": 1.5, "balanced": 1.0, "concede": 0.6}   # fixed code constants
@@ -144,12 +148,15 @@ def load_cache() -> dict:
 
 
 def save_cache(cache: dict) -> None:
-    merged = load_cache()          # merge, don't clobber: keys are model-qualified,
-    merged.update(cache)           # so runs at different models must coexist on disk
-    tmp = CACHE_PATH + ".tmp"
-    with open(tmp, "w") as f:
-        json.dump(merged, f, indent=2, sort_keys=True)
-    os.replace(tmp, CACHE_PATH)
+    # flock + per-pid tmp: parallel sweep workers save concurrently
+    with open(CACHE_PATH + ".lock", "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        merged = load_cache()          # merge, don't clobber: keys are model-qualified,
+        merged.update(cache)           # so runs at different models must coexist on disk
+        tmp = f"{CACHE_PATH}.tmp{os.getpid()}"
+        with open(tmp, "w") as f:
+            json.dump(merged, f, indent=2, sort_keys=True)
+        os.replace(tmp, CACHE_PATH)
 
 
 def llm_strategy(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
@@ -167,7 +174,7 @@ def llm_strategy(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
             client = ollama.Client(host=host)
             resp = client.chat(
                 model=model, format="json",
-                options={"temperature": 0, "num_predict": 150},
+                options={"temperature": 0, "num_predict": 150, **CTX_OPT},
                 messages=[{"role": "system", "content": SYSTEM},
                           {"role": "user", "content": _user_prompt(ctx)}],
             )
@@ -263,7 +270,7 @@ def llm_priority(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
             client = ollama.Client(host=host)
             resp = client.chat(
                 model=model, format="json",
-                options={"temperature": 0, "num_predict": 120},
+                options={"temperature": 0, "num_predict": 120, **CTX_OPT},
                 messages=[{"role": "system", "content": SYSTEM_PRIORITY},
                           {"role": "user", "content": _priority_prompt(ctx)}],
             )
@@ -360,7 +367,7 @@ def llm_declare(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
             system = SYSTEM_DECLARE_PRICED if ctx["tariff"] == "priced" else SYSTEM_DECLARE_FREE
             resp = client.chat(
                 model=model, format="json",
-                options={"temperature": 0, "num_predict": 120},
+                options={"temperature": 0, "num_predict": 120, **CTX_OPT},
                 messages=[{"role": "system", "content": system},
                           {"role": "user", "content": _declare_prompt(ctx)}],
             )
@@ -469,7 +476,7 @@ def llm_reserve(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
             client = ollama.Client(host=host)
             resp = client.chat(
                 model=model, format="json",
-                options={"temperature": 0, "num_predict": 120},
+                options={"temperature": 0, "num_predict": 120, **CTX_OPT},
                 messages=[{"role": "system", "content": SYSTEM_RESERVE},
                           {"role": "user", "content": _reserve_prompt(ctx)}],
             )
@@ -616,7 +623,7 @@ def llm_margin(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
             client = ollama.Client(host=host)
             resp = client.chat(
                 model=model, format="json",
-                options={"temperature": 0, "num_predict": 120},
+                options={"temperature": 0, "num_predict": 120, **CTX_OPT},
                 messages=[{"role": "system", "content": SYSTEM_MARGIN},
                           {"role": "user", "content": _margin_prompt(ctx)}],
             )
@@ -698,7 +705,7 @@ def llm_margin_reflect(ctx: dict, exp: dict, use_llm: bool = True, model: str = 
             client = ollama.Client(host=host)
             resp = client.chat(
                 model=model, format="json",
-                options={"temperature": 0, "num_predict": 120},
+                options={"temperature": 0, "num_predict": 120, **CTX_OPT},
                 messages=[{"role": "system", "content": SYSTEM_MARGIN_REFLECT},
                           {"role": "user", "content": _reflect_prompt(ctx, exp)}],
             )
@@ -789,7 +796,7 @@ def llm_joint(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
             client = ollama.Client(host=host)
             resp = client.chat(
                 model=model, format="json",
-                options={"temperature": 0, "num_predict": 150},
+                options={"temperature": 0, "num_predict": 150, **CTX_OPT},
                 messages=[{"role": "system", "content": SYSTEM_JOINT},
                           {"role": "user", "content": _joint_prompt(ctx)}],
             )

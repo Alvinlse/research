@@ -207,3 +207,26 @@ agents free-texting through it). Superseded by `pins/`; kept for reference. `mai
   lines in `research_plan.md`. Match that style — explain the "why" and the design link, not just the "what".
 - Keep the pure decider (`mechanism.py`) free of MCP/network/LLM imports so it stays unit-testable
   and provable in isolation. Verify it (`test_mechanism`) before wiring anything above it.
+
+## Operational manual — solved problems (add yours here, especially time-consuming ones)
+
+Treat this as the ops half of the "manual" idea (the referee's half is
+`pins/referee_manual.md`): when a problem costs real time to solve, distill the fix
+here so no future session re-derives it.
+
+- **Login-node reaper** kills background shells after ~12–15 CPU-minutes. Run one
+  sweep/pool per background task; don't chain them in one shell. (Cost: a dead
+  mid-deepseek run, 2026-07-15.)
+- **Parallel Ollama sweeps**: `pins/run_parallel_sweep.sh` (WORKERS ollama slots, seed
+  waves, peek tables between waves). VRAM budget: weights ~20GB + WORKERS x num_ctx of
+  KV — 4 x 8192 fits the 40GB A100; don't raise both.
+- **`save_cache` is flocked + pid-unique tmp** (llm_agent.py) because parallel workers
+  finishing together used to crash on a shared `.tmp` rename and could silently drop
+  each other's keys — each lost key costs 1–3 GPU-minutes to recompute. Don't
+  "simplify" it back.
+- **Reasoning models (deepseek-r1) need `num_predict` 4096**: the thinking channel eats
+  a 300-token budget before any JSON is emitted. (Cost: a day of empty referee replies,
+  Exp 49.)
+- **Never edit modules a running sweep imports** (`trace_replay.py`, `llm_agent.py`,
+  `referee.py`): each wave launches fresh processes, so mid-sweep edits mix code
+  versions across seeds and poison cache comparability.
