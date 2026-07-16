@@ -384,7 +384,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         assert referee, "--manual is a referee-arm option"
         from pins.referee import load_manual
         load_manual(manual)               # Exp 51: precedent block + cache-key hash
-        suffix += "+manual"               # tiers must never mix manual/vanilla rulings
+        # tiers must never mix rulings across manuals or with vanilla (results merge per tier)
+        suffix += ("+manual-learned" if "learned" in os.path.basename(manual) else "+manual")
     if n_jobs != 16:
         suffix += f"+n{n_jobs}"           # Exp 48: scale-up tiers must not collide
     tag = (baseline or ("rule" if not use_llm else model)) + suffix
