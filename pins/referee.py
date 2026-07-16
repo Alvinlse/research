@@ -266,11 +266,12 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
             reserve = 0
         out = NegotiationOutcome(margins=margins, reserve=reserve, rounds=1,
                                  agreed=o.feasible, transcript=o.transcript)
-        sig = f"referee|ok={o.feasible}|r={reserve}|m={sorted(margins.items())}"
+        sig = f"referee|free={free}|ok={o.feasible}|r={reserve}|m={sorted(margins.items())}"
         if sig not in seen:
             seen.add(sig)
-            trace.append({"policy": "referee", "feasible": o.feasible,
-                          "violations": o.violations, "reserve": reserve, "margins": margins,
+            trace.append({"policy": "referee", "free_gpus": free, "feasible": o.feasible,
+                          "violations": o.violations, "reserve": reserve,
+                          "llm_reserve": o.reserve, "margins": margins,
                           "why": o.justification, "_source": o._source})
         return margins, reserve, out
     return policy

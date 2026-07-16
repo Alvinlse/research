@@ -27,6 +27,7 @@ Run:  .venv/bin/python -m pins.manual_author --model deepseek-r1:32b --seeds 32
 from __future__ import annotations
 
 import argparse
+import collections
 import json
 import os
 import random
@@ -54,6 +55,23 @@ SYSTEM_REFLECT = (
     "WHEN clause) — the same request can deserve opposite rulings in different states, so an "
     "unconditioned rule is a bug. Learn from wins too: if a ruling worked, say when to repeat "
     "it. Prefer editing/sharpening an existing precedent over adding a near-duplicate.\n"
+    "THE WHEN CLAUSE IS MATCHED PER DECISION, NOT PER WINDOW. Use ONLY these exact field "
+    "names and values — they are the whole vocabulary the referee sees when it rules; any "
+    "other field does not exist and your precedent will never match:\n"
+    "  free_gpus            int  — GPUs free at that tick (see free_gpus_seen for this "
+    "window's actual distribution)\n"
+    "  tier                 'prod' | 'besteffort'                (per demand job)\n"
+    "  deadline             'behind' | 'ontrack' | 'ahead'       (per demand job)\n"
+    "  base_gpus            int                                  (per demand job)\n"
+    "  requested_margin_gpus int                                 (per demand job)\n"
+    "  requested_reserve_gpus int                                (supply side)\n"
+    "  incoming_prod        'none' | 'few' | 'many'  — a CATEGORY, never a number: write "
+    "incoming_prod != 'none', NOT incoming_prod > 0\n"
+    "The window summary (pool_size_gpus, n_jobs) is CONSTANT across every decision — a WHEN "
+    "clause referencing it matches always or never and teaches nothing.\n"
+    "Your rule must be SATISFIABLE wherever it fires: check it against `free_gpus_seen` "
+    "before proposing. A rule like 'reserve 3 GPUs' is dead if free_gpus is 0 or 1 in most "
+    "decisions. Pick thresholds that actually occur, and prefer a rule that fires often.\n"
     "Respond with ONLY this JSON object:\n"
     '{"action": "add" | "edit" | "none", "id": "<Pn, required for edit>", '
     '"when": "<observable state condition>", "rule": "<the ruling to apply>", '
@@ -157,7 +175,11 @@ def run(model: str, n_seeds: int, seed_start: int, pool: int, statement_model: s
                                  or ref["done_at"][j.jid] > j.deadline}
                     for j in jobs]
         payload = {
-            "window": {"free_pool_gpus": pool, "n_jobs": n_jobs, "seed": s},
+            "window": {"pool_size_gpus": pool, "n_jobs": n_jobs, "seed": s},
+            # the states a WHEN clause is actually matched against (P1 was written over the
+            # constant pool size and fired in 5/925 scenes — condition on these instead)
+            "free_gpus_seen": dict(sorted(collections.Counter(
+                d["free_gpus"] for d in decisions).items())),
             "your_outcome": {k: round(ref[k], 3) for k in
                              ("sla", "prod_sla", "util", "fallback_rate")},
             "rigid_rule_baseline_outcome": {k: round(floor[k], 3) for k in
