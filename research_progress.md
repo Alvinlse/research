@@ -2784,7 +2784,76 @@ PINS_MANUAL=pins/referee_manual_learned.md .venv/bin/python -m pins.trace_replay
 .venv/bin/python -m pins.trace_replay \
   --compare 'qwen2.5:14b+referee+manual-learned/referee,qwen2.5:14b+referee/referee'
 ```
-(NB: the Exp 53 reseed overwrote tier `qwen2.5:14b+referee` pool 8 with seeds 32–63 in
-the live results file; the seeds 0–31 arm lives in
-`pins/results_backup_pre_exp53_14b_reseed.json` — point `PINS_RESULTS` there for the
-paired comparisons above.)
+(NB: the reseed now lives in its own file — see Exp 53 — so the live results file keeps
+the seeds 0–31 arm and the paired comparisons above work as written.)
+
+## Experiment 53 — DOES THE 14b WIN GENERALIZE? Reseed + pool sweep: real (pooled n=64) but venue-bound (2026-07-17)
+
+**Question.** Exp 52's headline (vanilla 14b referee −9.0\* prodSLA at pool 8) was one
+seed set and one pool. Two robustness checks: fresh seeds 32–63 at pool 8 (reseed,
+paired against their own floor), and pools 4/6 on the original seeds (venue sweep).
+
+**Result 1 — reseed (pool 8, seeds 32–63, n=32).**
+
+| arm | dSLA | dprodSLA | dutil | dslow | fb |
+|---|---|---|---|---|---|
+| referee@14b    | +0.8 ± 1.7 | −5.9 ± 7.5 | −1.6 ± 1.7 | −2.1 ± 2.5 | 1% |
+| negotiated@14b | +0.2 ± 1.2 | −3.0 ± 7.0 | +2.1 ± 1.0\* | −1.1 ± 1.2 | 0% |
+
+Same sign, **not significant alone** (−5.9 ± 7.5). Pooling both seed sets:
+
+| seeds | dprodSLA |
+|---|---|
+| 0–31 (Exp 52) | −9.0 ± 5.3\* |
+| 32–63 (fresh) | −5.9 ± 7.5 ns |
+| **pooled n=64** | **−7.5 ± 4.5\*** (dSLA +0.9 ± 1.6 ns) |
+
+The win is real but modest: a single 32-seed batch is marginal for re-detecting it (the
+fresh batch's CI is ±7.5), so **n=64 is the honest headline: −7.5 ± 4.5\***, right on top
+of r1:32b's −7.7\* — 14b ≈ r1 at pool 8, now at 2× the seeds.
+
+**Result 2 — pool sweep (seeds 0–31, n=32 each).**
+
+| pool | dSLA | dprodSLA | dutil | fb | negotiated dprodSLA |
+|---|---|---|---|---|---|
+| 4 | **+3.3 ± 2.6\*** | −4.4 ± 5.0 | **−7.5 ± 2.4\*** | 0% | −3.1 ± 3.7 |
+| 6 | −0.2 ± 2.3 | **−9.2 ± 5.5\*** | −4.8 ± 2.1\* | 1% | −5.2 ± 4.4\* |
+| 8 | +1.0 ± 2.9 | **−9.0 ± 5.3\*** | −1.5 ± 1.8 | 1% | −4.3 ± 4.1\* |
+
+**Findings.**
+1. **The prod-protection win generalizes down to pool 6** (−9.2\*, ~2× the negotiated
+   arm) but **fades at pool 4** (−4.4 ns), where the referee instead pays **+3.3\***
+   overall SLA and **−7.5\*** utilisation. Same shape as Exp 50's r1 story: the
+   flexibility argument needs margins to spend; at a tight pool there are none, and the
+   referee's hedging turns into pure cost. The win is venue-bound, and the venue is slack.
+2. **14b's price is utilisation at every pool** (−1.5 to −7.5), unlike r1:32b which
+   *gained* util at pool 8 (+2.2\*). 14b protects prod by holding capacity back; r1
+   protected it by spending capacity better. Same headline number, different mechanism —
+   worth a transcript look before claiming 14b "matches" r1.
+3. Referee ≥ negotiated on prod protection at every pool; never significantly worse.
+
+**Caveats / ops.** Pool sweep is seeds 0–31 only; single trace, base world. This
+experiment ate a day of ops mistakes worth recording: (a) killing a run mid
+`json.dump` truncates `results_trace_replay.json` — it happened twice (once via the
+CPU reaper, once via a careless `pkill`); restore from
+`pins/results_backup_pre_exp53_14b_reseed.json`, everything replays from the LLM cache.
+(b) Outside `run_parallel_sweep.sh`, **always set `PINS_NUM_CTX=8192`**: ollama's 32k
+default context pushes 14b to a 48GB footprint → 15% CPU-offload → ~4× slower calls
+(and ollama serves smaller-ctx requests on an already-loaded bigger instance, so the fix
+only bites after `ollama stop`). (c) The reseed is stored in
+`pins/results_exp53_reseed_14b.json` (`PINS_RESULTS=<path>`) so the live file keeps the
+seeds 0–31 arm paired with Exp 51/52's tiers.
+
+**Next.** Transcript autopsy of the 14b util price (finding 2); gemma2 referee arm
+(family threshold, Exp 43/46 analogue, incl. the unrun manual arm); then the paper's
+referee section can claim: LLM-as-allocator ≥ code pipeline at slack, never infeasible,
+at chat-model latency.
+
+**Reproduce.**
+```bash
+PINS_NUM_CTX=8192 .venv/bin/python -m pins.trace_replay --referee --llm \
+  --model qwen2.5:14b --pools 4,6 --seeds 32                       # pool sweep, seeds 0-31
+PINS_RESULTS=pins/results_exp53_reseed_14b.json PINS_NUM_CTX=8192 \
+  .venv/bin/python -m pins.trace_replay --referee --llm \
+  --model qwen2.5:14b --pools 8 --seed-start 32 --seeds 64         # reseed, own floor
+```
