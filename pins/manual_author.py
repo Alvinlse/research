@@ -133,6 +133,32 @@ def apply_proposal(entries: list[dict], prop: dict | None) -> str:
 
 
 # --------------------------------------------------------------------------- #
+#  Contested-window screen (Phase A v6): only train where the knobs are live    #
+# --------------------------------------------------------------------------- #
+def contested(jobs, pool, horizon, u_map, spike_map, scale, spike_max, cap_map, tcap,
+              floor) -> bool:
+    """True if ANY constant (margins, reserve) probe strictly IMPROVES on the floor
+    (sla/prod_sla are violation rates, lower = better).
+
+    Exp 51-53 diagnosis: state coverage is 27/27 already; the manual degrades because most
+    random training windows are outcome-TIES (dprodSLA 0.000), so r1 reflects on noise and
+    accumulates near-duplicate reserve tweaks. The probes are the exact knobs the referee
+    controls; "any movement" is too loose a bar (a clumsy reserve can always hurt — 94% of
+    windows pass), so a window counts only if some probe BEATS the floor (61% pass): there
+    is a winnable lesson, not merely a knob with side effects."""
+    def const_policy(margin, reserve):
+        def p(demand, supply_ctx, free, **_):
+            return {j.jid: margin for j in demand}, reserve, None
+        return p
+    for m, r in ((0, 1), (0, 2), (0, 3), (1, 0)):
+        o = simulate(jobs, const_policy(m, r), pool, horizon, u_map, spike_map, scale,
+                     spike_max, cap_map, true_cap_map=tcap)
+        if (o["prod_sla"] < floor["prod_sla"] - 1e-9) or (o["sla"] < floor["sla"] - 1e-9):
+            return True
+    return False
+
+
+# --------------------------------------------------------------------------- #
 #  One training window: floor + referee + reflection                            #
 # --------------------------------------------------------------------------- #
 def reflect(model: str, payload: dict) -> dict | None:
@@ -145,7 +171,8 @@ def reflect(model: str, payload: dict) -> dict | None:
     return _parse(resp.message.content)
 
 
-def run(model: str, n_seeds: int, seed_start: int, pool: int, statement_model: str) -> None:
+def run(model: str, n_seeds: int, seed_start: int, pool: int, statement_model: str,
+        screen: bool = False, screen_budget: int = 8) -> None:
     trace = load_trace(TRACES["v2020"][0])
     dist = load_uncertainty_distribution()
     cache = load_cache()
@@ -153,7 +180,10 @@ def run(model: str, n_seeds: int, seed_start: int, pool: int, statement_model: s
     set_manual(save_store(entries))           # referee sees the manual as it grows
     horizon, n_jobs, spike_max, scale = 300, 16, 0.6, 3   # base world (Exp 28/29 recipe)
 
-    for s in range(seed_start, seed_start + n_seeds):
+    trained = 0
+    for s in range(seed_start, seed_start + n_seeds * (screen_budget if screen else 1)):
+        if trained >= n_seeds:
+            break
         jobs, cap_map, tcap, _ = make_trace_workload(trace, n_jobs, s, horizon, None,
                                                      False, None, False, None, None,
                                                      TRACES["v2020"][1], 1)
@@ -162,6 +192,13 @@ def run(model: str, n_seeds: int, seed_start: int, pool: int, statement_model: s
         u_map, spike_map = assign(jobs, s, dist, spike_max)
         floor = simulate(jobs, policy_none, pool, horizon, u_map, spike_map, scale,
                          spike_max, cap_map, true_cap_map=tcap)
+        if screen and not contested(jobs, pool, horizon, u_map, spike_map, scale,
+                                    spike_max, cap_map, tcap, floor):
+            with open(LOG, "a") as f:
+                f.write(json.dumps({"seed": s, "verdict": "skipped: uncontested"}) + "\n")
+            print(f"seed {s}: skipped (uncontested)")
+            continue
+        trained += 1
         decisions: list = []
         ref = simulate(jobs, make_policy_referee(True, model, cache, decisions, set(),
                                                  statement_model=statement_model),
@@ -214,8 +251,13 @@ def main() -> None:
     ap.add_argument("--seed-start", type=int, default=100)   # disjoint from eval seeds 0..31
     ap.add_argument("--pool", type=int, default=8)
     ap.add_argument("--statement-model", default="qwen2.5:3b")  # submissions fixed, as in Exp 50
+    ap.add_argument("--screen", action="store_true",
+                    help="Phase A v6: skip uncontested windows (no constant-probe policy "
+                         "moves the outcome vs the floor) — train only where a ruling can "
+                         "matter; scans up to 8x seeds to find --seeds contested windows")
     args = ap.parse_args()
-    run(args.model, args.seeds, args.seed_start, args.pool, args.statement_model)
+    run(args.model, args.seeds, args.seed_start, args.pool, args.statement_model,
+        screen=args.screen)
 
 
 if __name__ == "__main__":
