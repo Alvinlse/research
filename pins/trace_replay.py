@@ -331,7 +331,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           time_mode: str | None = None, ttf_mode: str | None = None,
           baseline: str | None = None, dyncap: str | None = None,
           trace_name: str = "v2020", quantum: int = 1, referee: bool = False,
-          manual: str | None = None) -> None:
+          manual: str | None = None, single_ilp: bool = False) -> None:
+    assert not (referee and single_ilp), "--referee and --single-ilp are separate arms" 
     assert not (time_mode and ttf_mode), "--time and --ttf are separate experiments"
     assert quantum == 1 or (caps_mode == "real" and truth_mode == "plan" and
                             not (time_mode or ttf_mode or baseline or dyncap)), \
@@ -379,6 +380,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         suffix += "+qwhole"               # Exp 48: whole-GPU allocation quantum
     if referee:
         suffix += "+referee"              # Exp 50: referee-LLM allocator arm
+    if single_ilp:
+        suffix += "+single-ilp"           # Exp 54: single LLM proposes, ILP repairs
     manual = manual or os.environ.get("PINS_MANUAL")   # flag and env are the same arm
     if manual:
         assert referee, "--manual is a referee-arm option"
@@ -403,6 +406,13 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
             ("no-llm",     lambda: policy_none),
             ("referee",    lambda: make_policy_referee(use_llm, model, cache, decisions, seen,
                                                        statement_model="qwen2.5:3b")),
+            ("negotiated", lambda: make_policy_negotiated(use_llm, model, cache, decisions, seen)),
+        ]
+    elif single_ilp:              # Exp 54: LLMSched spine — one LLM proposes, the ILP repairs
+        from pins.two_sided_sim import make_policy_single_ilp
+        rows = [
+            ("no-llm",     lambda: policy_none),
+            ("single-ilp", lambda: make_policy_single_ilp(use_llm, model, cache, decisions, seen)),
             ("negotiated", lambda: make_policy_negotiated(use_llm, model, cache, decisions, seen)),
         ]
     else:
@@ -532,6 +542,10 @@ def main() -> None:
                          "runtime P50 (pred_job_runtime.csv), 'blind' = none (always ontrack), "
                          "'oracle' = true work on the same runtime-covered windows. Default "
                          "(absent) = pre-Exp-38 oracle on unrestricted windows")
+    ap.add_argument("--single-ilp", action="store_true",
+                    help="Exp 54: LLMSched-spine arm — ONE joint-objective LLM proposes "
+                         "(margins, reserve), the evaluator verifies, an infeasible proposal "
+                         "is min-edit REPAIRED by pins/ilp.py (fb column = repair rate)")
     ap.add_argument("--referee", action="store_true",
                     help="Exp 50: swap the policy rows for the referee-LLM allocator vs the "
                          "no-llm floor and the negotiated (code-decides) arm; infeasible "
@@ -571,7 +585,7 @@ def main() -> None:
           use_llm=a.llm, model=a.model, caps_mode=a.caps, quantile=a.quantile,
           truth_mode=a.truth, time_mode=a.time, ttf_mode=a.ttf, baseline=a.baseline,
           dyncap=a.dyncap, trace_name=a.trace, quantum={"quarter": 1, "whole": 4}[a.quantum],
-          referee=a.referee, manual=a.manual)
+          referee=a.referee, manual=a.manual, single_ilp=a.single_ilp)
 
 
 if __name__ == "__main__":

@@ -35,7 +35,8 @@ import os
 
 from pins import bridge
 from pins.llm_agent import (llm_margin, llm_reserve, reserve_amount, load_cache, save_cache)
-from pins.negotiation_protocol import (DemandJob, HEDGE_GPUS, negotiate, single_llm_plan)
+from pins.negotiation_protocol import (DemandJob, HEDGE_GPUS, NegotiationOutcome, negotiate,
+                                       single_llm_plan)
 from pins.negotiation_sim import Job, make_workload
 from pins.predictor import PHASE_PROFILES
 from pins.uncertainty_sim import (assign, assign_gpu, load_gpu_distribution,
@@ -98,6 +99,39 @@ def make_policy_single(use_llm, model, cache, trace, seen):
         o = single_llm_plan(demand, supply_ctx, free, use_llm=use_llm, model=model, cache=cache)
         _record_outcome(trace, seen, "single-llm", o)
         return o.margins, o.reserve, o
+    return policy
+
+
+def make_policy_single_ilp(use_llm, model, cache, trace, seen):
+    """LLMSched-architecture arm: ONE joint-objective LLM proposes (margins, reserve), the
+    evaluator verifies it, and an infeasible proposal is REPAIRED by the min-edit ILP
+    (pins/ilp.py) instead of falling back to the floor wholesale — the reference paper's
+    propose->guarantee spine. `agreed=False` marks a repaired tick, so the fb column reads
+    as the ILP repair rate (the analogue of the referee's fallback rate)."""
+    from pins.ilp import allocate
+    from pins.referee import check_allocation
+
+    def policy(demand, supply_ctx, free, **_):
+        o = single_llm_plan(demand, supply_ctx, free, use_llm=use_llm, model=model, cache=cache)
+        margins, reserve = dict(o.margins), o.reserve
+        repaired = False
+        if check_allocation(margins, reserve, demand, free):
+            # Constant curves rank prod/behind margins above besteffort above the reserve;
+            # capacity = this tick's free pool. Nothing is "current" (margins are per-tick),
+            # so rescale_cost stays 0 and the ILP is a pure value-max knapsack over the
+            # LLM's own proposal — the minimum edit that fits.
+            bids = {j.jid: [2.0 + j.concede_rank] * margins[j.jid]
+                    for j in demand if margins.get(j.jid, 0) > 0}
+            if reserve > 0:
+                bids["_reserve"] = [1.0] * reserve
+            r = allocate(bids, free)
+            margins = {jid: r.allocation.get(jid, 0) for jid in margins}
+            reserve = r.allocation.get("_reserve", 0)
+            repaired = True
+        out = NegotiationOutcome(margins=margins, reserve=reserve, rounds=o.rounds,
+                                 agreed=not repaired, transcript=o.transcript)
+        _record_outcome(trace, seen, "single-ilp", out)
+        return margins, reserve, out
     return policy
 
 
