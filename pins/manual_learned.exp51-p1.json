@@ -1,0 +1,8 @@
+[
+ {
+  "id": "P1",
+  "when": "free_pool_gpus >=8 and n_jobs >=16 and upcoming_prod_jobs ==2 and (current_allocated_gpus + reserved_gpus) < total_available_gpus - 3",
+  "rule": "Reserve at least 3 GPUs for incoming prod jobs. For each additional upcoming prod job beyond 2, increase the reserve by 1 GPU up to a maximum of 5 reserved GPUs.",
+  "why": "Reducing the minimum reserve from 4 to 3 improved besteffort job outcomes without significantly affecting production SLA."
+ }
+]

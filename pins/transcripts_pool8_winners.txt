@@ -1,0 +1,1002 @@
+
+##########################################################################################
+SEED 1  pool 8: SLA 25.0% prodSLA 0.0% util 91% slowdown 3.29 | 229 referee calls
+##########################################################################################
+
+--- call 0  free=8  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=many: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={} reserve=1
+  why: Granted a small reserve as contention is low but prod jobs are incoming, aligning with feasibility and incentive skepticism rules.
+
+--- call 1  free=4  src=llm:deepseek-r1:32b  feasible=True
+  demand r00 [prod/ontrack] base=0 +margin_req=1: While uncertainty and spike risk are low, the large predicted GPU request and current low cluster contention suggest a moderate hedge to avoid missing
+  supply reserve_req=1 incoming_prod=many: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r00': 1} reserve=1
+  why: Allocated 1 GPU to r00 as its base is met and justification for margin is convincing. Reserved 1 GPU due to incoming prod jobs, within free_gpus limit.
+
+--- call 2  free=3  src=llm:deepseek-r1:32b  feasible=True
+  demand r00 [prod/ontrack] base=0 +margin_req=1: While uncertainty and spike risk are low, the large predicted GPU request and current low cluster contention suggest a moderate hedge to avoid missing
+  supply reserve_req=1 incoming_prod=many: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r00': 1} reserve=1
+  why: Allocated 1 GPU margin to r00 as its base was met and justification was convincing. Reserved 1 GPU for future prod jobs, totaling 2 GPUs within the free pool.
+
+--- call 17  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r00 [prod/ontrack] base=0 +margin_req=1: Despite low forecast uncertainty and low spike risk, the large predicted GPU request under high cluster contention warrants a modest safety margin to 
+  supply reserve_req=1 incoming_prod=many: Moderate contention allows reserving light headroom to protect incoming prod jobs without significantly impacting existing workload.
+  REFEREE -> alloc={'r00': 1} reserve=0
+  why: Allocated 1 GPU to r00 as its justification for margin was convincing, and it's a prod job with priority. Reserve not granted due to free_gpus constraint.
+
+--- call 18  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r00 [prod/ontrack] base=0 +margin_req=1: Despite low forecast uncertainty and low spike risk, the large predicted GPU request under high cluster contention warrants a modest safety margin to 
+  supply reserve_req=1 incoming_prod=many: Moderate contention allows reserving light headroom to protect incoming prod jobs without significantly impacting existing workload.
+  REFEREE -> alloc={} reserve=0
+  why: No free GPUs available to allocate or reserve.
+
+--- call 19  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r00 [prod/ontrack] base=0 +margin_req=1: Despite low forecast uncertainty and low spike risk, the large predicted GPU request under high cluster contention warrants a modest safety margin to 
+  demand r01 [besteffort/ontrack] base=0 +margin_req=1: Given the medium spike risk and large predicted GPU request, a some hedge provides adequate insurance against potential spikes without significantly i
+  supply reserve_req=1 incoming_prod=many: Moderate contention allows reserving light headroom to protect incoming prod jobs without significantly impacting existing workload.
+  REFEREE -> alloc={'r00': 0, 'r01': 0} reserve=0
+  why: No free GPUs available; allocations and reserve are zero to maintain feasibility.
+
+--- call 41  free=4  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=2: Despite the high uncertainty and spike risk, the large predicted request size and being ahead of schedule warrant a heavy hedge to protect against any
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={'r01': 2} reserve=1
+  why: Allocated 2 GPUs to r01 as margin due to high uncertainty and potential spikes, and granted 1 GPU reserve for future prod needs. Total awarded is within free_gpus limit.
+
+--- call 42  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=2: Despite the high uncertainty and spike risk, the large predicted request size and being ahead of schedule warrant a heavy hedge to protect against any
+  demand r04 [prod/ontrack] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted GPU request and current high cluster contention suggest a moderate hedge t
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={'r04': 1} reserve=0
+  why: Allocated 1 GPU to r04 as it is a prod job with a reasonable margin request, and no GPUs left for reserve or besteffort margins.
+
+--- call 43  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=2: Despite the high uncertainty and spike risk, the large predicted request size and being ahead of schedule warrant a heavy hedge to protect against any
+  demand r02 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, even with low uncertainty and small request size; hedge to avoid missing the deadline despite hig
+  demand r04 [prod/ontrack] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted GPU request and current high cluster contention suggest a moderate hedge t
+  demand r05 [besteffort/ontrack] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a large safety margin unnecessary, given the small request size and current high cluster contention.
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={'r01': 0, 'r02': 0, 'r04': 0, 'r05': 0} reserve=0
+  why: No GPUs are awarded as the free pool is empty, adhering to feasibility rules.
+
+--- call 52  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  demand r02 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high forecast uncertainty and small request size; low contention allows for some extra 
+  demand r04 [prod/ontrack] base=0 +margin_req=1: While uncertainty is medium, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen spikes 
+  demand r05 [besteffort/ontrack] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a large safety margin unnecessary, given the small request size and current low cluster contention.
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r04': 1} reserve=0
+  why: Allocated 1 GPU to 'prod' job r04 due to priority, leaving no room for reserve.
+
+--- call 53  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  demand r02 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high forecast uncertainty and small request size; low contention allows for some extra 
+  demand r04 [prod/ontrack] base=0 +margin_req=1: While uncertainty is medium, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen spikes 
+  demand r05 [besteffort/ontrack] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a large safety margin unnecessary, given the small request size and current low cluster contention.
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r01': 0, 'r02': 0, 'r04': 0, 'r05': 0} reserve=0
+  why: No GPUs are allocated or reserved as the free pool is exhausted.
+
+--- call 54  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  demand r02 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high forecast uncertainty and small request size; low contention allows for some extra 
+  demand r04 [prod/ontrack] base=0 +margin_req=1: While uncertainty is medium, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen spikes 
+  demand r05 [besteffort/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a large safety margin unnecessary, given the small request size and your current lead on schedule.
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r04': 1} reserve=0
+  why: Allocated 1 GPU to prod job r04 due to priority, leaving no room for the supply side's reserve.
+
+--- call 55  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  demand r02 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high forecast uncertainty and small request size; low contention allows for some extra 
+  demand r04 [prod/ontrack] base=0 +margin_req=1: While uncertainty is medium, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen spikes 
+  demand r05 [besteffort/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a large safety margin unnecessary, given the small request size and your current lead on schedule.
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r01': 0, 'r02': 0, 'r04': 0, 'r05': 0} reserve=0
+  why: No GPUs were allocated due to the free pool being zero, adhering to Feasibility and Incentive Skepticism rules.
+
+--- call 56  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  demand r02 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high forecast uncertainty and small request size; low contention allows for some extra 
+  demand r04 [prod/ontrack] base=0 +margin_req=1: While uncertainty is medium, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen spikes 
+  demand r05 [besteffort/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a large safety margin unnecessary, given the small request size and your current lead on schedule.
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r04': 1} reserve=0
+  why: Allocated 1 GPU to prod job r04 due to priority, leaving no room for the supply side's reserve.
+
+--- call 57  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  demand r02 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high forecast uncertainty and small request size; low contention allows for some extra 
+  demand r04 [prod/ontrack] base=0 +margin_req=1: While uncertainty is medium, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen spikes 
+  demand r05 [besteffort/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a large safety margin unnecessary, given the small request size and your current lead on schedule.
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r01': 0, 'r02': 0, 'r04': 0, 'r05': 0} reserve=0
+  why: No GPUs were allocated due to the free pool being zero, adhering to Feasibility and Incentive Skepticism rules.
+
+--- call 58  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  demand r02 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high forecast uncertainty and small request size; low contention allows for some extra 
+  demand r04 [prod/ontrack] base=0 +margin_req=1: While uncertainty is medium, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen spikes 
+  demand r05 [besteffort/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a large safety margin unnecessary, given the small request size and your current lead on schedule.
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r04': 1} reserve=0
+  why: Allocated 1 GPU to prod job r04 due to priority, leaving no room for the supply side's reserve.
+
+--- call 59  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  demand r02 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high forecast uncertainty and small request size; low contention allows for some extra 
+  demand r04 [prod/ontrack] base=0 +margin_req=1: While uncertainty is medium, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen spikes 
+  demand r05 [besteffort/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a large safety margin unnecessary, given the small request size and your current lead on schedule.
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r01': 0, 'r02': 0, 'r04': 0, 'r05': 0} reserve=0
+  why: No GPUs were allocated due to the free pool being zero, adhering to Feasibility and Incentive Skepticism rules.
+
+--- call 60  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  demand r02 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high forecast uncertainty and small request size; low contention allows for some extra 
+  demand r04 [prod/ontrack] base=0 +margin_req=1: While uncertainty is medium, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen spikes 
+  demand r05 [besteffort/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a large safety margin unnecessary, given the small request size and your current lead on schedule.
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r04': 1} reserve=0
+  why: Allocated 1 GPU to prod job r04 due to priority, leaving no room for the supply side's reserve.
+
+--- call 61  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  demand r02 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high forecast uncertainty and small request size; low contention allows for some extra 
+  demand r04 [prod/ontrack] base=0 +margin_req=1: While uncertainty is medium, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen spikes 
+  demand r05 [besteffort/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a large safety margin unnecessary, given the small request size and your current lead on schedule.
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r01': 0, 'r02': 0, 'r04': 0, 'r05': 0} reserve=0
+  why: No GPUs were allocated due to the free pool being zero, adhering to Feasibility and Incentive Skepticism rules.
+
+--- call 62  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  demand r02 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high forecast uncertainty and small request size; low contention allows for some extra 
+  demand r04 [prod/ontrack] base=0 +margin_req=1: While uncertainty is medium, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen spikes 
+  demand r05 [besteffort/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a large safety margin unnecessary, given the small request size and your current lead on schedule.
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r04': 1} reserve=0
+  why: Allocated 1 GPU to prod job r04 due to priority, leaving no room for the supply side's reserve.
+
+--- call 63  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  demand r02 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high forecast uncertainty and small request size; low contention allows for some extra 
+  demand r04 [prod/ontrack] base=0 +margin_req=1: While uncertainty is medium, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen spikes 
+  demand r05 [besteffort/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a large safety margin unnecessary, given the small request size and your current lead on schedule.
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r01': 0, 'r02': 0, 'r04': 0, 'r05': 0} reserve=0
+  why: No GPUs were allocated due to the free pool being zero, adhering to Feasibility and Incentive Skepticism rules.
+
+--- call 64  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  demand r02 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high forecast uncertainty and small request size; low contention allows for some extra 
+  demand r04 [prod/ontrack] base=0 +margin_req=1: While uncertainty is medium, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen spikes 
+  demand r05 [besteffort/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a large safety margin unnecessary, given the small request size and your current lead on schedule.
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r04': 1} reserve=0
+  why: Allocated 1 GPU to prod job r04 due to priority, leaving no room for the supply side's reserve.
+
+--- call 65  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  demand r02 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high forecast uncertainty and small request size; low contention allows for some extra 
+  demand r04 [prod/ontrack] base=0 +margin_req=1: While uncertainty is medium, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen spikes 
+  demand r05 [besteffort/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a large safety margin unnecessary, given the small request size and your current lead on schedule.
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r01': 0, 'r02': 0, 'r04': 0, 'r05': 0} reserve=0
+  why: No GPUs were allocated due to the free pool being zero, adhering to Feasibility and Incentive Skepticism rules.
+
+--- call 66  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  demand r02 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high forecast uncertainty and small request size; low contention allows for some extra 
+  demand r04 [prod/ontrack] base=0 +margin_req=1: While uncertainty is medium, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen spikes 
+  demand r05 [besteffort/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a large safety margin unnecessary, given the small request size and your current lead on schedule.
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r04': 1} reserve=0
+  why: Allocated 1 GPU to prod job r04 due to priority, leaving no room for the supply side's reserve.
+
+--- call 67  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  demand r02 [besteffort/ahead] base=0 +margin_req=1: Despite a small predicted GPU request, the medium spike risk warrants some extra GPUs to mitigate potential demand spikes that could still make up for
+  demand r04 [prod/ontrack] base=0 +margin_req=1: While uncertainty is medium, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen spikes 
+  demand r05 [besteffort/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a large safety margin unnecessary, given the small request size and your current lead on schedule.
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r01': 0, 'r02': 0, 'r04': 0, 'r05': 0} reserve=0
+  why: No GPUs were allocated due to the free pool being zero, adhering to Feasibility and Individual Rationality rules.
+
+--- call 68  free=2  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  demand r02 [besteffort/ahead] base=0 +margin_req=1: Despite a small predicted GPU request, the medium spike risk warrants some extra GPUs to mitigate potential demand spikes that could still make up for
+  demand r04 [prod/ontrack] base=0 +margin_req=1: While uncertainty is medium, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen spikes 
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r04': 1} reserve=1
+  why: Allocated 1 GPU to prod job r04 and reserved 1 GPU, totaling 2 GPUs within the free pool. Besteffort jobs did not receive allocation due to limited availability.
+
+--- call 69  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  demand r02 [besteffort/ahead] base=0 +margin_req=1: Despite a small predicted GPU request, the medium spike risk warrants some extra GPUs to mitigate potential demand spikes that could still make up for
+  demand r04 [prod/ontrack] base=0 +margin_req=1: While uncertainty is medium, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen spikes 
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r04': 1} reserve=0
+  why: Allocated 1 GPU to r04 as it is a prod-tier job with a convincing justification. Reserve not granted due to limited free GPUs.
+
+--- call 77  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  demand r02 [besteffort/ahead] base=0 +margin_req=1: Despite a small predicted GPU request, the medium spike risk warrants some extra GPUs to mitigate potential demand spikes that could still make up for
+  demand r04 [prod/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted GPU request allows a modest hedge to ensure meeting the deadline even with
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={} reserve=1
+  why: Allocated all available GPUs to the supply reserve to protect future prod jobs, as their justification was convincing and aligns with priority rules.
+
+--- call 78  free=2  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  demand r02 [besteffort/ahead] base=0 +margin_req=1: Despite a small predicted GPU request, the medium spike risk warrants some extra GPUs to mitigate potential demand spikes that could still make up for
+  demand r04 [prod/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted GPU request allows a modest hedge to ensure meeting the deadline even with
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r04': 1} reserve=1
+  why: Allocated 1 GPU to r04 (prod tier) and reserved 1 GPU, totaling 2 GPUs which is within the free pool. This satisfies priority for prod jobs and maintains strategic reserve.
+
+--- call 80  free=4  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and spike risk, the large predicted GPU request and being ahead of schedule warrant a moderate hedge to protect ag
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r01': 1} reserve=1
+  why: Allocated 1 GPU to r01 for margin and reserved 1 GPU, totaling 2 which is within the free pool of 4.
+
+--- call 81  free=8  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={} reserve=1
+  why: Granted a small reserve to protect future prod jobs while keeping most GPUs available.
+
+--- call 82  free=7  src=llm:deepseek-r1:32b  feasible=True
+  demand r06 [besteffort/ahead] base=0 +margin_req=1: Despite a small predicted GPU request, the medium spike risk warrants some extra GPUs to mitigate potential demand spikes that could still make up for
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r06': 1} reserve=1
+  why: Allocated 1 GPU margin to r06 due to medium spike risk, and reserved 1 GPU for potential prod jobs, totaling 2 GPUs within the free pool.
+
+--- call 83  free=5  src=llm:deepseek-r1:32b  feasible=True
+  demand r06 [besteffort/ahead] base=0 +margin_req=1: Despite a small predicted GPU request, the medium spike risk warrants some extra GPUs to mitigate potential demand spikes that could still make up for
+  demand r07 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r06': 1, 'r07': 1} reserve=1
+  why: Allocated margins to both besteffort jobs and granted a reserve, totaling 3 GPUs within the free pool of 5.
+
+--- call 84  free=4  src=llm:deepseek-r1:32b  feasible=True
+  demand r06 [besteffort/ahead] base=0 +margin_req=1: Despite a small predicted GPU request, the medium spike risk warrants some extra GPUs to mitigate potential demand spikes that could still make up for
+  demand r07 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r06': 1, 'r07': 1} reserve=1
+  why: Allocated 1 GPU each to r06 and r07 based on their justifications, and reserved 1 GPU for future prod jobs, totaling 3 GPUs within the free pool.
+
+--- call 86  free=3  src=llm:deepseek-r1:32b  feasible=True
+  demand r06 [besteffort/ahead] base=0 +margin_req=1: Despite a small predicted GPU request, the medium spike risk warrants some extra GPUs to mitigate potential demand spikes that could still make up for
+  demand r07 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen
+  demand r08 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r06': 1, 'r07': 1} reserve=1
+  why: Allocated margins to r06 and r07 with convincing justifications, reserved 1 GPU as per supply's request, ensuring total doesn't exceed free_gpus.
+
+--- call 88  free=2  src=rule  feasible=True
+  demand r06 [besteffort/ahead] base=0 +margin_req=1: Despite a small predicted GPU request, the medium spike risk warrants some extra GPUs to mitigate potential demand spikes that could still make up for
+  demand r07 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen
+  demand r08 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen
+  demand r09 [besteffort/ontrack] base=0 +margin_req=1: While the spike risk is low, the medium uncertainty suggests some insurance against unforeseen spikes to ensure meeting the deadline ontrack.
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r06': 1, 'r07': 1, 'r08': 0, 'r09': 0} reserve=0
+  why: rule: bases by tier/deadline, margins from surplus, reserve last
+
+--- call 90  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r06 [besteffort/ahead] base=0 +margin_req=1: Despite the small predicted GPU request, the medium spike risk and high uncertainty warrant a moderate safety margin to avoid missing the deadline ahe
+  demand r07 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted request size and your ahead-of-schedule status warrant a modest hedge to p
+  demand r08 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted request size and your ahead-of-schedule status warrant a modest hedge to p
+  demand r09 [besteffort/ontrack] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted request size and current high cluster contention suggest a moderate hedge 
+  supply reserve_req=1 incoming_prod=few: Moderate cluster contention warrants reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload
+  REFEREE -> alloc={'r06': 0, 'r07': 0, 'r08': 0, 'r09': 0} reserve=0
+  why: No GPUs were allocated due to the free pool being exhausted.
+
+--- call 91  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r06 [besteffort/ahead] base=0 +margin_req=1: Despite the small predicted GPU request, the medium spike risk and high uncertainty warrant a moderate safety margin to avoid missing the deadline ahe
+  demand r07 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted request size and your ahead-of-schedule status warrant a modest hedge to p
+  demand r08 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted request size and your ahead-of-schedule status warrant a modest hedge to p
+  demand r09 [besteffort/ontrack] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted request size and current high cluster contention suggest a moderate hedge 
+  demand r10 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the large predicted GPU request and high cluster contention warrant a moderate hedge to avoid 
+  supply reserve_req=1 incoming_prod=few: Moderate cluster contention warrants reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload
+  REFEREE -> alloc={'r06': 0, 'r07': 0, 'r08': 0, 'r09': 0, 'r10': 0} reserve=0
+  why: FEASIBILITY: No free GPUs available to allocate or reserve.
+
+--- call 109  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r06 [besteffort/ahead] base=0 +margin_req=1: Despite the small predicted GPU request, the medium spike risk and high uncertainty warrant a moderate safety margin to avoid missing the deadline ahe
+  demand r07 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted request size and your ahead-of-schedule status warrant a modest hedge to p
+  demand r09 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted request size and your ahead-of-schedule status warrant a modest hedge to p
+  demand r10 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the large predicted GPU request and high cluster contention warrant a moderate hedge to avoid 
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={} reserve=1
+  why: Allocated 1 GPU as reserve due to convincing justification for future prod demand preparation.
+
+--- call 126  free=2  src=llm:deepseek-r1:32b  feasible=True
+  demand r07 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted request size and your ahead-of-schedule status warrant a modest hedge to p
+  demand r09 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted request size and your ahead-of-schedule status warrant a modest hedge to p
+  demand r10 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the large predicted GPU request and high cluster contention warrant a moderate hedge to avoid 
+  supply reserve_req=1 incoming_prod=few: Moderate cluster contention warrants reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload
+  REFEREE -> alloc={'r10': 1} reserve=1
+  why: Allocated 1 GPU to r10 due to stronger justification and reserved 1 GPU as per supply's request, totaling 2 GPUs which fits within the free pool.
+
+--- call 127  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r07 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted request size and your ahead-of-schedule status warrant a modest hedge to p
+  demand r09 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted request size and your ahead-of-schedule status warrant a modest hedge to p
+  demand r10 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the large predicted GPU request and high cluster contention warrant a moderate hedge to avoid 
+  supply reserve_req=1 incoming_prod=few: Moderate cluster contention warrants reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload
+  REFEREE -> alloc={} reserve=1
+  why: Allocated full free GPU capacity to supply reserve due to moderate contention concerns, prioritizing potential future high-priority jobs.
+
+--- call 144  free=2  src=llm:deepseek-r1:32b  feasible=True
+  demand r09 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted request size and your ahead-of-schedule status warrant a modest hedge to p
+  demand r10 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the large predicted GPU request and high cluster contention warrant a moderate hedge to avoid 
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={'r10': 1} reserve=1
+  why: Allocated 1 GPU to job r10 due to its stronger justification for margin, and reserved 1 GPU to prepare for potential future prod jobs, ensuring total awarded GPUs do not exceed the free pool.
+
+--- call 145  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r09 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted request size and your ahead-of-schedule status warrant a modest hedge to p
+  demand r10 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the large predicted GPU request and high cluster contention warrant a moderate hedge to avoid 
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={} reserve=1
+  why: Allocated all available GPUs to the reserve due to convincing justification about future prod job contention.
+
+--- call 150  free=2  src=llm:deepseek-r1:32b  feasible=True
+  demand r10 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the large predicted GPU request and high cluster contention warrant a moderate hedge to avoid 
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={'r10': 0} reserve=2
+  why: Neither the demand nor supply statements provided sufficiently convincing justifications to allocate margin or reserve, so no GPUs were awarded.
+
+--- call 151  free=6  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={} reserve=1
+  why: Granted reserve of 1 GPU as contention is low but prod jobs are incoming, aligning with feasibility and incentive skepticism rules.
+
+--- call 152  free=1  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={} reserve=1
+  why: Granted the requested reserve of 1 GPU due to convincing justification about potential future demand, aligning with feasibility constraints.
+
+--- call 153  free=7  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={} reserve=1
+  why: Granted a minimal reserve of 1 GPU due to convincing justification about potential future demand while keeping the pool mostly available for current or new jobs.
+
+--- call 154  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r14 [prod/ontrack] base=0 +margin_req=1: Despite low forecast uncertainty and low spike risk, the high cluster contention suggests there is a risk of missing the deadline if a large demand sp
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={'r14': 1} reserve=0
+  why: Allocated 1 GPU to job r14 under priority for prod jobs, leaving no reserve as it fits within the free GPUs.
+
+--- call 155  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r14 [prod/ontrack] base=0 +margin_req=1: Despite low forecast uncertainty and low spike risk, the high cluster contention suggests there is a risk of missing the deadline if a large demand sp
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r14': 0} reserve=0
+  why: Free GPUs are zero, so no allocation or reserve can be granted.
+
+--- call 159  free=2  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No jobs submitted; reserve set to 0 as per supply's convincing justification.
+
+--- call 160  free=0  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No free GPUs are available to allocate or reserve.
+
+--- call 182  free=4  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=none: Moderate contention exists, but no prod jobs are incoming; reserving light headroom will prevent future shortages without harming current job performa
+  REFEREE -> alloc={} reserve=1
+  why: Granted the requested reserve as the justification was convincing under incentive skepticism, while ensuring feasibility with no job allocations.
+
+--- call 183  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r15 [prod/ontrack] base=0 +margin_req=1: Given the medium spike risk and high uncertainty, a moderate safety margin is appropriate to protect against potential spikes without over-hedging in 
+  supply reserve_req=1 incoming_prod=none: Moderate contention exists, but no prod jobs are incoming; reserving light headroom will prevent future shortages without harming current job performa
+  REFEREE -> alloc={'r15': 1} reserve=0
+  why: Allocated the sole GPU to job r15 under rule 3 (priority) and rule 2 (individual rationality), as its base was met and it is a prod-tier job. Reserve remains at 0 due to feasibility constraints.
+
+--- call 184  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r15 [prod/ontrack] base=0 +margin_req=1: Given the medium spike risk and high uncertainty, a moderate safety margin is appropriate to protect against potential spikes without over-hedging in 
+  supply reserve_req=1 incoming_prod=none: Moderate contention exists, but no prod jobs are incoming; reserving light headroom will prevent future shortages without harming current job performa
+  REFEREE -> alloc={'r15': 0} reserve=0
+  why: FEASIBILITY: No free GPUs available to allocate or reserve.
+
+--- call 228  free=4  src=llm:deepseek-r1:32b  feasible=True
+  demand r15 [prod/ahead] base=0 +margin_req=2: Despite low cluster contention, the high uncertainty and medium spike risk warrant a heavy safety margin to protect against potential missed deadlines
+  supply reserve_req=0 incoming_prod=none: Contention is low, and no prod jobs are incoming; reserving headroom would not benefit the current workload.
+  REFEREE -> alloc={'r15': 0} reserve=0
+  why: Allocated 0 GPUs to job r15 as its base is already met and the justification for margin was deemed insufficient. Reserved 0 GPUs as per supply's convincing justification.
+
+##########################################################################################
+SEED 10  pool 8: SLA 81.2% prodSLA 66.7% util 91% slowdown 41.60 | 276 referee calls
+##########################################################################################
+
+--- call 0  free=8  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=many: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={} reserve=1
+  why: Granted a small reserve as contention is low but prod jobs are incoming, aligning with feasibility and incentive skepticism rules.
+
+--- call 1  free=4  src=llm:deepseek-r1:32b  feasible=True
+  demand r00 [besteffort/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a safety margin unnecessary, especially with your lead on the deadline and current low cluster contention
+  supply reserve_req=1 incoming_prod=many: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r00': 0} reserve=1
+  why: Allocated 0 GPUs to r00 as its base is met, reserved 1 GPU for incoming prod jobs under Feasibility and Incentive Skepticism.
+
+--- call 32  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r00 [besteffort/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a safety margin unnecessary, especially with your ahead-of-schedule status and the current high cluster c
+  supply reserve_req=1 incoming_prod=many: Moderate contention allows reserving light headroom to protect incoming prod jobs without significantly impacting existing workload.
+  REFEREE -> alloc={'r00': 0} reserve=1
+  why: Allocated 0 GPUs to r00 as requested and reserved 1 GPU to protect incoming prod jobs, adhering to feasibility and supply's convincing justification.
+
+--- call 44  free=5  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=many: Moderate contention allows reserving light headroom to protect incoming prod jobs without significantly impacting existing workload.
+  REFEREE -> alloc={} reserve=1
+  why: Granted a small reserve to protect future prod jobs without exceeding free GPUs, following Feasibility and Incentive Skepticism.
+
+--- call 45  free=1  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=many: Moderate contention allows reserving light headroom to protect incoming prod jobs without significantly impacting existing workload.
+  REFEREE -> alloc={} reserve=1
+  why: Granted the requested reserve as it does not exceed the free GPUs and aligns with the justification to protect incoming prod jobs.
+
+--- call 51  free=1  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=2 incoming_prod=many: High contention indicates there is slack in the system, allowing for a heavy reservation to protect incoming prod jobs without over-reserving and risk
+  REFEREE -> alloc={} reserve=0
+  why: The supply side's requested reserve exceeds free_gpus, violating feasibility.
+
+--- call 52  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [besteffort/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a safety margin unnecessary, especially with your ahead-of-schedule status and the current high cluster c
+  supply reserve_req=2 incoming_prod=many: High contention indicates there is slack in the system, allowing for a heavy reservation to protect incoming prod jobs without over-reserving and risk
+  REFEREE -> alloc={'r01': 0} reserve=0
+  why: Free GPUs are exhausted (0), so no allocation or reserve is possible.
+
+--- call 101  free=8  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=2 incoming_prod=many: High contention indicates there is slack in the system, allowing for a heavy reservation to protect incoming prod jobs without over-reserving and risk
+  REFEREE -> alloc={} reserve=2
+  why: Granted a reserve of 2 GPUs as the justification was convincing, ensuring incoming prod jobs can be accommodated without over-reserving.
+
+--- call 102  free=2  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=2 incoming_prod=many: High contention indicates there is slack in the system, allowing for a heavy reservation to protect incoming prod jobs without over-reserving and risk
+  REFEREE -> alloc={} reserve=0
+  why: No jobs were requested, and the supply's justification for a heavy reserve was not sufficiently convincing given the lack of demand.
+
+--- call 103  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r04 [besteffort/behind] base=0 +margin_req=2: Despite medium forecast uncertainty and low spike risk, the combination of being behind schedule, a large predicted GPU request, and high cluster cont
+  supply reserve_req=2 incoming_prod=many: High contention indicates there is slack in the system, allowing for a heavy reservation to protect incoming prod jobs without over-reserving and risk
+  REFEREE -> alloc={'r04': 0} reserve=0
+  why: Free GPUs are zero; no allocation or reserve possible.
+
+--- call 109  free=8  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=2 incoming_prod=many: High contention indicates there is slack in the system, allowing for a heavy reservation to protect incoming prod jobs without over-reserving and risk
+  REFEREE -> alloc={} reserve=2
+  why: Granted a reserve of 2 GPUs as the justification was convincing, ensuring incoming prod jobs can be accommodated without over-reserving.
+
+--- call 110  free=2  src=llm:deepseek-r1:32b  feasible=True
+  demand r06 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high uncertainty and current high contention; a full heavy hedge would be excessive in 
+  demand r07 [besteffort/ontrack] base=0 +margin_req=1: Despite low forecast uncertainty and low spike risk, the large predicted GPU request under high cluster contention necessitates a modest hedge to avoi
+  supply reserve_req=2 incoming_prod=many: High contention indicates there is slack in the system, allowing for a heavy reservation to protect incoming prod jobs without over-reserving and risk
+  REFEREE -> alloc={'r06': 0, 'r07': 0} reserve=2
+  why: Allocated full reserve to protect incoming prod jobs, as their need is more critical than besteffort margins.
+
+--- call 112  free=6  src=llm:deepseek-r1:32b  feasible=True
+  demand r06 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high uncertainty and current high contention; a full heavy hedge would be excessive in 
+  supply reserve_req=2 incoming_prod=many: High contention indicates there is slack in the system, allowing for a heavy reservation to protect incoming prod jobs without over-reserving and risk
+  REFEREE -> alloc={'r06': 1} reserve=2
+  why: Allocated 1 GPU to r06 as margin and reserved 2 GPUs for incoming prod jobs, totaling 3 within the free pool of 6.
+
+--- call 113  free=2  src=llm:deepseek-r1:32b  feasible=True
+  demand r06 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high uncertainty and current high contention; a full heavy hedge would be excessive in 
+  supply reserve_req=2 incoming_prod=many: High contention indicates there is slack in the system, allowing for a heavy reservation to protect incoming prod jobs without over-reserving and risk
+  REFEREE -> alloc={} reserve=2
+  why: Allocated full reserve to protect incoming prod jobs due to high contention, as per supply's convincing justification.
+
+--- call 133  free=2  src=llm:deepseek-r1:32b  feasible=True
+  demand r06 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high uncertainty and current high contention; a full heavy hedge would be excessive in 
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={'r06': 1} reserve=1
+  why: Allocated 1 GPU to r06 due to convincing medium risk justification and reserved 1 GPU for potential prod jobs, fully utilizing the free pool.
+
+--- call 134  free=4  src=llm:deepseek-r1:32b  feasible=True
+  demand r06 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high uncertainty and current high contention; a full heavy hedge would be excessive in 
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={'r06': 1} reserve=1
+  why: Allocated 1 GPU margin to r06 due to convincing medium risk justification and granted 1 GPU reserve for future prod preparedness, totaling 2 GPUs within the free pool.
+
+--- call 135  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r06 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high uncertainty and current high contention; a full heavy hedge would be excessive in 
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={'r06': 0} reserve=0
+  why: Free GPUs are zero; no allocation possible.
+
+--- call 145  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r06 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high uncertainty and current high contention; a full heavy hedge would be excessive in 
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No free GPUs are available in the pool.
+
+--- call 154  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r06 [besteffort/ahead] base=0 +margin_req=2: Despite the high uncertainty, a medium spike risk warrants heavy hedging to ensure not missing the deadline even with worst-case spikes, given the hig
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r06': 0} reserve=0
+  why: Free GPUs are zero, so no allocation or reserve can be granted.
+
+--- call 174  free=2  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No jobs submitted; reserve set to 0 as per supply's convincing justification.
+
+--- call 175  free=0  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No free GPUs are available to allocate or reserve.
+
+--- call 215  free=6  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No jobs were submitted, so no GPUs are allocated or reserved.
+
+--- call 216  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r14 [prod/behind] base=0 +margin_req=2: Despite low forecast uncertainty and low spike risk, the large predicted GPU request and your being behind schedule warrant a heavy safety margin to p
+  demand r15 [prod/behind] base=0 +margin_req=2: Despite low forecast uncertainty and low spike risk, the large predicted GPU request and your being behind schedule warrant a heavy safety margin to p
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r14': 0, 'r15': 0} reserve=0
+  why: Free GPUs are zero, so no allocation or reserve can be granted.
+
+--- call 256  free=4  src=llm:deepseek-r1:32b  feasible=True
+  demand r15 [prod/behind] base=0 +margin_req=2: Despite low forecast uncertainty and low spike risk, the large predicted GPU request and your being behind schedule warrant a heavy safety margin to p
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r15': 2} reserve=0
+  why: Allocated 2 GPUs to r15 as its justification for margin was convincing, and the reserve request was zero. Total awarded is within free_gpus.
+
+--- call 257  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r12 [besteffort/ahead] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted request size and your ahead-of-schedule status warrant a modest hedge to p
+  demand r15 [prod/behind] base=0 +margin_req=2: Despite low forecast uncertainty and low spike risk, the large predicted GPU request and your being behind schedule warrant a heavy safety margin to p
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r12': 0, 'r15': 0} reserve=0
+  why: No GPUs were awarded due to free_gpus being zero, adhering to Feasibility.
+
+--- call 258  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r15 [prod/behind] base=0 +margin_req=2: Despite low forecast uncertainty and low spike risk, the large predicted GPU request and your being behind schedule warrant a heavy safety margin to p
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r15': 1} reserve=0
+  why: Allocated 1 GPU to job r15 under 'prod' tier due to being behind deadline, within free_gpus limit. No reserve granted as per supply statement.
+
+--- call 259  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r15 [prod/behind] base=0 +margin_req=2: Despite low forecast uncertainty and low spike risk, the large predicted GPU request and your being behind schedule warrant a heavy safety margin to p
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r15': 0} reserve=0
+  why: Free GPUs are zero; no allocation or reserve possible.
+
+--- call 262  free=4  src=llm:deepseek-r1:32b  feasible=True
+  demand r15 [prod/behind] base=0 +margin_req=2: Despite low forecast uncertainty and low spike risk, the large predicted GPU request and your being behind schedule warrant a heavy safety margin to p
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r15': 2} reserve=0
+  why: Allocated 2 GPUs to r15 as its justification for margin was convincing, and the reserve request was zero. Total awarded is within free_gpus.
+
+--- call 263  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r15 [prod/behind] base=0 +margin_req=2: Despite low forecast uncertainty and low spike risk, the large predicted GPU request and your being behind schedule warrant a heavy safety margin to p
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r15': 0} reserve=0
+  why: Free GPUs are zero; no allocation or reserve possible.
+
+--- call 265  free=4  src=llm:deepseek-r1:32b  feasible=True
+  demand r15 [prod/behind] base=0 +margin_req=2: Despite low forecast uncertainty and low spike risk, the large predicted GPU request and your being behind schedule warrant a heavy safety margin to p
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r15': 2} reserve=0
+  why: Allocated 2 GPUs to r15 as its justification for margin was convincing, and the reserve request was zero. Total awarded is within free_gpus.
+
+--- call 266  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r05 [besteffort/behind] base=0 +margin_req=2: Despite medium forecast uncertainty and low spike risk, being behind schedule in a high-contention cluster warrants a heavy safety margin to avoid mis
+  demand r15 [prod/behind] base=0 +margin_req=2: Despite low forecast uncertainty and low spike risk, the large predicted GPU request and your being behind schedule warrant a heavy safety margin to p
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No GPUs are available for allocation or reserve as free_gpus is zero.
+
+--- call 271  free=2  src=llm:deepseek-r1:32b  feasible=True
+  demand r05 [besteffort/behind] base=0 +margin_req=2: Despite medium forecast uncertainty and low spike risk, being behind schedule in a high-contention cluster warrants a heavy safety margin to avoid mis
+  demand r15 [prod/behind] base=0 +margin_req=2: Despite low forecast uncertainty and low spike risk, the large predicted GPU request and your being behind schedule warrant a heavy safety margin to p
+  supply reserve_req=1 incoming_prod=none: Moderate contention exists, but no prod jobs are incoming; reserving light headroom will prevent future shortages without harming current job performa
+  REFEREE -> alloc={'r15': 2} reserve=0
+  why: Allocated full margin to prod job r15 due to priority and its convincing justification, leaving no room for reserve.
+
+--- call 272  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r05 [besteffort/behind] base=0 +margin_req=2: Despite medium forecast uncertainty and low spike risk, being behind schedule in a high-contention cluster warrants a heavy safety margin to avoid mis
+  demand r15 [prod/behind] base=0 +margin_req=2: Despite low forecast uncertainty and low spike risk, the large predicted GPU request and your being behind schedule warrant a heavy safety margin to p
+  supply reserve_req=1 incoming_prod=none: Moderate contention exists, but no prod jobs are incoming; reserving light headroom will prevent future shortages without harming current job performa
+  REFEREE -> alloc={'r05': 0, 'r15': 0} reserve=0
+  why: No GPUs are available in the pool (free_gpus=0), so all allocations and reserve must be zero.
+
+--- call 273  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r05 [besteffort/behind] base=0 +margin_req=2: Despite medium forecast uncertainty and low spike risk, being behind schedule in a high-contention cluster warrants a heavy safety margin to avoid mis
+  demand r11 [besteffort/behind] base=0 +margin_req=2: Despite medium forecast uncertainty and low spike risk, being behind schedule in a high-contention cluster warrants a heavy safety margin to avoid mis
+  demand r15 [prod/behind] base=0 +margin_req=2: Despite low forecast uncertainty and low spike risk, the large predicted GPU request and your being behind schedule warrant a heavy safety margin to p
+  supply reserve_req=1 incoming_prod=none: Moderate contention exists, but no prod jobs are incoming; reserving light headroom will prevent future shortages without harming current job performa
+  REFEREE -> alloc={'r05': 0, 'r11': 0, 'r15': 0} reserve=0
+  why: No GPUs were allocated as the free pool is exhausted.
+
+##########################################################################################
+SEED 21  pool 8: SLA 75.0% prodSLA 33.3% util 95% slowdown 4.22 | 300 referee calls
+##########################################################################################
+
+--- call 0  free=8  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={} reserve=1
+  why: Granted a small reserve to protect future prod jobs while keeping most GPUs available.
+
+--- call 1  free=7  src=llm:deepseek-r1:32b  feasible=True
+  demand r00 [prod/ontrack] base=0 +margin_req=1: While uncertainty is medium, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen spikes 
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r00': 1} reserve=1
+  why: Allocated 1 GPU to job r00 as its base is met and justification for margin is convincing. Reserved 1 GPU as supply's justification is plausible, within free_gpus.
+
+--- call 2  free=6  src=llm:deepseek-r1:32b  feasible=True
+  demand r00 [prod/ontrack] base=0 +margin_req=1: While uncertainty is medium, the low spike risk and small predicted request make a moderate hedge sufficient to protect against any unforeseen spikes 
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r00': 1} reserve=1
+  why: Allocated 1 GPU to r00 for margin and reserved 1 GPU, totaling 2 GPUs used, which is within the free pool of 6. Both justifications were convincing.
+
+--- call 4  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r00 [prod/ontrack] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted GPU request and current high cluster contention suggest a moderate hedge t
+  supply reserve_req=1 incoming_prod=few: Moderate cluster contention warrants reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload
+  REFEREE -> alloc={'r00': 1} reserve=0
+  why: Allocated 1 GPU to job r00 as its margin request was prioritized over the supply reserve due to current contention and hedge needs, while ensuring feasibility.
+
+--- call 5  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r00 [prod/ontrack] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the small predicted GPU request and current high cluster contention suggest a moderate hedge t
+  supply reserve_req=1 incoming_prod=few: Moderate cluster contention warrants reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload
+  REFEREE -> alloc={} reserve=0
+  why: No GPUs were awarded as the free pool was zero.
+
+--- call 62  free=1  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={} reserve=1
+  why: Granted the requested reserve of 1 GPU due to convincing justification about potential future demand, aligning with feasibility constraints.
+
+--- call 67  free=0  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={} reserve=0
+  why: No GPUs are available in the pool (free_gpus=0), so neither allocations nor a reserve can be granted.
+
+--- call 71  free=1  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={} reserve=1
+  why: Granted the requested reserve of 1 GPU due to convincing justification about potential future demand, aligning with feasibility constraints.
+
+--- call 75  free=8  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={} reserve=1
+  why: Granted a small reserve to protect future prod jobs while keeping most GPUs available.
+
+--- call 76  free=1  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={} reserve=1
+  why: Granted the requested reserve of 1 GPU due to convincing justification about potential future demand, aligning with feasibility constraints.
+
+--- call 81  free=8  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={} reserve=1
+  why: Granted a small reserve to protect future prod jobs while keeping most GPUs available.
+
+--- call 82  free=1  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={} reserve=1
+  why: Granted the requested reserve of 1 GPU due to convincing justification about potential future demand, aligning with feasibility constraints.
+
+--- call 84  free=8  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Moderate cluster contention warrants reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload
+  REFEREE -> alloc={} reserve=1
+  why: Granted a small reserve to protect future prod jobs while keeping most GPUs available.
+
+--- call 85  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r04 [besteffort/behind] base=0 +margin_req=2: Despite low forecast uncertainty and low spike risk, the large predicted GPU request combined with being behind schedule and facing high cluster conte
+  supply reserve_req=1 incoming_prod=few: Moderate cluster contention warrants reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload
+  REFEREE -> alloc={'r04': 0} reserve=1
+  why: Insufficient free GPUs to allocate any margin. Reserved 1 GPU to protect incoming high-priority jobs, adhering to priority and feasibility rules.
+
+--- call 92  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r04 [besteffort/ontrack] base=0 +margin_req=1: Despite low forecast uncertainty and low spike risk, the large predicted GPU request under high cluster contention necessitates a modest hedge to avoi
+  supply reserve_req=1 incoming_prod=few: Moderate cluster contention warrants reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload
+  REFEREE -> alloc={} reserve=1
+  why: Allocated full free GPU as reserve to protect incoming high-priority jobs, denying besteffort margin due to limited capacity.
+
+--- call 93  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r04 [besteffort/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a safety margin unnecessary, especially with your ahead-of-schedule status and the current high cluster c
+  supply reserve_req=1 incoming_prod=few: Moderate cluster contention warrants reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload
+  REFEREE -> alloc={'r04': 0} reserve=1
+  why: Allocated 0 GPUs to r04 as its base is met and no margin needed. Reserved 1 GPU to protect incoming prod jobs, adhering to feasibility.
+
+--- call 94  free=5  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Moderate cluster contention warrants reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload
+  REFEREE -> alloc={} reserve=1
+  why: Granted a reserve of 1 GPU to protect incoming prod jobs while keeping contention low.
+
+--- call 95  free=1  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={} reserve=1
+  why: Granted the requested reserve of 1 GPU due to convincing justification about potential future demand, aligning with feasibility constraints.
+
+--- call 108  free=8  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Moderate cluster contention warrants reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload
+  REFEREE -> alloc={} reserve=1
+  why: Granted a small reserve to protect future prod jobs while keeping most GPUs available.
+
+--- call 109  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r08 [besteffort/behind] base=0 +margin_req=2: Despite medium forecast uncertainty and low spike risk, the combination of being behind schedule, a large predicted GPU request, and high cluster cont
+  supply reserve_req=1 incoming_prod=few: Moderate cluster contention warrants reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload
+  REFEREE -> alloc={} reserve=1
+  why: Granted supply's reserve due to moderate contention, leaving no margin for demand as free GPUs are exhausted.
+
+--- call 112  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r08 [besteffort/ontrack] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the large predicted GPU request and high cluster contention warrant a moderate safety margin t
+  supply reserve_req=1 incoming_prod=few: Moderate cluster contention warrants reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload
+  REFEREE -> alloc={'r08': 0} reserve=1
+  why: Allocated the reserve to protect incoming high-priority jobs, as per supply side justification and rule 3.
+
+--- call 114  free=5  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Moderate cluster contention warrants reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload
+  REFEREE -> alloc={} reserve=1
+  why: Granted a reserve of 1 GPU to protect incoming prod jobs while keeping contention low.
+
+--- call 115  free=1  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Moderate cluster contention warrants reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload
+  REFEREE -> alloc={} reserve=1
+  why: Granted the requested reserve of 1 GPU due to convincing justification about potential future demand, aligning with feasibility constraints.
+
+--- call 175  free=1  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No jobs were submitted, so no allocation or reserve was needed.
+
+--- call 176  free=0  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No free GPUs are available to allocate or reserve.
+
+--- call 182  free=7  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No jobs were submitted, so no GPUs are allocated or reserved.
+
+--- call 183  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r14 [prod/ontrack] base=0 +margin_req=1: Despite low forecast uncertainty and low spike risk, the large predicted GPU request under high cluster contention warrants a modest safety margin to 
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r14': 0} reserve=0
+  why: Free GPUs are zero, so no allocation or reserve can be granted.
+
+--- call 222  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r14 [prod/ahead] base=0 +margin_req=1: Despite low forecast uncertainty and low spike risk, the large predicted GPU request and high cluster contention warrant a moderate safety margin to a
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No GPUs are available to allocate or reserve as free_gpus is zero.
+
+--- call 244  free=4  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No jobs were submitted, so no GPUs are allocated or reserved.
+
+--- call 245  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r10 [besteffort/behind] base=0 +margin_req=2: Despite low forecast uncertainty and low spike risk, the large predicted GPU request combined with being behind schedule and facing high cluster conte
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r10': 0} reserve=0
+  why: Free GPUs are zero, so no allocation or reserve is possible.
+
+--- call 273  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r10 [besteffort/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a safety margin unnecessary, especially with your ahead-of-schedule status and the current high cluster c
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: Free GPUs are zero, so no allocation or reserve can be granted.
+
+--- call 274  free=8  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No jobs were submitted, so no GPUs are allocated or reserved.
+
+--- call 275  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r13 [besteffort/behind] base=0 +margin_req=2: Despite medium forecast uncertainty and low spike risk, the combination of being behind schedule, a large predicted GPU request, and high cluster cont
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No GPUs are available in the free pool, so no allocations or reserves can be granted.
+
+--- call 294  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r13 [besteffort/ontrack] base=0 +margin_req=1: Despite medium forecast uncertainty and low spike risk, the large predicted GPU request and high cluster contention warrant a moderate safety margin t
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r13': 0} reserve=0
+  why: No GPUs were allocated as free_gpus is zero, satisfying feasibility.
+
+--- call 296  free=4  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No jobs were submitted, so no GPUs are allocated or reserved.
+
+--- call 297  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r15 [besteffort/behind] base=0 +margin_req=2: Despite low forecast uncertainty and low spike risk, the large predicted GPU request combined with being behind schedule and facing high cluster conte
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r15': 0} reserve=0
+  why: Feasibility requires no allocation or reserve due to zero free GPUs.
+
+##########################################################################################
+SEED 26  pool 8: SLA 75.0% prodSLA 0.0% util 95% slowdown 25.27 | 286 referee calls
+##########################################################################################
+
+--- call 0  free=8  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Moderate cluster contention warrants reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload
+  REFEREE -> alloc={} reserve=1
+  why: Granted a small reserve to protect future prod jobs while keeping most GPUs available.
+
+--- call 1  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r00 [prod/ahead] base=0 +margin_req=2: Given the medium spike risk and high uncertainty, a heavy hedge protects against potential spikes even with high contention and large request size.
+  supply reserve_req=1 incoming_prod=few: Moderate cluster contention warrants reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload
+  REFEREE -> alloc={'r00': 0} reserve=0
+  why: No free GPUs available in the pool, so allocations and reserve must be zero.
+
+--- call 2  free=8  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={} reserve=1
+  why: Granted a small reserve to protect future prod jobs while keeping most GPUs available.
+
+--- call 3  free=4  src=llm:deepseek-r1:32b  feasible=True
+  demand r01 [prod/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a safety margin unnecessary, especially with your ahead-of-schedule position and low cluster contention.
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r01': 0} reserve=0
+  why: Allocated 0 GPUs to r01 as its base is already satisfied. No reserve granted due to lack of convincing justification.
+
+--- call 4  free=8  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={} reserve=1
+  why: Granted a small reserve to protect future prod jobs while keeping most GPUs available.
+
+--- call 5  free=4  src=llm:deepseek-r1:32b  feasible=True
+  demand r02 [besteffort/ahead] base=0 +margin_req=2: Despite low cluster contention, the medium spike risk necessitates a heavy safety margin to ensure meeting the deadline even if a large demand spike o
+  supply reserve_req=1 incoming_prod=few: Contention is low, but prod jobs are still incoming; reserving light headroom can protect future jobs without harming current workload.
+  REFEREE -> alloc={'r02': 0} reserve=1
+  why: Granted a minimal reserve to protect future prod jobs while denying the demand's exaggerated margin request due to low contention.
+
+--- call 18  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r02 [besteffort/ahead] base=0 +margin_req=2: Despite the high uncertainty and medium spike risk, the large predicted request size and being ahead of schedule warrant a heavy safety margin to prot
+  supply reserve_req=1 incoming_prod=few: Moderate cluster contention warrants reserving light headroom to protect incoming high-priority jobs without significantly impacting existing workload
+  REFEREE -> alloc={'r02': 0} reserve=1
+  why: Allocated 0 GPUs to r02 as its justification for margin was excessive, and reserved 1 GPU to protect incoming prod jobs, adhering to feasibility and incentive skepticism.
+
+--- call 76  free=5  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=1 incoming_prod=few: Contention is currently low, but prod jobs are still incoming; reserving light headroom will help protect against future high-demand scenarios without
+  REFEREE -> alloc={} reserve=1
+  why: Granted a reserve of 1 GPU to protect incoming prod jobs while keeping contention low.
+
+--- call 77  free=1  src=llm:deepseek-r1:32b  feasible=True
+  demand r05 [besteffort/behind] base=0 +margin_req=2: Given the medium spike risk and high uncertainty, a heavy hedge protects against potential large spikes that could jeopardize hitting the deadline des
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r05': 1} reserve=0
+  why: Allocated 1 GPU to r05 as it meets the base requirement and within free_gpus limit.
+
+--- call 78  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r05 [besteffort/ontrack] base=0 +margin_req=1: Medium spike risk warrants a moderate safety margin, given the high uncertainty and current high contention; a full heavy hedge would be excessive in 
+  demand r07 [prod/ontrack] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a large safety margin unnecessary, even with high cluster contention and a small request.
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r05': 0, 'r07': 0} reserve=0
+  why: Free GPUs are zero; no allocation or reserve is possible without exceeding the pool.
+
+--- call 79  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r05 [besteffort/ahead] base=0 +margin_req=2: Despite the high uncertainty, a medium spike risk warrants heavy hedging to ensure not missing the deadline even with worst-case spikes, given the hig
+  demand r07 [prod/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a large safety margin unnecessary, given the headroom from being ahead of schedule and the high cluster c
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No GPUs are available in the free pool to allocate.
+
+--- call 80  free=2  src=llm:deepseek-r1:32b  feasible=True
+  demand r07 [prod/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a large safety margin unnecessary, given the headroom from being ahead of schedule and the high cluster c
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r07': 0} reserve=0
+  why: Allocated 0 GPUs to job r07 and reserved 0 GPUs as both the demand and supply sides justified their requests effectively, leaving no need for allocation or reservation.
+
+--- call 81  free=1  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No jobs were submitted, so no allocation or reserve was needed.
+
+--- call 82  free=0  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No free GPUs are available to allocate or reserve.
+
+--- call 97  free=5  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No jobs were submitted, so no allocation or reserve was granted.
+
+--- call 98  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r11 [besteffort/behind] base=0 +margin_req=1: Despite low forecast uncertainty and low spike risk, the small predicted GPU request and high cluster contention suggest a moderate hedge to avoid was
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r11': 0} reserve=0
+  why: No GPUs were allocated due to free_gpus being zero, adhering to Feasibility.
+
+--- call 105  free=1  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No jobs were submitted, so no allocation or reserve was needed.
+
+--- call 106  free=0  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No free GPUs are available to allocate or reserve.
+
+--- call 194  free=3  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No jobs were submitted, so no GPUs are allocated or reserved.
+
+--- call 195  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r10 [besteffort/ahead] base=0 +margin_req=2: Despite the high uncertainty and medium spike risk, the large predicted request size and being ahead of schedule warrant a heavy safety margin to prot
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No GPUs are allocated as free_gpus is zero, adhering to the feasibility rule.
+
+--- call 199  free=8  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No jobs were submitted, so no GPUs are allocated or reserved.
+
+--- call 200  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r14 [besteffort/ontrack] base=0 +margin_req=1: Despite low forecast uncertainty and low spike risk, the large predicted GPU request under high cluster contention necessitates a modest hedge to avoi
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r14': 0} reserve=0
+  why: Free GPUs are exhausted (0), so no allocation or reserve can be granted.
+
+--- call 201  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r14 [besteffort/ahead] base=0 +margin_req=0: Forecast uncertainty and low spike risk make a safety margin unnecessary, especially with your ahead-of-schedule status and the current high cluster c
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No GPUs were allocated as both the demand and supply sides requested zero, and free_gpus is zero.
+
+--- call 202  free=4  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No jobs were submitted, so no GPUs are allocated or reserved.
+
+--- call 203  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r06 [besteffort/behind] base=0 +margin_req=2: Despite medium forecast uncertainty and low spike risk, the combination of being behind schedule, a large predicted GPU request, and high cluster cont
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r06': 0} reserve=0
+  why: Feasibility requires total awarded to not exceed free_gpus (0).
+
+--- call 264  free=8  src=llm:deepseek-r1:32b  feasible=True
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={} reserve=0
+  why: No jobs were submitted, so no GPUs are allocated or reserved.
+
+--- call 265  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r08 [besteffort/behind] base=0 +margin_req=2: Despite medium forecast uncertainty and low spike risk, the combination of being behind schedule, a large predicted GPU request, and high cluster cont
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r08': 0} reserve=0
+  why: No GPUs were awarded as the free pool is exhausted.
+
+--- call 269  free=4  src=llm:deepseek-r1:32b  feasible=True
+  demand r08 [besteffort/behind] base=0 +margin_req=2: Despite medium forecast uncertainty and low spike risk, the combination of being behind schedule, a large predicted GPU request, and high cluster cont
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r08': 4} reserve=0
+  why: Allocated all available GPUs to r08 as it is a besteffort job behind schedule, with no incoming prod jobs or reserve needed.
+
+--- call 270  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r08 [besteffort/behind] base=0 +margin_req=2: Despite medium forecast uncertainty and low spike risk, the combination of being behind schedule, a large predicted GPU request, and high cluster cont
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r08': 0} reserve=0
+  why: No GPUs were awarded as the free pool is exhausted.
+
+--- call 271  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r08 [besteffort/behind] base=0 +margin_req=2: Despite medium forecast uncertainty and low spike risk, the combination of being behind schedule, a large predicted GPU request, and high cluster cont
+  demand r12 [besteffort/ahead] base=0 +margin_req=2: Despite the high uncertainty and medium spike risk, the large predicted request size and being ahead of schedule warrant a heavy safety margin to prot
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r08': 0, 'r12': 0} reserve=0
+  why: No GPUs were allocated as the free pool is zero, preventing any margin or reserve allocation despite job justifications.
+
+--- call 272  free=4  src=llm:deepseek-r1:32b  feasible=True
+  demand r08 [besteffort/behind] base=0 +margin_req=2: Despite medium forecast uncertainty and low spike risk, the combination of being behind schedule, a large predicted GPU request, and high cluster cont
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r08': 4} reserve=0
+  why: Allocated all available GPUs to r08 as it is a besteffort job behind schedule, with no incoming prod jobs or reserve needed.
+
+--- call 273  free=0  src=llm:deepseek-r1:32b  feasible=True
+  demand r08 [besteffort/behind] base=0 +margin_req=2: Despite medium forecast uncertainty and low spike risk, the combination of being behind schedule, a large predicted GPU request, and high cluster cont
+  supply reserve_req=0 incoming_prod=none: The cluster is currently scarce, there are no incoming high-priority jobs to protect, and reserving headroom would not improve the situation.
+  REFEREE -> alloc={'r08': 0} reserve=0
+  why: No GPUs were awarded as the free pool is exhausted.

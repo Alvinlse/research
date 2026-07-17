@@ -1,0 +1,16 @@
+{"seed": 100, "verdict": "add P1", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 1}
+{"seed": 101, "verdict": "edit P1", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 1}
+{"seed": 102, "verdict": "none", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 1}
+{"seed": 103, "verdict": "edit P1", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 1}
+{"seed": 104, "verdict": "add P2", "d_prod_sla": -0.333, "fallback_rate": 0.0, "n_entries": 2}
+{"seed": 105, "verdict": "add P3", "d_prod_sla": -0.143, "fallback_rate": 0.0, "n_entries": 3}
+{"seed": 106, "verdict": "edit P1", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 3}
+{"seed": 107, "verdict": "none", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 3}
+{"seed": 108, "verdict": "add P4", "d_prod_sla": -0.429, "fallback_rate": 0.0, "n_entries": 4}
+{"seed": 109, "verdict": "add P5", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 5}
+{"seed": 110, "verdict": "none", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 5}
+{"seed": 111, "verdict": "add P6", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 6}
+{"seed": 112, "verdict": "add P7", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 7}
+{"seed": 113, "verdict": "edit P4", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 7}
+{"seed": 114, "verdict": "add P8", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 8}
+{"seed": 115, "verdict": "edit P6", "d_prod_sla": 0.125, "fallback_rate": 0.0, "n_entries": 8}

@@ -1,0 +1,50 @@
+[
+ {
+  "id": "P1",
+  "when": "incoming_prod == 'many' AND free_gpus >= 4",
+  "rule": "reserve 2 GPUs",
+  "why": "Reserving 2 GPUs specifically when incoming_prod is 'many' ensures better SLA protection without over-reserving when there are fewer prod jobs."
+ },
+ {
+  "id": "P2",
+  "when": "incoming_prod != 'none' AND (free_gpus == 2 OR free_gpus == 3)",
+  "rule": "reserve 1 GPU",
+  "why": "Reserving 1 GPU in these cases balances future protection with higher utilization, as seen in this window."
+ },
+ {
+  "id": "P3",
+  "when": "incoming_prod == 'many' AND free_gpus >= 6",
+  "rule": "reserve 3 GPUs",
+  "why": "Reserving more GPUs when many prod jobs are incoming and capacity is high improves their SLA without significantly affecting utilization."
+ },
+ {
+  "id": "P4",
+  "when": "incoming_prod == 'many' AND free_gpus == 5",
+  "rule": "reserve 3 GPUs",
+  "why": "Increasing the reserve to 3 GPUs improves SLA protection for prod jobs without significantly affecting utilization, as seen in this window."
+ },
+ {
+  "id": "P5",
+  "when": "incoming_prod == 'few' AND (free_gpus >= 2 AND free_gpus <= 4)",
+  "rule": "reserve 1 GPU",
+  "why": "Reserving 1 GPU when incoming_prod is 'few' and free_gpus is between 2-4 improves SLA without over-reserving, as seen in this window."
+ },
+ {
+  "id": "P6",
+  "when": "incoming_prod == 'many' AND free_gpus >= 7",
+  "rule": "reserve 3 GPUs",
+  "why": "Reducing the reserve to 3 GPUs when many prod jobs are incoming and capacity is high improves utilization while still protecting SLA, as seen in this window."
+ },
+ {
+  "id": "P7",
+  "when": "incoming_prod == 'many' AND free_gpus == 4",
+  "rule": "reserve 3 GPUs",
+  "why": "Reserving 3 GPUs when incoming_prod is 'many' and free_gpus is exactly 4 improves SLA protection for prod jobs without significantly affecting utilization."
+ },
+ {
+  "id": "P8",
+  "when": "incoming_prod == 'many' AND free_gpus >= 5",
+  "rule": "reserve 3 GPUs",
+  "why": "Consistently reserving 3 GPUs when many prod jobs are incoming and capacity is sufficient improves SLA protection without significantly affecting utilization, as seen in this window."
+ }
+]

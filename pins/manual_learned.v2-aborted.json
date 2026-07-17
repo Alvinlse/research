@@ -1,0 +1,8 @@
+[
+ {
+  "id": "P1",
+  "when": "free_gpus >= 1 AND incoming_prod_count > 0",
+  "rule": "reserve = 1",
+  "why": "Reserving 1 GPU when free GPUs are available and prod jobs are incoming improved utilization without breaking SLAs."
+ }
+]

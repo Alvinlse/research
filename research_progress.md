@@ -2679,3 +2679,112 @@ r1's judgment at chat-model latency?
 ```bash
 MODEL=deepseek-r1:32b SEEDS=32 POOLS=8 WORKERS=4 bash pins/run_parallel_sweep.sh
 ```
+
+## Experiment 51 — REFEREE PRECEDENT MANUAL, build + Phase B at 3b: grounding the author, and the small model won't take dictation (2026-07-16/17)
+
+**Question.** Exp 50's transcript study said the referee's failure mode is promptable
+(margin-priority under `incoming_prod=many` + tight pool). Can a **precedent manual** —
+state-conditioned WHEN→ruling entries, self-authored by the r1 referee on training
+windows — transfer r1's judgment to chat-model latency?
+
+**How.** (commits `5aa1bc9`, `1d02ff8`)
+- `pins/referee_manual.md`: hand-seeded P1–P3 from the Exp 49/50 lessons. `referee.py`
+  `set_manual`/`load_manual`/`PINS_MANUAL=<path>` appends the precedent block to
+  `SYSTEM_REFEREE` and **hashes the manual into the scene-cache key** (manual and vanilla
+  rulings never mix). `trace_replay --manual` → tier suffix `+manual` / `+manual-learned`.
+- **Phase A** (`pins/manual_author.py`): r1 referees each training window (seeds 100+,
+  disjoint from eval 0–31), reflects on its decisions vs the floor's outcome on the same
+  jobs, proposes ≤1 add/edit per window; code owns ids, the 12-entry cap, rendering, and
+  the audit log (`pins/manual_author_log.jsonl`).
+- **Phase B**: freeze the manual, eval 3b ± manual at pool 8, n=32 (vanilla 3b n=32 in
+  `pins/results_phaseB_vanilla3b.json`; manual arm = tier `qwen2.5:3b+referee+manual-learned`).
+
+**Result 1 — the first self-authored manual was INERT (and why).** Phase A v1's entries
+looked plausible but never fired: its P1 matched **5 of 925 eval scenes**. Root cause: the
+reflection payload named the constant pool size `free_pool_gpus` (colliding with
+decision-time `free_gpus`) and decisions carried **no per-decision state at all**, so r1
+wrote WHEN clauses over window constants and invented fields (`upcoming_prod_jobs`).
+Fix (`1d02ff8`): trace entries record `free_gpus` and `llm_reserve` (pre-fallback), the
+dedup signature includes the state, and the reflection payload is per-decision. Artifacts
+of the inert round preserved as `pins/*.exp51-p1.*`.
+
+**Result 2 — grounded Phase A writes a real manual.** 16 training windows (seeds 100–115)
+→ **8 entries** (`pins/referee_manual_learned.md`, hash `0198cae1`), every WHEN clause now
+over `incoming_prod × free_gpus` with reserve prescriptions 1–3 — recognisably the Exp 50
+seed-2 lesson, discovered without being told it.
+
+**Result 3 — 3b ignores the manual it quotes.** Pool 8, n=32, paired vs floor:
+
+| arm | dSLA | dprodSLA | dutil | dslow | fb |
+|---|---|---|---|---|---|
+| vanilla 3b        | −0.4 ± 1.8 | −5.7 ± 5.1\* | +2.4 ± 1.6\* | +1.7 ± 1.8 | 40% |
+| 3b+manual-learned | −0.4 ± 1.6 | −6.7 ± 5.0\* | +2.6 ± 1.5\* | +1.3 ± 1.3 | 38% |
+
+Statistical tie everywhere. The citation autopsy explains it: 3b **cites** a precedent id
+in 65% of its rulings but **sets the cited reserve in only 10% of them** — the citations
+are decoration over whatever it was going to do anyway, and the fallback layer (~38–40%
+of ticks) is doing the safety work in both arms.
+
+**Caveats.** Single venue (v2020 base world, pool 8); manual authored from 16 windows;
+"follows" = `llm_reserve` equals the cited precedent's prescription (fallback ticks
+excluded from the citation stats).
+
+**Reproduce.**
+```bash
+.venv/bin/python -m pins.manual_author               # Phase A (r1, seeds 100–115)
+PINS_MANUAL=pins/referee_manual_learned.md .venv/bin/python -m pins.trace_replay \
+  --referee --llm --model qwen2.5:3b --seeds 32 --pools 8
+```
+
+## Experiment 52 — THE MANUAL AT 14b: obedience achieved, content worth ~0 — vanilla 14b is the best arm (2026-07-17)
+
+**How.** Same frozen 8-entry manual (hash `0198cae1`), 14b ± manual at pool 8, n=32,
+plus the missing vanilla 14b referee arm. Windows shared with Exp 51's arms → all
+paired.
+
+**Result (pool 8, paired vs floor, n=32).**
+
+| arm | dSLA | dprodSLA | dutil | dslow | fb |
+|---|---|---|---|---|---|
+| **vanilla 14b**    | +1.0 ± 2.9 | **−9.0 ± 5.3\*** | −1.5 ± 1.8 | +0.5 ± 2.8 | 1% |
+| 14b+manual-learned | +1.0 ± 1.9 | −6.4 ± 5.1\*     | +0.8 ± 1.5 | +1.7 ± 1.7 | 1% |
+| (r1:32b, Exp 50)   | +0.4 ± 2.4 | −7.7 ± 5.4\*     | +2.2 ± 1.5\* | +1.3 ± 1.5 | 0% |
+| negotiated@14b     | +0.0 ± 2.1 | −4.3 ± 4.1\*     | +3.0 ± 1.1\* | +0.3 ± 1.2 | 0% |
+
+Direct paired delta, manual MINUS vanilla at 14b: dprodSLA **+2.6 ± 4.2** (ns, manual
+nominally worse), dutil +2.3\* (manual runs hotter), TOST not-equiv on prodSLA.
+
+**Findings.**
+1. **Instruction-following is the threshold, again.** 14b cites precedents at the same
+   rate as 3b (66% vs 65%) but **follows the cited prescription 92% of the time** (3b:
+   10%). Obedience to a live operational manual turns on at 14b — echoing Exp 40's
+   finding that instruction-following, not scale, is what matters.
+2. **Obedience ≠ value.** The obeyed manual makes 14b *nominally worse* at prod
+   protection (−6.4 vs −9.0): the fixed reserve prescriptions override the model's own —
+   evidently better — situational judgment, trading prod margins for utilisation
+   (+2.3\*). The r1-authored content is worth ~0 here; Exp 51's grounding fix made the
+   manual *fire*, and firing is exactly what hurt.
+3. **Vanilla 14b is the strongest arm at this venue**: −9.0\* prod protection at 1% fb,
+   beating the r1:32b headline (−7.7\*) at less than half the parameters and chat-model
+   latency — the "recover r1's judgment at chat latency" goal is met by *removing* the
+   scaffolding, not adding it.
+4. The manual track is not dead — precedents that encode *facts the model can't infer*
+   (trace-specific load patterns) remain untested; what failed is r1-distilled *judgment*.
+   gemma2 arm unrun.
+
+**Caveats.** Seeds 0–31, single trace, base world; the vanilla-14b headline needs the
+reseed/other-pools check → Exp 53 (in flight: seeds 32–63 give −5.9 ± 7.5 ns alone;
+pools 4/6 partial).
+
+**Reproduce.**
+```bash
+.venv/bin/python -m pins.trace_replay --referee --llm --model qwen2.5:14b --seeds 32 --pools 8
+PINS_MANUAL=pins/referee_manual_learned.md .venv/bin/python -m pins.trace_replay \
+  --referee --llm --model qwen2.5:14b --seeds 32 --pools 8
+.venv/bin/python -m pins.trace_replay \
+  --compare 'qwen2.5:14b+referee+manual-learned/referee,qwen2.5:14b+referee/referee'
+```
+(NB: the Exp 53 reseed overwrote tier `qwen2.5:14b+referee` pool 8 with seeds 32–63 in
+the live results file; the seeds 0–31 arm lives in
+`pins/results_backup_pre_exp53_14b_reseed.json` — point `PINS_RESULTS` there for the
+paired comparisons above.)
