@@ -156,16 +156,20 @@ def _rule_referee(stmts: list[dict], free_gpus: int) -> dict:
 
 def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
                    use_llm: bool = True, model: str = DEFAULT_MODEL, host: str = HOST,
-                   cache: dict | None = None, statement_model: str | None = None) -> RefereeOutcome:
+                   cache: dict | None = None, statement_model: str | None = None,
+                   think: bool = True, stmts: list[dict] | None = None) -> RefereeOutcome:
     """Full reason-then-referee round: gather statements, ask the referee LLM for the
     allocation, evaluate it. Cached per discretised scene like every other agent call.
     `statement_model` pins the demand/supply statement LLM independently of the referee's
-    `model`, so referee-model ablations hold the submissions fixed."""
+    `model`, so referee-model ablations hold the submissions fixed.
+    `stmts` overrides the gathering step with hand-authored submissions — the hard-case suite
+    (pins/hardcases.py) uses it to put an exceptional fact in a job's own justification."""
     cache = load_cache() if cache is None else cache
-    stmts = gather_statements(demand, supply_ctx, use_llm=use_llm,
-                              model=statement_model or model, cache=cache)
+    if stmts is None:
+        stmts = gather_statements(demand, supply_ctx, use_llm=use_llm,
+                                  model=statement_model or model, cache=cache)
     key = (f"{PROMPT_VERSION}{_MANUAL_TAG}|{_scene_key(stmts, free_gpus)}"
-           f"|{'llm:' + model if use_llm else 'rule'}")
+           f"|{'llm:' + model if use_llm else 'rule'}{'' if think else '|nothink'}")
 
     out = cache.get(key)
     if out is None and use_llm:
@@ -173,7 +177,7 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
             import ollama
             client = ollama.Client(host=host)
             resp = client.chat(
-                model=model, format="json",
+                model=model, format="json", think=think,
                 options={"temperature": 0, "num_predict": 4096, **CTX_OPT},  # reasoning models (r1) spend
                 # most of the budget in the thinking channel before emitting the JSON
                 messages=[{"role": "system",
@@ -247,7 +251,7 @@ def check_allocation(alloc: dict[str, int], reserve: int, demand: list[DemandJob
 # --------------------------------------------------------------------------- #
 #  two_sided_sim policy slot (Exp 50): the referee INSIDE the sim on real jobs  #
 # --------------------------------------------------------------------------- #
-def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None):
+def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None, think=True):
     """Referee as a `two_sided_sim` policy: each tick it decides the margin/reserve split of
     the free pool directly (in the sim the demand table is margins-only, forecast_cap=0).
 
@@ -258,7 +262,7 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
 
     def policy(demand, supply_ctx, free, **_):
         o = referee_decide(demand, supply_ctx, free, use_llm=use_llm, model=model,
-                           cache=cache, statement_model=statement_model)
+                           cache=cache, statement_model=statement_model, think=think)
         margins = {j.jid: o.alloc.get(j.jid, 0) for j in demand}
         reserve = o.reserve
         if not o.feasible:                       # overcommit/violation -> floor, counted
