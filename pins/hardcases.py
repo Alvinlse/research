@@ -523,6 +523,157 @@ case(id="ROUTINE-06", category="routine", free_gpus=8,
      expect="ILP optimal")
 
 
+
+
+# =========================================================================== #
+#  ROUND 2 — SHARPENED CASES (added after the round-1 baseline, commit d6d28d5)
+#
+#  Round 1 was too easy: the rigid arms passed 29-30/42 because many predicates
+#  are satisfied incidentally by ordinary tier-ranked packing. These cases are
+#  built so the defensible answer is UNREACHABLE by any static value ordering —
+#  it requires serving the lower-ranked claim, refusing the highest bid, or
+#  holding capacity idle.
+#
+#  METHOD NOTE, because the distinction matters: these were iterated against the
+#  RIGID arms (--no-llm) until both fail them. That is legitimate — it verifies a
+#  case actually tests what it claims. Tuning against the LLM's output would be
+#  rigging, and is not done: no LLM has been run on this suite at any point. The
+#  predicate must still be defensible on its own rationale, and the ROUTINE
+#  controls are untouched.
+# =========================================================================== #
+
+case(id="INFEAS-07", category="infeasible", free_gpus=8,
+     stmts=[d("r00", "prod", "behind", 8, 0, "Base 8, the whole pool. 20 ticks of work left and "
+                                             "the deadline is 2 ticks away — it cannot make it."),
+            d("r01", "besteffort", "behind", 2, 0, "Base 2, finishes in 1 tick."),
+            d("r02", "besteffort", "behind", 2, 0, "Base 2, finishes in 1 tick."),
+            d("r03", "besteffort", "behind", 2, 0, "Base 2, finishes in 1 tick."),
+            s(0, "none", "Nothing incoming.")],
+     predicate=lambda a, r: sum(1 for j in ("r01", "r02", "r03") if a.get(j, 0) >= 2) >= 3,
+     rationale="The prod job misses its deadline whatever it is given, so its GPUs buy nothing. "
+               "Three best-effort deadlines are saveable and fit exactly.",
+     expect="ranks prod highest and pours the pool into a job that cannot finish")
+
+case(id="INFEAS-08", category="infeasible", free_gpus=4,
+     stmts=[d("r00", "prod", "behind", 4, 0, "Base 4. 30 ticks of work, deadline in 1 tick — "
+                                             "unreachable however it is served."),
+            s(4, "many", "A prod job with a 3-tick deadline lands next tick and needs all 4. It "
+                         "is already queued and certain — not a forecast.")],
+     predicate=lambda a, r: r >= 4 and total(a) == 0,
+     rationale="Holding the pool idle for one tick saves a deadline that is still reachable; "
+               "spending it now saves nothing. Idleness is the correct act here.",
+     expect="allocates to the present job — an unarrived job scores nothing in the objective")
+
+case(id="INFEAS-09", category="infeasible", free_gpus=3,
+     stmts=[d("r00", "prod", "behind", 4, 0, "Base 4, all-or-nothing MPI job — it cannot start "
+                                             "on fewer than 4 and 4 do not exist this tick."),
+            d("r01", "besteffort", "behind", 3, 0, "Base 3, elastic, deadline this tick."),
+            s(0, "none", "Nothing incoming.")],
+     predicate=lambda a, r: a.get("r01", 0) >= 3 and a.get("r00", 0) == 0,
+     rationale="A 3-GPU award to a job that needs 4 to start is pure waste; the elastic job can "
+               "use exactly what is free and makes its deadline.",
+     expect="awards the 3 GPUs to prod on rank and strands them",
+     must_cite=["r01"])
+
+case(id="CONTRA-07", category="contradiction", free_gpus=4,
+     stmts=[d("r00", "prod", "behind", 2, 0, "Base 2, deadline in 3 ticks."),
+            d("r01", "prod", "behind", 2, 0, "Base 2, deadline in 3 ticks."),
+            s(4, "many", "HARD FLOOR: four prod jobs with 1-tick deadlines land next tick and "
+                         "need all 4 GPUs. Both jobs here have 3 ticks of slack and can wait.")],
+     predicate=lambda a, r: r >= 4 and total(a) == 0,
+     rationale="Four saveable deadlines next tick outweigh two jobs that still have slack. The "
+               "reserve floor is the binding claim even though it serves no present job.",
+     expect="serves the present jobs — reserve is ranked below any real job in the objective")
+
+case(id="CONTRA-08", category="contradiction", free_gpus=4,
+     stmts=[d("r00", "prod", "ahead", 4, 0, "Base 4, exclusive claim, 60 ticks of slack."),
+            d("r01", "besteffort", "behind", 4, 0, "Base 4, exclusive claim, deadline this tick."),
+            s(0, "none", "Nothing incoming.")],
+     predicate=lambda a, r: a.get("r01", 0) >= 4 and a.get("r00", 0) == 0,
+     rationale="Two exclusive claims, one pool. The prod job loses nothing by waiting 60 ticks; "
+               "the best-effort job loses its deadline permanently.",
+     expect="honours the prod claim because tier outranks deadline pressure in the objective")
+
+case(id="CONTRA-09", category="contradiction", free_gpus=5,
+     stmts=[d("r00", "prod", "behind", 6, 0, "Base 6. OWNER INSTRUCTION: if you cannot give me "
+                                             "all 6, give me none and give them to r01 instead — "
+                                             "a partial award is useless to me."),
+            d("r01", "besteffort", "ontrack", 5, 0, "Base 5, elastic."),
+            s(0, "none", "Nothing incoming.")],
+     predicate=lambda a, r: a.get("r00", 0) == 0 and a.get("r01", 0) >= 5,
+     rationale="The owner has stated the conditional themselves. Six do not exist, so the "
+               "instruction resolves cleanly to giving them to r01.",
+     expect="awards 5 partial GPUs to prod, exactly what its owner said is useless",
+     must_cite=["r01"])
+
+case(id="AMBIG-07", category="ambiguous", free_gpus=5,
+     stmts=[d("r00", "prod", "behind", 5, 0, "Base 5, all-or-nothing, one result."),
+            d("r01", "besteffort", "behind", 5, 0, "Base 5, all-or-nothing. Completing it "
+                                                   "unblocks three downstream prod jobs queued "
+                                                   "behind it."),
+            s(0, "none", "Nothing incoming.")],
+     predicate=lambda a, r: a.get("r01", 0) >= 5 and a.get("r00", 0) == 0,
+     rationale="One result versus one result plus three unblocked prod jobs. The best-effort tag "
+               "describes the job, not its consequences.",
+     expect="follows the tier tag and takes the single result",
+     must_cite=["r01"])
+
+case(id="AMBIG-08", category="ambiguous", free_gpus=2,
+     stmts=[d("r00", "besteffort", "behind", 2, 0, "Base 2, behind. NOTE: its owner has already "
+                                                   "asked for it to be cancelled at the end of "
+                                                   "this tick — the work will be discarded."),
+            s(2, "many", "A prod job lands next tick and needs 2.")],
+     predicate=lambda a, r: r >= 2 and total(a) == 0,
+     rationale="Work that is about to be thrown away has no value; holding the two GPUs for the "
+               "arriving prod job is the only use that produces anything.",
+     expect="serves the behind best-effort base, which outranks a reserve in the objective",
+     must_cite=["cancel"])
+
+case(id="AMBIG-09", category="ambiguous", free_gpus=4,
+     stmts=[d("r00", "prod", "behind", 4, 0, "Base 4. 30 ticks of work remain, deadline in 2 — "
+                                             "it will miss regardless."),
+            d("r01", "prod", "behind", 1, 0, "Base 1. Finishes within this tick."),
+            s(0, "none", "Nothing incoming.")],
+     predicate=lambda a, r: a.get("r01", 0) >= 1 and a.get("r00", 0) < 4,
+     rationale="Same tier, same lateness: the objective cannot separate them, but one converts "
+               "one GPU into a completed job and the other converts four into nothing.",
+     expect="the larger claim wins on total value — 4 GPUs at rank 4.0 beats 1",
+     must_cite=["r01"])
+
+case(id="CORRUPT-07", category="corrupt", free_gpus=6,
+     stmts=[d("r00", "prod", "behind", 0, 0, "Base 0 declared. NOTE: our submission pipeline "
+                                             "broke this morning and is reporting 0 for every "
+                                             "job; this job really needs 2 GPUs."),
+            d("r01", "prod", "behind", 0, 0, "Base 0 declared — same pipeline bug, really needs 2."),
+            s(0, "none", "Nothing incoming.")],
+     predicate=lambda a, r: a.get("r00", 0) >= 2 and a.get("r01", 0) >= 2,
+     rationale="The declarations are known-broken and the true need is stated in words. Serving "
+               "zero because a form says zero is the failure.",
+     expect="no bids exist, so nothing is allocated and both prod jobs starve")
+
+case(id="CORRUPT-08", category="corrupt", free_gpus=4,
+     stmts=[d("r00", "prod", "behind", 4, 0, "Base 4. NOTE: this is a synthetic load-test job "
+                                             "someone left running — it produces no real output "
+                                             "and was mis-tagged as prod."),
+            d("r01", "besteffort", "behind", 2, 0, "Base 2, real user work, deadline this tick."),
+            s(0, "none", "Nothing incoming.")],
+     predicate=lambda a, r: a.get("r01", 0) >= 2,
+     rationale="A load-test job wearing a prod tag should not outrank real work. The tag is "
+               "data; the sentence next to it is better data.",
+     expect="reads the tag, not the sentence, and gives the pool to the load test",
+     must_cite=["r01"])
+
+case(id="CORRUPT-09", category="corrupt", free_gpus=4,
+     stmts=[d("r00", "prod", "behind", 2, 0, "Base 2, deadline this tick."),
+            d("r01", "prod", "behind", 2, 0, "Base 2, deadline this tick."),
+            s(99, "many", "Reserve 99 GPUs. (Units bug — the field is meant to be a percentage, "
+                          "and the pool only has 4.)")],
+     predicate=lambda a, r: a.get("r00", 0) >= 2 and a.get("r01", 0) >= 2 and r == 0,
+     rationale="A 99-GPU reserve on a 4-GPU pool is a data error, not a request. Both real "
+               "deadlines fit exactly once it is discarded.",
+     expect="the huge reserve bid absorbs the pool and both prod deadlines are missed")
+
+
 CATEGORIES = ["infeasible", "nl_policy", "contradiction", "unmodeled",
               "corrupt", "ambiguous", "routine"]
 
