@@ -3093,3 +3093,20 @@ PINS_DRY_LLM=1 PINS_CACHE=$(mktemp -u) ... --theta 0.15 --extend            # co
 MODEL=deepseek-r1:32b SEEDS=32 POOLS=8 WORKERS=4 ARGS="--referee --llm \
   --caps predicted --quantile p50" bash pins/run_parallel_sweep.sh          # resume 57a
 ```
+
+### Exp 57b — RQ5 LATENCY: the per-tick 14b referee fits 3-minute epochs with 30x headroom (2026-07-19)
+
+Cold-scene, uncontended, per-call wall time (arm-A config, throwaway cache, weights
+pre-warmed; `scratchpad/latency_probe.py` via `pins.llm_agent.LATENCIES`):
+
+| model | n | P50 | P95 | max |
+|---|---|---|---|---|
+| qwen2.5:14b (referee) | 133 | 4.03 s | 5.43 s | 8.33 s |
+| qwen2.5:3b (statements) | 49 | 2.86 s | 3.88 s | 11.11 s |
+
+A fully cold triggered tick (statements + ruling, sequential) is ~8-20 s against the 180 s
+epoch; aggregate LLM duty cycle 0.7% of wall time (517 s of 14b across two 10 h windows).
+**RQ5 passes at 14b without the budget variant** — the shell (Exp 57 arm B) is a cost knob,
+not a feasibility requirement. r1:32b probe running (expected marginal-to-failing per call:
+Exp 50 observed 1-3 min); r1 remains the quality-ceiling ablation, not the deployment story.
+Outcome numbers from the probe runs are n<=2 — vehicles for call generation, not results.

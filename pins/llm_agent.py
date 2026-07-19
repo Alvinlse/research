@@ -144,6 +144,8 @@ def _rule_strategy(ctx: dict) -> dict:
 # counts ollama already returns. CACHE HITS NEVER REACH HERE — the meter therefore reports
 # the true marginal cost of an arm, not its cold-start cost.
 TOKENS = {"calls": 0, "prompt": 0, "completion": 0}
+LATENCIES: list = []   # (model, seconds) per live call, session-cumulative (RQ5); never reset
+import time as _time
 
 
 def _count(resp, field):
@@ -172,7 +174,9 @@ def metered_client(host: str):
     inner = client.chat
 
     def chat(*a, **kw):
+        t0 = _time.monotonic()
         resp = inner(*a, **kw)
+        LATENCIES.append((kw.get("model", "?"), _time.monotonic() - t0))  # RQ5: per-call wall s
         TOKENS["calls"] += 1
         TOKENS["prompt"] += _count(resp, "prompt_eval_count")
         TOKENS["completion"] += _count(resp, "eval_count")
