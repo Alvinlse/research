@@ -1,0 +1,146 @@
+% 改訂手法セクション（Exp 49–57b の証跡つき）— \input{method_referee} で取り込む
+% 必要パッケージ: \usepackage{tikz} \usetikzlibrary{positioning,fit}
+% 注意: 本節は「レフェリーLLMが決定する」構成であり，main.tex 現行§3の
+% 「LLMは推論し，機構が決定する」枠組みと*意図的に*対立する．統合時は
+% 序論・概要の主張を「決定権の所在を測定した」形へ改訂すること．
+
+\section{改訂手法：毎ティック裁定型レフェリーLLM配分器}
+\label{sec:method-referee}
+
+\subsection{設計の賭けと全体像}
+先行研究の標準構成は「LLMが提案し，最適化器が決定する」である
+（LLMSched の候補生成→ILP精錬）．本手法はこの権限分割を逆転させ，
+\textbf{レフェリーLLMが配分数値そのものを決定し，決定論的コードは検証と計測のみを行う}．
+実行不能な裁定は修復されず，そのティックはフロア（マージン・予約ゼロ）へ
+落ち，フォールバック率として計上される——実行不能性は隠される欠陥ではなく
+測定される結果である（14bで約1\%）．
+図~\ref{fig:referee-pipeline}に全体を示す．
+
+\begin{figure*}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  font=\small,
+  box/.style={draw, rounded corners=2pt, align=center, inner sep=5pt, minimum height=2.4em},
+  llm/.style={box, fill=blue!8},
+  det/.style={box, fill=gray!10},
+  rej/.style={box, fill=red!6, draw=red!50, dashed},
+  lbl/.style={font=\footnotesize, align=center},
+  arr/.style={-stealth, thick},
+  node distance=7mm and 9mm]
+
+\node[det] (state) {クラスタ状態 $S_t$\\（係争スライスのみ）};
+\node[llm, right=of state] (stmt) {ステートメント\\需要$\times n$＋供給$\times 1$\\（3b, 部分的主張）};
+\node[llm, right=of stmt, very thick] (ref) {\textbf{レフェリー裁定（14b）}\\ \{alloc, reserve,\\ total\_awarded, 正当化\}};
+\node[det, right=of ref] (eval) {検証器 check\_allocation\\規則1--4を照合\\ \textbf{報告のみ・修復しない}};
+\node[det, right=of eval] (exec) {剛体実行\\ceiling付与・prod優先\\マージン$\to$速度};
+\node[det, below=11mm of eval, xshift=12mm] (floor) {フロア・ティック\\（fb として計上, $\approx$1\%）};
+
+\draw[arr] (state) -- (stmt);
+\draw[arr] (stmt) -- (ref);
+\draw[arr] (ref) -- (eval);
+\draw[arr] (eval) -- node[lbl, above] {適法} (exec);
+\draw[arr] (eval.south) |- node[lbl, below left=1mm and -2mm] {違反} (floor.west);
+
+% 予算バリアント（採用・既定オフ）
+\node[det, below=9mm of state, anchor=north west, xshift=-2mm] (delta)
+  {予算バリアント（既定オフ）\\ $\Delta$トリガ $\le\theta$：\\
+   直前裁定を決定論的に再執行\\ 到着ジョブは同層の模範額\\ 招集 $1/7$・$-4.5$\sig};
+\draw[arr, dashed] (state.south) -- (delta.north);
+\draw[arr, dashed] (delta.south) -- ++(0,-3mm) -| (exec.south);
+
+% 棄却された構成
+\node[rej, below=11mm of ref, xshift=6mm] (stale)
+  {旧スナップショット裁定（棄却）\\ $-7.6$\sig$\to-2.5$ns, fb$\times5$};
+\draw[arr, red!60, dashed] (stale) -- (ref);
+\end{tikzpicture}}
+\caption{改訂手法のパイプライン．実線が本手法（毎ティック裁定）．青がLLM，灰が決定論的コード．
+下段左の破線経路は採用された予算バリアント（$\theta$トリガ・既定オフ），下段中央の赤破線は
+測定の結果棄却されたパイプライン化（1ティックの陳腐化で優位が消失）．}
+\label{fig:referee-pipeline}
+\end{figure*}
+
+\subsection{各段の構成}
+\paragraph{(1) ステートメント}
+訓練フェーズかつ基礎割当を保持するジョブのみが需要ステートメント
+（層・締切バケット・基礎GPU・要求マージン・一行の正当化）を提出し，
+供給側は予約要求を提出する．ステートメントは事実ではなく\textbf{戦略的主張}として
+扱われる（規則5：インセンティブ懐疑）．
+
+\paragraph{(2) 裁定}
+レフェリーは自由プール量と全ステートメントを受け取り，5つの順序付き規則
+（実行可能性・個別合理性・優先度・無羨望・懐疑）の下で配分数値を直接出力する．
+自己検算欄 \texttt{total\_awarded} は裁定の算術的忠実性の測定点を兼ねる．
+
+\paragraph{(3) 検証（修復しない）}
+決定論的検証器が規則1--4への違反を\textbf{報告のみ}する．
+違反時はティック全体がフロアへ落ちる．修復層を置かないことで，
+測定される効果がLLM自身の判断に帰属できる．
+
+\paragraph{(4) 剛体実行}
+裁定はジョブごとの上限となり，実行系は自発的縮小のみ（先取りなし）で付与する．
+マージンGPUはスパイク吸収速度（rate$>1$）を買い，これがprod保護の機構である．
+
+\subsection{予算バリアント（採用，既定オフ）}
+$\Delta$トリガ（供給バケット交差 0.4＋需要集合の離脱 0.4＋新規behind-prod 0.2 $>\theta$）
+が発火しない静穏ティックでは，\textbf{直前の裁定}を決定論的に再執行する．
+到着ジョブへは当該裁定の層別模範額をその規則3--4順で付与し，
+収まらない場合は修復せず再招集する（権限分割の保存）．
+測定された交換条件：招集$1/7$・限界トークン$1/7$で $-4.5\pm3.2$\sig
+（毎ティック比の対損失 $+3.08\pm2.71$）．
+展開でのコスト削減ノブであり，実行可能性要件ではない（後述の遅延測定）．
+
+\subsection{棄却された構成：パイプライン化裁定}
+直前ティックのステートメントで裁定し生存状態で検証する構成
+（LLMSched \S20 の並行プランナ設計）は，優位を $-2.5$ns へ侵食し
+フロア落ちを5倍にした．\textbf{レフェリーの価値は現在ティックの厳密な構成への
+即応に存在し，キャッシュ可能な戦略的知識ではない}——これが場面空間が
+キャッシュに抵抗する理由（コールド招集 42 対 8.9 回/シード）であり，
+「提案するLLM」で機能する96.8\%高速パス構成が「決定するLLM」へ移植できない理由である．
+
+\subsection{頑健性・計測層（すべて既定オフ，Exp 56 再現をビット同一で確認）}
+\begin{itemize}
+\item \textbf{再配分コスト} \texttt{--realloc-cost}：割当変更ティックの進捗を没収．
+  レフェリーの churn はフロアの1.52倍だが，課金は優位を\textbf{拡大}する
+  （$-7.1\to-11.4$）——churn の回数と害は別量である．
+\item \textbf{劣線形スケーリング} \texttt{--alpha}／\texttt{--alpha-norm}：
+  $P(g)=g/(1+\alpha(g-1))$ を基礎需要正規化と$P(1)$正規化の両読みで導入．
+  両者は世界の難度で符号が逆だが，優位は全セルで $-7$〜$-12$ に留まる．
+\item \textbf{推論会計}：全ollama呼び出しを計量（限界トークン・呼数・遅延）．
+  コールドコストは \texttt{PINS\_DRY\_LLM} で無課金計数．
+\end{itemize}
+
+\subsection{運用可能性（RQ5）}
+コールド場面・非競合の実測で，14bレフェリーは1呼び出し P50 4.0s／P95 5.4s，
+LLM占有は壁時計の0.7\%であり，3分エポックに対し約30倍の余裕で収まる．
+したがって毎ティック裁定は\textbf{予算バリアントなしで}展開可能であり，
+$\theta$シェルは純粋なコスト調整ノブである．
+% r1:32b は 1--3分/呼で境界的：品質上限のアブレーションであり展開構成ではない．
+
+\subsection{設計決定と証拠の対応}
+\begin{table}[t]
+\centering
+\caption{改訂手法の各設計決定を支える測定（対応比較，32シードは\sig 付き）．}
+\label{tab:method-evidence}
+{\footnotesize
+\begin{tabular}{@{}lll@{}}
+\toprule
+設計決定 & 対立仮説 & 決着させた測定 \\
+\midrule
+毎ティック裁定 & シェルで十分 & B: $+3.08\pm2.71$ 対損失 \\
+鮮度は本質的 & 1ティック陳腐化可 & C: $-2.5$ns, fb$\times5$ \\
+修復層を置かない & ILP精錬が安全 & 提案+ILP修復=基線劣位 \\
+churn は無害 & 再配分課金で崩壊 & 課金で優位拡大 $-11.4$ \\
+線形進捗は非本質 & $\alpha>0$で消失 & 両正規化で $-7$〜$-12$ \\
+運用可能 & 180s予算超過 & P95 5.4s，占有0.7\% \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\subsection{適用範囲の明示}
+本節の判定は 14b・プール8・P50信念・単一トレースでの測定である．
+r1:32b は同等のprod保護を\textbf{利用率を高めながら}達成する別機構
+（dutil $+2.5\pm2.4$\sig, $n{=}16$）でありシェル未測定．
+再配分・スケーリング頑健性は規則アーム $n{=}8$ の感度であり，LLM確認は今後の課題．
+レフェリーの人間的柔軟性という尾部主張は，本節の平均指標ではなく
+事前登録済みハードケース集で担われる．
