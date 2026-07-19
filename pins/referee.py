@@ -317,7 +317,7 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
                    use_llm: bool = True, model: str = DEFAULT_MODEL, host: str = HOST,
                    cache: dict | None = None, statement_model: str | None = None,
                    think: bool = True, stmts: list[dict] | None = None,
-                   trigger: str = "bucket") -> RefereeOutcome:
+                   trigger: str = "bucket", no_argue: bool = False) -> RefereeOutcome:
     """Full reason-then-referee round: gather statements, ask the referee LLM for the
     allocation, evaluate it. Cached per discretised scene like every other agent call.
     `statement_model` pins the demand/supply statement LLM independently of the referee's
@@ -328,8 +328,14 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
     if stmts is None:
         stmts = gather_statements(demand, supply_ctx, use_llm=use_llm,
                                   model=statement_model or model, cache=cache)
+    if no_argue:
+        # Exp 57f ablation: the referee sees the NUMBERS but none of the advocacy — isolates
+        # what the two-sided statements contribute beyond structured quantities. Blanked
+        # AFTER gathering so the demand/supply reasoning cost stays identical.
+        stmts = [{**s, "justification": ""} for s in stmts]
     key = (f"{PROMPT_VERSION}{_MANUAL_TAG}|{_scene_key(stmts, free_gpus, trigger)}"
-           f"|{'llm:' + model if use_llm else 'rule'}{'' if think else '|nothink'}")
+           f"|{'llm:' + model if use_llm else 'rule'}{'' if think else '|nothink'}"
+           f"{'|noarg' if no_argue else ''}")
     if statement_model and statement_model != "qwen2.5:3b":
         # The scene key discretises the ASKS but not the arguments, and the referee reads the
         # arguments -- so a stronger advocate that lands on the same numbers would otherwise
@@ -439,7 +445,8 @@ def take_shell_stats() -> dict:
 
 def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None, think=True,
                         debate=False, trigger="bucket", theta=None, stale="fresh",
-                        extend=False):
+                        extend=False, no_argue=False):
+    assert not (debate and no_argue), "--debate rewrites the arguments --no-argue removes"
     """Referee as a `two_sided_sim` policy: each tick it decides the margin/reserve split of
     the free pool directly (in the sim the demand table is margins-only, forecast_cap=0).
 
@@ -532,7 +539,7 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
                           cache=cache)
         o = referee_decide(dec_demand, dec_supply, dec_free, use_llm=use_llm, model=model,
                            cache=cache, statement_model=statement_model, think=think,
-                           stmts=stmts, trigger=trigger)
+                           stmts=stmts, trigger=trigger, no_argue=no_argue)
         SHELL_STATS["llm"] += 1
         margins = {j.jid: o.alloc.get(j.jid, 0) for j in demand}
         if stale == "one":               # stale ruling -> the evaluator re-checks vs LIVE state

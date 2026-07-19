@@ -3110,3 +3110,72 @@ epoch; aggregate LLM duty cycle 0.7% of wall time (517 s of 14b across two 10 h 
 not a feasibility requirement. r1:32b probe running (expected marginal-to-failing per call:
 Exp 50 observed 1-3 min); r1 remains the quality-ceiling ablation, not the deployment story.
 Outcome numbers from the probe runs are n<=2 — vehicles for call generation, not results.
+
+## Experiment 57c–g — THE STRUCTURE LADDER: what each layer of the multi-LLM architecture buys (2026-07-20)
+
+**Thesis reframing (this session).** The question is now: *can debate-like structured
+multi-LLM interaction improve resource-utilisation safety (low SLA)?* That turns the
+referee-vs-negotiated comparisons into a LADDER — no arguments → one-shot statements →
+statements+debate — each rung paired on the same seeds in the revised-method world
+(qwen2.5:14b rules, 3b advocates, caps=predicted, pool 8, seeds 0-31), flanked by the
+rivals. New arms: `--no-argue` (justifications stripped after gathering, |noarg cache tag)
+and the 57g gated-debate composition. All defaults off; arm-A replay verified bit-identical
+after every build.
+
+**The ladder (dprodSLA / dSLA / dutil vs floor, n=32, 0 referee fallbacks in every run).**
+
+| arm | dprodSLA | dSLA | dutil | note |
+|---|---|---|---|---|
+| no-llm floor | — | — | — | |
+| single-ilp (57d) | −7.9 ± 5.3\* | −1.8 | +0.2 | ILP repaired **44%** of ticks |
+| no-argue (57f) | −7.0 ± 3.9\* | **+4.9 ± 2.5\*** | **−5.3 ± 2.5\*** | 14.8/16 done — worst completions |
+| referee (A) | −7.6 ± 5.0\* | −0.2 | −1.6 | fb 1% |
+| **debate (57e)** | **−12.0 ± 7.0\*** | +0.8 | −2.5 ± 1.8\* | largest effect in project |
+| gated debate (57g) | −9.1 ± 6.4\* | +1.0 | −2.9 ± 1.7\* | llm-ticks 33 vs 221 |
+| negotiated | −6.6 ± 4.6\* | −1.8 | **+2.0 ± 1.0\*** | only +util arm |
+
+**Findings.**
+1. **The advocacy text contributes ~nothing to prod protection and everything to
+   non-destructiveness** (57f paired vs A: prod +0.58 ns; sla **+5.08 ± 2.43\***; util
+   **−3.64 ± 2.34\***). Numbers-only refereeing still shields prod (rules 3-4 are mechanical)
+   but becomes a blunt tax: overall SLA significantly WORSE than no scheduler, util −5.3\*.
+   The statements are the information channel that makes rule-5 skepticism discriminating.
+2. **The debate round ~1.6×'s the protection** (−12.0\* vs −7.6\*), six starred peeks,
+   trajectory −18.7→−15.3→−17.2→−15.0→−12.5→−13.1→−12.0. The INCREMENT over the plain
+   referee is −4.37 ± 4.39 — **ns by 0.02 points at n=32**; n=64 reseed required before
+   claiming it. Price: dutil −2.5\* (deliberation holds capacity).
+3. **Gating the debate (Δ>0.15, 57g) is a token-economy device, not a cluster-efficiency
+   device**: consultations −6.6× with ALL paired outcome diffs vs full debate ns
+   (prod +2.84 ± 3.82, util −0.37 ± 0.86) — but util identical (−2.9\*): the standing ruling
+   FREEZES the hold-back across quiet ticks. The shell that significantly hurt the plain
+   referee (+3.08\*) costs the debate arm nothing measurable. First 57g attempt was INVALID
+   (debate row missed the theta plumbing, replayed 57e byte-identically — caught by
+   paired-diff=0.00 + shell_fast=0; quarantined in scratchpad, rerun verified fast=187/llm=33).
+4. **Single-ilp @14b+pred (57d): outcome TIE with the referee** (paired −0.28 ± 3.92 ns) at
+   44% ILP-repair rate vs the referee's fb 1%. The prior log/paper claim that propose+repair
+   is inferior was WRONG (it was never logged; 3b tier −7.3\* was already competitive). The
+   architecture contrast is autonomy/auditability, not outcomes.
+5. **Robustness knobs transfer to the 14b LLM referee SPLIT (57c)**: α=0.3 survives
+   (−6.2 ± 3.4\*, DiD vs α=0 +1.44 ± 3.94 ns) — linear scaling is not load-bearing;
+   rc=0.25 loses significance (−4.2 ± 4.5, DiD +3.42 ± 4.09 ns, floor +1.9 vs referee +5.3
+   absolute damage) — the rule-arm "pricing widens the win" did NOT reproduce; undecided,
+   leaning adverse. 14b churn 1.23× floor (jobs 2.1×).
+6. **No 14b configuration achieves +util AND low SLA.** Deliberation's util price is not
+   avoidable by gating; negotiated remains the only +util\* arm. The both-signs candidate is
+   r1's spend-don't-hold mechanism (Exp 50 +2.2\*, 57a +2.5\* at n=16) — Exp 55 (r1+debate,
+   caps real, pre-registered) is IN FLIGHT serial (~7-10 h; referee row replayed from cache
+   in 27 s as designed; r1 100% VRAM at NUM_PARALLEL=1).
+
+**Accounting debts (open).** Debate token bill not captured (warmers pay cold calls in
+throwaway processes; cache proxy ~37 debated rulings + ~96 rebuts/seed). Concession-rate
+diagnostic needs a deterministic replay script (rebut cache stores revised LEVELS only).
+Debate latency probe (--debate, 1 seed) pending. All multi-arm selection on seeds 0-31 —
+any headline arm from this search must be CONFIRMED on seeds 32-63.
+
+**Reproduce.**
+```bash
+PINS_NUM_CTX=8192 .venv/bin/python -m pins.trace_replay --referee --debate --llm \
+  --model qwen2.5:14b --caps predicted --pools 8 --seeds 32          # 57e
+# --no-argue -> 57f   # --debate --theta 0.15 --extend -> 57g   # --single-ilp -> 57d
+bash pins/run_debate.sh                                              # Exp 55 (r1, caps real)
+```

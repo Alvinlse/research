@@ -362,7 +362,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           no_think: bool = False, debate: bool = False,
           advocates: str = "qwen2.5:3b", realloc_cost: float = 0.0, alpha: float = 0.0,
           alpha_norm: str = "c0", trigger: str = "bucket", theta: float | None = None,
-          stale: str = "fresh", extend: bool = False) -> None:
+          stale: str = "fresh", extend: bool = False, no_argue: bool = False) -> None:
     assert not (referee and single_ilp), "--referee and --single-ilp are separate arms"
     assert not debate or referee, "--debate is a referee-arm round"
     assert not (time_mode and ttf_mode), "--time and --ttf are separate experiments"
@@ -446,7 +446,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                                                        statement_model=advocates,
                                                        think=not no_think, trigger=trigger,
                                                        theta=theta, stale=stale,
-                                                       extend=extend)),
+                                                       extend=extend, no_argue=no_argue)),
             ("negotiated", lambda: make_policy_negotiated(use_llm, model, cache, decisions, seen)),
         ]
         if debate:                # cross-talk round, same referee stage -> isolates the round.
@@ -454,7 +454,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
             # debate win cannot be charged to a stronger advocate model.
             rows.insert(2, ("debate", lambda: make_policy_referee(
                 use_llm, model, cache, decisions, seen, statement_model=advocates,
-                think=not no_think, debate=True)))
+                think=not no_think, debate=True, trigger=trigger, theta=theta,
+                stale=stale, extend=extend)))
     elif single_ilp:              # Exp 54: LLMSched spine — one LLM proposes, the ILP repairs
         from pins.two_sided_sim import make_policy_single_ilp
         rows = [
@@ -636,6 +637,10 @@ def main() -> None:
                     help="Exp 57 shell: fast mode also awards ARRIVALS by the standing "
                          "ruling's own per-tier exemplar and rule-3/4 order; only departures "
                          "and new prod-behind jobs then fire the trigger.")
+    ap.add_argument("--no-argue", action="store_true",
+                    help="Exp 57f ablation: strip every statement's justification before the "
+                         "referee rules — numbers-only scenes isolate what the two-sided "
+                         "advocacy contributes. Separate cache tag (|noarg).")
     ap.add_argument("--stale", default="fresh", choices=("fresh", "one"),
                     help="Exp 57: 'one' = pipelined epochs — the referee decides on the "
                          "previous tick's statements, evaluator validates against the live "
@@ -692,7 +697,7 @@ def main() -> None:
           referee=a.referee, manual=a.manual, single_ilp=a.single_ilp, debate=a.debate,
           no_think=a.no_think, advocates=a.advocates, realloc_cost=a.realloc_cost,
           alpha=a.alpha, alpha_norm=a.alpha_norm, trigger=a.trigger, theta=a.theta,
-          stale=a.stale, extend=a.extend)
+          stale=a.stale, extend=a.extend, no_argue=a.no_argue)
 
 
 if __name__ == "__main__":
