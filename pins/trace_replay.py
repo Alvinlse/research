@@ -33,8 +33,9 @@ import csv
 import json
 import os
 import random
+import time
 
-from pins.llm_agent import load_cache, save_cache
+from pins.llm_agent import load_cache, save_cache, take_tokens
 from pins.negotiation_sim import Job
 from pins.two_sided_sim import (make_policy_isolated, make_policy_negotiated,
                                 make_policy_single, policy_none, simulate,
@@ -116,7 +117,7 @@ def load_runtime_pred(path: str = RUNTIME_CSV) -> dict[str, float]:
 
 def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, oracle=False,
                         true_map=None, declared=False, time_pred=None, time_mode=None,
-                        tick: int = TICK_S, quantum: int = 1
+                        tick: int = TICK_S, quantum: int = 1, stratify: bool = False
                         ) -> tuple[list[Job], dict[str, int], dict[str, int],
                                    dict[str, float] | str | None]:
     """n_jobs real jobs thinned from a random 10-hour trace window, on ONE clock.
@@ -145,6 +146,11 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
     WHOLE-GPU units: a job's cap becomes max(1, round(quanta/4)), so every sub-GPU job
     rounds up to a full card and the pool/margins/reserve all move in whole GPUs. Window
     sampling is quantum-independent, so quarter/whole tiers stay seed-paired.
+
+    Phase A (`stratify=True`, manual_author only): replace the uniform draw with a
+    within-window stratification — systematic over trace GPU-quanta (base_gpus spread) and a
+    fixed prod count with band-spread urgencies (tier + deadline spread). OFF by default so
+    every eval tier keeps its byte-identical seed-paired windows.
     """
     rng = random.Random(f"replay-{seed}")
     window_s = int(horizon * ARRIVAL_FRAC) * tick        # arrivals within first 60%
@@ -157,8 +163,28 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
         # rerolled seed to the plan world (request==prediction, plan truth) in every arm —
         # 5/32 seeds in the Exp 36/37 sweeps. Forward EVERYTHING.
         return make_trace_workload(trace, n_jobs, seed + 7919, horizon, pred, oracle,
-                                   true_map, declared, time_pred, time_mode, tick, quantum)
-    window = sorted(rng.sample(in_win, n_jobs), key=lambda r: r[:3])   # thin the arrival stream
+                                   true_map, declared, time_pred, time_mode, tick, quantum,
+                                   stratify)
+    if stratify:
+        # Phase A diversity (opt-in; eval path keeps rng.sample so its seeds stay byte-paired):
+        # systematic draw over the trace's GPU-quanta distribution so each window spans
+        # small..large base_gpus instead of an accidental all-similar-size clump.
+        rows = sorted(in_win, key=lambda r: r[2])
+        step = len(rows) / n_jobs
+        window = sorted((rng.choice(rows[int(i * step):int((i + 1) * step)] or rows)
+                         for i in range(n_jobs)), key=lambda r: r[:3])
+    else:
+        window = sorted(rng.sample(in_win, n_jobs), key=lambda r: r[:3])   # thin the arrival stream
+    if stratify:
+        # tier + deadline diversity: fixed prod count (keeps the recipe's ~1/3 prod MEAN but
+        # kills the binomial variance that yields all-besteffort windows) with urgencies
+        # spread across each tier's band, so deadline tightness (behind/ontrack/ahead) also
+        # spans its range within every window. Shuffled to decorrelate from arrival order.
+        prod_n = round(n_jobs * (2.2 - 1.667) / (2.2 - 0.6))
+        urg = [1.667 + (2.2 - 1.667) * (k + 0.5) / prod_n for k in range(prod_n)] + \
+              [0.6 + (1.667 - 0.6) * (k + 0.5) / (n_jobs - prod_n)
+               for k in range(n_jobs - prod_n)]
+        rng.shuffle(urg)
 
     jobs: list[Job] = []
     cap_map: dict[str, int] = {}
@@ -170,7 +196,7 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
         quanta = min(max(1, round(quanta / quantum)), clip)  # trace quanta -> pool units
         arrival = (arr_s - t0) // tick
         work = float(min(WORK_CLAMP[1], max(WORK_CLAMP[0], round(dur_s / tick))))
-        urgency = round(rng.uniform(0.6, 2.2), 3)          # make_workload recipe verbatim
+        urgency = round(urg[i] if stratify else rng.uniform(0.6, 2.2), 3)  # make_workload recipe
         slack = max(1.15, min(2.4, 2.5 - 0.65 * urgency))
         deadline = arrival + int(round(work * slack))
         tier = "prod" if urgency >= 1.667 else "besteffort"
@@ -193,7 +219,8 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
     return jobs, cap_map, true_cap_map, belief
 
 
-METRICS = ("sla", "prod_sla", "util", "slowdown", "finished", "fallback_rate")
+METRICS = ("sla", "prod_sla", "util", "slowdown", "finished", "fallback_rate",
+           "churn_gpu", "churn_jobs")
 RESULTS = os.environ.get("PINS_RESULTS", os.path.join(HERE, "results_trace_replay.json"))
 
 
@@ -331,8 +358,13 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           time_mode: str | None = None, ttf_mode: str | None = None,
           baseline: str | None = None, dyncap: str | None = None,
           trace_name: str = "v2020", quantum: int = 1, referee: bool = False,
-          manual: str | None = None, single_ilp: bool = False) -> None:
-    assert not (referee and single_ilp), "--referee and --single-ilp are separate arms" 
+          manual: str | None = None, single_ilp: bool = False,
+          no_think: bool = False, debate: bool = False,
+          advocates: str = "qwen2.5:3b", realloc_cost: float = 0.0, alpha: float = 0.0,
+          alpha_norm: str = "c0", trigger: str = "bucket", theta: float | None = None,
+          stale: str = "fresh", extend: bool = False) -> None:
+    assert not (referee and single_ilp), "--referee and --single-ilp are separate arms"
+    assert not debate or referee, "--debate is a referee-arm round"
     assert not (time_mode and ttf_mode), "--time and --ttf are separate experiments"
     assert quantum == 1 or (caps_mode == "real" and truth_mode == "plan" and
                             not (time_mode or ttf_mode or baseline or dyncap)), \
@@ -380,6 +412,12 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         suffix += "+qwhole"               # Exp 48: whole-GPU allocation quantum
     if referee:
         suffix += "+referee"              # Exp 50: referee-LLM allocator arm
+    if advocates != "qwen2.5:3b":
+        assert referee, "--advocates is a referee-arm option"
+        suffix += "+adv" + advocates.split(":")[-1]   # tiers must not mix advocate scales
+    if no_think:
+        assert referee, "--no-think is a referee-arm ablation"
+        suffix += "+nothink"              # hybrid reasoner with the thinking channel disabled
     if single_ilp:
         suffix += "+single-ilp"           # Exp 54: single LLM proposes, ILP repairs
     manual = manual or os.environ.get("PINS_MANUAL")   # flag and env are the same arm
@@ -405,9 +443,18 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         rows = [
             ("no-llm",     lambda: policy_none),
             ("referee",    lambda: make_policy_referee(use_llm, model, cache, decisions, seen,
-                                                       statement_model="qwen2.5:3b")),
+                                                       statement_model=advocates,
+                                                       think=not no_think, trigger=trigger,
+                                                       theta=theta, stale=stale,
+                                                       extend=extend)),
             ("negotiated", lambda: make_policy_negotiated(use_llm, model, cache, decisions, seen)),
         ]
+        if debate:                # cross-talk round, same referee stage -> isolates the round.
+            # Advocates run at `advocates` in BOTH rows: the round is the only difference, so a
+            # debate win cannot be charged to a stronger advocate model.
+            rows.insert(2, ("debate", lambda: make_policy_referee(
+                use_llm, model, cache, decisions, seen, statement_model=advocates,
+                think=not no_think, debate=True)))
     elif single_ilp:              # Exp 54: LLMSched spine — one LLM proposes, the ILP repairs
         from pins.two_sided_sim import make_policy_single_ilp
         rows = [
@@ -438,7 +485,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         per_seed_pool: dict[str, list[dict]] = {}
         for name, factory in rows:
             per_seed: list[dict] = []
-            for s in seeds:
+            _t0 = time.time()
+            for i, s in enumerate(seeds):
                 # ttf 'predicted' reuses the belief-map construction; the map routes to the
                 # SUPPLY signal (ttf_work) instead of the demand deadline belief (belief_work)
                 mk_mode = time_mode or ("predicted" if ttf_mode == "predicted" else None)
@@ -465,10 +513,23 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                     r = simulate(jobs, factory(), gpus, horizon, u_map, spike_map, scale,
                                  spike_max, cap_map, true_cap_map=tcap,
                                  belief_work=belief if time_mode else None, ttf_work=ttf,
-                                 dyn_cap_map=dyn_map)
-                per_seed.append({k: r[k] for k in METRICS})
+                                 dyn_cap_map=dyn_map, realloc_cost=realloc_cost, alpha=alpha,
+                                 alpha_norm=alpha_norm)
+                tk = take_tokens()          # marginal inference cost of THIS (seed, arm)
+                from pins.referee import take_shell_stats
+                sh = take_shell_stats()     # fast/llm tick split of the controller shell
+                per_seed.append({k: r[k] for k in METRICS}
+                                | {"llm_calls": float(tk["calls"]),
+                                   "llm_tokens": float(tk["prompt"] + tk["completion"]),
+                                   "shell_fast": float(sh["fast"]),
+                                   "shell_llm": float(sh["llm"])})
                 if use_llm:
                     save_cache(cache)   # per-seed: a reaped run loses at most one seed
+                el, done = time.time() - _t0, i + 1
+                eta = el / done * (len(seeds) - done)
+                print(f"\r      {gpus}gpu {name:<11} {done:>2}/{len(seeds)} seeds "
+                      f"| {el:5.0f}s elapsed ~{eta:5.0f}s left", end="", flush=True)
+            print()
             per_seed_pool[name] = per_seed
             results.append((name, {k: sum(row[k] for row in per_seed) / len(seeds)
                                    for k in METRICS}))
@@ -542,14 +603,57 @@ def main() -> None:
                          "runtime P50 (pred_job_runtime.csv), 'blind' = none (always ontrack), "
                          "'oracle' = true work on the same runtime-covered windows. Default "
                          "(absent) = pre-Exp-38 oracle on unrestricted windows")
+    ap.add_argument("--no-think", action="store_true",
+                    help="referee ablation: run a hybrid reasoner with think=False (distinct tier+cache)")
     ap.add_argument("--single-ilp", action="store_true",
                     help="Exp 54: LLMSched-spine arm — ONE joint-objective LLM proposes "
                          "(margins, reserve), the evaluator verifies, an infeasible proposal "
                          "is min-edit REPAIRED by pins/ilp.py (fb column = repair rate)")
+    ap.add_argument("--realloc-cost", type=float, default=0.0, metavar="F",
+                    help="Exp 57: fraction of a tick's progress a job loses on any tick its "
+                         "allocation changed (checkpoint/restart/reload). 0.0 = the zero-cost "
+                         "upper bound Exp 22-56b assumed; try 0.1/0.25/0.5 as sensitivity.")
+    ap.add_argument("--alpha", type=float, default=0.0, metavar="A",
+                    help="Exp 57: diminishing-returns coefficient in P(g)=g/(1+A*(g-1)). "
+                         "0.0 = the linear scaling Exp 22-56b assumed; try 0.1/0.3 as "
+                         "sensitivity. Cannot be calibrated from v2020 (no counterfactuals).")
+    ap.add_argument("--alpha-norm", default="c0", choices=("c0", "unit"),
+                    help="Exp 57: where the scaling law is normalised. 'c0' = rate 1.0 at the "
+                         "job's base demand (alpha reprices margin only). 'unit' = the plan's "
+                         "literal P(1) law, which also tightens every deadline. They disagree "
+                         "in sign on world difficulty; report both.")
+    ap.add_argument("--trigger", default="bucket", choices=("bucket", "delta"),
+                    help="Exp 57: referee scene-cache key. 'bucket' keys every job_id "
+                         "separately; 'delta' is role-indexed and identity-free, so a ruling "
+                         "transfers to any scene of the same shape.")
+    ap.add_argument("--theta", type=float, default=None, metavar="T",
+                    help="Exp 57 controller shell: delta-trigger threshold (try 0.15). A tick "
+                         "whose state change is below T re-executes the standing ruling "
+                         "deterministically instead of re-invoking the referee. Method "
+                         "verdict: the BUDGET variant (-4.5* at 1/7 the consultations); "
+                         "per-tick (theta off) stays the headline method. Default off.")
+    ap.add_argument("--extend", action="store_true",
+                    help="Exp 57 shell: fast mode also awards ARRIVALS by the standing "
+                         "ruling's own per-tier exemplar and rule-3/4 order; only departures "
+                         "and new prod-behind jobs then fire the trigger.")
+    ap.add_argument("--stale", default="fresh", choices=("fresh", "one"),
+                    help="Exp 57: 'one' = pipelined epochs — the referee decides on the "
+                         "previous tick's statements, evaluator validates against the live "
+                         "tick. REJECTED as method (erodes -7.6* to -2.5 ns, fb x5); kept "
+                         "for the staleness ablation.")
     ap.add_argument("--referee", action="store_true",
                     help="Exp 50: swap the policy rows for the referee-LLM allocator vs the "
                          "no-llm floor and the negotiated (code-decides) arm; infeasible "
                          "referee ticks fall back to the floor and count in fb")
+    ap.add_argument("--advocates", default="qwen2.5:3b", metavar="MODEL",
+                    help="model for the demand/supply statements in the referee AND debate "
+                         "rows (default qwen2.5:3b, as Exp 50). Holding it fixed across both "
+                         "rows is what makes the debate contrast the round alone")
+    ap.add_argument("--debate", action="store_true",
+                    help="add a 'debate' row: both sides read each other's statements and "
+                         "revise (asks may only shrink) before the SAME referee rules, so the "
+                         "referee vs debate contrast isolates the cross-talk round. Advocates "
+                         "run at --model. Requires --referee")
     ap.add_argument("--manual", default=None, metavar="PATH",
                     help="Exp 51: referee precedent manual (e.g. pins/referee_manual.md or "
                          "the self-authored pins/referee_manual_learned.md) — appended to the "
@@ -585,7 +689,10 @@ def main() -> None:
           use_llm=a.llm, model=a.model, caps_mode=a.caps, quantile=a.quantile,
           truth_mode=a.truth, time_mode=a.time, ttf_mode=a.ttf, baseline=a.baseline,
           dyncap=a.dyncap, trace_name=a.trace, quantum={"quarter": 1, "whole": 4}[a.quantum],
-          referee=a.referee, manual=a.manual, single_ilp=a.single_ilp)
+          referee=a.referee, manual=a.manual, single_ilp=a.single_ilp, debate=a.debate,
+          no_think=a.no_think, advocates=a.advocates, realloc_cost=a.realloc_cost,
+          alpha=a.alpha, alpha_norm=a.alpha_norm, trigger=a.trigger, theta=a.theta,
+          stale=a.stale, extend=a.extend)
 
 
 if __name__ == "__main__":

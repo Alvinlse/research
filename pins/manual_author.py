@@ -163,7 +163,8 @@ def contested(jobs, pool, horizon, u_map, spike_map, scale, spike_max, cap_map, 
 # --------------------------------------------------------------------------- #
 def reflect(model: str, payload: dict) -> dict | None:
     import ollama
-    resp = ollama.Client(host=HOST).chat(
+    from pins.llm_agent import metered_client
+    resp = metered_client(HOST).chat(
         model=model, format="json",
         options={"temperature": 0, "num_predict": 4096, **CTX_OPT},
         messages=[{"role": "system", "content": SYSTEM_REFLECT},
@@ -186,7 +187,7 @@ def run(model: str, n_seeds: int, seed_start: int, pool: int, statement_model: s
             break
         jobs, cap_map, tcap, _ = make_trace_workload(trace, n_jobs, s, horizon, None,
                                                      False, None, False, None, None,
-                                                     TRACES["v2020"][1], 1)
+                                                     TRACES["v2020"][1], 1, stratify=True)
         cap_map = {k: min(v, pool) for k, v in cap_map.items()}
         tcap = {k: min(v, pool) for k, v in tcap.items()}
         u_map, spike_map = assign(jobs, s, dist, spike_max)

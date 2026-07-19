@@ -34,7 +34,7 @@ import os
 import sys
 from dataclasses import dataclass, field
 
-from pins.llm_agent import (CTX_OPT, DEFAULT_MODEL, HOST, MARGIN_HEDGES, RESERVE_LEVELS, _parse,
+from pins.llm_agent import (metered_client, CTX_OPT, DEFAULT_MODEL, HOST, MARGIN_HEDGES, RESERVE_LEVELS, _parse,
                             llm_margin, llm_reserve, load_cache, reserve_amount, save_cache)
 from pins.negotiation_protocol import HEDGE_GPUS, DemandJob
 
@@ -171,7 +171,7 @@ def _rebut_call(system: str, payload: dict, field: str, levels: list[str], model
     level, why = None, ""
     try:
         import ollama
-        resp = ollama.Client(host=host).chat(
+        resp = metered_client(host).chat(
             model=model, format="json", think=False,
             options={"temperature": 0, "num_predict": 120, **CTX_OPT},
             messages=[{"role": "system", "content": system},
@@ -238,8 +238,43 @@ def rebut(stmts: list[dict], free_gpus: int, use_llm: bool = True, model: str = 
 # --------------------------------------------------------------------------- #
 #  Step 2 — the referee decides (LLM emits the numbers; rule fallback)          #
 # --------------------------------------------------------------------------- #
-def _scene_key(stmts: list[dict], free_gpus: int) -> str:
+def _roles(stmts: list[dict]) -> list[dict]:
+    """Demand statements in canonical ROLE order — the order a delta-triggered ruling is
+    indexed by. Identity (job_id) is deliberately excluded: two scenes with the same tiers,
+    deadlines and asks are the same *situation*, whatever the jobs happen to be called."""
+    return sorted((s for s in stmts if s["side"] == "demand"),
+                  key=lambda s: (s["tier"], s["deadline"], -s["base_gpus"],
+                                 -s["requested_margin_gpus"]))
+
+
+def _alloc_to_slots(alloc: dict, stmts: list[dict]) -> dict:
+    """jid-keyed award -> slot-keyed, so a delta ruling can be reused by other jobs."""
+    return {f"s{i}": int(alloc.get(s["job_id"], 0)) for i, s in enumerate(_roles(stmts))}
+
+
+def _alloc_from_slots(slots: dict, stmts: list[dict]) -> dict:
+    """slot-keyed award -> jid-keyed for THIS scene's jobs (inverse of _alloc_to_slots)."""
+    return {s["job_id"]: int(slots.get(f"s{i}", 0)) for i, s in enumerate(_roles(stmts))}
+
+
+def _scene_key(stmts: list[dict], free_gpus: int, trigger: str = "bucket") -> str:
     parts = []
+    if trigger == "delta":
+        # Exp 57: role-indexed, identity-free. `bucket` (default) keys every distinct job_id
+        # separately, so a structurally identical scene re-fires the LLM for a new job — the
+        # ~4.7x invocation gap vs the negotiated arm. Here slot i is "the i-th job in role
+        # order", so the cached ruling transfers to any scene with the same shape.
+        for i, s in enumerate(_roles(stmts)):
+            parts.append(f"s{i}:{s['tier']}:{s['deadline']}:"
+                         f"b{s['base_gpus']}+m{s['requested_margin_gpus']}")
+        sup = [s for s in stmts if s["side"] != "demand"]
+        for s in sup:
+            parts.append(f"supply:r{s['requested_reserve_gpus']}:{s['incoming_prod']}")
+        key = f"referee-d|free{free_gpus}|" + "|".join(parts)
+        if any(s.get("_debated") for s in stmts):
+            key += "|dbt" + hashlib.sha1(
+                "|".join(s["justification"] for s in stmts).encode()).hexdigest()[:12]
+        return key
     for s in sorted(stmts, key=lambda s: s.get("job_id", "~supply")):
         if s["side"] == "demand":
             parts.append(f"{s['job_id']}:{s['tier']}:{s['deadline']}:"
@@ -281,7 +316,8 @@ def _rule_referee(stmts: list[dict], free_gpus: int) -> dict:
 def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
                    use_llm: bool = True, model: str = DEFAULT_MODEL, host: str = HOST,
                    cache: dict | None = None, statement_model: str | None = None,
-                   think: bool = True, stmts: list[dict] | None = None) -> RefereeOutcome:
+                   think: bool = True, stmts: list[dict] | None = None,
+                   trigger: str = "bucket") -> RefereeOutcome:
     """Full reason-then-referee round: gather statements, ask the referee LLM for the
     allocation, evaluate it. Cached per discretised scene like every other agent call.
     `statement_model` pins the demand/supply statement LLM independently of the referee's
@@ -292,7 +328,7 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
     if stmts is None:
         stmts = gather_statements(demand, supply_ctx, use_llm=use_llm,
                                   model=statement_model or model, cache=cache)
-    key = (f"{PROMPT_VERSION}{_MANUAL_TAG}|{_scene_key(stmts, free_gpus)}"
+    key = (f"{PROMPT_VERSION}{_MANUAL_TAG}|{_scene_key(stmts, free_gpus, trigger)}"
            f"|{'llm:' + model if use_llm else 'rule'}{'' if think else '|nothink'}")
     if statement_model and statement_model != "qwen2.5:3b":
         # The scene key discretises the ASKS but not the arguments, and the referee reads the
@@ -301,10 +337,12 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
         key += f"|adv:{statement_model}"
 
     out = cache.get(key)
+    if out is not None and trigger == "delta" and "alloc_slots" in out:
+        out = dict(out, alloc=_alloc_from_slots(out["alloc_slots"], stmts))
     if out is None and use_llm:
         try:
             import ollama
-            client = ollama.Client(host=host)
+            client = metered_client(host)
             resp = client.chat(
                 # only hybrid reasoners accept the thinking channel; ollama now 400s on the
                 # rest (it used to ignore the flag, which is how Exp 51-53 ran think=True on
@@ -341,7 +379,10 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
             print(f"  ! referee fallback: {type(e).__name__}: {e}")
     if out is None:
         out = _rule_referee(stmts, free_gpus)
-    cache[key] = out
+    if trigger == "delta":
+        cache[key] = dict(out, alloc_slots=_alloc_to_slots(out["alloc"], stmts))
+    else:
+        cache[key] = out
 
     violations = check_allocation(out["alloc"], out["reserve"], demand, free_gpus)
     return RefereeOutcome(alloc=out["alloc"], reserve=out["reserve"],
@@ -384,8 +425,21 @@ def check_allocation(alloc: dict[str, int], reserve: int, demand: list[DemandJob
 # --------------------------------------------------------------------------- #
 #  two_sided_sim policy slot (Exp 50): the referee INSIDE the sim on real jobs  #
 # --------------------------------------------------------------------------- #
+# Exp 57 controller shell: per-(seed,arm) tick counters, read+reset by trace_replay the
+# same way take_tokens() is. fast = ticks governed by an adapted standing ruling (no LLM);
+# llm = ticks that invoked referee_decide.
+SHELL_STATS = {"fast": 0, "llm": 0}
+
+
+def take_shell_stats() -> dict:
+    out = dict(SHELL_STATS)
+    SHELL_STATS.update(fast=0, llm=0)
+    return out
+
+
 def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None, think=True,
-                        debate=False):
+                        debate=False, trigger="bucket", theta=None, stale="fresh",
+                        extend=False):
     """Referee as a `two_sided_sim` policy: each tick it decides the margin/reserve split of
     the free pool directly (in the sim the demand table is margins-only, forecast_cap=0).
 
@@ -395,31 +449,111 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
 
     `debate` inserts the cross-talk round (Step 1b) between the statements and the ruling: both
     sides read each other, then revise. The referee stage is byte-identical either way, so the
-    debate/no-debate contrast isolates the round itself."""
+    debate/no-debate contrast isolates the round itself.
+
+    Controller shell (Exp 57, from the LLMSched pipeline; default OFF so every prior tier
+    replays unchanged):
+      `theta` — Δ-trigger threshold. Each tick Δ = 0.4·|Δfree|/prev + 0.4·jobset-symdiff
+        + 0.2·new-prod-behind. Δ<=theta -> FAST MODE: deterministically re-execute the
+        STANDING ruling (keep awards of continuing jobs, drop departed, NEW jobs get 0 —
+        their arrival raises Δ and normally fires the trigger). The LLM authored the standing
+        ruling; fast mode only executes it, so decision authority stays with the referee.
+        An adapted ruling that no longer fits the live pool re-fires the trigger instead of
+        being repaired.
+      `stale` — 'one' = pipelined epochs: the referee decides on the PREVIOUS tick's
+        statements (the snapshot a concurrent 180 s planner would have), and the evaluator
+        validates the ruling against the LIVE tick. 'fresh' (default) = decide on this tick."""
     from pins.negotiation_protocol import NegotiationOutcome
 
+    st = {"free": None, "jids": None, "behind": frozenset(),
+          "standing": None,            # (alloc dict, reserve) of the last ruling
+          "prev_in": None}             # (demand, supply_ctx, free) of the previous tick
+
+    def _delta(demand, free):
+        jids = frozenset(j.jid for j in demand)
+        behind = frozenset(j.jid for j in demand
+                           if j.ctx.get("tier") == "prod" and j.ctx.get("deadline") == "behind")
+        if st["free"] is None:
+            d = 1.0                                        # cold start always triggers
+        else:
+            # Pool sizes here are 0-8 GPUs, so a RAW |dfree|/prev term is near-binary (any
+            # 1-GPU move fires). Bucket it the way the agents themselves see supply
+            # (empty / scarce / roomy): only a bucket CROSSING counts as a supply change.
+            bucket = lambda f: 0 if f == 0 else (1 if f <= 2 else 2)
+            du = 1.0 if bucket(free) != bucket(st["free"]) else 0.0
+            # with `extend` the standing ruling GOVERNS routine arrivals, so only departures
+            # count toward the job term; risky arrivals (new prod-behind) still fire via the
+            # risk term (0.2 > the 0.15 default theta) — the referee is consulted for risky
+            # novelty, never for routine churn.
+            moved = (st["jids"] - jids) if extend else (jids ^ st["jids"])
+            dj = min(1.0, len(moved) / max(len(st["jids"]), 1))
+            risk = 1.0 if behind - st["behind"] else 0.0
+            d = 0.4 * du + 0.4 * dj + 0.2 * risk
+        st["free"], st["jids"], st["behind"] = free, jids, behind
+        return d
+
     def policy(demand, supply_ctx, free, **_):
+        fast = (theta is not None and st["standing"] is not None
+                and _delta(demand, free) <= theta)
+        if theta is not None and not fast:
+            _delta(demand, free) if st["free"] is None else None   # keep state warm on cold start
+        if fast:
+            alloc, sreserve = st["standing"]
+            margins = {j.jid: alloc.get(j.jid, 0) for j in demand}
+            if extend:
+                # Award arrivals by the ruling's own revealed policy: per-tier exemplar award
+                # (mean of what the ruling gave this tier), granted in the referee's rule
+                # 3/4 order — prod before besteffort, behind before ontrack. No exemplar
+                # (ruling never awarded this tier) -> 0: the ruling is extended, not invented.
+                by_tier: dict[str, list[int]] = {}
+                for j in demand:
+                    if j.jid in alloc and alloc[j.jid] > 0:
+                        by_tier.setdefault(j.ctx.get("tier", "besteffort"), []).append(alloc[j.jid])
+                new = [j for j in demand if j.jid not in alloc]
+                for j in sorted(new, key=lambda j: (j.ctx.get("tier") != "prod",
+                                                    j.ctx.get("deadline") != "behind", j.jid)):
+                    ex = by_tier.get(j.ctx.get("tier", "besteffort"))
+                    margins[j.jid] = round(sum(ex) / len(ex)) if ex else 0
+            if not check_allocation(margins, sreserve, demand, free):   # still fits live pool
+                SHELL_STATS["fast"] += 1
+                st["prev_in"] = (demand, supply_ctx, free)
+                return margins, sreserve, NegotiationOutcome(
+                    margins=margins, reserve=sreserve, rounds=0, agreed=True, transcript=[])
+            # standing ruling no longer feasible -> fall through and re-invoke the referee
+
+        dec_demand, dec_supply, dec_free = (
+            st["prev_in"] if (stale == "one" and st["prev_in"] is not None)
+            else (demand, supply_ctx, free))
         stmts = None
         if debate:
-            stmts = gather_statements(demand, supply_ctx, use_llm=use_llm,
+            stmts = gather_statements(dec_demand, dec_supply, use_llm=use_llm,
                                       model=statement_model or model, cache=cache)
-            stmts = rebut(stmts, free, use_llm=use_llm, model=statement_model or model,
+            stmts = rebut(stmts, dec_free, use_llm=use_llm, model=statement_model or model,
                           cache=cache)
-        o = referee_decide(demand, supply_ctx, free, use_llm=use_llm, model=model,
+        o = referee_decide(dec_demand, dec_supply, dec_free, use_llm=use_llm, model=model,
                            cache=cache, statement_model=statement_model, think=think,
-                           stmts=stmts)
+                           stmts=stmts, trigger=trigger)
+        SHELL_STATS["llm"] += 1
         margins = {j.jid: o.alloc.get(j.jid, 0) for j in demand}
+        if stale == "one":               # stale ruling -> the evaluator re-checks vs LIVE state
+            violations = check_allocation(margins, o.reserve, demand, free)
+            feasible = not violations
+        else:
+            violations, feasible = o.violations, o.feasible
         reserve = o.reserve
-        if not o.feasible:                       # overcommit/violation -> floor, counted
+        if not feasible:                         # overcommit/violation -> floor, counted
             margins = {j.jid: 0 for j in demand}
             reserve = 0
+        else:
+            st["standing"] = (dict(o.alloc), reserve)
+        st["prev_in"] = (demand, supply_ctx, free)
         out = NegotiationOutcome(margins=margins, reserve=reserve, rounds=1,
-                                 agreed=o.feasible, transcript=o.transcript)
-        sig = f"referee|free={free}|ok={o.feasible}|r={reserve}|m={sorted(margins.items())}"
+                                 agreed=feasible, transcript=o.transcript)
+        sig = f"referee|free={free}|ok={feasible}|r={reserve}|m={sorted(margins.items())}"
         if sig not in seen:
             seen.add(sig)
-            trace.append({"policy": "referee", "free_gpus": free, "feasible": o.feasible,
-                          "violations": o.violations, "reserve": reserve,
+            trace.append({"policy": "referee", "free_gpus": free, "feasible": feasible,
+                          "violations": violations, "reserve": reserve,
                           "llm_reserve": o.reserve, "margins": margins,
                           "why": o.justification, "_source": o._source})
         return margins, reserve, out

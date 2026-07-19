@@ -33,7 +33,7 @@ import os
 import re
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-CACHE_PATH = os.path.join(HERE, "llm_agent_cache.json")
+CACHE_PATH = os.environ.get("PINS_CACHE", os.path.join(HERE, "llm_agent_cache.json"))
 DEFAULT_MODEL = "qwen2.5:3b"          # project default; --model swaps it (e.g. a llama tag)
 HOST = "http://localhost:11434"
 # PINS_NUM_CTX shrinks each request's context so OLLAMA_NUM_PARALLEL slots fit in VRAM
@@ -136,6 +136,60 @@ def _rule_strategy(ctx: dict) -> dict:
 
 
 # --------------------------------------------------------------------------- #
+#  Inference budget meter (Exp 57)                                             #
+# --------------------------------------------------------------------------- #
+# RQ3 of the ValueSched plan asks whether multi-agent gains come from role structure or
+# simply from more inference. Nothing counted tokens, so the question was unanswerable.
+# Every ollama client in the codebase is built through metered_client(), which tallies the
+# counts ollama already returns. CACHE HITS NEVER REACH HERE — the meter therefore reports
+# the true marginal cost of an arm, not its cold-start cost.
+TOKENS = {"calls": 0, "prompt": 0, "completion": 0}
+
+
+def _count(resp, field):
+    v = getattr(resp, field, None)
+    if v is None and isinstance(resp, dict):
+        v = resp.get(field)
+    return int(v or 0)
+
+
+class _DryRun(Exception):
+    """PINS_DRY_LLM: raised instead of calling ollama, so the caller's existing except-branch
+    takes its rule fallback. Lets us COUNT the cold calls an arm would make without paying
+    for them — the structural half of RQ5 (calls/epoch), measurable with no GPU at all."""
+
+
+def metered_client(host: str):
+    """An ollama.Client whose .chat() adds its token counts to TOKENS."""
+    if os.environ.get("PINS_DRY_LLM"):
+        class _Stub:
+            def chat(self, *a, **kw):
+                TOKENS["calls"] += 1
+                raise _DryRun("dry run: counted, not called")
+        return _Stub()
+    import ollama
+    client = ollama.Client(host=host)
+    inner = client.chat
+
+    def chat(*a, **kw):
+        resp = inner(*a, **kw)
+        TOKENS["calls"] += 1
+        TOKENS["prompt"] += _count(resp, "prompt_eval_count")
+        TOKENS["completion"] += _count(resp, "eval_count")
+        return resp
+
+    client.chat = chat
+    return client
+
+
+def take_tokens() -> dict:
+    """Read and reset the meter — trace_replay calls this once per (seed, arm)."""
+    out = dict(TOKENS)
+    TOKENS.update(calls=0, prompt=0, completion=0)
+    return out
+
+
+# --------------------------------------------------------------------------- #
 #  Cache (one query per distinct discretised state)                            #
 # --------------------------------------------------------------------------- #
 def load_cache() -> dict:
@@ -171,7 +225,7 @@ def llm_strategy(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
     if use_llm:
         try:
             import ollama
-            client = ollama.Client(host=host)
+            client = metered_client(host)
             resp = client.chat(
                 model=model, format="json",
                 options={"temperature": 0, "num_predict": 150, **CTX_OPT},
@@ -267,7 +321,7 @@ def llm_priority(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
     if use_llm:
         try:
             import ollama
-            client = ollama.Client(host=host)
+            client = metered_client(host)
             resp = client.chat(
                 model=model, format="json",
                 options={"temperature": 0, "num_predict": 120, **CTX_OPT},
@@ -363,7 +417,7 @@ def llm_declare(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
     if use_llm:
         try:
             import ollama
-            client = ollama.Client(host=host)
+            client = metered_client(host)
             system = SYSTEM_DECLARE_PRICED if ctx["tariff"] == "priced" else SYSTEM_DECLARE_FREE
             resp = client.chat(
                 model=model, format="json",
@@ -473,7 +527,7 @@ def llm_reserve(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
     if use_llm:
         try:
             import ollama
-            client = ollama.Client(host=host)
+            client = metered_client(host)
             resp = client.chat(
                 model=model, format="json",
                 options={"temperature": 0, "num_predict": 120, **CTX_OPT},
@@ -620,7 +674,7 @@ def llm_margin(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
     if use_llm:
         try:
             import ollama
-            client = ollama.Client(host=host)
+            client = metered_client(host)
             resp = client.chat(
                 model=model, format="json",
                 options={"temperature": 0, "num_predict": 120, **CTX_OPT},
@@ -702,7 +756,7 @@ def llm_margin_reflect(ctx: dict, exp: dict, use_llm: bool = True, model: str = 
     if use_llm:
         try:
             import ollama
-            client = ollama.Client(host=host)
+            client = metered_client(host)
             resp = client.chat(
                 model=model, format="json",
                 options={"temperature": 0, "num_predict": 120, **CTX_OPT},
@@ -793,7 +847,7 @@ def llm_joint(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
     if use_llm:
         try:
             import ollama
-            client = ollama.Client(host=host)
+            client = metered_client(host)
             resp = client.chat(
                 model=model, format="json",
                 options={"temperature": 0, "num_predict": 150, **CTX_OPT},

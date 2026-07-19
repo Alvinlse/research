@@ -3013,3 +3013,83 @@ PINS_NUM_CTX=8192 .venv/bin/python -m pins.trace_replay --referee --llm \
   'qwen2.5:14b+pred+referee/referee,qwen2.5:14b+pred-prod-p90+referee/referee'   # levels
 # DiD: per_seed referee-minus-no-llm in each tier, paired across tiers (see findings table)
 ```
+
+## Experiment 57 — METHOD REVISION vs THE LLMSCHED PIPELINE: per-tick invocation is load-bearing (2026-07-19)
+
+**Question.** The LLMSched pipeline doc (referee_allocator branch) prescribes: Δ-trigger the
+LLM only on large state changes (θ=0.15), serve routine ticks from an adapted cached
+strategy (96.8% fast mode), and pipeline the decision against the previous epoch's snapshot.
+Does the referee keep its prod-protection win inside that controller shell — and while we're
+instrumenting, does the win survive the plan's other realism knobs (reallocation overhead,
+sublinear scaling, token budgets)?
+
+**New infrastructure (all default-off; defaults verified bit-identical to Exp 56 replays).**
+- Churn probe: `churn_gpu`/`churn_jobs` per tick in METRICS (always on, free).
+- `--realloc-cost F`: a job forfeits F of a tick's progress on any tick its allocation
+  changed. `--alpha A` + `--alpha-norm {c0,unit}`: P(g)=g/(1+A(g-1)) scaling law, normalised
+  at base demand (c0, default: alpha reprices margin only) or at P(1) (unit: the plan's
+  literal law — also tightens every deadline; the two disagree in SIGN on world difficulty).
+- Token meter: every ollama client runs through `metered_client()`; `llm_calls`/`llm_tokens`
+  per (seed, arm) in per_seed. Cache hits never reach the meter -> MARGINAL cost. Cold cost
+  via `PINS_DRY_LLM=1` + `PINS_CACHE=<throwaway>` (counts calls without calling).
+- `--trigger delta`: role-indexed identity-free referee scene key (rulings transfer across
+  jobs in the same roles). Only −19% cold calls: the scene SPACE is combinatorial, not the key.
+- Controller shell `--theta T --extend` + `--stale one`: Δ = 0.4·supply-bucket-crossing +
+  0.4·jobset-change (departures only under extend) + 0.2·new-prod-behind; fast mode
+  re-executes the STANDING ruling (extend: arrivals get the ruling's per-tier exemplar in
+  rule-3/4 order); infeasible standing ruling re-fires the trigger, never repaired.
+
+**Findings (pool 8, caps predicted, p50).**
+1. **Churn ≠ churn harm.** r1 referee re-tunes 1.52x the floor's GPUs/tick (+0.172±0.098*,
+   n=8) — but pricing churn (rule arms, rc=0.5) WIDENS the referee's win (−7.1 -> −11.4):
+   the floor's reallocations land where lost progress costs deadlines, the referee's don't.
+2. **Alpha robustness, both normalisations (rule arms, n=8).** c0-norm worlds get EASIER
+   (starvation cushioning dominates), unit-norm worlds get brutal (floor prodSLA 91.5% at
+   0.3); the referee's advantage stays −7..−12 in every cell of both. Linear-scaling is not
+   what the win rests on.
+3. **Cold-cost anatomy.** Referee 42.1 cold calls/seed vs negotiated 8.9 (4.7x) — key
+   granularity + combinatorial scenes, NOT decision frequency. Shell cuts consultations 7x
+   (217->31 llm ticks/seed) but cold inference only 36%: trigger and cache de-duplicate the
+   same repeats; the triggered ticks are the novel scenes.
+4. **THE METHOD VERDICT (14b, n=32, seeds 0-31, paired).**
+   | arm | dprodSLA vs floor | fb | llm ticks | paired vs A |
+   |---|---|---|---|---|
+   | A per-tick (Exp 56 method) | **−7.6 ± 4.8*** | 1.1% | 217 | — |
+   | B shell θ=.15+extend       | −4.5 ± 3.2*     | 1.1% |  31 | **+3.08 ± 2.71 LOSS** |
+   | C B + stale one            | −2.5 ± 2.6 ns   | 5.0% |  29 | +5.12 ± 5.84 ns |
+   The pre-registered rule ("adopt most-featured arm with no significant paired loss")
+   nominally admits C — **overruled**: C's ns comes from staleness inflating variance
+   (point estimate WORSE than B's significant loss, fb 5x). Rules that reward noise lose.
+   **Verdict: per-tick invocation is load-bearing. A stays the method; B is the documented
+   budget variant (−4.5* at 1/7 the consultations, 1330 marginal tokens/seed); C rejected —
+   one tick of staleness erodes the headline to noise.** The referee's value lives in
+   reacting to the current tick — exactly what LLMSched's pipelined planner would remove.
+5. **Exp 57a (r1 predicted-belief, INTERRUPTED at n=16, checkpoint
+   `results_exp57_r1_p50_ckpt16.json`):** dutil **+2.5 ± 2.4*** — r1's spend-don't-hold
+   mechanism survives the belief swap (14b: −1.6 same settings); dprodSLA −6.4 ± 8.0 ns,
+   needs the remaining 16 seeds. Seeds 0-15 cached; resume with `--seed-start 16`.
+
+**Caveats.** Method verdict is 14b/single pool/p50; r1 shell arms unmeasured (its standing
+rulings may extend differently). Sensitivity findings are rule-arm, n=8 — the LLM-referee
+realloc/alpha arms were pre-empted for the method test. alpha is uncalibratable from v2020:
+sensitivity, never measurement. Shell 5%-invocation target NOT met (14%): free-pool
+feasibility churn at tiny pools is real work, not cache-able routine.
+
+**Ops.** (a) metered_client briefly recursed onto itself via blanket substitution — caught
+by the live-call smoke test, invisible to fully-cached runs; keep that test before trusting
+token numbers. (b) TaskStop on a sweep kills its nohup'd ollama too — restart before the
+next arm. (c) git worktrees don't carry untracked .venv/data/eval-csvs: symlink them.
+(d) This commit also carries the previously-uncommitted Exp 55 debate wiring and Phase A
+stratify code that shared the same files.
+
+**Reproduce.**
+```bash
+PINS_NUM_CTX=8192 .venv/bin/python -m pins.trace_replay --referee --llm \
+  --model qwen2.5:14b --caps predicted --pools 8 --seeds 32                  # arm A
+# + --theta 0.15 --extend            -> arm B     # + --stale one            -> arm C
+PINS_DRY_LLM=1 PINS_CACHE=$(mktemp -u) ... --theta 0.15 --extend            # cold counts
+.venv/bin/python -m pins.trace_replay --referee --caps predicted --pools 8 \
+  --seeds 8 --realloc-cost 0.5                                              # churn pricing
+MODEL=deepseek-r1:32b SEEDS=32 POOLS=8 WORKERS=4 ARGS="--referee --llm \
+  --caps predicted --quantile p50" bash pins/run_parallel_sweep.sh          # resume 57a
+```

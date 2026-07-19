@@ -50,6 +50,19 @@ TTF_HORIZON = 2      # Exp 39: "imminent" release = believed remaining work <= t
 # --------------------------------------------------------------------------- #
 #  Per-job Stage-1 facts -> bridged demand ctx (build task #1 in the loop)       #
 # --------------------------------------------------------------------------- #
+def _speedup(x: float, alpha: float) -> float:
+    """Exp 57: P(g) = g / (1 + alpha*(g-1)) — the plan's counterfactual scaling law.
+
+    alpha=0 is perfectly linear scaling (identity), which is what the simulator hard-coded
+    through Exp 56b. alpha>0 makes each extra GPU buy less: serial fraction, communication,
+    straggler overhead. Used as a RATIO against the job's own base c0, so rate==1.0 whenever
+    a job holds exactly its base demand, for every alpha — the normalisation prior results
+    depend on is preserved and only the value of MARGIN (g>c0) changes."""
+    if x <= 0:
+        return 0.0
+    return x / (1.0 + alpha * (x - 1.0))
+
+
 def job_facts(job: Job, u: float, spike_max: float, req_gpu: int) -> bridge.Stage1Facts:
     """Synthesise the Stage-1 facts a real forecaster would emit for this job: P50 runtime = its
     nominal work (steps), P90 = inflated by the plausible spike (u*spike_max), uncertainty = u,
@@ -159,7 +172,9 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
              cap_map: dict[str, int], true_cap_map: dict[str, int] | None = None,
              belief_work: dict[str, float] | str | None = None,
              ttf_work: dict[str, float] | str | None = None,
-             dyn_cap_map: dict[str, int] | None = None, dyn_after: int = 3) -> dict:
+             dyn_cap_map: dict[str, int] | None = None, dyn_after: int = 3,
+             realloc_cost: float = 0.0, alpha: float = 0.0,
+             alpha_norm: str = "c0") -> dict:
     """One run of a policy on a fresh workload copy. Rigid: a running job is never involuntarily
     preempted; it only shrinks VOLUNTARILY to its ceiling (cap0 + this tick's negotiated margin).
     Spikes: a train phase's true work is inflated; margin GPUs grant rate>1 to absorb it, capped at
@@ -170,6 +185,17 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
     (e.g. a Stage-1 prediction) while progress dynamics run on the job's TRUE train demand —
     under-prediction starves the job (rate<1 even fully granted), over-prediction hogs GPUs it
     cannot convert into progress. If None, request == truth (Exp 27/28 behaviour, unchanged).
+
+    `realloc_cost` (Exp 57): fraction of a tick's progress a job forfeits on any tick its
+    allocation CHANGED — checkpoint, restart, worker reconfiguration, data reload. 0.0 (default)
+    is the zero-cost upper bound every experiment through Exp 56b assumed, and reproduces those
+    runs bit-identically. Prices exactly the `churn_gpu`/`churn_jobs` the probe above counts.
+
+    `alpha` (Exp 57): the scaling law's diminishing-returns coefficient, see `_speedup`.
+    0.0 (default) = the linear world of Exp 22-56b, reproduced bit-identically under EITHER
+    normalisation. `alpha_norm` picks what the law is normalised at: 'c0' (default) keeps
+    rate==1 at the job's base demand; 'unit' is the plan's literal P(1) form, where holding
+    c0 no longer buys nominal speed. The two disagree in SIGN, so report both.
 
     `belief_work` (Exp 38): what the DEMAND AGENT believes a job's total work is, for its
     behind/ontrack/ahead deadline bucket only — dynamics and SLA stay on the truth. None =
@@ -203,6 +229,9 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
     busy_steps = 0
     n_fallback = 0
     n_decisions = 0
+    churn_gpu = 0.0        # sum |delta GPUs| across ticks (the quantity an overhead model prices)
+    churn_jobs = 0         # job-ticks touched by a reallocation
+    churn_ticks = 0
 
     def phase_of(j):
         return j.phases[pidx[j.jid]] if pidx[j.jid] < len(j.phases) else "idle"
@@ -270,6 +299,7 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
             n_fallback += 1
 
         # --- rigid allocation with the negotiated ceilings ------------------------------------
+        pre_tick = {j.jid: held[j.jid] for j in active}    # churn probe: allocation before retune
         ceiling = {j.jid: cap0(j) + (margins.get(j.jid, 0) if phase_of(j) == "train" else 0)
                    for j in active}
         for j in active:                                   # voluntary shrink to the new ceiling
@@ -294,6 +324,16 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
         grant(prod_w, free)                                # prod first, full free pool
         grant(be_w, max(0, free - reserve))                # best-effort, minus reserved headroom
 
+        # churn probe: |delta| GPUs re-tuned this tick, and how many jobs were touched
+        resized = set()
+        for j in active:
+            d = abs(held[j.jid] - pre_tick[j.jid])
+            if d > 0:
+                churn_gpu += d
+                churn_jobs += 1
+                resized.add(j.jid)
+        churn_ticks += 1
+
         # --- advance: margin GPUs buy spike-absorbing speed ------------------------------------
         busy_sum += sum(held[j.jid] for j in active) / total_gpus
         busy_steps += 1
@@ -309,7 +349,16 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
                 rate = 1.0
             else:
                 ceil_use = c0 + (useful[j.jid] if phase_of(j) == "train" else 0)
-                rate = min(g, ceil_use) / c0               # margin -> rate can exceed 1
+                # alpha=0 -> the linear rate every experiment through Exp 56b assumed;
+                # alpha>0 -> Amdahl: the Nth extra GPU buys strictly less than the first.
+                # 'c0'  : rate==1 at the job's own base demand -> alpha only reprices MARGIN
+                #         (and cushions starvation), deadlines keep their Exp 22-56b meaning.
+                # 'unit': the plan's literal P(1)-normalised law -> holding c0 no longer buys
+                #         nominal speed, so every deadline silently tightens. Sensitivity only.
+                denom = _speedup(c0, alpha) if alpha_norm == "c0" else c0
+                rate = _speedup(min(g, ceil_use), alpha) / denom
+            if realloc_cost and j.jid in resized:
+                rate *= max(0.0, 1.0 - realloc_cost)       # resize = checkpoint/restart/reload
             progress[j.jid] += rate
             while done_at[j.jid] is None and progress[j.jid] >= work[j.jid][pidx[j.jid]] - 1e-9:
                 progress[j.jid] -= work[j.jid][pidx[j.jid]]
@@ -334,6 +383,8 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
         "finished": float(len(fin)),
         "n_jobs": float(len(jobs)),
         "fallback_rate": n_fallback / max(n_decisions, 1),
+        "churn_gpu": churn_gpu / max(churn_ticks, 1),      # mean |delta| GPUs re-tuned per tick
+        "churn_jobs": churn_jobs / max(churn_ticks, 1),    # mean jobs touched per tick
         "done_at": dict(done_at),   # per-job completion tick (None = unfinished);
     }                               # results files are unaffected (METRICS whitelist)
 
@@ -460,6 +511,8 @@ def simulate_backfill(jobs_proto: list[Job], total_gpus: int, horizon: int,
         "finished": float(len(fin)),
         "n_jobs": float(len(jobs)),
         "fallback_rate": 0.0,
+        "churn_gpu": 0.0,
+        "churn_jobs": 0.0,
     }
 
 
@@ -500,7 +553,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model) -> No
         results = []
         for name, factory in rows:
             acc = {"sla": 0.0, "prod_sla": 0.0, "util": 0.0, "slowdown": 0.0,
-                   "finished": 0.0, "fallback_rate": 0.0}
+                   "finished": 0.0, "fallback_rate": 0.0,
+                   "churn_gpu": 0.0, "churn_jobs": 0.0}
             for s in seeds:
                 jobs = make_workload(n_jobs, s, horizon)
                 u_map, spike_map = assign(jobs, s, dist, spike_max)
