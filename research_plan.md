@@ -490,3 +490,70 @@ baselines from the evaluation plan — now scoped and run (Exp 41 EASY, Exp 42 t
    schedulers train on 10^5-10^6 episodes — a compute budget outside this thesis.
 6. **Prediction leftovers:** local-LLM metadata extraction for cold-start; derive spike-risk from
    the forecaster's P90/P50 ratio for a fully end-to-end signal.
+
+---
+
+## Phase 6 — Utilisation-safety of structured multi-LLM allocation (revised 2026-07-20)
+
+**Thesis question (refined):** *can debate-like structured multi-LLM interaction improve
+resource-utilisation safety (low SLA) of LLM allocation?* The referee is no longer defended
+as "better than the pipeline" — Exp 57d showed propose+ILP-repair TIES it on outcomes
+(44% repair rate vs fb 1%) — but as the architecture whose safety is *produced by the
+multi-LLM structure itself*, each layer's contribution now separately measured.
+
+### What the Exp 55/57 cycle established (all 14b, caps=predicted, pool 8, n=32, paired)
+
+| layer / arm | buys | costs | evidence |
+|---|---|---|---|
+| referee rules alone (no-argue) | prod −7.0\* | SLA **+4.9\* WORSE than floor**, util −5.3\* | 57f |
+| + advocacy text | non-destructiveness (SLA +5.1\*, util +3.6\* recovered) | ~0 prod | 57f paired |
+| + debate round | prod −12.0\* (largest effect in project) | util −2.5\* | 57e; increment vs referee ns@32 by 0.02 → **n=64 reseed required** |
+| Δ-gated debate | tokens −6.6× (all outcome diffs ns) | util NOT recovered | 57g (v1 invalid, rerun verified) |
+| negotiated | only +util\* arm (+2.0\*) | smaller prod (−6.6\*) | — |
+| single-ilp | outcome tie | 44% repair dependency | 57d |
+
+Robustness at the LLM level SPLIT: α=0.3 transfers (−6.2\*), realloc-cost undecided
+(sig lost, DiD ns). Latency: 14b P95 5.4 s (30× headroom), r1 P95 57.5 s (passes; old
+1–3 min figure was parallel-contention artifact). **No 14b configuration achieves +util AND
+low SLA; the both-signs candidate is r1's spend-don't-hold mechanism** (Exp 50 +2.2\*,
+57a +2.5\* n=16) — Exp 55 (r1+debate, caps real, pre-registered) in flight.
+
+### Revised architecture (adopted 2026-07-20, supersedes the Δ>0.15 shell)
+
+Per 3-minute tick: (1) update all numerical facts deterministically; (2) statements refresh
+on bucket-change (the existing discretised cache IS this trigger — statements stay
+qualitative per the Exp 1–7 lesson, so "stale numerics" cannot occur by construction);
+(3) rebuttal/deliberation refreshes on HARD TRIGGERS only (prod arrival, release of
+contested GPUs, slack-bucket crossing, predicted SLA violation, contested-set / free-GPU /
+min-feasible change, prior fallback or invalid ruling); (4) **referee rules EVERY tick**
+(T^R=1 — per-tick freshness measured load-bearing: gating cost +3.08\* [arm B], one-tick
+pipelining erased the win [arm C]); (5) non-repairing validator; (6) valid → execute,
+invalid → safe fallback, counted.
+
+Optional strict replay (replaces the rejected weighted-Δ rule, which asked "did the state
+move?" instead of "would reuse hurt?"): replay the previous ruling ONLY if decision
+signature Ψ (contested identities, free GPUs, urgency buckets, priority ranking, reserve
+ask, feasible structure) is EQUAL, the ruling is still feasible, age < K_R=1, and a regret
+guard vs a deterministic proxy allocation (rule-referee as GreedySafeAllocator; loss =
+weighted SLA-risk + idle + fragmentation + fairness) shows no meaningful harm.
+Rejected from the proposal: confidence-gate (no schema field; LLM self-confidence
+uncalibrated, Exp 1–7), numeric-fresh statements and 5-level slack buckets for now
+(scene-space inflation: cold-call anatomy 42 vs 8.9/seed is combinatorial).
+
+### Next experiments (pre-registered order; every winner re-confirmed on FRESH seeds 32–63)
+
+1. **E1 — previous-allocation referee input (prompt v3):** referee receives A[t−1] + a
+   change-cost note + rule 6 ("prefer keeping allocations you cannot justify changing").
+   The only untested 14b lever for +util. Expect churn ↓ (near-certain); util unknown;
+   named risk = anchoring (would reproduce 57g staleness through the prompt — watch
+   dprodSLA drift toward −9). Scene key must digest prev_alloc (cache-collision hygiene).
+2. **E3 — hard-trigger-gated debate:** deliberation on hard triggers, statements on
+   bucket-change, ruling per-tick fresh (unlike 57g, which froze the RULING). Expect prod
+   −10..−12, rebuttal calls −3–5×, util unchanged (~−2.5\* — falsification of the
+   "deliberation holds capacity" mechanism if it improves).
+3. **E2 — signature-replay arm:** the principled cost-control story; expect rare replay at
+   pool 8 (≈ per-tick outcomes, modest savings), value is the deployment/paper argument.
+4. **Debate increment reseed (n=64):** settle the −4.37 ± 4.39.
+5. **r1 completions:** finish 57a (`--seed-start 16`), then r1+debate @ caps predicted if
+   Exp 55 preserves +util under the round — if so, an r1 version of E1 jumps this queue.
+6. Accounting debts: debate token bill, concession-rate replay script, --debate latency probe.
