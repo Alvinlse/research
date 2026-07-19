@@ -64,6 +64,16 @@ SYSTEM_REFEREE = (
 
 PROMPT_VERSION = "v2"                 # busts the scene cache whenever SYSTEM_REFEREE changes
 
+# Exp 58/E1 (research_plan Phase 6): the referee gains MEMORY of its own last executed
+# ruling plus a qualitative change-cost note. Appended to SYSTEM_REFEREE only when
+# `prev_alloc` is passed, so every existing tier's prompt — and cache key — is untouched.
+RULE6_PREV = (
+    "\n6. CONTINUITY: you are also given previous_allocation — the allocation that "
+    "actually executed last epoch. Changing a job's allocation costs part of its progress "
+    "(checkpoint/restart), so KEEP an allocation unless the statements justify changing "
+    "it. Do not keep an allocation that rules 1-5 now argue against."
+)
+
 def _HYBRID(model: str) -> bool:      # models whose API accepts think=; the rest 400 on it
     return model.startswith(("deepseek-r1", "qwen3"))
 
@@ -317,7 +327,8 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
                    use_llm: bool = True, model: str = DEFAULT_MODEL, host: str = HOST,
                    cache: dict | None = None, statement_model: str | None = None,
                    think: bool = True, stmts: list[dict] | None = None,
-                   trigger: str = "bucket", no_argue: bool = False) -> RefereeOutcome:
+                   trigger: str = "bucket", no_argue: bool = False,
+                   prev_alloc: dict | None = None) -> RefereeOutcome:
     """Full reason-then-referee round: gather statements, ask the referee LLM for the
     allocation, evaluate it. Cached per discretised scene like every other agent call.
     `statement_model` pins the demand/supply statement LLM independently of the referee's
@@ -336,6 +347,12 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
     key = (f"{PROMPT_VERSION}{_MANUAL_TAG}|{_scene_key(stmts, free_gpus, trigger)}"
            f"|{'llm:' + model if use_llm else 'rule'}{'' if think else '|nothink'}"
            f"{'|noarg' if no_argue else ''}")
+    if prev_alloc is not None:
+        # v3-prev arm: the ruling depends on the executed history, so the history is part
+        # of the scene identity — two ticks with equal statements but different pasts must
+        # never share a cached ruling (the Exp 56/57g cache-collision lesson).
+        key += "|prev:" + hashlib.sha1(
+            json.dumps(sorted(prev_alloc.items())).encode()).hexdigest()[:10]
     if statement_model and statement_model != "qwen2.5:3b":
         # The scene key discretises the ASKS but not the arguments, and the referee reads the
         # arguments -- so a stronger advocate that lands on the same numbers would otherwise
@@ -358,9 +375,13 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
                 options={"temperature": 0, "num_predict": 4096, **CTX_OPT},  # reasoning models (r1) spend
                 # most of the budget in the thinking channel before emitting the JSON
                 messages=[{"role": "system",
-                           "content": SYSTEM_REFEREE + ("\n\n" + _MANUAL if _MANUAL else "")},
+                           "content": SYSTEM_REFEREE
+                                      + (RULE6_PREV if prev_alloc is not None else "")
+                                      + ("\n\n" + _MANUAL if _MANUAL else "")},
                           {"role": "user", "content": json.dumps(
-                              {"free_gpus": free_gpus, "statements": stmts}, indent=1)}],
+                              {"free_gpus": free_gpus, "statements": stmts}
+                              | ({"previous_allocation": prev_alloc}
+                                 if prev_alloc is not None else {}), indent=1)}],
             )
             obj = _parse(resp.message.content)
             if obj is not None and isinstance(obj.get("alloc"), dict):
@@ -445,7 +466,7 @@ def take_shell_stats() -> dict:
 
 def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None, think=True,
                         debate=False, trigger="bucket", theta=None, stale="fresh",
-                        extend=False, no_argue=False):
+                        extend=False, no_argue=False, prev_input=False):
     assert not (debate and no_argue), "--debate rewrites the arguments --no-argue removes"
     """Referee as a `two_sided_sim` policy: each tick it decides the margin/reserve split of
     the free pool directly (in the sim the demand table is margins-only, forecast_cap=0).
@@ -524,6 +545,7 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
             if not check_allocation(margins, sreserve, demand, free):   # still fits live pool
                 SHELL_STATS["fast"] += 1
                 st["prev_in"] = (demand, supply_ctx, free)
+                st["executed"] = dict(margins) | {"_reserve": sreserve}
                 return margins, sreserve, NegotiationOutcome(
                     margins=margins, reserve=sreserve, rounds=0, agreed=True, transcript=[])
             # standing ruling no longer feasible -> fall through and re-invoke the referee
@@ -539,7 +561,8 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
                           cache=cache)
         o = referee_decide(dec_demand, dec_supply, dec_free, use_llm=use_llm, model=model,
                            cache=cache, statement_model=statement_model, think=think,
-                           stmts=stmts, trigger=trigger, no_argue=no_argue)
+                           stmts=stmts, trigger=trigger, no_argue=no_argue,
+                           prev_alloc=(st.get("executed") or {}) if prev_input else None)
         SHELL_STATS["llm"] += 1
         margins = {j.jid: o.alloc.get(j.jid, 0) for j in demand}
         if stale == "one":               # stale ruling -> the evaluator re-checks vs LIVE state
@@ -554,6 +577,7 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
         else:
             st["standing"] = (dict(o.alloc), reserve)
         st["prev_in"] = (demand, supply_ctx, free)
+        st["executed"] = dict(margins) | {"_reserve": reserve}   # E1: what actually ran
         out = NegotiationOutcome(margins=margins, reserve=reserve, rounds=1,
                                  agreed=feasible, transcript=o.transcript)
         sig = f"referee|free={free}|ok={feasible}|r={reserve}|m={sorted(margins.items())}"
