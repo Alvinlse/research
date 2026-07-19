@@ -2582,6 +2582,22 @@ above the reasoning threshold.
 ```
 Results in `pins/results_referee_eval.json`.
 
+### Exp 49 addendum (2026-07-17) — qwen3.5:35b joins the passing class
+
+Alibaba's Feb-2026 generation re-run on the same 24 scenes: **qwen3.5:35b matches r1's
+perfect row** — 100% feasible at ALL pool factors incl. 0.75× shortfall, over/waste 0.00,
+prodcov 1.00 — at **~60 s/call steady-state** (r1: 60–180 s), 26 GB fully in VRAM at
+num_ctx 8192. The finding sharpens: feasibility under scarcity is a reasoning-model
+property *and is no longer unique to r1* — the passing class is {r1:32b, qwen3.5:35b},
+the failing class is every chat model tested. Candidate r1 replacement for Phase A
+authoring (~2–3× cheaper windows) pending the in-sim judgment test (Exp 50 protocol,
+running). NB `referee_eval` OVERWRITES its results json with only the `--models` passed —
+rebuild the full file from cache with all six models in ONE invocation (seconds).
+```bash
+PINS_NUM_CTX=8192 .venv/bin/python -m pins.referee_eval \
+  --models rule,qwen2.5:3b,qwen2.5:14b,gemma2:27b,deepseek-r1:32b,qwen3.5:35b
+```
+
 ## Experiment 50 — REFEREE IN-SIM: trace replay with the LLM as the allocator (2026-07-15/16)
 
 **Why.** Exp 49 measured scenes in isolation; the claim needs outcomes. `trace_replay
@@ -2856,4 +2872,144 @@ PINS_NUM_CTX=8192 .venv/bin/python -m pins.trace_replay --referee --llm \
 PINS_RESULTS=pins/results_exp53_reseed_14b.json PINS_NUM_CTX=8192 \
   .venv/bin/python -m pins.trace_replay --referee --llm \
   --model qwen2.5:14b --pools 8 --seed-start 32 --seeds 64         # reseed, own floor
+```
+
+## Experiment 56 — REFEREE ON A PREDICTED BELIEF: the 14b win survives the belief swap (2026-07-19)
+
+**Question.** Every referee tier so far (Exp 50–53) ran at `caps=real` — agents request the
+trace's true `plan_gpu` declaration. That is the easy world: the referee reasons over numbers
+that are correct by construction. Does the 14b prod-protection win survive when the agents
+request **Stage-1 predicted** demand instead (the Exp 30/36 belief axis, dynamics still true)?
+If the win only exists on true declarations it is an artefact of the harness, not a scheduler
+result.
+
+**Result (pool 8, seeds 0–31, n=32, `--caps predicted --quantile p50`).**
+
+| arm | SLA | prodSLA | util | slowdown | fb |
+|---|---|---|---|---|---|
+| no-llm (floor) | 53.9% | 59.1% | 80% | 8.73 | 0% |
+| referee@14b    | 53.7% | 51.5%\* | 78% | 8.66 | 1% |
+| negotiated@14b | 52.1%\* | 52.5% | 82% | 7.92 | 0% |
+
+| arm | dSLA | dprodSLA | dutil | dslow |
+|---|---|---|---|---|
+| referee@14b    | −0.2 ± 1.9 | **−7.6 ± 5.0\*** | −1.6 ± 1.7 | −0.1 ± 1.0 |
+| negotiated@14b | −1.8 ± 2.2 | −6.6 ± 4.6\* | +2.0 ± 1.0\* | −0.8 ± 0.8 |
+
+**Findings.**
+1. **The headline is belief-independent.** −7.6 ± 5.0\* on a predicted belief vs Exp 53's
+   pooled −7.5 ± 4.5\* on the real one — statistically indistinguishable. The referee's
+   prod protection does **not** depend on agents seeing true declarations; it holds on
+   Stage-1 predictions, which is the only thing a real scheduler ever has. This is the
+   robustness check the paper's referee section needed.
+2. **The overall-SLA price vanished.** dSLA −0.2 ± 1.9 ns here vs +1.0 ± 2.9 at `caps=real`
+   (Exp 53 pool 8). On a predicted belief the prod protection comes essentially free on
+   aggregate SLA — the referee is no longer trading one tier against the other.
+3. **The utilisation price persists** (−1.6 ± 1.7, straddling zero; Exp 53 pool 8 was −1.5).
+   Exp 53 finding 2 is unchanged by the belief swap: **14b protects prod by holding capacity
+   back**, where r1:32b protected it by spending capacity better. Same headline, same
+   different mechanism. The transcript autopsy is still owed.
+4. Referee > negotiated on prod (−7.6 vs −6.6), but loses util (−1.6 vs +2.0\*) and
+   slowdown (−0.1 vs −0.8). Consistent with every prior pool-8 comparison.
+
+**Caveats.** Single pool (8), single trace, `p50` quantile, base world, seeds 0–31 only.
+The negotiated row replayed unchanged from cache (that arm never touches the referee path),
+so the referee row is the only new measurement here. `fb 1%` is whole-tick fall-to-floor.
+
+**Ops — a silent-failure mode worth remembering.** The first attempt produced a complete,
+plausible, significant-looking table (−8.1 ± 5.5\* prodSLA) in which **the LLM never ran**.
+`qwen2.5:14b` is not a hybrid reasoner and current ollama now returns
+`400 "qwen2.5:14b" does not support thinking` for `think=True`; `referee_decide` catches the
+exception, falls back to `_rule_referee`, and **caches the rule answer under the LLM's key**
+(`pins/referee.py:335-337`). 816 fallbacks, exit code 0, and the summary column read `fb 0%`
+because `fallback_rate` only counts whole-tick falls-to-floor, never per-decision rule
+substitution. Three consequences:
+- (a) **Always `grep -c "referee fallback"` on the log before believing a referee table.**
+  A referee run can be 100% rule-based and look perfectly healthy.
+- (b) 857 poisoned entries (`_source: "rule"` under `|llm:qwen2.5:14b`) were purged from
+  `llm_agent_cache.json`; backup at `pins/llm_agent_cache.bak_pre_purge_exp56.json`. Only
+  newly-seen scenes were affected — the cache is read before the call, so Exp 51–53's 3,628
+  genuine entries were reused, not overwritten.
+- (c) **Exp 51/52/53's 14b numbers were produced with `think=True` silently ignored** by an
+  older ollama. Those results stand (the flag was a no-op, not a different code path), but
+  the fix makes it explicit: `_HYBRID()` gates the API call to `deepseek-r1*`/`qwen3*` while
+  leaving the `think` variable — and therefore the cache key — untouched, so those tiers keep
+  replaying.
+
+**Next.** `--quantile prod-p90` at the same settings — see Exp 56b below. Then: the owed
+transcript autopsy of the util price, and the gemma2 arm.
+
+**Reproduce.**
+```bash
+PINS_NUM_CTX=8192 .venv/bin/python -m pins.trace_replay --referee --llm \
+  --model qwen2.5:14b --caps predicted --pools 8 --seeds 32        # tier qwen2.5:14b+pred+referee
+grep -c "referee fallback" <logfile>                                # MUST be 0
+```
+
+### Exp 56b — THE HEDGE AND THE REFEREE ARE SUBSTITUTES (2026-07-19)
+
+**Question.** Exp 56 showed the referee recovers −7.6\* prodSLA on a predicted belief with no
+hedging. Exp 31 showed the P90 request hedge recovers *all* of the prod-tier prediction-error
+cost in the negotiated arm. Are they complements (stack) or substitutes (same margin, claimed
+twice)? Same settings as Exp 56 plus `--quantile prod-p90`.
+
+**Result (pool 8, seeds 0–31, n=32, `--caps predicted --quantile prod-p90`).**
+
+| arm | SLA | prodSLA | util | slowdown | fb |
+|---|---|---|---|---|---|
+| no-llm (floor) | 52.3% | 49.4% | 82% | 10.00 | 0% |
+| referee@14b    | 52.9% | 46.3%\* | 80% | 10.03 | 1% |
+| negotiated@14b | 51.8%\* | 47.8% | 84% | 9.26 | 0% |
+
+| arm | dSLA | dprodSLA | dutil | dslow |
+|---|---|---|---|---|
+| referee@14b    | +0.6 ± 1.8 | −3.0 ± 4.1 ns | −1.7 ± 1.8 | +0.0 ± 0.8 |
+| negotiated@14b | −0.6 ± 2.1 | −1.6 ± 3.6 ns | +1.8 ± 1.2\* | −0.7 ± 0.8 |
+
+**The decisive numbers are the floor row and the difference-of-differences**, not the deltas
+above — the hedge moves the floor, so the two worlds' deltas are not directly comparable:
+
+| quantity | p50 | prod-p90 | DiD (p50 − p90) |
+|---|---|---|---|
+| referee dprodSLA | −7.62 ± 4.97\* | −3.02 ± 4.09 ns | **−4.60 ± 3.88\*** |
+| referee dSLA     | −0.20 ± 1.86 | +0.59 ± 1.84 | −0.78 ± 1.37 ns |
+| referee dutil    | −1.63 ± 1.75 | −1.74 ± 1.77 | **+0.12 ± 0.73 ns** |
+| floor prodSLA (abs) | 59.1% | 49.4% | hedge gain **+9.75 ± 5.63\*** |
+
+**Findings.**
+1. **Substitutes, and now significantly so.** The hedge alone improves the *floor* by
+   **+9.75 ± 5.63\*** prod points with no LLM involved — Exp 31 reproducing cleanly. The
+   referee's marginal contribution then falls from −7.6\* to −3.0 ns, and the paired
+   difference-of-differences **−4.60 ± 3.88\*** confirms the shrinkage is real, not CI
+   overlap. Both mechanisms are claiming the same prediction margin.
+2. **Same price, less benefit.** The referee's utilisation cost is *statistically identical*
+   in both worlds (DiD +0.12 ± 0.73 ns): it holds back the same capacity whether or not the
+   hedge already did the work. Under the hedge it pays full price for a third of the value.
+3. **Stacking still gives the best absolute prod protection** — referee+p90 at **46.3%**, the
+   lowest prod violation rate in either run (p50: referee 51.5%, floor 59.1%). They overlap
+   rather than cancel; what changes is *attribution*, which moves to the cheap hedge.
+4. **Read against Exp 31.** There, `prod-p90` per-job made hedge and reserve *complements*
+   again. That does not carry over to the referee: for the LLM allocator the hedge is a
+   substitute, so the interesting composition is hedge+reserve, not hedge+referee.
+
+**Interpretation for the paper.** This is a cost-effectiveness result, not a negative one.
+A one-line quantile change buys ~9.7 prod points; a 14b LLM in the loop buys ~7.6 on the
+unhedged belief and ~3.0 on top of the hedge, while costing ~1.7 points of utilisation and
+chat-model latency. **The honest claim is that the referee's value is largest exactly where
+cheap hedging is unavailable** — and the referee section should say so rather than reporting
+the −7.6\* in isolation. The flexibility thesis ([[referee-flexibility-thesis]]) still points
+at the tail (hard-case suite), which no quantile rule addresses; that remains the place to
+argue for the LLM, not the mean.
+
+**Caveats.** Single pool (8), single trace, seeds 0–31, base world, 0 fallbacks verified.
+DiD is paired by seed across two tiers built on the same windows. The negotiated arm also
+loses significance under the hedge (−1.6 ns), consistent with the same substitution.
+
+**Reproduce.**
+```bash
+PINS_NUM_CTX=8192 .venv/bin/python -m pins.trace_replay --referee --llm \
+  --model qwen2.5:14b --caps predicted --quantile prod-p90 --pools 8 --seeds 32
+.venv/bin/python -m pins.trace_replay --compare \
+  'qwen2.5:14b+pred+referee/referee,qwen2.5:14b+pred-prod-p90+referee/referee'   # levels
+# DiD: per_seed referee-minus-no-llm in each tier, paired across tiers (see findings table)
 ```

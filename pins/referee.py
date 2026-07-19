@@ -34,8 +34,8 @@ import os
 import sys
 from dataclasses import dataclass, field
 
-from pins.llm_agent import (CTX_OPT, DEFAULT_MODEL, HOST, _parse, llm_margin, llm_reserve,
-                            load_cache, reserve_amount, save_cache)
+from pins.llm_agent import (CTX_OPT, DEFAULT_MODEL, HOST, MARGIN_HEDGES, RESERVE_LEVELS, _parse,
+                            llm_margin, llm_reserve, load_cache, reserve_amount, save_cache)
 from pins.negotiation_protocol import HEDGE_GPUS, DemandJob
 
 SYSTEM_REFEREE = (
@@ -63,6 +63,9 @@ SYSTEM_REFEREE = (
 )
 
 PROMPT_VERSION = "v2"                 # busts the scene cache whenever SYSTEM_REFEREE changes
+
+def _HYBRID(model: str) -> bool:      # models whose API accepts think=; the rest 400 on it
+    return model.startswith(("deepseek-r1", "qwen3"))
 
 _MANUAL = ""       # precedent block appended to SYSTEM_REFEREE (Exp 51 manual arm)
 _MANUAL_TAG = ""   # cache-key component: manual hash, so manual/vanilla rulings never mix
@@ -119,6 +122,120 @@ def gather_statements(demand: list[DemandJob], supply_ctx: dict, use_llm: bool =
 
 
 # --------------------------------------------------------------------------- #
+#  Step 1b — CROSS-TALK: each side sees the other and revises, still partisan   #
+# --------------------------------------------------------------------------- #
+SYSTEM_REBUT_DEMAND = (
+    "You are the ADVOCATE for ONE job competing for a shared GPU pool. You have already stated "
+    "your opening position. You can now see the supply side's position and your competitors'. "
+    "Argue your job's case to the referee who will decide.\n"
+    "You may keep or lower your margin request; you may NOT raise it, and your base need is "
+    "fixed. Conceding margin you cannot justify makes your remaining claim more credible — the "
+    "referee is explicitly skeptical of unsupported asks. But do not concede a margin your job "
+    "genuinely needs just because others want it.\n"
+    'Reply JSON: {"hedge": "none|some|heavy", "justification": "<one sentence to the referee>"}')
+
+SYSTEM_REBUT_SUPPLY = (
+    "You are the SUPPLY agent for a shared GPU cluster, holding headroom against incoming "
+    "high-priority work. You have already stated your opening reserve. You can now see every "
+    "job's stated need and justification. Argue your case to the referee who will decide.\n"
+    "You may keep or lower your reserve; you may NOT raise it. If the demand on the table is "
+    "more urgent than the work you are holding headroom for, releasing it is the right call — "
+    "but do not release headroom that genuinely protects incoming prod work.\n"
+    'Reply JSON: {"reserve": "none|light|heavy", "justification": "<one sentence to the '
+    'referee>"}')
+
+
+def _opposing_view(stmts: list[dict], me: str | None) -> list[dict]:
+    """What one side is allowed to see: everyone else's position + why, never private ctx."""
+    view = []
+    for s in stmts:
+        if s["side"] == "demand" and s["job_id"] != me:
+            view.append({"who": f"job {s['job_id']}", "tier": s["tier"],
+                         "deadline": s["deadline"], "needs_base": s["base_gpus"],
+                         "wants_margin": s["requested_margin_gpus"],
+                         "argues": s["justification"]})
+        elif s["side"] == "supply":
+            view.append({"who": "supply", "wants_reserve": s["requested_reserve_gpus"],
+                         "incoming_prod": s["incoming_prod"], "argues": s["justification"]})
+    return view
+
+
+def _rebut_call(system: str, payload: dict, field: str, levels: list[str], model: str,
+                host: str, cache: dict) -> tuple[str | None, str]:
+    """One partisan revision. Returns (level, justification); level None => keep opening."""
+    key = ("rebut|" + hashlib.sha1(
+        (system[:40] + json.dumps(payload, sort_keys=True) + model).encode()).hexdigest())
+    if key in cache:
+        c = cache[key]
+        return c["level"], c["why"]
+    level, why = None, ""
+    try:
+        import ollama
+        resp = ollama.Client(host=host).chat(
+            model=model, format="json", think=False,
+            options={"temperature": 0, "num_predict": 120, **CTX_OPT},
+            messages=[{"role": "system", "content": system},
+                      {"role": "user", "content": json.dumps(payload, indent=1)}])
+        obj = _parse(resp.message.content)
+        if obj is not None:
+            lv = str(obj.get(field, "")).strip().lower()
+            if lv in levels:
+                level = lv
+            why = str(obj.get("justification", "")).strip().replace("\n", " ")[:200]
+    except Exception as e:
+        print(f"  ! rebut fallback: {type(e).__name__}: {e}")
+    cache[key] = {"level": level, "why": why}
+    return level, why
+
+
+def rebut(stmts: list[dict], free_gpus: int, use_llm: bool = True, model: str = DEFAULT_MODEL,
+          host: str = HOST, cache: dict | None = None) -> list[dict]:
+    """DEBATE round: each side reads the opposing positions and revises its own ask, still
+    arguing only its own corner. Returns statements in the same schema gather_statements emits,
+    so referee_decide consumes them unchanged (that keeps the debate/no-debate A/B honest).
+
+    Monotone by construction: asks may only shrink. That guarantees termination in one round and
+    means the round can only free capacity, never manufacture contention. `_r0_gpus` records the
+    opening ask so downstream can measure the concession rate -- if nobody ever moves the debate
+    is decoration, and if everyone always caves it is sycophancy (both are theatre, not signal).
+    """
+    if not use_llm:
+        return stmts
+    cache = load_cache() if cache is None else cache
+    out = []
+    for s in stmts:
+        s = dict(s)
+        if s["side"] == "demand":
+            lv, why = _rebut_call(
+                SYSTEM_REBUT_DEMAND,
+                {"free_gpus": free_gpus, "my_job": s["job_id"], "my_tier": s["tier"],
+                 "my_deadline": s["deadline"], "my_base_gpus": s["base_gpus"],
+                 "my_opening_margin_gpus": s["requested_margin_gpus"],
+                 "my_opening_argument": s["justification"],
+                 "others": _opposing_view(stmts, s["job_id"])},
+                "hedge", MARGIN_HEDGES, model, host, cache)
+            s["_r0_gpus"] = s["requested_margin_gpus"]
+            if lv is not None:                       # monotone: never let the round inflate an ask
+                s["requested_margin_gpus"] = min(HEDGE_GPUS[lv], s["requested_margin_gpus"])
+                s["justification"] = why or s["justification"]
+        else:
+            lv, why = _rebut_call(
+                SYSTEM_REBUT_SUPPLY,
+                {"free_gpus": free_gpus, "my_opening_reserve_gpus": s["requested_reserve_gpus"],
+                 "incoming_prod": s["incoming_prod"], "my_opening_argument": s["justification"],
+                 "others": _opposing_view(stmts, None)},
+                "reserve", RESERVE_LEVELS, model, host, cache)
+            s["_r0_gpus"] = s["requested_reserve_gpus"]
+            if lv is not None:
+                s["requested_reserve_gpus"] = min(reserve_amount(lv),
+                                                  s["requested_reserve_gpus"])
+                s["justification"] = why or s["justification"]
+        s["_debated"] = True
+        out.append(s)
+    return out
+
+
+# --------------------------------------------------------------------------- #
 #  Step 2 — the referee decides (LLM emits the numbers; rule fallback)          #
 # --------------------------------------------------------------------------- #
 def _scene_key(stmts: list[dict], free_gpus: int) -> str:
@@ -129,7 +246,14 @@ def _scene_key(stmts: list[dict], free_gpus: int) -> str:
                          f"b{s['base_gpus']}+m{s['requested_margin_gpus']}")
         else:
             parts.append(f"supply:r{s['requested_reserve_gpus']}:{s['incoming_prod']}")
-    return f"referee|free{free_gpus}|" + "|".join(parts)
+    key = f"referee|free{free_gpus}|" + "|".join(parts)
+    if any(s.get("_debated") for s in stmts):
+        # A debate round rewrites the ARGUMENTS even when the numbers land back where they
+        # opened, and the referee reads those arguments -- so the discretised numbers alone
+        # would collide with the no-debate arm's cached ruling. Hash the text to separate them.
+        key += "|dbt" + hashlib.sha1(
+            "|".join(s["justification"] for s in stmts).encode()).hexdigest()[:12]
+    return key
 
 
 def _rule_referee(stmts: list[dict], free_gpus: int) -> dict:
@@ -170,6 +294,11 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
                                   model=statement_model or model, cache=cache)
     key = (f"{PROMPT_VERSION}{_MANUAL_TAG}|{_scene_key(stmts, free_gpus)}"
            f"|{'llm:' + model if use_llm else 'rule'}{'' if think else '|nothink'}")
+    if statement_model and statement_model != "qwen2.5:3b":
+        # The scene key discretises the ASKS but not the arguments, and the referee reads the
+        # arguments -- so a stronger advocate that lands on the same numbers would otherwise
+        # reuse the 3b-advocate ruling. Keep advocate tiers on separate keys.
+        key += f"|adv:{statement_model}"
 
     out = cache.get(key)
     if out is None and use_llm:
@@ -177,7 +306,11 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
             import ollama
             client = ollama.Client(host=host)
             resp = client.chat(
-                model=model, format="json", think=think,
+                # only hybrid reasoners accept the thinking channel; ollama now 400s on the
+                # rest (it used to ignore the flag, which is how Exp 51-53 ran think=True on
+                # 14b). Gate the API call, NOT `think` -- the cache key must stay unsuffixed
+                # so those tiers keep replaying.
+                model=model, format="json", think=think and _HYBRID(model),
                 options={"temperature": 0, "num_predict": 4096, **CTX_OPT},  # reasoning models (r1) spend
                 # most of the budget in the thinking channel before emitting the JSON
                 messages=[{"role": "system",
@@ -251,18 +384,30 @@ def check_allocation(alloc: dict[str, int], reserve: int, demand: list[DemandJob
 # --------------------------------------------------------------------------- #
 #  two_sided_sim policy slot (Exp 50): the referee INSIDE the sim on real jobs  #
 # --------------------------------------------------------------------------- #
-def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None, think=True):
+def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None, think=True,
+                        debate=False):
     """Referee as a `two_sided_sim` policy: each tick it decides the margin/reserve split of
     the free pool directly (in the sim the demand table is margins-only, forecast_cap=0).
 
     HONEST feasibility semantics — the thesis hinge: if the referee overcommits the pool,
     the tick falls back to the floor (no margins, no reserve) and counts in fallback_rate.
-    Code never repairs the decision; infeasibility costs the referee performance."""
+    Code never repairs the decision; infeasibility costs the referee performance.
+
+    `debate` inserts the cross-talk round (Step 1b) between the statements and the ruling: both
+    sides read each other, then revise. The referee stage is byte-identical either way, so the
+    debate/no-debate contrast isolates the round itself."""
     from pins.negotiation_protocol import NegotiationOutcome
 
     def policy(demand, supply_ctx, free, **_):
+        stmts = None
+        if debate:
+            stmts = gather_statements(demand, supply_ctx, use_llm=use_llm,
+                                      model=statement_model or model, cache=cache)
+            stmts = rebut(stmts, free, use_llm=use_llm, model=statement_model or model,
+                          cache=cache)
         o = referee_decide(demand, supply_ctx, free, use_llm=use_llm, model=model,
-                           cache=cache, statement_model=statement_model, think=think)
+                           cache=cache, statement_model=statement_model, think=think,
+                           stmts=stmts)
         margins = {j.jid: o.alloc.get(j.jid, 0) for j in demand}
         reserve = o.reserve
         if not o.feasible:                       # overcommit/violation -> floor, counted
