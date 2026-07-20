@@ -3179,3 +3179,61 @@ PINS_NUM_CTX=8192 .venv/bin/python -m pins.trace_replay --referee --debate --llm
 # --no-argue -> 57f   # --debate --theta 0.15 --extend -> 57g   # --single-ilp -> 57d
 bash pins/run_debate.sh                                              # Exp 55 (r1, caps real)
 ```
+
+## Experiment 55 — THE PRE-REGISTERED DEBATE ROUND AT r1:32b (caps=real): both signs at last, and the round itself is EQUIVALENT to no round (2026-07-20)
+
+Pre-registered before the 57c–g ladder was run (`pins/run_debate.sh`), finally landed:
+`deepseek-r1:32b` rules, 3b advocates in BOTH the referee and debate rows (so the delta
+isolates the round, not the advocate model), caps=real, pool 8, seeds 0-31. Serial,
+NUM_PARALLEL=1, ~11.7 h for the debate row alone (41,992 s / 32 seeds ≈ 1,312 s/seed);
+no-llm / referee / negotiated replayed from the Exp 50 cache in ~26 s each as designed.
+0 referee fallbacks, 3,422 distinct decisions/transcripts.
+
+| pool | policy | SLA | prodSLA | util | slowdown | fb | done |
+|---|---|---|---|---|---|---|---|
+| 8 | no-llm | 51.8% | 55.7% | 82% | 9.98 | 0% | 15.4/16 |
+| 8 | referee | 52.1% | 48.0% | 84% | 11.24 | 0% | 15.4/16 |
+| 8 | debate | 51.2%\* | 48.0%\* | 84% | 10.87 | 0% | 15.4/16 |
+| 8 | negotiated | 51.8% | 51.7% | 83% | 10.25 | 0% | 15.4/16 |
+
+```
+referee      vs floor:  dSLA   +0.4 ± 2.4   dprodSLA   -7.7 ± 5.4*  dutil   +2.2 ± 1.5*  dslow   +1.3 ± 1.5
+debate       vs floor:  dSLA   -0.6 ± 1.9   dprodSLA   -7.7 ± 6.1*  dutil   +2.3 ± 1.5*  dslow   +0.9 ± 1.1
+negotiated   vs floor:  dSLA   +0.0 ± 2.2   dprodSLA   -4.0 ± 3.8*  dutil   +1.0 ± 0.8*  dslow   +0.3 ± 1.2
+(* = 95% CI excludes 0, paired by seed, n=32)
+```
+
+**Findings.**
+1. **THE BOTH-SIGNS ARM EXISTS.** r1:32b at caps=real is the first configuration to buy
+   significant prod protection AND significant utilisation at once: referee −7.7\* prodSLA
+   with **+2.2\* util**, debate −7.7\* with **+2.3\* util**. Every 14b configuration in the
+   57c–g ladder paid util for deliberation (−1.6 to −5.3); r1's spend-don't-hold mechanism
+   (Exp 50 +2.2\*, 57a +2.5\*) reproduces at n=32 and now carries the debate arm with it.
+   This closes the "no 14b configuration achieves +util AND low SLA" gap noted in 57c–g —
+   by changing the referee model, not the structure.
+2. **The debate round adds NOTHING here, and that is now measured as EQUIVALENCE, not just
+   ns** (paired debate MINUS referee, same tier, n=32): dprodSLA −0.1 ± 3.3, dutil +0.1 ± 0.7,
+   dSLA −1.0 ± 1.9, and TOST rejects a ±3 pt effect on all three metrics
+   (prodSLA 90%CI[−2.8,+2.7], util[−0.5,+0.6] — also EQ±2, sla[−2.6,+0.6]). Contrast the
+   14b ladder, where the debate increment was −4.37 ± 4.39 (ns by 0.02, "n=64 required").
+   **The cross-talk round's value is model-dependent, and at the strong-reasoner end it
+   vanishes** — the ruling is already whatever the round would have converged to.
+3. Carried caveat from the pre-registration, now load-bearing: advocates are 3b, a weak
+   arguer (Exp 33, 51). A null round at r1 is partly "3b had nothing to say to a 32b model".
+   The `--advocates qwen2.5:14b` rerun (~20 h, all rows cold) is the remaining way to
+   separate "the round is decoration" from "the arguers were outclassed".
+4. Overall SLA is flat everywhere (debate's 51.2% is starred against the floor but is a
+   −0.6 ns paired diff at pool level); the win remains prod-tier protection plus util.
+
+**Open.** Concession rate still not extracted (`referee._r0_gpus` holds the opening ask;
+needs the deterministic replay script — same debt as 57c–g). Debate-vs-referee equivalence
+is selection-free (pre-registered), so no seeds 32-63 confirmation is owed for THIS null,
+but the both-signs headline should be confirmed on fresh seeds before it goes in the paper.
+
+**Reproduce.**
+```bash
+# ollama MUST be OLLAMA_NUM_PARALLEL=1 (r1:32b spills to CPU otherwise, ~6x)
+bash pins/run_debate.sh                                   # ~12 h, debate row only is cold
+.venv/bin/python -m pins.trace_replay \
+  --compare 'deepseek-r1:32b+referee/debate,deepseek-r1:32b+referee/referee'
+```
