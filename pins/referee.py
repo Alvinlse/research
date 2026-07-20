@@ -466,7 +466,7 @@ def take_shell_stats() -> dict:
 
 def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None, think=True,
                         debate=False, trigger="bucket", theta=None, stale="fresh",
-                        extend=False, no_argue=False, prev_input=False):
+                        extend=False, no_argue=False, prev_input=False, fast_negotiate=False):
     assert not (debate and no_argue), "--debate rewrites the arguments --no-argue removes"
     """Referee as a `two_sided_sim` policy: each tick it decides the margin/reserve split of
     the free pool directly (in the sim the demand table is margins-only, forecast_cap=0).
@@ -490,8 +490,16 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
         being repaired.
       `stale` — 'one' = pipelined epochs: the referee decides on the PREVIOUS tick's
         statements (the snapshot a concurrent 180 s planner would have), and the evaluator
-        validates the ruling against the LIVE tick. 'fresh' (default) = decide on this tick."""
-    from pins.negotiation_protocol import NegotiationOutcome
+        validates the ruling against the LIVE tick. 'fresh' (default) = decide on this tick.
+      `fast_negotiate` — fast mode calls the cheap bounded-concession `negotiate()` protocol
+        (pins/negotiation_protocol.py, same mechanism as the 'negotiated' arm) on the LIVE
+        tick instead of replaying/extending the standing ruling. The referee still owns every
+        tick past theta (novel/risky scenes); routine ticks go to the cheap auction instead of
+        a frozen memory of the referee's last word. Mutually exclusive with `extend` (which
+        only makes sense for the replay mechanism); requires theta."""
+    from pins.negotiation_protocol import NegotiationOutcome, negotiate
+    assert not (fast_negotiate and extend), "--fast-negotiate replaces the --extend replay path"
+    assert not fast_negotiate or theta is not None, "--fast-negotiate needs --theta"
 
     st = {"free": None, "jids": None, "behind": frozenset(),
           "standing": None,            # (alloc dict, reserve) of the last ruling
@@ -526,29 +534,37 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
         if theta is not None and not fast:
             _delta(demand, free) if st["free"] is None else None   # keep state warm on cold start
         if fast:
-            alloc, sreserve = st["standing"]
-            margins = {j.jid: alloc.get(j.jid, 0) for j in demand}
-            if extend:
-                # Award arrivals by the ruling's own revealed policy: per-tier exemplar award
-                # (mean of what the ruling gave this tier), granted in the referee's rule
-                # 3/4 order — prod before besteffort, behind before ontrack. No exemplar
-                # (ruling never awarded this tier) -> 0: the ruling is extended, not invented.
-                by_tier: dict[str, list[int]] = {}
-                for j in demand:
-                    if j.jid in alloc and alloc[j.jid] > 0:
-                        by_tier.setdefault(j.ctx.get("tier", "besteffort"), []).append(alloc[j.jid])
-                new = [j for j in demand if j.jid not in alloc]
-                for j in sorted(new, key=lambda j: (j.ctx.get("tier") != "prod",
-                                                    j.ctx.get("deadline") != "behind", j.jid)):
-                    ex = by_tier.get(j.ctx.get("tier", "besteffort"))
-                    margins[j.jid] = round(sum(ex) / len(ex)) if ex else 0
+            if fast_negotiate:
+                no = negotiate(demand, supply_ctx, free, use_llm=use_llm,
+                               model=statement_model or model, cache=cache)
+                margins, sreserve, rounds, transcript = dict(no.margins), no.reserve, no.rounds, no.transcript
+            else:
+                alloc, sreserve = st["standing"]
+                margins = {j.jid: alloc.get(j.jid, 0) for j in demand}
+                if extend:
+                    # Award arrivals by the ruling's own revealed policy: per-tier exemplar
+                    # award (mean of what the ruling gave this tier), granted in the referee's
+                    # rule 3/4 order — prod before besteffort, behind before ontrack. No
+                    # exemplar (ruling never awarded this tier) -> 0: extended, not invented.
+                    by_tier: dict[str, list[int]] = {}
+                    for j in demand:
+                        if j.jid in alloc and alloc[j.jid] > 0:
+                            by_tier.setdefault(j.ctx.get("tier", "besteffort"), []).append(alloc[j.jid])
+                    new = [j for j in demand if j.jid not in alloc]
+                    for j in sorted(new, key=lambda j: (j.ctx.get("tier") != "prod",
+                                                        j.ctx.get("deadline") != "behind", j.jid)):
+                        ex = by_tier.get(j.ctx.get("tier", "besteffort"))
+                        margins[j.jid] = round(sum(ex) / len(ex)) if ex else 0
+                rounds, transcript = 0, []
             if not check_allocation(margins, sreserve, demand, free):   # still fits live pool
                 SHELL_STATS["fast"] += 1
                 st["prev_in"] = (demand, supply_ctx, free)
                 st["executed"] = dict(margins) | {"_reserve": sreserve}
                 return margins, sreserve, NegotiationOutcome(
-                    margins=margins, reserve=sreserve, rounds=0, agreed=True, transcript=[])
-            # standing ruling no longer feasible -> fall through and re-invoke the referee
+                    margins=margins, reserve=sreserve, rounds=rounds, agreed=True,
+                    transcript=transcript)
+            # infeasible (standing ruling no longer fits, or negotiate() couldn't clear) ->
+            # fall through and re-invoke the referee
 
         dec_demand, dec_supply, dec_free = (
             st["prev_in"] if (stale == "one" and st["prev_in"] is not None)

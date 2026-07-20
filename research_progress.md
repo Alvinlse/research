@@ -3237,3 +3237,78 @@ bash pins/run_debate.sh                                   # ~12 h, debate row on
 .venv/bin/python -m pins.trace_replay \
   --compare 'deepseek-r1:32b+referee/debate,deepseek-r1:32b+referee/referee'
 ```
+
+## Experiment 59 — THE FAST PATH TRADES ITS DETERMINISTIC REPLAY FOR THE CHEAP AUCTION: util cost flips to a gain (2026-07-21)
+
+User's proposal: in the 57c–g gated-debate shell (θ-trigger; above θ → debate, below θ →
+deterministic replay of the standing ruling), replace the below-θ deterministic replay with
+the cheap bounded-concession `negotiate()` protocol — the SAME mechanism the `negotiated`
+arm already uses — instead of extending/replaying the referee's last word. Rationale: 57g
+showed gating saves tokens but NOT util (dutil still −2.9\* vs floor, same price as full
+debate) — the frozen standing ruling holds back capacity across every quiet tick regardless
+of gating. If the fast path priced its holdback with a live, cheap negotiation instead of a
+memorized ruling, that cost might not be inherent.
+
+**Implementation.** New `--fast-negotiate` flag (`pins/trace_replay.py`,
+`pins/referee.make_policy_referee`), mutually exclusive with `--extend`, requires `--theta`.
+Fast-path ticks (Δ ≤ θ) now call `negotiate(demand, supply_ctx, free, ...)` fresh each tick
+instead of replaying `st["standing"]`; ticks past θ are unchanged — the referee (or debate)
+still rules every novel/risky scene. Tier suffix `+fastneg`. The theta-gate machinery itself
+(the Δ formula, the escalation trigger) is untouched — only what happens BELOW the gate
+changed. 1-seed smoke test passed clean before committing compute to the full sweep.
+
+**Run: the exact 57g config with `--extend` swapped for `--fast-negotiate`** — qwen2.5:14b,
+θ=0.15, caps=predicted, pool 8, seeds 0-31, `--referee --debate`. 0 referee fallbacks.
+
+| pool | policy | SLA | prodSLA | util | slowdown | fb | done |
+|---|---|---|---|---|---|---|---|
+| 8 | no-llm | 53.9% | 59.1% | 80% | 8.73 | 0% | 15.3/16 |
+| 8 | referee | 52.1%\* | 52.7% | 82% | 8.43 | 0% | 15.4/16 |
+| 8 | debate | 52.3% | 50.8%\* | 81% | 8.15 | 0% | 15.5/16 |
+| 8 | negotiated | 52.1%\* | 52.5% | 82% | 7.92 | 0% | 15.5/16 |
+
+```
+referee      vs floor:  dSLA  -1.8 ± 2.4   dprodSLA  -6.4 ± 5.1*  dutil  +2.1 ± 1.4*  dslow  -0.3 ± 0.5
+debate       vs floor:  dSLA  -1.6 ± 2.6   dprodSLA  -8.3 ± 5.5*  dutil  +1.8 ± 1.4*  dslow  -0.6 ± 0.8
+negotiated   vs floor:  dSLA  -1.8 ± 2.2   dprodSLA  -6.6 ± 4.6*  dutil  +2.0 ± 1.0*  dslow  -0.8 ± 0.8
+(* = 95% CI excludes 0, paired by seed, n=32)
+```
+
+**Findings.**
+1. **Util flips sign against the documented 57g run** (same config, `--extend` instead):
+   dprodSLA −9.1 ± 6.4\* / dutil −2.9 ± 1.7\* (57g) vs dprodSLA −8.3 ± 5.5\* / **dutil
+   +1.8 ± 1.4\*** (this run). Protection is unchanged within overlapping CIs; utilisation
+   moves ~4.7 points and crosses zero. **The util cost identified in 57c–g was a property of
+   the frozen-replay fast path, not of gating itself** — a cheap live re-decision below θ
+   recovers it.
+2. **This is the second both-signs configuration in the project** (after Exp 55's r1:32b) —
+   significant prod-tier protection AND significant +util together — but reached by an
+   architecture change (what the fast path IS) rather than a bigger referee model. The plain
+   `referee` row alone (no debate) shows the same flip: +2.1\* util here vs arm-A's ns −1.6
+   cost ([[structure-ladder-debate]]).
+3. **Caveat: this is NOT a paired-by-seed comparison.** `--theta`/`--extend` never earned
+   their own tier suffix (a pre-existing gap — they were assumed safe to leave untagged
+   since default-off preserves every prior tier byte-identically), so the 57g run's raw
+   per-seed rows share a tier key with, and were overwritten by, later ungated 14b-referee
+   runs (at least Exp 57b's latency probe, likely also Exp 56/58 reproduction runs) before
+   this experiment's pre-run backup was even taken (confirmed: `debate` per_seed was already
+   empty in `pins/results_backup_pre_exp59.json`). The 57g figures above are the aggregate
+   numbers already committed to this log, not a fresh within-seed diff — the swing is
+   suggestive at this sample, not statistically confirmed against 57g specifically. A same-
+   session reseed of `--extend` would let `--compare` produce the real paired number; not
+   done here to avoid re-spending the ~70 min this run already cost.
+4. Fast/LLM tick split not yet re-extracted for this run (need `SHELL_STATS`/log grep); the
+   architecture-level expectation is unchanged — most ticks are still below θ, now costing a
+   cheap 3b call each instead of nothing, which is the deliberate trade this makes.
+
+**Open.** Tag `--theta`/`--extend`/`--stale`/`--no-argue`/`--prev-input` with a tier suffix
+so shell variants stop silently overwriting each other's rows — this bit both the
+comparison here and will bite the next person who wants a paired diff against a past shell
+run. Re-run `--extend` fresh in the same session as any future `--fast-negotiate` sweep if a
+paired confirmation is needed.
+
+**Reproduce.**
+```bash
+PINS_NUM_CTX=8192 .venv/bin/python -u -m pins.trace_replay --referee --debate --llm \
+  --model qwen2.5:14b --caps predicted --pools 8 --seeds 32 --theta 0.15 --fast-negotiate
+```

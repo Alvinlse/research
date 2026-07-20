@@ -363,9 +363,10 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           advocates: str = "qwen2.5:3b", realloc_cost: float = 0.0, alpha: float = 0.0,
           alpha_norm: str = "c0", trigger: str = "bucket", theta: float | None = None,
           stale: str = "fresh", extend: bool = False, no_argue: bool = False,
-          prev_input: bool = False) -> None:
+          prev_input: bool = False, fast_negotiate: bool = False) -> None:
     assert not (referee and single_ilp), "--referee and --single-ilp are separate arms"
     assert not debate or referee, "--debate is a referee-arm round"
+    assert not (fast_negotiate and extend), "--fast-negotiate replaces the --extend replay path"
     assert not (time_mode and ttf_mode), "--time and --ttf are separate experiments"
     assert quantum == 1 or (caps_mode == "real" and truth_mode == "plan" and
                             not (time_mode or ttf_mode or baseline or dyncap)), \
@@ -413,6 +414,9 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         suffix += "+qwhole"               # Exp 48: whole-GPU allocation quantum
     if referee:
         suffix += "+referee"              # Exp 50: referee-LLM allocator arm
+    if fast_negotiate:
+        assert theta is not None, "--fast-negotiate needs --theta"
+        suffix += "+fastneg"              # Exp 59: fast mode auctions instead of replaying
     if advocates != "qwen2.5:3b":
         assert referee, "--advocates is a referee-arm option"
         suffix += "+adv" + advocates.split(":")[-1]   # tiers must not mix advocate scales
@@ -448,7 +452,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                                                        think=not no_think, trigger=trigger,
                                                        theta=theta, stale=stale,
                                                        extend=extend, no_argue=no_argue,
-                                                       prev_input=prev_input)),
+                                                       prev_input=prev_input,
+                                                       fast_negotiate=fast_negotiate)),
             ("negotiated", lambda: make_policy_negotiated(use_llm, model, cache, decisions, seen)),
         ]
         if debate:                # cross-talk round, same referee stage -> isolates the round.
@@ -457,7 +462,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
             rows.insert(2, ("debate", lambda: make_policy_referee(
                 use_llm, model, cache, decisions, seen, statement_model=advocates,
                 think=not no_think, debate=True, trigger=trigger, theta=theta,
-                stale=stale, extend=extend)))
+                stale=stale, extend=extend, fast_negotiate=fast_negotiate)))
     elif single_ilp:              # Exp 54: LLMSched spine — one LLM proposes, the ILP repairs
         from pins.two_sided_sim import make_policy_single_ilp
         rows = [
@@ -639,6 +644,11 @@ def main() -> None:
                     help="Exp 57 shell: fast mode also awards ARRIVALS by the standing "
                          "ruling's own per-tier exemplar and rule-3/4 order; only departures "
                          "and new prod-behind jobs then fire the trigger.")
+    ap.add_argument("--fast-negotiate", action="store_true",
+                    help="Exp 59: fast mode (below theta) calls the cheap bounded-concession "
+                         "negotiate() auction on the live tick instead of replaying/extending "
+                         "the standing ruling; the referee still rules every tick past theta. "
+                         "Mutually exclusive with --extend. Requires --theta.")
     ap.add_argument("--prev-input", action="store_true",
                     help="E1 (Exp 58): the referee also receives the allocation that "
                          "actually executed last tick plus a change-cost rule 6. Prompt "
@@ -704,7 +714,8 @@ def main() -> None:
           referee=a.referee, manual=a.manual, single_ilp=a.single_ilp, debate=a.debate,
           no_think=a.no_think, advocates=a.advocates, realloc_cost=a.realloc_cost,
           alpha=a.alpha, alpha_norm=a.alpha_norm, trigger=a.trigger, theta=a.theta,
-          stale=a.stale, extend=a.extend, no_argue=a.no_argue, prev_input=a.prev_input)
+          stale=a.stale, extend=a.extend, no_argue=a.no_argue, prev_input=a.prev_input,
+          fast_negotiate=a.fast_negotiate)
 
 
 if __name__ == "__main__":
