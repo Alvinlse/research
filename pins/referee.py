@@ -450,7 +450,8 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
     else:
         cache[key] = out
 
-    violations = check_allocation(out["alloc"], out["reserve"], demand, free_gpus)
+    violations = check_allocation(out["alloc"], out["reserve"], demand, free_gpus,
+                                  waiting_jids=frozenset(w["jid"] for w in waiting or ()))
     defer = frozenset(out.get("defer") or ())
     priority = None
     if waiting is not None:
@@ -472,11 +473,14 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
 #  Step 3 — deterministic EVALUATOR (reports, never repairs)                    #
 # --------------------------------------------------------------------------- #
 def check_allocation(alloc: dict[str, int], reserve: int, demand: list[DemandJob],
-                     free_gpus: int) -> list[str]:
+                     free_gpus: int, waiting_jids: frozenset = frozenset()) -> list[str]:
     """Return the referee's rule violations. Empty list == feasible. Mirrors rules 1-4;
-    rule 5 (skepticism) is a judgment call, measured downstream via SLA/lying experiments."""
+    rule 5 (skepticism) is a judgment call, measured downstream via SLA/lying experiments.
+    `waiting_jids` (Exp 63): under rule 7 an award to a WAITING job's base is legitimate,
+    not a hallucination — and it still counts toward the rule-1 total, as admitted bases
+    genuinely draw from the free pool."""
     v = []
-    known = {j.jid for j in demand}
+    known = {j.jid for j in demand} | set(waiting_jids)
     total = sum(alloc.values()) + reserve
     if total > free_gpus:                                            # rule 1
         v.append(f"infeasible: awarded {total} > free {free_gpus}")

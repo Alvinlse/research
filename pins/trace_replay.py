@@ -603,8 +603,11 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
     data["tiers"][tag] = {"use_llm": use_llm, "spike_max": spike_max, "scale": scale,
                           "cap_clip": CAP_CLIP, "n_seeds": len(seeds),
                           "per_seed": all_per_seed, "decisions": decisions}
-    with open(RESULTS, "w") as f:
+    # atomic replace: concurrent sweeps interleaving writes tore this file once (2026-07-22,
+    # 4h of results nearly lost at merge). Last-write-wins can still drop a tier; torn JSON can't.
+    with open(RESULTS + ".tmp", "w") as f:
         json.dump(data, f, indent=2)
+    os.replace(RESULTS + ".tmp", RESULTS)
     if use_llm:
         save_cache(cache)
     print(f"{len(decisions)} distinct decisions/transcripts -> {RESULTS} (tier '{tag}')")
