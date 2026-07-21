@@ -3312,3 +3312,94 @@ paired confirmation is needed.
 PINS_NUM_CTX=8192 .venv/bin/python -u -m pins.trace_replay --referee --debate --llm \
   --model qwen2.5:14b --caps predicted --pools 8 --seeds 32 --theta 0.15 --fast-negotiate
 ```
+
+## Experiment 60 — THE ARRIVAL SURGE: the referee's protection is a slack-regime property, and debate INVERTS under contention (2026-07-21/22)
+
+Every Stage-2 result so far lives in one arrival regime: the trace's own thinned near-Poisson
+stream, where 16 jobs trickle into a 6-hour window. The referee's whole case — deliberate over
+a contested scene, protect the prod tier — is a claim about what happens when capacity is
+scarce, but scarcity in that world arrives gradually. This asks the obvious question the
+regime never posed: **what happens when demand arrives all at once?**
+
+**Implementation.** New `--burst S` (`pins/trace_replay.make_trace_workload`): a demand SURGE
+laid on top of the trace's own arrivals. One surge instant `t_b` is drawn uniformly anywhere
+in the arrival window (so the spike can land mid-flight, not only at t=0); **half** the
+window's jobs are re-stamped to arrive uniformly inside `[t_b, t_b + S)`; the other half keep
+their real trace arrival times. At `S=600` that is 8 jobs inside 5 ticks against 8 spread over
+180 — roughly a 36x local arrival-rate spike. Only the arrival timestamp is synthetic:
+duration, GPU quanta, predicted caps, urgency/deadline/tier all come from the untouched
+pipeline. Drawn from its own rng stream (`burst-{seed}`), so every non-burst tier keeps
+byte-identical windows, and tagged `+burstS`, so burst rows can never merge with or overwrite
+a calm tier.
+
+**Run.** qwen2.5:14b, caps=predicted, pool 8, seeds 0-31, `--referee --debate --burst 600`.
+
+| pool | policy | SLA | prodSLA | util | slowdown | fb | done |
+|---|---|---|---|---|---|---|---|
+| 8 | no-llm | 61.7% | 56.2% | 81% | 11.22 | 0% | 15.2/16 |
+| 8 | referee | 61.7% | 51.3%\* | 78% | 11.53 | 1% | 14.7/16 |
+| 8 | debate | 64.1% | 52.4% | 79% | 11.70 | 3% | 14.8/16 |
+| 8 | negotiated | 60.5%\* | 51.4% | 83% | 10.52 | 0% | 15.2/16 |
+
+```
+referee      vs floor:  dSLA  +0.0 ± 3.1   dprodSLA  -4.9 ± 5.2   dutil  -2.7 ± 2.4*  dslow  +0.3 ± 1.8
+debate       vs floor:  dSLA  +2.3 ± 3.3   dprodSLA  -3.9 ± 4.7   dutil  -2.2 ± 1.8*  dslow  +0.5 ± 1.9
+negotiated   vs floor:  dSLA  -1.2 ± 1.9   dprodSLA  -4.9 ± 4.5*  dutil  +2.6 ± 1.1*  dslow  -0.7 ± 0.5*
+(* = 95% CI excludes 0, paired by seed, n=32)
+
+debate MINUS referee (paired, same tier):
+  dSLA  +2.3 ± 2.0*  dprodSLA  +1.1 ± 3.4   dutil  +0.4 ± 2.4   dslow  +0.2 ± 1.5
+  TOST: dSLA 90%CI[+0.6,+4.0] not-equiv   dprodSLA 90%CI[-1.7,+3.9] not-equiv   dutil 90%CI[-1.5,+2.4] EQ±3
+```
+
+**Findings.**
+1. **The referee's prod-protection does not survive the surge.** dprodSLA −4.9 ± 5.2, non-
+   significant, against −9.1\* (57g) and −12.0\* (57e, debate) in the calm pool-8 world. The
+   point estimate roughly halves and the CI opens past zero.
+2. **The util cost survives intact** (−2.7\* referee, −2.2\* debate). Under surge the LLM arms
+   keep the whole bill and lose the benefit — the worst of both.
+3. **`negotiated` is the only arm with both signs right here:** prodSLA −4.9\*, util +2.6\*,
+   slowdown −0.7\*, and 15.2/16 jobs done vs the referee's 14.7. Note its prod point estimate
+   is IDENTICAL to the referee's (−4.9) — what separates them is variance, not mean: the
+   auction's spread is small enough for the CI to exclude zero where the referee's is not.
+   Under contention the mechanism's *reliability* is the whole edge.
+4. **Debate inverts.** The paired increment over plain referee is dSLA **+2.3 ± 2.0\*** —
+   significantly WORSE overall SLA — with the prod increment ns and util equivalent (EQ±3).
+   Fallback rate 3% vs the referee's 1%: the extra round is producing more infeasible rulings,
+   each dumping a whole tick to the floor. In the calm world the same round was the largest
+   single effect in the project (−12.0\*). The cross-talk round is not a free improvement; it
+   is regime-dependent, and the regime that flips it is exactly the contended one it was
+   designed for.
+
+**Interpretation (the boundary claim).** The referee's advantage looks like a *slack-regime*
+phenomenon: it earns its keep when there is enough room that a thoughtful margin/reserve split
+matters, and loses it when the binding constraint is simply that too much arrived at once.
+This is the same shape as Exp 47/48 — the protocol scales, the hedging lever does not — and it
+is a genuine limit on the thesis claim, not a tuning failure. It also sharpens what the
+referee is FOR: [[referee-flexibility-thesis]] argues the value is tail/exception handling,
+and a surge is precisely a mean-shifting stressor, not an exception scene.
+
+**Caveats.**
+- Burst windows are different workloads, so burst-vs-calm is a BETWEEN-tier comparison; the
+  calm figures cited are the aggregates already in this log, not a fresh paired run. Only the
+  within-run rows (floor/referee/debate/negotiated, and the debate−referee increment) are
+  paired by seed.
+- Re-stamping breaks any real correlation between when a job arrived and what it is; a surged
+  job's size is now independent of its arrival. Real bursts are often correlated (a gang of
+  similar jobs from one user). This is a synthetic arrival spike on real job bodies.
+- Deadlines derive from arrival, so surged jobs carry their deadlines with them: the spike
+  compresses demand, not slack. Total work is roughly conserved — the surge redistributes load
+  in time rather than adding it.
+- One surge intensity (S=600) at one pool. Monotonicity in S is untested.
+
+**Open.** Is the effect monotone in surge intensity (`--burst 1800`, milder)? And why does
+debate produce 3x the fallbacks under surge — pull the infeasible rulings' transcripts and
+check whether the rebuttal round is conceding into an allocation that no longer fits.
+
+**Reproduce.**
+```bash
+PINS_NUM_CTX=8192 .venv/bin/python -u -m pins.trace_replay --referee --debate --llm \
+  --model qwen2.5:14b --caps predicted --pools 8 --seeds 32 --burst 600
+.venv/bin/python -m pins.trace_replay --compare \
+  'qwen2.5:14b+pred+referee+burst600/debate,qwen2.5:14b+pred+referee+burst600/referee'
+```
