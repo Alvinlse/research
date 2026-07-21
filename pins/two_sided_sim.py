@@ -99,9 +99,15 @@ def make_policy_isolated(use_llm, model, cache, trace, seen):
     return policy
 
 
-def make_policy_negotiated(use_llm, model, cache, trace, seen):
-    def policy(demand, supply_ctx, free, **_):
+def make_policy_negotiated(use_llm, model, cache, trace, seen, admit=False):
+    """`admit` (Exp 63): the auction also rations ADMISSION — which waiting jobs start this tick
+    — via the deterministic `admission_plan`, on top of the margin/reserve split it always did.
+    Default off, so every pre-Exp-63 tier replays byte-identically."""
+    def policy(demand, supply_ctx, free, waiting=None, **_):
         o = negotiate(demand, supply_ctx, free, use_llm=use_llm, model=model, cache=cache)
+        if admit and waiting:
+            from pins.negotiation_protocol import admission_plan
+            o.priority, o.defer = admission_plan(waiting, free)
         _record_outcome(trace, seen, "negotiated", o)
         return o.margins, o.reserve, o
     return policy
@@ -222,6 +228,7 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
     useful = {j.jid: round(u_map[j.jid] * scale) for j in jobs}      # extra GPUs a spike can use
     held = {j.jid: 0 for j in jobs}                                  # rigid: locked to the job
     ran = {j.jid: 0 for j in jobs}                                   # ticks run (telemetry seen)
+    start_at: dict[str, int | None] = {j.jid: None for j in jobs}    # first tick holding GPUs
     progress = {j.jid: 0.0 for j in jobs}
     pidx = {j.jid: 0 for j in jobs}
     done_at: dict[str, int | None] = {j.jid: None for j in jobs}
@@ -293,14 +300,27 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
             if phase_of(j) == "train" and held[j.jid] >= cap0(j) > 0:
                 demand.append(DemandJob(j.jid, ctx, 0, True, float(rank)))
         free_now = total_gpus - sum(held[j.jid] for j in active)
-        margins, reserve, outcome = policy(demand, supply_ctx, free_now)
+        # Exp 63 admission lever: the jobs the margin table CANNOT see — arrived, never started,
+        # still short of their base. Whether these start now or keep waiting is the decision that
+        # dominates SLA under contention, and until now no policy could express it. Plain dicts
+        # (not DemandJob): a waiting job has no margin to negotiate, only a claim on its base.
+        waiting = [{"jid": j.jid, "tier": j.tier, "base_gpus": cap0(j),
+                    "waited_ticks": t - j.arrival,
+                    "deadline": bridge.deadline_bucket(remaining(j), j.deadline - t)}
+                   for j in active if ran[j.jid] == 0 and held[j.jid] < cap0(j)]
+        margins, reserve, outcome = policy(demand, supply_ctx, free_now, waiting=waiting)
         n_decisions += 1
         if outcome is not None and not getattr(outcome, "agreed", True):
             n_fallback += 1
 
         # --- rigid allocation with the negotiated ceilings ------------------------------------
         pre_tick = {j.jid: held[j.jid] for j in active}    # churn probe: allocation before retune
-        ceiling = {j.jid: cap0(j) + (margins.get(j.jid, 0) if phase_of(j) == "train" else 0)
+        # Exp 63: a DEFERRED job is held at ceiling 0 for this tick. The `ran == 0` guard is what
+        # preserves the rigid-incumbent invariant every experiment since Exp 22 assumed — only a
+        # job that has never run can be deferred, so nothing is ever involuntarily preempted.
+        defer = getattr(outcome, "defer", None) or frozenset()
+        ceiling = {j.jid: 0 if (j.jid in defer and ran[j.jid] == 0) else
+                          cap0(j) + (margins.get(j.jid, 0) if phase_of(j) == "train" else 0)
                    for j in active}
         for j in active:                                   # voluntary shrink to the new ceiling
             if held[j.jid] > ceiling[j.jid]:
@@ -308,8 +328,14 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
         free = total_gpus - sum(held[j.jid] for j in active)
         frozen = {j.jid: sum(j.bid()) for j in active}     # bid-once priority (preprocess=urgency)
         wanters = [j for j in active if held[j.jid] < ceiling[j.jid]]
-        prod_w = sorted([j for j in wanters if j.tier == "prod"], key=lambda j: (-frozen[j.jid], j.jid))
-        be_w = sorted([j for j in wanters if j.tier != "prod"], key=lambda j: (-frozen[j.jid], j.jid))
+        # Exp 63: a policy-supplied priority reorders grants WITHIN each tier; the frozen bid stays
+        # as the tie-break, so jobs the policy said nothing about keep their original relative order
+        # and tier precedence (prod before besteffort) is never overridden.
+        prio = getattr(outcome, "priority", None)
+        key = ((lambda j: (-prio.get(j.jid, 0.0), -frozen[j.jid], j.jid)) if prio
+               else (lambda j: (-frozen[j.jid], j.jid)))
+        prod_w = sorted([j for j in wanters if j.tier == "prod"], key=key)
+        be_w = sorted([j for j in wanters if j.tier != "prod"], key=key)
 
         def grant(order, pool):
             nonlocal free
@@ -345,6 +371,8 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
             g = held[j.jid]
             if g > 0:
                 ran[j.jid] += 1                            # a tick of telemetry accrues
+                if start_at[j.jid] is None:
+                    start_at[j.jid] = t                    # Exp 63: queue wait ends here
             if c0 == 0:
                 rate = 1.0
             else:
@@ -374,6 +402,11 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
 
     prod = [j for j in jobs if j.tier == "prod"]
     fin = [j for j in jobs if done_at[j.jid] is not None]
+    # Exp 63: queueing delay, the quantity admission control moves directly and the one SLA
+    # compresses away. A job that never started is censored at the horizon, not dropped -- else
+    # deferring a job forever would look like an improvement.
+    waits = sorted((start_at[j.jid] if start_at[j.jid] is not None else horizon) - j.arrival
+                   for j in jobs)
     slow = [(done_at[j.jid] - j.arrival) / j.nominal for j in fin if j.nominal > 0]
     return {
         "sla": sum(1 for j in jobs if violated(j)) / len(jobs),
@@ -381,6 +414,8 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
         "util": busy_sum / max(busy_steps, 1),
         "slowdown": sum(slow) / max(len(slow), 1),
         "finished": float(len(fin)),
+        "wait": sum(waits) / max(len(waits), 1),
+        "wait_p95": float(waits[min(len(waits) - 1, int(0.95 * len(waits)))]) if waits else 0.0,
         "n_jobs": float(len(jobs)),
         "fallback_rate": n_fallback / max(n_decisions, 1),
         "churn_gpu": churn_gpu / max(churn_ticks, 1),      # mean |delta| GPUs re-tuned per tick
@@ -502,6 +537,11 @@ def simulate_backfill(jobs_proto: list[Job], total_gpus: int, horizon: int,
 
     prod = [j for j in jobs if j.tier == "prod"]
     fin = [j for j in jobs if done_at[j.jid] is not None]
+    # Exp 63: queueing delay, the quantity admission control moves directly and the one SLA
+    # compresses away. A job that never started is censored at the horizon, not dropped -- else
+    # deferring a job forever would look like an improvement.
+    waits = sorted((start_at[j.jid] if start_at[j.jid] is not None else horizon) - j.arrival
+                   for j in jobs)
     slow = [(done_at[j.jid] - j.arrival) / j.nominal for j in fin if j.nominal > 0]
     return {
         "sla": sum(1 for j in jobs if violated(j)) / len(jobs),
@@ -509,6 +549,8 @@ def simulate_backfill(jobs_proto: list[Job], total_gpus: int, horizon: int,
         "util": busy_sum / max(busy_steps, 1),
         "slowdown": sum(slow) / max(len(slow), 1),
         "finished": float(len(fin)),
+        "wait": sum(waits) / max(len(waits), 1),
+        "wait_p95": float(waits[min(len(waits) - 1, int(0.95 * len(waits)))]) if waits else 0.0,
         "n_jobs": float(len(jobs)),
         "fallback_rate": 0.0,
         "churn_gpu": 0.0,

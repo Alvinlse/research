@@ -56,6 +56,42 @@ class NegotiationOutcome:
     rounds: int                # concession steps taken (0 = agreed immediately)
     agreed: bool               # True if want <= avail was reached; False -> heuristic fallback
     transcript: list = field(default_factory=list)
+    # ---- admission lever (Exp 63). Both default None, so every pre-admission arm returns the
+    # exact same outcome object it always did and `simulate` keeps its original grant order.
+    priority: dict[str, float] | None = None   # jid -> grant order key (higher = served first)
+    defer: frozenset[str] | None = None        # jids held at ceiling 0 this tick (never-started only)
+
+
+ADMIT_ORDER = {"behind": 0, "ontrack": 1, "ahead": 2}
+
+
+def admission_plan(waiting: list[dict], free: int) -> tuple[dict[str, float], frozenset[str]]:
+    """Deterministic admission: who starts now, who keeps waiting. Returns (priority, defer).
+
+    The sim grants GPUs greedily in priority order and a job that does not fit still receives a
+    PARTIAL allocation, progressing at rate < 1. So spreading a scarce pool across every waiting
+    job slows all of them; the lever's value is CONCENTRATION — admit jobs whose bases actually
+    fit and defer the tail, so the admitted ones run at full rate and clear their deadlines.
+
+    Order: prod before besteffort, behind-deadline before ontrack before ahead, then smaller base
+    first (more jobs cleared per GPU), then jid for determinism. Priority is descending rank, so
+    `simulate` serves them in exactly this order."""
+    rank = sorted(waiting, key=lambda w: (w["tier"] != "prod", ADMIT_ORDER.get(w["deadline"], 1),
+                                          w["base_gpus"], w["jid"]))
+    priority, defer, left = {}, [], free
+    for i, w in enumerate(rank):
+        if w["base_gpus"] <= left:
+            priority[w["jid"]] = float(len(rank) - i)
+            left -= w["base_gpus"]
+        elif left > 0:
+            # MARGINAL job: takes what is left as a partial allocation. Deferring it instead
+            # would idle those GPUs -- nobody behind it in the queue can claim them either, so
+            # a strict "whole base or wait" rule costs ~8 utilisation points for nothing.
+            priority[w["jid"]] = float(len(rank) - i)
+            left = 0
+        else:
+            defer.append(w["jid"])          # pool is genuinely exhausted -> wait, don't dilute
+    return priority, frozenset(defer)
 
 
 def default_margin_gpus(job: DemandJob, hedge: str) -> int:

@@ -232,7 +232,7 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
 
 
 METRICS = ("sla", "prod_sla", "util", "slowdown", "finished", "fallback_rate",
-           "churn_gpu", "churn_jobs")
+           "churn_gpu", "churn_jobs", "wait", "wait_p95")
 RESULTS = os.environ.get("PINS_RESULTS", os.path.join(HERE, "results_trace_replay.json"))
 
 
@@ -377,7 +377,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           stale: str = "fresh", extend: bool = False, no_argue: bool = False,
           prev_input: bool = False, fast_negotiate: bool = False,
           burst_s: int | None = None, hard_trigger: bool = False,
-          slack_mult: float = 1.0) -> None:
+          slack_mult: float = 1.0, admit: bool = False) -> None:
     assert not (referee and single_ilp), "--referee and --single-ilp are separate arms"
     assert not debate or referee, "--debate is a referee-arm round"
     assert not (fast_negotiate and extend), "--fast-negotiate replaces the --extend replay path"
@@ -461,6 +461,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
     if hard_trigger:
         assert debate, "--hard-trigger gates the debate round"
         suffix += "+hardtrig"             # E3: deliberation gated, ruling still per-tick
+    if admit:
+        suffix += "+admit"                # Exp 63: policy also rations ADMISSION, not just margin
     if slack_mult != 1.0:
         suffix += f"+slack{slack_mult:g}"   # deadline-tightness calibration knob
     if burst_s:
@@ -487,7 +489,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                                                        extend=extend, no_argue=no_argue,
                                                        prev_input=prev_input,
                                                        fast_negotiate=fast_negotiate)),
-            ("negotiated", lambda: make_policy_negotiated(use_llm, model, cache, decisions, seen)),
+            ("negotiated", lambda: make_policy_negotiated(use_llm, model, cache, decisions, seen, admit=admit)),
         ]
         if debate:                # cross-talk round, same referee stage -> isolates the round.
             # Advocates run at `advocates` in BOTH rows: the round is the only difference, so a
@@ -502,13 +504,13 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         rows = [
             ("no-llm",     lambda: policy_none),
             ("single-ilp", lambda: make_policy_single_ilp(use_llm, model, cache, decisions, seen)),
-            ("negotiated", lambda: make_policy_negotiated(use_llm, model, cache, decisions, seen)),
+            ("negotiated", lambda: make_policy_negotiated(use_llm, model, cache, decisions, seen, admit=admit)),
         ]
     else:
         rows = [
             ("no-llm",     lambda: policy_none),
             ("isolated",   lambda: make_policy_isolated(use_llm, model, cache, decisions, seen)),
-            ("negotiated", lambda: make_policy_negotiated(use_llm, model, cache, decisions, seen)),
+            ("negotiated", lambda: make_policy_negotiated(use_llm, model, cache, decisions, seen, admit=admit)),
             ("single-llm", lambda: make_policy_single(use_llm, model, cache, decisions, seen)),
         ]
 
@@ -519,7 +521,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           f"mean of {len(seeds)} seeds (window per seed) | spike_max={spike_max} scale={scale} "
           f"| truth={truth_mode} caps={caps_mode} clip={CAP_CLIP}")
     header = (f"{'pool':>4}  {'policy':<12} {'SLA':>7} {'prodSLA':>8} {'util':>6} "
-              f"{'slowdown':>9} {'fb':>6} {'done':>8}")
+              f"{'slowdown':>9} {'wait':>6} {'fb':>6} {'done':>8}")
     all_per_seed: dict[str, dict[str, list[dict]]] = {}
     for gpus in pools:
         print("-" * len(header)); print(header); print("-" * len(header))
@@ -584,7 +586,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
             s1 = "*" if abs(r["sla"] - best_sla) < 1e-9 else " "
             p1 = "*" if abs(r["prod_sla"] - best_prod) < 1e-9 else " "
             print(f"{gpus:>4}  {name:<12} {r['sla']:>6.1%}{s1}{r['prod_sla']:>7.1%}{p1}"
-                  f"{r['util']:>6.0%} {r['slowdown']:>9.2f} {r['fallback_rate']:>5.0%} "
+                  f"{r['util']:>6.0%} {r['slowdown']:>9.2f} {r['wait']:>6.1f} "
+                  f"{r['fallback_rate']:>5.0%} "
                   f"{r['finished']:>4.1f}/{n_jobs:<3}")
         print_paired_vs_floor(per_seed_pool)
         print()
@@ -685,6 +688,11 @@ def main() -> None:
                          "negotiate() auction on the live tick instead of replaying/extending "
                          "the standing ruling; the referee still rules every tick past theta. "
                          "Mutually exclusive with --extend. Requires --theta.")
+    ap.add_argument("--admit", action="store_true",
+                    help="Exp 63: give the decision layer an ADMISSION lever — which waiting "
+                         "jobs start this tick and which keep waiting — on top of the "
+                         "margin/reserve split. Only never-started jobs can be deferred, so the "
+                         "rigid no-preemption invariant holds. Tier suffix +admit.")
     ap.add_argument("--slack-mult", type=float, default=1.0, metavar="M",
                     help="scale every job's deadline slack by M. The stock recipe gives median "
                          "1.55x the job's OWN work (p10 = 1.00x -- unmeetable in a shared "
@@ -769,6 +777,7 @@ def main() -> None:
           alpha=a.alpha, alpha_norm=a.alpha_norm, trigger=a.trigger, theta=a.theta,
           stale=a.stale, extend=a.extend, no_argue=a.no_argue, prev_input=a.prev_input,
           burst_s=a.burst, hard_trigger=a.hard_trigger, slack_mult=a.slack_mult,
+          admit=a.admit,
           fast_negotiate=a.fast_negotiate)
 
 
