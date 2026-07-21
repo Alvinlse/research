@@ -117,7 +117,8 @@ def load_runtime_pred(path: str = RUNTIME_CSV) -> dict[str, float]:
 
 def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, oracle=False,
                         true_map=None, declared=False, time_pred=None, time_mode=None,
-                        tick: int = TICK_S, quantum: int = 1, stratify: bool = False
+                        tick: int = TICK_S, quantum: int = 1, stratify: bool = False,
+                        burst_s: int | None = None
                         ) -> tuple[list[Job], dict[str, int], dict[str, int],
                                    dict[str, float] | str | None]:
     """n_jobs real jobs thinned from a random 10-hour trace window, on ONE clock.
@@ -147,6 +148,11 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
     rounds up to a full card and the pool/margins/reserve all move in whole GPUs. Window
     sampling is quantum-independent, so quarter/whole tiers stay seed-paired.
 
+    `burst_s` (arrival SURGE): half the window's jobs are re-stamped into one random
+    burst_s-second interval, the rest keep the trace's own arrival times — so a single seed
+    contains both a quiet baseline and a contended spike. Drawn from its own rng stream, so
+    every non-burst tier keeps byte-identical windows.
+
     Phase A (`stratify=True`, manual_author only): replace the uniform draw with a
     within-window stratification — systematic over trace GPU-quanta (base_gpus spread) and a
     fixed prod count with band-spread urgencies (tier + deadline spread). OFF by default so
@@ -164,7 +170,7 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
         # 5/32 seeds in the Exp 36/37 sweeps. Forward EVERYTHING.
         return make_trace_workload(trace, n_jobs, seed + 7919, horizon, pred, oracle,
                                    true_map, declared, time_pred, time_mode, tick, quantum,
-                                   stratify)
+                                   stratify, burst_s)
     if stratify:
         # Phase A diversity (opt-in; eval path keeps rng.sample so its seeds stay byte-paired):
         # systematic draw over the trace's GPU-quanta distribution so each window spans
@@ -175,6 +181,12 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
                          for i in range(n_jobs)), key=lambda r: r[:3])
     else:
         window = sorted(rng.sample(in_win, n_jobs), key=lambda r: r[:3])   # thin the arrival stream
+    if burst_s:
+        brng = random.Random(f"burst-{seed}")          # own stream: other tiers stay byte-paired
+        t_b = brng.randrange(t0, t0 + max(1, window_s - burst_s))
+        surge = set(brng.sample(range(len(window)), len(window) // 2))
+        window = sorted(((t_b + brng.randrange(burst_s) if i in surge else r[0], *r[1:])
+                         for i, r in enumerate(window)), key=lambda r: r[:3])
     if stratify:
         # tier + deadline diversity: fixed prod count (keeps the recipe's ~1/3 prod MEAN but
         # kills the binomial variance that yields all-besteffort windows) with urgencies
@@ -363,7 +375,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           advocates: str = "qwen2.5:3b", realloc_cost: float = 0.0, alpha: float = 0.0,
           alpha_norm: str = "c0", trigger: str = "bucket", theta: float | None = None,
           stale: str = "fresh", extend: bool = False, no_argue: bool = False,
-          prev_input: bool = False, fast_negotiate: bool = False) -> None:
+          prev_input: bool = False, fast_negotiate: bool = False,
+          burst_s: int | None = None, hard_trigger: bool = False) -> None:
     assert not (referee and single_ilp), "--referee and --single-ilp are separate arms"
     assert not debate or referee, "--debate is a referee-arm round"
     assert not (fast_negotiate and extend), "--fast-negotiate replaces the --extend replay path"
@@ -414,9 +427,21 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         suffix += "+qwhole"               # Exp 48: whole-GPU allocation quantum
     if referee:
         suffix += "+referee"              # Exp 50: referee-LLM allocator arm
+    if theta is not None:
+        # every controller-shell variant needs its own tier, or a later ungated run silently
+        # overwrites the gated rows under a shared key (the Exp-59 unpaired-comparison trap)
+        suffix += f"+theta{theta:g}"
+    if extend:
+        suffix += "+extend"
     if fast_negotiate:
         assert theta is not None, "--fast-negotiate needs --theta"
         suffix += "+fastneg"              # Exp 59: fast mode auctions instead of replaying
+    if stale != "fresh":
+        suffix += f"+stale-{stale}"
+    if no_argue:
+        suffix += "+noargue"
+    if prev_input:
+        suffix += "+previn"
     if advocates != "qwen2.5:3b":
         assert referee, "--advocates is a referee-arm option"
         suffix += "+adv" + advocates.split(":")[-1]   # tiers must not mix advocate scales
@@ -432,6 +457,11 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         load_manual(manual)               # Exp 51: precedent block + cache-key hash
         # tiers must never mix rulings across manuals or with vanilla (results merge per tier)
         suffix += ("+manual-learned" if "learned" in os.path.basename(manual) else "+manual")
+    if hard_trigger:
+        assert debate, "--hard-trigger gates the debate round"
+        suffix += "+hardtrig"             # E3: deliberation gated, ruling still per-tick
+    if burst_s:
+        suffix += f"+burst{burst_s}"      # arrival surge: separate windows, separate tier
     if n_jobs != 16:
         suffix += f"+n{n_jobs}"           # Exp 48: scale-up tiers must not collide
     tag = (baseline or ("rule" if not use_llm else model)) + suffix
@@ -462,7 +492,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
             rows.insert(2, ("debate", lambda: make_policy_referee(
                 use_llm, model, cache, decisions, seen, statement_model=advocates,
                 think=not no_think, debate=True, trigger=trigger, theta=theta,
-                stale=stale, extend=extend, fast_negotiate=fast_negotiate)))
+                stale=stale, extend=extend, fast_negotiate=fast_negotiate,
+                hard_trigger=hard_trigger)))
     elif single_ilp:              # Exp 54: LLMSched spine — one LLM proposes, the ILP repairs
         from pins.two_sided_sim import make_policy_single_ilp
         rows = [
@@ -501,7 +532,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                 jobs, cap_map, tcap, belief = make_trace_workload(trace, n_jobs, s, horizon, pred,
                                                                   oracle, true_map, declared,
                                                                   time_pred, mk_mode, tick,
-                                                                  quantum)
+                                                                  quantum, burst_s=burst_s)
                 cap_map = {k: min(v, gpus) for k, v in cap_map.items()}  # feasible at this pool
                 tcap = {k: min(v, gpus) for k, v in tcap.items()}
                 dyn_map = None
@@ -530,7 +561,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                                 | {"llm_calls": float(tk["calls"]),
                                    "llm_tokens": float(tk["prompt"] + tk["completion"]),
                                    "shell_fast": float(sh["fast"]),
-                                   "shell_llm": float(sh["llm"])})
+                                   "shell_llm": float(sh["llm"]),
+                                   "shell_debate": float(sh["debate"])})
                 if use_llm:
                     save_cache(cache)   # per-seed: a reaped run loses at most one seed
                 el, done = time.time() - _t0, i + 1
@@ -649,6 +681,18 @@ def main() -> None:
                          "negotiate() auction on the live tick instead of replaying/extending "
                          "the standing ruling; the referee still rules every tick past theta. "
                          "Mutually exclusive with --extend. Requires --theta.")
+    ap.add_argument("--burst", type=int, default=None, metavar="S",
+                    help="arrival SURGE: half the window's jobs are re-stamped into one "
+                         "random S-second interval, the rest keep the trace's own arrival "
+                         "times, so each seed holds a quiet baseline AND a contended spike. "
+                         "Tier gets a +burstS suffix (windows differ, so it never pairs "
+                         "with a non-burst tier).")
+    ap.add_argument("--hard-trigger", action="store_true",
+                    help="E3: gate the DELIBERATION, not the ruling — the debate round fires "
+                         "only on a hard trigger (prod arrival, free-GPU bucket crossing, a "
+                         "job newly behind, or a fallback last tick); the referee still rules "
+                         "every tick on live numbers. Routine ticks reuse the plain referee's "
+                         "cached ruling. Requires --debate; tier suffix +hardtrig.")
     ap.add_argument("--prev-input", action="store_true",
                     help="E1 (Exp 58): the referee also receives the allocation that "
                          "actually executed last tick plus a change-cost rule 6. Prompt "
@@ -715,6 +759,7 @@ def main() -> None:
           no_think=a.no_think, advocates=a.advocates, realloc_cost=a.realloc_cost,
           alpha=a.alpha, alpha_norm=a.alpha_norm, trigger=a.trigger, theta=a.theta,
           stale=a.stale, extend=a.extend, no_argue=a.no_argue, prev_input=a.prev_input,
+          burst_s=a.burst, hard_trigger=a.hard_trigger,
           fast_negotiate=a.fast_negotiate)
 
 

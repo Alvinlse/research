@@ -455,19 +455,21 @@ def check_allocation(alloc: dict[str, int], reserve: int, demand: list[DemandJob
 # Exp 57 controller shell: per-(seed,arm) tick counters, read+reset by trace_replay the
 # same way take_tokens() is. fast = ticks governed by an adapted standing ruling (no LLM);
 # llm = ticks that invoked referee_decide.
-SHELL_STATS = {"fast": 0, "llm": 0}
+SHELL_STATS = {"fast": 0, "llm": 0, "debate": 0}
 
 
 def take_shell_stats() -> dict:
     out = dict(SHELL_STATS)
-    SHELL_STATS.update(fast=0, llm=0)
+    SHELL_STATS.update(fast=0, llm=0, debate=0)
     return out
 
 
 def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None, think=True,
                         debate=False, trigger="bucket", theta=None, stale="fresh",
-                        extend=False, no_argue=False, prev_input=False, fast_negotiate=False):
+                        extend=False, no_argue=False, prev_input=False, fast_negotiate=False,
+                        hard_trigger=False):
     assert not (debate and no_argue), "--debate rewrites the arguments --no-argue removes"
+    assert not hard_trigger or debate, "--hard-trigger gates the debate round"
     """Referee as a `two_sided_sim` policy: each tick it decides the margin/reserve split of
     the free pool directly (in the sim the demand table is margins-only, forecast_cap=0).
 
@@ -496,14 +498,26 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
         tick instead of replaying/extending the standing ruling. The referee still owns every
         tick past theta (novel/risky scenes); routine ticks go to the cheap auction instead of
         a frozen memory of the referee's last word. Mutually exclusive with `extend` (which
-        only makes sense for the replay mechanism); requires theta."""
+        only makes sense for the replay mechanism); requires theta.
+
+    `hard_trigger` (E3) — gate the DELIBERATION, not the ruling. The rebuttal round fires only
+    on a hard trigger (prod arrival, free-GPU bucket crossing, a job newly behind deadline, or
+    a fallback last tick); routine ticks submit the opening statements straight to the referee,
+    who still rules EVERY tick on live numbers. This is the layer 57g got wrong: it froze the
+    ruling (measured load-bearing, arm B +3.08*) to save the cheap statements, whereas the
+    expensive part is the per-job rebuttal call. Un-debated ticks also drop the |dbt hash from
+    the scene key, so they share cached rulings with the plain referee arm — identical inputs,
+    identical ruling, no extra inference. Requires `debate`."""
     from pins.negotiation_protocol import NegotiationOutcome, negotiate
     assert not (fast_negotiate and extend), "--fast-negotiate replaces the --extend replay path"
     assert not fast_negotiate or theta is not None, "--fast-negotiate needs --theta"
 
     st = {"free": None, "jids": None, "behind": frozenset(),
           "standing": None,            # (alloc dict, reserve) of the last ruling
-          "prev_in": None}             # (demand, supply_ctx, free) of the previous tick
+          "prev_in": None,             # (demand, supply_ctx, free) of the previous tick
+          "h_free": None, "h_jids": None,      # E3 hard-trigger state, kept SEPARATE from the
+          "h_behind": frozenset(),             # theta shell's so the two gates can compose
+          "h_fell": False}
 
     def _delta(demand, free):
         jids = frozenset(j.jid for j in demand)
@@ -527,6 +541,21 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
             d = 0.4 * du + 0.4 * dj + 0.2 * risk
         st["free"], st["jids"], st["behind"] = free, jids, behind
         return d
+
+    def _hard(demand, free) -> bool:
+        """E3: does this scene deserve a deliberation round? Fires on the events the plan
+        pre-registered as hard triggers; routine arrival/departure churn does not."""
+        jids = frozenset(j.jid for j in demand)
+        behind = frozenset(j.jid for j in demand if j.ctx.get("deadline") == "behind")
+        bucket = lambda f: 0 if f == 0 else (1 if f <= 2 else 2)   # the agents' own supply view
+        fire = (st["h_jids"] is None                               # cold start: always deliberate
+                or st["h_fell"]                                    # last ruling was infeasible
+                or bucket(free) != bucket(st["h_free"])            # contested-capacity crossing
+                or bool(behind - st["h_behind"])                   # a job newly behind deadline
+                or any(j.jid not in st["h_jids"] and j.ctx.get("tier") == "prod"
+                       for j in demand))                           # prod arrival
+        st["h_jids"], st["h_free"], st["h_behind"] = jids, free, behind
+        return fire
 
     def policy(demand, supply_ctx, free, **_):
         fast = (theta is not None and st["standing"] is not None
@@ -573,8 +602,10 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
         if debate:
             stmts = gather_statements(dec_demand, dec_supply, use_llm=use_llm,
                                       model=statement_model or model, cache=cache)
-            stmts = rebut(stmts, dec_free, use_llm=use_llm, model=statement_model or model,
-                          cache=cache)
+            if not hard_trigger or _hard(dec_demand, dec_free):
+                stmts = rebut(stmts, dec_free, use_llm=use_llm, model=statement_model or model,
+                              cache=cache)
+                SHELL_STATS["debate"] += 1
         o = referee_decide(dec_demand, dec_supply, dec_free, use_llm=use_llm, model=model,
                            cache=cache, statement_model=statement_model, think=think,
                            stmts=stmts, trigger=trigger, no_argue=no_argue,
@@ -587,6 +618,7 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
         else:
             violations, feasible = o.violations, o.feasible
         reserve = o.reserve
+        st["h_fell"] = not feasible              # a fallback re-arms the deliberation trigger
         if not feasible:                         # overcommit/violation -> floor, counted
             margins = {j.jid: 0 for j in demand}
             reserve = 0
