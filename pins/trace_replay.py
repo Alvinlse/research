@@ -118,7 +118,7 @@ def load_runtime_pred(path: str = RUNTIME_CSV) -> dict[str, float]:
 def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, oracle=False,
                         true_map=None, declared=False, time_pred=None, time_mode=None,
                         tick: int = TICK_S, quantum: int = 1, stratify: bool = False,
-                        burst_s: int | None = None
+                        burst_s: int | None = None, slack_mult: float = 1.0
                         ) -> tuple[list[Job], dict[str, int], dict[str, int],
                                    dict[str, float] | str | None]:
     """n_jobs real jobs thinned from a random 10-hour trace window, on ONE clock.
@@ -170,7 +170,7 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
         # 5/32 seeds in the Exp 36/37 sweeps. Forward EVERYTHING.
         return make_trace_workload(trace, n_jobs, seed + 7919, horizon, pred, oracle,
                                    true_map, declared, time_pred, time_mode, tick, quantum,
-                                   stratify, burst_s)
+                                   stratify, burst_s, slack_mult)
     if stratify:
         # Phase A diversity (opt-in; eval path keeps rng.sample so its seeds stay byte-paired):
         # systematic draw over the trace's GPU-quanta distribution so each window spans
@@ -209,7 +209,7 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
         arrival = (arr_s - t0) // tick
         work = float(min(WORK_CLAMP[1], max(WORK_CLAMP[0], round(dur_s / tick))))
         urgency = round(urg[i] if stratify else rng.uniform(0.6, 2.2), 3)  # make_workload recipe
-        slack = max(1.15, min(2.4, 2.5 - 0.65 * urgency))
+        slack = max(1.15, min(2.4, 2.5 - 0.65 * urgency)) * slack_mult
         deadline = arrival + int(round(work * slack))
         tier = "prod" if urgency >= 1.667 else "besteffort"
         j = Job(f"r{i:02d}", arrival, ["train"], [work], urgency, deadline, tier)
@@ -376,7 +376,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           alpha_norm: str = "c0", trigger: str = "bucket", theta: float | None = None,
           stale: str = "fresh", extend: bool = False, no_argue: bool = False,
           prev_input: bool = False, fast_negotiate: bool = False,
-          burst_s: int | None = None, hard_trigger: bool = False) -> None:
+          burst_s: int | None = None, hard_trigger: bool = False,
+          slack_mult: float = 1.0) -> None:
     assert not (referee and single_ilp), "--referee and --single-ilp are separate arms"
     assert not debate or referee, "--debate is a referee-arm round"
     assert not (fast_negotiate and extend), "--fast-negotiate replaces the --extend replay path"
@@ -460,6 +461,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
     if hard_trigger:
         assert debate, "--hard-trigger gates the debate round"
         suffix += "+hardtrig"             # E3: deliberation gated, ruling still per-tick
+    if slack_mult != 1.0:
+        suffix += f"+slack{slack_mult:g}"   # deadline-tightness calibration knob
     if burst_s:
         suffix += f"+burst{burst_s}"      # arrival surge: separate windows, separate tier
     if n_jobs != 16:
@@ -532,7 +535,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                 jobs, cap_map, tcap, belief = make_trace_workload(trace, n_jobs, s, horizon, pred,
                                                                   oracle, true_map, declared,
                                                                   time_pred, mk_mode, tick,
-                                                                  quantum, burst_s=burst_s)
+                                                                  quantum, burst_s=burst_s,
+                                                                  slack_mult=slack_mult)
                 cap_map = {k: min(v, gpus) for k, v in cap_map.items()}  # feasible at this pool
                 tcap = {k: min(v, gpus) for k, v in tcap.items()}
                 dyn_map = None
@@ -681,6 +685,11 @@ def main() -> None:
                          "negotiate() auction on the live tick instead of replaying/extending "
                          "the standing ruling; the referee still rules every tick past theta. "
                          "Mutually exclusive with --extend. Requires --theta.")
+    ap.add_argument("--slack-mult", type=float, default=1.0, metavar="M",
+                    help="scale every job's deadline slack by M. The stock recipe gives median "
+                         "1.55x the job's OWN work (p10 = 1.00x -- unmeetable in a shared "
+                         "queue), which floors SLA violations near 55% regardless of policy. "
+                         "M>1 buys the scheduler room to matter. Tier suffix +slackM.")
     ap.add_argument("--burst", type=int, default=None, metavar="S",
                     help="arrival SURGE: half the window's jobs are re-stamped into one "
                          "random S-second interval, the rest keep the trace's own arrival "
@@ -759,7 +768,7 @@ def main() -> None:
           no_think=a.no_think, advocates=a.advocates, realloc_cost=a.realloc_cost,
           alpha=a.alpha, alpha_norm=a.alpha_norm, trigger=a.trigger, theta=a.theta,
           stale=a.stale, extend=a.extend, no_argue=a.no_argue, prev_input=a.prev_input,
-          burst_s=a.burst, hard_trigger=a.hard_trigger,
+          burst_s=a.burst, hard_trigger=a.hard_trigger, slack_mult=a.slack_mult,
           fast_negotiate=a.fast_negotiate)
 
 

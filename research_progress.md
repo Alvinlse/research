@@ -3403,3 +3403,91 @@ PINS_NUM_CTX=8192 .venv/bin/python -u -m pins.trace_replay --referee --debate --
 .venv/bin/python -m pins.trace_replay --compare \
   'qwen2.5:14b+pred+referee+burst600/debate,qwen2.5:14b+pred+referee+burst600/referee'
 ```
+
+## Experiment 61 (E3) — HARD-TRIGGER DELIBERATION: gate the round, not the ruling — 6.4x fewer rounds, protection intact, and the round is EQUIVALENT to no round (2026-07-22)
+
+User's latency proposal, mapped onto the architecture: call the LLM only when the situation
+changes seriously, restrain its input/output, hold the discussion to one round, and reuse the
+cache. Three of the four were already true — statements are categorical and cached per
+discretised bucket, `rebut()` is a single monotone round (asks may only shrink, so termination
+is structural), and `--no-argue` (57f) already measured that stripping the arguments further
+COSTS SLA +4.9\* vs floor. The one live idea was selective invocation, and 57c–g had applied it
+to the wrong layer: it froze the RULING (measured load-bearing — arm B +3.08\*) to save the
+cheap cached statements, when the actual bill is the rebuttal round, which fires once per job
+per tick.
+
+**Implementation.** New `--hard-trigger` (`referee.make_policy_referee`, requires `--debate`):
+the rebuttal round fires only on a hard trigger — prod arrival, free-GPU bucket crossing, a job
+newly behind deadline, or a fallback last tick — while the referee still rules EVERY tick on
+live numbers (T^R=1 preserved). Trigger state is kept in separate `h_*` keys from the theta
+shell's, so the two gates compose. Un-debated ticks never set `_debated`, so `_scene_key` drops
+the `|dbt` justification hash and those ticks REUSE the plain referee arm's cached ruling —
+identical inputs, identical ruling, no extra inference. New `shell_debate` per-seed counter
+makes the saving measurable rather than asserted. Tier suffix `+hardtrig`.
+
+**Run.** qwen2.5:14b, caps=predicted, pool 8, seeds 0-31, `--referee --debate --hard-trigger`.
+
+| pool | policy | SLA | prodSLA | util | slowdown | fb | done |
+|---|---|---|---|---|---|---|---|
+| 8 | no-llm | 53.9% | 59.1% | 80% | 8.73 | 0% | 15.3/16 |
+| 8 | referee | 53.7% | 51.5%\* | 78% | 8.66 | 1% | 15.2/16 |
+| 8 | debate | 53.7% | 52.6% | 79% | 8.19 | 1% | 15.2/16 |
+| 8 | negotiated | 52.1%\* | 52.5% | 82% | 7.92 | 0% | 15.5/16 |
+
+```
+referee      vs floor:  dSLA  -0.2 ± 1.9   dprodSLA  -7.6 ± 5.0*  dutil  -1.6 ± 1.7   dslow  -0.1 ± 1.0
+debate       vs floor:  dSLA  -0.2 ± 2.1   dprodSLA  -6.5 ± 5.3*  dutil  -1.0 ± 1.5   dslow  -0.5 ± 1.0
+negotiated   vs floor:  dSLA  -1.8 ± 2.2   dprodSLA  -6.6 ± 4.6*  dutil  +2.0 ± 1.0*  dslow  -0.8 ± 0.8
+(* = 95% CI excludes 0, paired by seed, n=32)
+
+gated debate MINUS its own (fresh, same-tier) referee row:
+  dSLA +0.0 ± 1.1   dprodSLA +1.1 ± 1.5   dutil +0.6 ± 1.2   dslow -0.5 ± 1.2
+  TOST: dSLA 90%CI[-1.0,+1.0] EQ±3 EQ±2   dprodSLA 90%CI[-0.2,+2.4] EQ±3   dutil 90%CI[-0.4,+1.6] EQ±3 EQ±2
+
+deliberation load (mean per seed):
+  referee   ticks_ruled 217.3   debate_rounds  0.0
+  debate    ticks_ruled 217.8   debate_rounds 33.8  (15.5% of ticks)   tokens 6813
+```
+
+**Findings.**
+1. **The gate works and is free.** 217.8 ticks ruled per seed, only 33.8 deliberations —
+   a **6.4x cut in rebuttal rounds** — with prod protection fully intact (−6.5\* gated,
+   −7.6\* referee, both in the same band as Exp 59's ungated −8.3\*/−6.4\*) and fallback
+   unchanged at 1%. Selective invocation at the DELIBERATION layer costs nothing, unlike
+   57g's gating of the ruling.
+2. **The util cost disappears** (−1.0 ± 1.5, ns; −1.6 ± 1.7, ns) where 57c–g measured −2.5\*
+   for the ungated round. The plan pre-registered util unchanged at ~−2.5\* and named an
+   improvement as the FALSIFICATION of the "deliberation holds capacity" mechanism. That
+   falsification is what happened: cutting 85% of the deliberation recovered the util cost
+   without touching protection, so the capacity was not being held by the deliberation.
+3. **The round is equivalent to no round.** Gated debate vs its own referee row is EQ±2 on
+   SLA and util, with the prod increment +1.1 ± 1.5 (ns, if anything worse). This reproduces
+   Exp 55's r1:32b result on a second model and strengthens the emerging story: across 14b
+   (here), r1:32b (Exp 55), and the 57e increment (ns@32), **the cross-talk round has never
+   been shown to carry the result** — 57e's −12.0\* vs floor is the referee stage's effect,
+   not the round's.
+4. **`negotiated` remains the only both-signs arm** (prodSLA −6.6\*, util +2.0\*). Same
+   pattern as Exp 60's surge: the LLM arms protect the prod tier but never win utilisation;
+   the deterministic auction does both.
+
+**Caveat — the gated-vs-UNGATED-debate increment could not be computed.** The plain
+`qwen2.5:14b+pred+referee` tier has no `debate` per-seed rows at all
+(`{'no-llm': 32, 'referee': 32, 'negotiated': 32}`) — overwritten by later ungated runs before
+this session's tier-suffix fix landed, the same trap documented on Exp 59. The increment above
+is against this run's own fresh referee row, which is clean and answers "does the gated round
+still buy anything"; the token/latency saving vs an ungated debate run is quantified by the
+`shell_debate` counter, not by a paired outcome diff. A fresh ungated `--debate` reseed would
+make the direct contrast computable.
+
+**Standing conclusion after Exp 60 + 61.** Effort spent on the reasoning layer is hitting
+diminishing returns: the round is equivalent to no round, gating it is free, and the auction
+still beats both LLM arms on utilisation in every regime tested. The binding constraints are
+elsewhere — see the calibration note below.
+
+**Reproduce.**
+```bash
+PINS_NUM_CTX=8192 .venv/bin/python -u -m pins.trace_replay --referee --debate --hard-trigger \
+  --llm --model qwen2.5:14b --caps predicted --pools 8 --seeds 32
+.venv/bin/python -m pins.trace_replay --compare \
+  'qwen2.5:14b+pred+referee+hardtrig/debate,qwen2.5:14b+pred+referee+hardtrig/referee'
+```

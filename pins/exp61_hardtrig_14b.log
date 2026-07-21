@@ -1,0 +1,16 @@
+======================================================================================
+TRACE REPLAY (v2020) — two-sided sim on real jobs; agents=qwen2.5:14b+pred+referee+hardtrig
+======================================================================================
+16 real jobs/window from 606,421 trace jobs, horizon 300, mean of 32 seeds (window per seed) | spike_max=0.6 scale=3 | truth=plan caps=predicted clip=8
+--------------------------------------------------------------------
+pool  policy           SLA  prodSLA   util  slowdown     fb     done
+--------------------------------------------------------------------
+   8  no-llm        53.9%   59.1%    80%      8.73    0% 15.3/16 
+   8  referee       53.7%   51.5%*   78%      8.66    1% 15.2/16 
+   8  debate        53.7%   52.6%    79%      8.19    1% 15.2/16 
+   8  negotiated    52.1%*  52.5%    82%      7.92    0% 15.5/16 
+      referee      vs floor:  dSLA   -0.2 ± 1.9   dprodSLA   -7.6 ± 5.0*  dutil   -1.6 ± 1.7   dslow   -0.1 ± 1.0 
+      debate       vs floor:  dSLA   -0.2 ± 2.1   dprodSLA   -6.5 ± 5.3*  dutil   -1.0 ± 1.5   dslow   -0.5 ± 1.0 
+      negotiated   vs floor:  dSLA   -1.8 ± 2.2   dprodSLA   -6.6 ± 4.6*  dutil   +2.0 ± 1.0*  dslow   -0.8 ± 0.8 
+      (* = 95% CI excludes 0, paired by seed, n=32)
+1183 distinct decisions/transcripts -> /import/gp-home.ciero/kimseng/Research/pins/results_trace_replay.json (tier 'qwen2.5:14b+pred+referee+hardtrig')
