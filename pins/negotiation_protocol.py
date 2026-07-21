@@ -65,7 +65,8 @@ class NegotiationOutcome:
 ADMIT_ORDER = {"behind": 0, "ontrack": 1, "ahead": 2}
 
 
-def admission_plan(waiting: list[dict], free: int) -> tuple[dict[str, float], frozenset[str]]:
+def admission_plan(waiting: list[dict], free: int,
+                   reserve: int = 0) -> tuple[dict[str, float], frozenset[str]]:
     """Deterministic admission: who starts now, who keeps waiting. Returns (priority, defer).
 
     The sim grants GPUs greedily in priority order and a job that does not fit still receives a
@@ -78,7 +79,9 @@ def admission_plan(waiting: list[dict], free: int) -> tuple[dict[str, float], fr
     `simulate` serves them in exactly this order."""
     rank = sorted(waiting, key=lambda w: (w["tier"] != "prod", ADMIT_ORDER.get(w["deadline"], 1),
                                           w["base_gpus"], w["jid"]))
-    priority, defer, left = {}, [], free
+    # plan against what will actually be grantable: the same outcome's reserve is held out of
+    # the besteffort pool by the sim, so admitting against raw `free` over-admits by `reserve`
+    priority, defer, left = {}, [], max(0, free - reserve)
     for i, w in enumerate(rank):
         if w["base_gpus"] <= left:
             priority[w["jid"]] = float(len(rank) - i)

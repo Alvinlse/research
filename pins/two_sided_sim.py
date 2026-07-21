@@ -107,7 +107,7 @@ def make_policy_negotiated(use_llm, model, cache, trace, seen, admit=False):
         o = negotiate(demand, supply_ctx, free, use_llm=use_llm, model=model, cache=cache)
         if admit and waiting:
             from pins.negotiation_protocol import admission_plan
-            o.priority, o.defer = admission_plan(waiting, free)
+            o.priority, o.defer = admission_plan(waiting, free, reserve=o.reserve)
         _record_outcome(trace, seen, "negotiated", o)
         return o.margins, o.reserve, o
     return policy
@@ -229,6 +229,7 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
     held = {j.jid: 0 for j in jobs}                                  # rigid: locked to the job
     ran = {j.jid: 0 for j in jobs}                                   # ticks run (telemetry seen)
     start_at: dict[str, int | None] = {j.jid: None for j in jobs}    # first tick holding GPUs
+    full_at: dict[str, int | None] = {j.jid: None for j in jobs}     # first tick at FULL base
     progress = {j.jid: 0.0 for j in jobs}
     pidx = {j.jid: 0 for j in jobs}
     done_at: dict[str, int | None] = {j.jid: None for j in jobs}
@@ -373,6 +374,9 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
                 ran[j.jid] += 1                            # a tick of telemetry accrues
                 if start_at[j.jid] is None:
                     start_at[j.jid] = t                    # Exp 63: queue wait ends here
+            if full_at[j.jid] is None and g >= cap0(j):
+                full_at[j.jid] = t                         # `wait` (first GPU) flatters partial
+                                                           # trickle-feeds; this one cannot
             if c0 == 0:
                 rate = 1.0
             else:
@@ -407,6 +411,8 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
     # deferring a job forever would look like an improvement.
     waits = sorted((start_at[j.jid] if start_at[j.jid] is not None else horizon) - j.arrival
                    for j in jobs)
+    fulls = [(full_at[j.jid] if full_at[j.jid] is not None else horizon) - j.arrival
+             for j in jobs]
     slow = [(done_at[j.jid] - j.arrival) / j.nominal for j in fin if j.nominal > 0]
     return {
         "sla": sum(1 for j in jobs if violated(j)) / len(jobs),
@@ -416,6 +422,7 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
         "finished": float(len(fin)),
         "wait": sum(waits) / max(len(waits), 1),
         "wait_p95": float(waits[min(len(waits) - 1, int(0.95 * len(waits)))]) if waits else 0.0,
+        "wait_full": sum(fulls) / max(len(fulls), 1),
         "n_jobs": float(len(jobs)),
         "fallback_rate": n_fallback / max(n_decisions, 1),
         "churn_gpu": churn_gpu / max(churn_ticks, 1),      # mean |delta| GPUs re-tuned per tick
@@ -551,6 +558,7 @@ def simulate_backfill(jobs_proto: list[Job], total_gpus: int, horizon: int,
         "finished": float(len(fin)),
         "wait": sum(waits) / max(len(waits), 1),
         "wait_p95": float(waits[min(len(waits) - 1, int(0.95 * len(waits)))]) if waits else 0.0,
+        "wait_full": sum(waits) / max(len(waits), 1),   # EASY is all-or-nothing: full == first
         "n_jobs": float(len(jobs)),
         "fallback_rate": 0.0,
         "churn_gpu": 0.0,

@@ -74,6 +74,20 @@ RULE6_PREV = (
     "it. Do not keep an allocation that rules 1-5 now argue against."
 )
 
+# Exp 63 (revision 2): the referee also decides ADMISSION — which queued jobs start now and
+# which keep waiting. Appended only when `waiting` is passed, so every pre-admission tier's
+# prompt — and cache key — is untouched (the RULE6_PREV pattern).
+RULE7_ADMIT = (
+    "\n7. ADMISSION: you are also given waiting_jobs — queued jobs that have not started. "
+    "After margins and reserve, admitted jobs draw their base_gpus from what remains of the "
+    "free pool, in the order you list them; a job that only partly fits runs SLOWER, and "
+    "spreading a scarce pool thinly slows everyone. List jobs to hold back this epoch in "
+    '"defer" (they wait at zero GPUs; only never-started jobs can be deferred) and the '
+    'admitted ones in "admit_order", most important first. Never defer a prod job while '
+    "admitting a besteffort one. Deferral is rationing, not punishment: defer only when the "
+    "remaining pool cannot usefully cover the job's base."
+)
+
 def _HYBRID(model: str) -> bool:      # models whose API accepts think=; the rest 400 on it
     return model.startswith(("deepseek-r1", "qwen3"))
 
@@ -107,6 +121,8 @@ class RefereeOutcome:
     justification: str
     transcript: list = field(default_factory=list)   # the submitted statements
     _source: str = "rule"
+    defer: frozenset = frozenset()               # Exp 63: waiting jids held back this epoch
+    priority: dict | None = None                 # Exp 63: admit order (higher = served first)
 
 
 # --------------------------------------------------------------------------- #
@@ -328,7 +344,8 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
                    cache: dict | None = None, statement_model: str | None = None,
                    think: bool = True, stmts: list[dict] | None = None,
                    trigger: str = "bucket", no_argue: bool = False,
-                   prev_alloc: dict | None = None) -> RefereeOutcome:
+                   prev_alloc: dict | None = None,
+                   waiting: list[dict] | None = None) -> RefereeOutcome:
     """Full reason-then-referee round: gather statements, ask the referee LLM for the
     allocation, evaluate it. Cached per discretised scene like every other agent call.
     `statement_model` pins the demand/supply statement LLM independently of the referee's
@@ -353,6 +370,13 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
         # never share a cached ruling (the Exp 56/57g cache-collision lesson).
         key += "|prev:" + hashlib.sha1(
             json.dumps(sorted(prev_alloc.items())).encode()).hexdigest()[:10]
+    if waiting is not None:
+        # Exp 63: the ruling now includes WHO STARTS, so the waiting set is part of the scene
+        # identity. jid included (defer names jobs); waited_ticks excluded (continuous — it
+        # would kill every cache hit) on the discretise-the-asks-not-the-arguments precedent.
+        key += "|adm:" + hashlib.sha1("|".join(
+            f"{w['jid']}:{w['tier']}:{w['deadline']}:b{w['base_gpus']}"
+            for w in sorted(waiting, key=lambda w: w["jid"])).encode()).hexdigest()[:10]
     if statement_model and statement_model != "qwen2.5:3b":
         # The scene key discretises the ASKS but not the arguments, and the referee reads the
         # arguments -- so a stronger advocate that lands on the same numbers would otherwise
@@ -377,11 +401,14 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
                 messages=[{"role": "system",
                            "content": SYSTEM_REFEREE
                                       + (RULE6_PREV if prev_alloc is not None else "")
+                                      + (RULE7_ADMIT if waiting is not None else "")
                                       + ("\n\n" + _MANUAL if _MANUAL else "")},
                           {"role": "user", "content": json.dumps(
                               {"free_gpus": free_gpus, "statements": stmts}
                               | ({"previous_allocation": prev_alloc}
-                                 if prev_alloc is not None else {}), indent=1)}],
+                                 if prev_alloc is not None else {})
+                              | ({"waiting_jobs": waiting}
+                                 if waiting is not None else {}), indent=1)}],
             )
             obj = _parse(resp.message.content)
             if obj is not None and isinstance(obj.get("alloc"), dict):
@@ -402,20 +429,43 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
                     claimed = -1
                 out = {"alloc": alloc, "reserve": reserve, "justification": why,
                        "claimed_total": claimed, "_source": f"llm:{model}"}
+                if waiting is not None:
+                    # the referee's OWN admission call, unrepaired: unknown jids pass through
+                    # harmlessly (the sim matches by jid); an empty defer = admit everyone.
+                    out["defer"] = [str(x) for x in obj.get("defer", [])
+                                    if isinstance(obj.get("defer"), list)]
+                    order = obj.get("admit_order")
+                    out["admit_order"] = [str(x) for x in order] if isinstance(order, list) else []
         except Exception as e:
             print(f"  ! referee fallback: {type(e).__name__}: {e}")
     if out is None:
         out = _rule_referee(stmts, free_gpus)
+        if waiting is not None:                        # deterministic admission fallback
+            from pins.negotiation_protocol import admission_plan
+            prio, dfr = admission_plan(waiting, free_gpus, reserve=out["reserve"])
+            out["defer"] = sorted(dfr)
+            out["admit_order"] = sorted(prio, key=prio.get, reverse=True)
     if trigger == "delta":
         cache[key] = dict(out, alloc_slots=_alloc_to_slots(out["alloc"], stmts))
     else:
         cache[key] = out
 
     violations = check_allocation(out["alloc"], out["reserve"], demand, free_gpus)
+    defer = frozenset(out.get("defer") or ())
+    priority = None
+    if waiting is not None:
+        order = out.get("admit_order") or []
+        priority = {jid: float(len(order) - i) for i, jid in enumerate(order)}
+        # rule-3 analogue for admission, REPORTED never repaired: prod held back while a
+        # besteffort peer starts is a violation the referee pays for, not one code fixes.
+        tiers = {w["jid"]: w["tier"] for w in waiting}
+        if any(tiers.get(j) == "prod" for j in defer) \
+                and any(t != "prod" and j not in defer for j, t in tiers.items()):
+            violations = violations + ["prod deferred while besteffort admitted"]
     return RefereeOutcome(alloc=out["alloc"], reserve=out["reserve"],
                           feasible=not violations, violations=violations,
                           justification=out["justification"], transcript=stmts,
-                          _source=out["_source"])
+                          _source=out["_source"], defer=defer, priority=priority)
 
 
 # --------------------------------------------------------------------------- #
@@ -467,7 +517,7 @@ def take_shell_stats() -> dict:
 def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None, think=True,
                         debate=False, trigger="bucket", theta=None, stale="fresh",
                         extend=False, no_argue=False, prev_input=False, fast_negotiate=False,
-                        hard_trigger=False):
+                        hard_trigger=False, admit=False):
     assert not (debate and no_argue), "--debate rewrites the arguments --no-argue removes"
     assert not hard_trigger or debate, "--hard-trigger gates the debate round"
     """Referee as a `two_sided_sim` policy: each tick it decides the margin/reserve split of
@@ -557,7 +607,8 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
         st["h_jids"], st["h_free"], st["h_behind"] = jids, free, behind
         return fire
 
-    def policy(demand, supply_ctx, free, **_):
+    def policy(demand, supply_ctx, free, waiting=None, **_):
+        waiting = waiting if admit else None       # admission is an opt-in arm (+admit tier)
         fast = (theta is not None and st["standing"] is not None
                 and _delta(demand, free) <= theta)
         if theta is not None and not fast:
@@ -589,9 +640,16 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
                 SHELL_STATS["fast"] += 1
                 st["prev_in"] = (demand, supply_ctx, free)
                 st["executed"] = dict(margins) | {"_reserve": sreserve}
-                return margins, sreserve, NegotiationOutcome(
+                fout = NegotiationOutcome(
                     margins=margins, reserve=sreserve, rounds=rounds, agreed=True,
                     transcript=transcript)
+                if waiting:
+                    # fast ticks admit by the deterministic rule; the referee owns admission
+                    # only on the novel/risky scenes it is consulted for — same division of
+                    # labour as the margins.
+                    from pins.negotiation_protocol import admission_plan
+                    fout.priority, fout.defer = admission_plan(waiting, free, reserve=sreserve)
+                return margins, sreserve, fout
             # infeasible (standing ruling no longer fits, or negotiate() couldn't clear) ->
             # fall through and re-invoke the referee
 
@@ -609,7 +667,8 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
         o = referee_decide(dec_demand, dec_supply, dec_free, use_llm=use_llm, model=model,
                            cache=cache, statement_model=statement_model, think=think,
                            stmts=stmts, trigger=trigger, no_argue=no_argue,
-                           prev_alloc=(st.get("executed") or {}) if prev_input else None)
+                           prev_alloc=(st.get("executed") or {}) if prev_input else None,
+                           waiting=waiting)
         SHELL_STATS["llm"] += 1
         margins = {j.jid: o.alloc.get(j.jid, 0) for j in demand}
         if stale == "one":               # stale ruling -> the evaluator re-checks vs LIVE state
@@ -627,7 +686,10 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
         st["prev_in"] = (demand, supply_ctx, free)
         st["executed"] = dict(margins) | {"_reserve": reserve}   # E1: what actually ran
         out = NegotiationOutcome(margins=margins, reserve=reserve, rounds=1,
-                                 agreed=feasible, transcript=o.transcript)
+                                 agreed=feasible, transcript=o.transcript,
+                                 # infeasible ruling -> floor tick: no admission control either
+                                 priority=o.priority if feasible else None,
+                                 defer=o.defer if feasible else None)
         sig = f"referee|free={free}|ok={feasible}|r={reserve}|m={sorted(margins.items())}"
         if sig not in seen:
             seen.add(sig)

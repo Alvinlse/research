@@ -232,7 +232,7 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
 
 
 METRICS = ("sla", "prod_sla", "util", "slowdown", "finished", "fallback_rate",
-           "churn_gpu", "churn_jobs", "wait", "wait_p95")
+           "churn_gpu", "churn_jobs", "wait", "wait_p95", "wait_full")
 RESULTS = os.environ.get("PINS_RESULTS", os.path.join(HERE, "results_trace_replay.json"))
 
 
@@ -488,7 +488,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                                                        theta=theta, stale=stale,
                                                        extend=extend, no_argue=no_argue,
                                                        prev_input=prev_input,
-                                                       fast_negotiate=fast_negotiate)),
+                                                       fast_negotiate=fast_negotiate,
+                                                       admit=admit)),
             ("negotiated", lambda: make_policy_negotiated(use_llm, model, cache, decisions, seen, admit=admit)),
         ]
         if debate:                # cross-talk round, same referee stage -> isolates the round.
@@ -498,7 +499,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                 use_llm, model, cache, decisions, seen, statement_model=advocates,
                 think=not no_think, debate=True, trigger=trigger, theta=theta,
                 stale=stale, extend=extend, fast_negotiate=fast_negotiate,
-                hard_trigger=hard_trigger)))
+                hard_trigger=hard_trigger, admit=admit)))
     elif single_ilp:              # Exp 54: LLMSched spine — one LLM proposes, the ILP repairs
         from pins.two_sided_sim import make_policy_single_ilp
         rows = [
