@@ -3491,3 +3491,68 @@ PINS_NUM_CTX=8192 .venv/bin/python -u -m pins.trace_replay --referee --debate --
 .venv/bin/python -m pins.trace_replay --compare \
   'qwen2.5:14b+pred+referee+hardtrig/debate,qwen2.5:14b+pred+referee+hardtrig/referee'
 ```
+
+## Experiment 68 — THE ELEVATED PLAN'S MEASUREMENT LAYER: occupancy is not productive work, and every margin arm buys waste (2026-07-22)
+
+**What changed (build).** The elevated research plan (`referee_allocator/Elevated_Multi_Agent_GPU_Scheduling_Research_Plan.pdf`,
+uploaded to `origin/referee_allocator`) makes three demands on the simulator that the Exp 22–63
+line never satisfied. All three are now implemented in `pins/two_sided_sim.py`:
+
+1. **§3.2 counterfactual progress model.** A second, *primary* scaling law
+   `p_j(g) = 1 − exp(−kappa_j·g)` with `kappa_j = K/c0` — each job saturates on the scale of its
+   own base demand, so `rate == 1` at `c0` and deadlines stay comparable across laws
+   (`--law sat --kappa K`, default `K=2`). The Exp 57 Amdahl law is now the §3.3 *robustness*
+   model (`--law amdahl`, default, byte-identical to every result through Exp 63 — verified by
+   re-running HEAD in a worktree: SLA/prodSLA/util/slowdown/wait/done all match exactly).
+2. **§4 utilisation decomposition.** `util` (= U_alloc, occupancy) is now reported alongside
+   **`u_useful`** (GPU-equivalents of progress actually produced, `min(g, c0·rate)`) and
+   `u_waste = U_alloc − U_useful`. Allocated GPUs a job cannot convert into progress no longer
+   count as utilisation.
+3. **§14 allocation regret.** A per-tick oracle `A*_t` maximising useful progress subject to
+   `sum_j g_j ≤ G`, `g_j ≤ ceil_use_j`. Both laws are concave, so greedy-by-marginal-gain is the
+   *exact* maximiser (heap, O(n + G log n)). `regret = (oracle − actual)/oracle` over the run.
+   The oracle is unconstrained by rigidity, so this regret prices rigid incumbency too — an
+   upper bound, and reported as one.
+
+**Result (rule tier, v2020 replay, 16 jobs/window, pools 4/6/8, n=32 paired seeds, both laws).**
+
+| law | pool | arm | dutil | **duseful** | **dregret** | dprodSLA |
+|---|---|---|---|---|---|---|
+| amdahl | 4 | negotiated | −1.1\* | **−1.3\*** | **+1.8\*** | −3.7 |
+| amdahl | 6 | negotiated | +0.1 | −0.3 | **+0.6\*** | −2.9 |
+| amdahl | 8 | negotiated | **+1.0\*** | +0.3 | +0.1 | **−4.0\*** |
+| sat | 4 | negotiated | −1.7\* | **−2.4\*** | **+2.6\*** | −1.3 |
+| sat | 6 | negotiated | −0.4 | **−1.7\*** | **+1.7\*** | −2.0 |
+| sat | 8 | negotiated | +0.8 | **−0.8\*** | **+1.1\*** | **−3.4\*** |
+
+(paired vs the `no-llm` floor; \* = 95% CI excludes 0. `isolated` and `single-llm` behave the
+same or worse throughout.)
+
+**Reading.**
+1. **The utilisation gains reported since Exp 22 are partly waste.** At pool 8/amdahl the
+   negotiated arm's headline `dutil +1.0*` shrinks to `duseful +0.3` (ns) once occupancy is
+   separated from progress — the margin GPUs are held but not converted. Under the plan's
+   primary law the sign flips outright: `duseful −0.8*` at every pool. **No arm buys useful
+   utilisation anywhere in this sweep.** Every past "+util\*" claim in this log needs the
+   qualifier "occupancy" until re-run with `u_useful`.
+2. **Regret is the sharper instrument.** It is significantly WORSE than the floor for every
+   LLM-shaped arm in 5 of 6 cells — a signal SLA and util both hid, and exactly the plan's
+   argument for making normalised regret a primary outcome.
+3. **The prod-tier protection survives the law change.** `dprodSLA −3.4*` (sat, pool 8) vs
+   `−4.0*` (amdahl, pool 8): the project's core finding passes the §3.3 both-models test. The
+   utilisation story does not.
+4. **Contention flips the sign of the waste.** At pool 4 (saturated) margin costs both
+   occupancy and useful work; at pool 8 (slack) it at least converts. This is the same
+   slack-regime boundary Exp 60 found for the referee.
+
+**Reproduce.**
+```bash
+for L in amdahl sat; do PINS_RESULTS=pins/results_exp68_$L.json \
+  .venv/bin/python -m pins.trace_replay --seeds 32 --pools 4,6,8 --law $L > pins/exp68_$L.log; done
+```
+
+**Open (not done here).** The plan's other demands are untouched: §13 equal-inference-budget
+protocol (the single-LLM baseline is still unmatched on tokens), §6–8 explicit bid/ask +
+credits + seriousness gate, §12 quality-aware cache with false-reuse rate, §15 resize
+cooldowns, §17 ρ/λ sweeps. And the headline LLM arms (14b referee, r1:32b) have NOT been
+re-run under `--law sat` or scored on `u_useful`/`regret` — the table above is rule-tier only.

@@ -557,3 +557,33 @@ uncalibrated, Exp 1–7), numeric-fresh statements and 5-level slack buckets for
 5. **r1 completions:** finish 57a (`--seed-start 16`), then r1+debate @ caps predicted if
    Exp 55 preserves +util under the round — if so, an r1 version of E1 jumps this queue.
 6. Accounting debts: debate token bill, concession-rate replay script, --debate latency probe.
+
+## Phase 7 — the elevated plan (adopted 2026-07-22)
+
+`referee_allocator/Elevated_Multi_Agent_GPU_Scheduling_Research_Plan.pdf` (on
+`origin/referee_allocator`) re-specifies the methodology. It does not change the thesis
+question; it changes what counts as evidence for it. Adopted in full as the measurement
+standard from Exp 68 onward.
+
+**Landed (Exp 68).** §3 counterfactual progress model (`--law sat`, saturating, primary;
+Amdahl demoted to the §3.3 robustness check), §4 `U_useful`/`U_alloc`/`U_waste`, §14 per-tick
+oracle regret. Consequence: **occupancy `util` is no longer a headline metric.** Any claim of
+"+util" from Exp 22–63 is a claim about occupancy and must be re-stated with `u_useful`.
+
+**Queued, in the order they change conclusions:**
+1. **Re-run the headline arms under the new metrics** — 14b referee and r1:32b, `--law sat`
+   and `--law amdahl`, scored on `u_useful` + `regret`. Exp 68 showed the rule-tier util story
+   inverts; the LLM-tier one may too. This precedes every new lever.
+2. **§13 equal-inference-budget protocol** — `C_LLM = a·N_in + b·N_out + c·T_wall`, with the
+   single-LLM baseline funded to match each multi-agent arm. Today's single-LLM control is
+   *cheaper* than the arms it validates, which is the plan's headline fairness risk and
+   currently un-mitigated. The `llm_calls`/`llm_tokens` per-seed counters already exist.
+3. **§6–8 explicit market** — marginal bid `b_(j,k,t)`, ask `a_(k,t)`, virtual credits with
+   equal endowment + redistribution (§7), seriousness score `Gamma_t` as the negotiation gate
+   (§8, generalises `--hard-trigger`).
+4. **§12 quality-aware cache** — similarity × quality × age decay, and **false-reuse rate**
+   rather than hit rate.
+5. **§17 sensitivity grid** — offered load rho, SLA tightness lambda, resize cooldown.
+
+**Explicitly out of scope for now:** MIG profile capacity (§2), which needs a hardware model
+the v2020 trace does not support.

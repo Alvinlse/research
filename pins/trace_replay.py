@@ -232,7 +232,10 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
 
 
 METRICS = ("sla", "prod_sla", "util", "slowdown", "finished", "fallback_rate",
-           "churn_gpu", "churn_jobs", "wait", "wait_p95", "wait_full")
+           "churn_gpu", "churn_jobs", "wait", "wait_p95", "wait_full",
+           # elevated plan §4/§14: occupancy is NOT productive work, so report useful
+           # utilisation and waste separately, plus regret vs the per-tick oracle.
+           "u_useful", "u_waste", "regret")
 RESULTS = os.environ.get("PINS_RESULTS", os.path.join(HERE, "results_trace_replay.json"))
 
 
@@ -287,7 +290,8 @@ def print_paired_vs_floor(per_seed_pool: dict[str, list[dict]]) -> None:
             continue
         parts = []
         for metric, label, pct in (("sla", "dSLA", True), ("prod_sla", "dprodSLA", True),
-                                   ("util", "dutil", True), ("slowdown", "dslow", False)):
+                                   ("util", "dutil", True), ("u_useful", "duseful", True),
+                                   ("regret", "dregret", True), ("slowdown", "dslow", False)):
             diffs = [a[metric] - b[metric] for a, b in zip(rows_, floor)]
             m, h = paired_ci(diffs)
             u = 100.0 if pct else 1.0
@@ -353,7 +357,8 @@ def compare_tiers(spec: str) -> None:
             continue
         parts, eq = [], []
         for metric, label, pct in (("sla", "dSLA", True), ("prod_sla", "dprodSLA", True),
-                                   ("util", "dutil", True), ("slowdown", "dslow", False)):
+                                   ("util", "dutil", True), ("u_useful", "duseful", True),
+                                   ("regret", "dregret", True), ("slowdown", "dslow", False)):
             diffs = [x[metric] - y[metric] for x, y in zip(ra, rb)]
             m, h = paired_ci(diffs)
             u = 100.0 if pct else 1.0
@@ -377,7 +382,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           stale: str = "fresh", extend: bool = False, no_argue: bool = False,
           prev_input: bool = False, fast_negotiate: bool = False,
           burst_s: int | None = None, hard_trigger: bool = False,
-          slack_mult: float = 1.0, admit: bool = False) -> None:
+          slack_mult: float = 1.0, admit: bool = False,
+          law: str = "amdahl", kappa: float = 2.0) -> None:
     assert not (referee and single_ilp), "--referee and --single-ilp are separate arms"
     assert not debate or referee, "--debate is a referee-arm round"
     assert not (fast_negotiate and extend), "--fast-negotiate replaces the --extend replay path"
@@ -522,7 +528,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           f"mean of {len(seeds)} seeds (window per seed) | spike_max={spike_max} scale={scale} "
           f"| truth={truth_mode} caps={caps_mode} clip={CAP_CLIP}")
     header = (f"{'pool':>4}  {'policy':<12} {'SLA':>7} {'prodSLA':>8} {'util':>6} "
-              f"{'slowdown':>9} {'wait':>6} {'fb':>6} {'done':>8}")
+              f"{'useful':>7} {'regret':>7} {'slowdown':>9} {'wait':>6} {'fb':>6} {'done':>8}")
     all_per_seed: dict[str, dict[str, list[dict]]] = {}
     for gpus in pools:
         print("-" * len(header)); print(header); print("-" * len(header))
@@ -560,7 +566,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                                  spike_max, cap_map, true_cap_map=tcap,
                                  belief_work=belief if time_mode else None, ttf_work=ttf,
                                  dyn_cap_map=dyn_map, realloc_cost=realloc_cost, alpha=alpha,
-                                 alpha_norm=alpha_norm)
+                                 alpha_norm=alpha_norm, law=law, kappa=kappa)
                 tk = take_tokens()          # marginal inference cost of THIS (seed, arm)
                 from pins.referee import take_shell_stats
                 sh = take_shell_stats()     # fast/llm tick split of the controller shell
@@ -587,7 +593,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
             s1 = "*" if abs(r["sla"] - best_sla) < 1e-9 else " "
             p1 = "*" if abs(r["prod_sla"] - best_prod) < 1e-9 else " "
             print(f"{gpus:>4}  {name:<12} {r['sla']:>6.1%}{s1}{r['prod_sla']:>7.1%}{p1}"
-                  f"{r['util']:>6.0%} {r['slowdown']:>9.2f} {r['wait']:>6.1f} "
+                  f"{r['util']:>6.0%} {r['u_useful']:>7.0%} {r['regret']:>7.0%}"
+                  f" {r['slowdown']:>9.2f} {r['wait']:>6.1f} "
                   f"{r['fallback_rate']:>5.0%} "
                   f"{r['finished']:>4.1f}/{n_jobs:<3}")
         print_paired_vs_floor(per_seed_pool)
@@ -668,6 +675,15 @@ def main() -> None:
                     help="Exp 57: diminishing-returns coefficient in P(g)=g/(1+A*(g-1)). "
                          "0.0 = the linear scaling Exp 22-56b assumed; try 0.1/0.3 as "
                          "sensitivity. Cannot be calibrated from v2020 (no counterfactuals).")
+    ap.add_argument("--law", default="amdahl", choices=("amdahl", "sat"),
+                    help="counterfactual progress model (elevated plan S3): 'amdahl' = the "
+                         "Exp 57 law all results through Exp 63 used (default, unchanged); "
+                         "'sat' = the plan's primary saturating law p(g)=1-exp(-kappa*g). "
+                         "A conclusion counts only if it survives BOTH.")
+    ap.add_argument("--kappa", type=float, default=2.0, metavar="K",
+                    help="scaling sharpness of --law sat; kappa_j = K/c0 so each job "
+                         "saturates on the scale of its own base demand (rate==1 at c0). "
+                         "Larger K = earlier saturation = margin GPUs buy less.")
     ap.add_argument("--alpha-norm", default="c0", choices=("c0", "unit"),
                     help="Exp 57: where the scaling law is normalised. 'c0' = rate 1.0 at the "
                          "job's base demand (alpha reprices margin only). 'unit' = the plan's "
@@ -781,7 +797,7 @@ def main() -> None:
           alpha=a.alpha, alpha_norm=a.alpha_norm, trigger=a.trigger, theta=a.theta,
           stale=a.stale, extend=a.extend, no_argue=a.no_argue, prev_input=a.prev_input,
           burst_s=a.burst, hard_trigger=a.hard_trigger, slack_mult=a.slack_mult,
-          admit=a.admit,
+          admit=a.admit, law=a.law, kappa=a.kappa,
           fast_negotiate=a.fast_negotiate)
 
 

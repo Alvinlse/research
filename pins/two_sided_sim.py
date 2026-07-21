@@ -30,7 +30,9 @@ Run:  .venv/bin/python -m pins.two_sided_sim                 # rule-fallback com
 from __future__ import annotations
 
 import argparse
+import heapq
 import json
+import math
 import os
 
 from pins import bridge
@@ -61,6 +63,69 @@ def _speedup(x: float, alpha: float) -> float:
     if x <= 0:
         return 0.0
     return x / (1.0 + alpha * (x - 1.0))
+
+
+def _sat(x: float, kappa: float) -> float:
+    """Elevated plan §3.2: the saturating progress law p(g) = p_max (1 - exp(-kappa g))."""
+    return 1.0 - math.exp(-kappa * x) if x > 0 else 0.0
+
+
+def _rate(g: float, c0: float, ceil_use: float, alpha: float, alpha_norm: str,
+          law: str, kappa: float) -> float:
+    """Progress rate of a job holding `g` GPUs, normalised so rate==1 at its base demand c0.
+
+    law='amdahl' (default) is the Exp 57 law every result through Exp 63 used, reproduced
+    bit-identically. law='sat' is the elevated plan's PRIMARY counterfactual model, with the
+    per-job scaling parameter kappa_j = kappa/c0 — i.e. each job saturates on the scale of its
+    own base demand, which is what keeps rate==1 at c0 and leaves deadlines comparable across
+    laws. Larger `kappa` = earlier saturation = a margin GPU buys less. The two laws are the
+    plan's §3.3 robustness pair: a conclusion counts only if it holds under both."""
+    if c0 == 0:
+        return 1.0
+    x = min(g, ceil_use)
+    if law == "sat":
+        k = kappa / c0
+        return _sat(x, k) / _sat(c0, k)
+    denom = _speedup(c0, alpha) if alpha_norm == "c0" else c0
+    return _speedup(x, alpha) / denom
+
+
+def _useful_units(g: float, c0: float, rate: float) -> float:
+    """Plan §4: the GPU-equivalents of useful work a job holding `g` GPUs produces.
+
+    c0*rate is the linear-equivalent GPU count for that progress; the min() clamp keeps a job
+    from being credited with more useful GPUs than it actually holds. Concave laws do make
+    per-GPU efficiency higher below c0, but crediting that as >g would make U_waste negative
+    and break the plan's decomposition U_alloc = U_useful + U_waste."""
+    return min(g, c0 * rate) if c0 else 0.0
+
+
+def _oracle_units(caps: list[tuple[float, float]], total_gpus: int, alpha: float,
+                  alpha_norm: str, law: str, kappa: float) -> float:
+    """Elevated plan §14: the per-tick oracle allocation A*_t, in useful GPU-equivalents.
+
+    `caps` is [(c0, ceil_use)] for the active jobs. Both laws are concave in g, so allocating
+    units greedily by marginal useful progress IS the exact maximiser of sum_j c0_j p_j(g_j)
+    subject to sum_j g_j <= G and g_j <= ceil_use_j. The oracle is unconstrained by rigidity
+    (it may re-shape any job every tick), so the regret it defines prices the cost of rigid
+    incumbency as well as of the policy's choices — an upper bound, reported as such."""
+    heap = []
+    for i, (c0, ceil) in enumerate(caps):
+        if c0 > 0 and ceil >= 1:
+            gain = _useful_units(1, c0, _rate(1, c0, ceil, alpha, alpha_norm, law, kappa))
+            heapq.heappush(heap, (-gain, i, 1))
+    total = 0.0
+    for _ in range(total_gpus):
+        if not heap:
+            break
+        neg, i, g = heapq.heappop(heap)
+        total += -neg
+        c0, ceil = caps[i]
+        if g + 1 <= ceil:
+            nxt = (_useful_units(g + 1, c0, _rate(g + 1, c0, ceil, alpha, alpha_norm, law, kappa))
+                   - _useful_units(g, c0, _rate(g, c0, ceil, alpha, alpha_norm, law, kappa)))
+            heapq.heappush(heap, (-nxt, i, g + 1))
+    return total
 
 
 def job_facts(job: Job, u: float, spike_max: float, req_gpu: int) -> bridge.Stage1Facts:
@@ -180,7 +245,7 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
              ttf_work: dict[str, float] | str | None = None,
              dyn_cap_map: dict[str, int] | None = None, dyn_after: int = 3,
              realloc_cost: float = 0.0, alpha: float = 0.0,
-             alpha_norm: str = "c0") -> dict:
+             alpha_norm: str = "c0", law: str = "amdahl", kappa: float = 2.0) -> dict:
     """One run of a policy on a fresh workload copy. Rigid: a running job is never involuntarily
     preempted; it only shrinks VOLUNTARILY to its ceiling (cap0 + this tick's negotiated margin).
     Spikes: a train phase's true work is inflated; margin GPUs grant rate>1 to absorb it, capped at
@@ -220,7 +285,12 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
     user's declared request stays fixed; only the system's belief moves. A falling cap
     triggers the existing voluntary-shrink path; a rising one makes the job a wanter again.
     Negotiation facts (job_facts req_gpu) intentionally stay on cap_map — the margin layer
-    still negotiates over the admission request. None = pre-Exp-45, byte-identical."""
+    still negotiates over the admission request. None = pre-Exp-45, byte-identical.
+
+    `law`/`kappa` (Exp 68, elevated plan §3): which counterfactual progress model the dynamics
+    run on — 'amdahl' (default, pre-Exp-68 byte-identical) or 'sat', the plan's primary
+    saturating law. See `_rate`. Both feed the new §4/§14 metrics `u_useful`, `u_waste` and
+    `regret`, which are computed under whichever law is active."""
     jobs = [Job(j.jid, j.arrival, list(j.phases), list(j.need), j.urgency, j.deadline, j.tier)
             for j in jobs_proto]
     by_id = {j.jid: j for j in jobs}
@@ -235,6 +305,8 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
     done_at: dict[str, int | None] = {j.jid: None for j in jobs}
     busy_sum = 0.0
     busy_steps = 0
+    useful_sum = 0.0       # plan §4: useful GPU-equivalents actually produced
+    oracle_sum = 0.0       # plan §14: what the per-tick oracle allocation would have produced
     n_fallback = 0
     n_decisions = 0
     churn_gpu = 0.0        # sum |delta GPUs| across ticks (the quantity an overhead model prices)
@@ -365,6 +437,7 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
         busy_sum += sum(held[j.jid] for j in active) / total_gpus
         busy_steps += 1
         tcap = true_cap_map or cap_map
+        caps_tick: list[tuple[float, float]] = []
         for j in active:
             # dynamics run on the TRUE demand; cap0/ceiling above used the (possibly predicted)
             # requested demand — the gap is exactly prediction error hitting outcomes
@@ -377,20 +450,20 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
             if full_at[j.jid] is None and g >= cap0(j):
                 full_at[j.jid] = t                         # `wait` (first GPU) flatters partial
                                                            # trickle-feeds; this one cannot
-            if c0 == 0:
-                rate = 1.0
-            else:
-                ceil_use = c0 + (useful[j.jid] if phase_of(j) == "train" else 0)
-                # alpha=0 -> the linear rate every experiment through Exp 56b assumed;
-                # alpha>0 -> Amdahl: the Nth extra GPU buys strictly less than the first.
-                # 'c0'  : rate==1 at the job's own base demand -> alpha only reprices MARGIN
-                #         (and cushions starvation), deadlines keep their Exp 22-56b meaning.
-                # 'unit': the plan's literal P(1)-normalised law -> holding c0 no longer buys
-                #         nominal speed, so every deadline silently tightens. Sensitivity only.
-                denom = _speedup(c0, alpha) if alpha_norm == "c0" else c0
-                rate = _speedup(min(g, ceil_use), alpha) / denom
+            # alpha=0 -> the linear rate every experiment through Exp 56b assumed;
+            # alpha>0 -> Amdahl: the Nth extra GPU buys strictly less than the first.
+            # 'c0'  : rate==1 at the job's own base demand -> alpha only reprices MARGIN
+            #         (and cushions starvation), deadlines keep their Exp 22-56b meaning.
+            # 'unit': the plan's literal P(1)-normalised law -> holding c0 no longer buys
+            #         nominal speed, so every deadline silently tightens. Sensitivity only.
+            ceil_use = c0 + (useful[j.jid] if phase_of(j) == "train" else 0)
+            rate = _rate(g, c0, ceil_use, alpha, alpha_norm, law, kappa)
             if realloc_cost and j.jid in resized:
                 rate *= max(0.0, 1.0 - realloc_cost)       # resize = checkpoint/restart/reload
+            # plan §4: allocated GPUs that the job cannot convert into progress are WASTE, so
+            # useful work is counted in GPU-equivalents (c0 * rate), never in GPUs held.
+            useful_sum += _useful_units(g, c0, rate)
+            caps_tick.append((float(c0), float(ceil_use)))
             progress[j.jid] += rate
             while done_at[j.jid] is None and progress[j.jid] >= work[j.jid][pidx[j.jid]] - 1e-9:
                 progress[j.jid] -= work[j.jid][pidx[j.jid]]
@@ -400,6 +473,7 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
                     break
             if done_at[j.jid] is not None:
                 held[j.jid] = 0                            # release on completion
+        oracle_sum += _oracle_units(caps_tick, total_gpus, alpha, alpha_norm, law, kappa)
 
     def violated(j):
         return done_at[j.jid] is None or done_at[j.jid] > j.deadline
@@ -417,7 +491,10 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
     return {
         "sla": sum(1 for j in jobs if violated(j)) / len(jobs),
         "prod_sla": sum(1 for j in prod if violated(j)) / max(len(prod), 1),
-        "util": busy_sum / max(busy_steps, 1),
+        "util": busy_sum / max(busy_steps, 1),             # plan §4: U_alloc (occupancy)
+        "u_useful": useful_sum / max(busy_steps, 1) / total_gpus,
+        "u_waste": (busy_sum - useful_sum / total_gpus) / max(busy_steps, 1),
+        "regret": max(0.0, oracle_sum - useful_sum) / max(oracle_sum, 1e-9),
         "slowdown": sum(slow) / max(len(slow), 1),
         "finished": float(len(fin)),
         "wait": sum(waits) / max(len(waits), 1),
@@ -466,6 +543,8 @@ def simulate_backfill(jobs_proto: list[Job], total_gpus: int, horizon: int,
     started: set[str] = set()
     busy_sum = 0.0
     busy_steps = 0
+    useful_sum = 0.0
+    oracle_sum = 0.0
 
     def req(j) -> int:                                   # all-or-nothing request, held to completion
         return max(1, cap_map[j.jid])
@@ -521,14 +600,15 @@ def simulate_backfill(jobs_proto: list[Job], total_gpus: int, horizon: int,
         busy_sum += sum(held[j.jid] for j in active) / total_gpus
         busy_steps += 1
         tcap = true_cap_map or cap_map
+        caps_tick: list[tuple[float, float]] = []
         for j in active:
             c0 = tcap[j.jid] if j.phases[min(pidx[j.jid], len(j.phases) - 1)] == "train" \
                 else PHASE_PROFILES[j.phases[min(pidx[j.jid], len(j.phases) - 1)]][0]
             g = held[j.jid]
-            if c0 == 0:
-                rate = 1.0
-            else:
-                rate = min(g, c0 + useful[j.jid]) / c0
+            ceil_use = c0 + useful[j.jid]
+            rate = _rate(g, c0, ceil_use, 0.0, "c0", "amdahl", 0.0)   # EASY: linear, as before
+            useful_sum += _useful_units(g, c0, rate)
+            caps_tick.append((float(c0), float(ceil_use)))
             progress[j.jid] += rate
             while done_at[j.jid] is None and progress[j.jid] >= work[j.jid][pidx[j.jid]] - 1e-9:
                 progress[j.jid] -= work[j.jid][pidx[j.jid]]
@@ -538,6 +618,7 @@ def simulate_backfill(jobs_proto: list[Job], total_gpus: int, horizon: int,
                     break
             if done_at[j.jid] is not None:
                 held[j.jid] = 0
+        oracle_sum += _oracle_units(caps_tick, total_gpus, 0.0, "c0", "amdahl", 0.0)
 
     def violated(j):
         return done_at[j.jid] is None or done_at[j.jid] > j.deadline
@@ -554,6 +635,9 @@ def simulate_backfill(jobs_proto: list[Job], total_gpus: int, horizon: int,
         "sla": sum(1 for j in jobs if violated(j)) / len(jobs),
         "prod_sla": sum(1 for j in prod if violated(j)) / max(len(prod), 1),
         "util": busy_sum / max(busy_steps, 1),
+        "u_useful": useful_sum / max(busy_steps, 1) / total_gpus,
+        "u_waste": (busy_sum - useful_sum / total_gpus) / max(busy_steps, 1),
+        "regret": max(0.0, oracle_sum - useful_sum) / max(oracle_sum, 1e-9),
         "slowdown": sum(slow) / max(len(slow), 1),
         "finished": float(len(fin)),
         "wait": sum(waits) / max(len(waits), 1),
