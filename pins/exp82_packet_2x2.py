@@ -34,7 +34,8 @@ import argparse
 import json
 import os
 
-from pins.correction_signed import _ask, apply_signed, disruption, gather_signed
+from pins.correction_signed import (_ask, apply_signed, debate_signed, disruption,
+                                    gather_signed)
 from pins.h2_eval import build_anchor
 from pins.hardcase_eval import score
 from pins.packet import (SYSTEM_PACKET_REFEREE, SYSTEM_PACKET_SINGLE, build_packet,
@@ -42,6 +43,7 @@ from pins.packet import (SYSTEM_PACKET_REFEREE, SYSTEM_PACKET_SINGLE, build_pack
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ARMS = ["market", "single-pkt", "referee-pkt"]
+DEBATE_ARM = "debate-pkt"
 
 
 def _decide(system: str, packet: dict, model: str, cache: dict, tag: str) -> dict:
@@ -56,7 +58,23 @@ def _decide(system: str, packet: dict, model: str, cache: dict, tag: str) -> dic
     return d
 
 
-def run_case(case, model: str, use_llm: bool, arm: str, max_delta: int):
+def load_history(which: str) -> list:
+    """The Exp 51 self-authored precedent manual, as packet.history.
+
+    DOMAIN MISMATCH, stated because it decides what a null means: every WHEN clause keys on
+    `incoming_prod`, a variable the hard-case world does not have, and every rule is about
+    sizing a reserve for an incoming prod wave. None concerns suspensions, caps, corrupt
+    declarations or dependencies -- the things the round-3 cases are about. So a null result
+    here is evidence about THIS manual in THIS domain, not about precedent in general, and a
+    NEGATIVE result would mean irrelevant precedent actively distracts.
+    """
+    if which != "manual":
+        return []
+    with open(os.path.join(HERE, "manual_learned.json")) as f:
+        return json.load(f)
+
+
+def run_case(case, model: str, use_llm: bool, arm: str, max_delta: int, history=None):
     floors, alloc, ranking, _env = build_anchor(case)
     dem = [s for s in case.stmts if s.get("side") == "demand"]
     jobs = [{"jid": s["job_id"], "tier": s.get("tier"), "deadline": s.get("deadline"),
@@ -73,13 +91,17 @@ def run_case(case, model: str, use_llm: bool, arm: str, max_delta: int):
             "confidence": None, "n_actions": 0, "unknown_ids": []}
 
     props = None
-    if arm == "referee-pkt":
+    if arm in ("referee-pkt", "debate-pkt"):
         p = gather_signed(jobs, sup, case.free_gpus, alloc, use_llm=use_llm,
                           model=model, cache=cache)
-        props = {"demand": p["demand"], "supply": p["supply"]}
+        if arm == "debate-pkt":
+            # one rebuttal round: each reviewer reads the others and may revise its own corner
+            p = debate_signed(jobs, sup, case.free_gpus, alloc, p, use_llm=use_llm,
+                              model=model, cache=cache)
+        props = {k: v for k, v in p.items() if k in ("demand", "supply", "opening", "debated")}
 
     packet = build_packet(jobs, sup, case.free_gpus, alloc, ranking, floors,
-                          max_delta=max_delta, reviewer_proposals=props)
+                          max_delta=max_delta, reviewer_proposals=props, history=history)
     if not use_llm:
         d = {"changes": {}, "hold_free": 0, "picked": [], "unknown_ids": [],
              "confidence": 0.0, "justification": "rule: market stands"}
@@ -105,6 +127,10 @@ def main() -> None:
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--max-delta", type=int, default=6,
                     help="GPUs movable per decision; 1 reproduces the proposed tight policy")
+    ap.add_argument("--debate", action="store_true",
+                    help="add the debate-pkt arm: one rebuttal round before the referee rules")
+    ap.add_argument("--history", default="none", choices=["none", "manual"],
+                    help="manual = load pins/manual_learned.json into packet.history")
     a = ap.parse_args()
 
     from pins.hardcases import CASES
@@ -113,15 +139,18 @@ def main() -> None:
     if a.limit:
         cases = cases[:a.limit]
 
+    hist = load_history(a.history)
+    arms_run = ARMS + ([DEBATE_ARM] if a.debate else [])
+
     out_path = os.environ.get(
         "PINS_RESULTS",
         os.path.join(HERE, f"results_exp82_{a.model.replace(':', '')}_d{a.max_delta}.json"))
     results: dict[str, dict] = {}
     for case in cases:
         arms = {}
-        for arm in ARMS:
+        for arm in arms_run:
             final, why, meta = run_case(case, a.model, not a.no_llm and arm != "market",
-                                        arm, a.max_delta)
+                                        arm, a.max_delta, history=hist)
             arms[arm] = score(case, final, 0, why, True) | {"meta": meta}
         results[case.id] = {"category": case.category, "arms": arms}
         print(f"{case.id:14s} {case.category:12s} " + " ".join(
@@ -129,7 +158,8 @@ def main() -> None:
             f"{'!' if v['meta']['rejected'] else ('*' if v['meta']['fired'] else '')}"
             for k, v in arms.items()))
 
-    json.dump({"model": a.model, "suite": a.suite, "arms": ARMS, "max_delta": a.max_delta,
+    json.dump({"model": a.model, "suite": a.suite, "arms": arms_run, "max_delta": a.max_delta,
+               "history": a.history, "n_precedents": len(hist),
                "results": results}, open(out_path, "w"), indent=1)
 
     ids = [c.id for c in cases]
@@ -142,7 +172,7 @@ def main() -> None:
         print(f"\n=== {label}  n={len(sub)} ===")
         print(f"  {'arm':13s}{'handled':>9s}{'fired':>7s}{'invalid':>9s}"
               f"{'rescued':>9s}{'broke':>7s}{'net':>6s}{'badid':>7s}")
-        for arm in ARMS:
+        for arm in arms_run:
             h = sum(1 for c in sub if results[c]["arms"][arm]["handled"])
             f = sum(1 for c in sub if results[c]["arms"][arm]["meta"]["fired"])
             r = sum(1 for c in sub if results[c]["arms"][arm]["meta"]["rejected"])
@@ -151,16 +181,21 @@ def main() -> None:
             bad = sum(1 for c in sub if results[c]["arms"][arm]["meta"]["unknown_ids"])
             print(f"  {arm:13s}{h:>6d}/{len(sub):<3d}{f:>7d}{r:>9d}"
                   f"{resc:>9d}{brk:>7d}{resc - brk:>+6d}{bad:>7d}")
-        b = sum(1 for c in sub if results[c]["arms"]["referee-pkt"]["handled"]
-                and not results[c]["arms"]["single-pkt"]["handled"])
-        cc = sum(1 for c in sub if results[c]["arms"]["single-pkt"]["handled"]
-                 and not results[c]["arms"]["referee-pkt"]["handled"])
-        print(f"  head-to-head referee vs single: referee-only {b}, single-only {cc}")
+        def h2h(x, y):
+            b = sum(1 for c in sub if results[c]["arms"][x]["handled"]
+                    and not results[c]["arms"][y]["handled"])
+            cc = sum(1 for c in sub if results[c]["arms"][y]["handled"]
+                     and not results[c]["arms"][x]["handled"])
+            print(f"  head-to-head {x} vs {y}: {x}-only {b}, {y}-only {cc}")
+        h2h("referee-pkt", "single-pkt")
+        if DEBATE_ARM in arms_run:
+            h2h(DEBATE_ARM, "referee-pkt")      # the increment debate adds over parallel review
+            h2h(DEBATE_ARM, "single-pkt")
 
     # is the self-reported confidence worth gating on? (collected, never enforced)
     print("\n=== confidence calibration (PRIMARY): does conf >= 0.70 predict a correct override? ===")
     prim = [c for c in ids if c in set(PRIMARY)]
-    for arm in ARMS[1:]:
+    for arm in arms_run[1:]:
         rows = [(results[c]["arms"][arm]["meta"]["confidence"],
                  results[c]["arms"][arm]["handled"]) for c in prim
                 if results[c]["arms"][arm]["meta"]["fired"]]
@@ -170,7 +205,7 @@ def main() -> None:
         print(f"  {arm:13s} fired {len(rows):2d}   conf>=0.70 correct {f(hi):>7s}   "
               f"conf<0.70 correct {f(lo):>7s}")
 
-    print(f"\nmax_delta={a.max_delta}   full detail -> {out_path}")
+    print(f"\nmax_delta={a.max_delta}  history={a.history}({len(hist)})   full detail -> {out_path}")
 
 
 if __name__ == "__main__":

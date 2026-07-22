@@ -49,6 +49,8 @@ Four deliberate departures from correction.py, each of which could be wrong and 
 """
 from __future__ import annotations
 
+import json
+
 from pins.correction import HOST, _ask as _ask_raw
 from pins.llm_agent import DEFAULT_MODEL
 from pins.referee import _HYBRID
@@ -289,3 +291,99 @@ def apply_signed(alloc: dict[str, int], decision: dict, free: int,
     if sum(new.values()) > free:
         viol.append(f"infeasible: {sum(new.values())} > {free}")
     return (alloc if viol else new), viol
+
+
+# --------------------------------------------------------------------------- #
+#  DEBATE round (Exp 83). Mirrors referee.rebut's convention: each side reads the
+#  opposing positions and may revise ITS OWN ask, arguing only its own corner.
+#
+#  One deviation, stated: referee.rebut enforces monotone concession (demand may
+#  not raise, supply may not raise) to guarantee termination of an open-ended
+#  protocol. Here there is exactly ONE rebuttal round, so termination is trivial
+#  and a monotonicity rule would only stop a reviewer from correcting itself
+#  after reading evidence it had not seen. Revision is therefore free in both
+#  directions, and the opening position is kept in the packet so the referee can
+#  see who moved and why.
+# --------------------------------------------------------------------------- #
+SYSTEM_DEMAND_REBUT = (
+    "You are the DEMAND-side reviewer for ONE job. You already stated whether it should get "
+    "more or less than the market gave it. You can now see what the other reviewers said about "
+    "the other jobs, and what the supply side wants held free. The pool is finite: every extra "
+    "GPU your job gets comes out of another job on this list.\n"
+    "Revise your own position if the other positions change what is justified — you may raise "
+    "or lower it — and argue your corner to the referee in one sentence. Only your own job.\n"
+    "Respond with ONLY this JSON object:\n"
+    '{"delta_gpus": <signed integer, 0 for no change>, "argument": "<one sentence to the '
+    'referee>"}')
+
+SYSTEM_SUPPLY_REBUT = (
+    "You are the SUPPLY-side reviewer. You already stated how many GPUs must be left "
+    "unallocated. You can now see every job's position and the evidence behind it. If the "
+    "demand on the table is more urgent than what you are holding capacity for, releasing it "
+    "is the right call — but do not release capacity that a stated limit or an announced "
+    "arrival genuinely requires.\n"
+    "Respond with ONLY this JSON object:\n"
+    '{"hold_free_gpus": <integer, 0 for none>, "argument": "<one sentence to the referee>"}')
+
+
+def _opening_view(props: dict, me: str | None) -> dict:
+    """What one reviewer may see: every OTHER position and its evidence, never private state."""
+    return {"other_jobs": [{"job": p["jid"], "proposed_delta": p["delta"],
+                            "evidence": p["evidence"]}
+                           for p in props["demand"] if p["jid"] != me],
+            "supply": ({"hold_free": props["supply"]["hold_free"],
+                        "evidence": props["supply"]["evidence"]} if props["supply"] else None)}
+
+
+def debate_signed(jobs: list[dict], supply_note: str, free: int, alloc: dict[str, int],
+                  props: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
+                  cache: dict | None = None, host: str = HOST) -> dict:
+    """One rebuttal round over the openings. Returns the same shape, plus `opening` kept."""
+    cache = {} if cache is None else cache
+    if not use_llm or (not props["demand"] and not props["supply"]):
+        return dict(props, opening=props, debated=False)
+
+    revised: list[dict] = []
+    for j in jobs:
+        if not (j.get("note") or "").strip():
+            continue
+        mine = next((p for p in props["demand"] if p["jid"] == j["jid"]), None)
+        view = _opening_view(props, j["jid"])
+        if not view["other_jobs"] and not view["supply"]:
+            if mine:
+                revised.append(dict(mine, argument=""))
+            continue
+        user = json.dumps({"free_gpus": free, "market_allocation": dict(sorted(alloc.items())),
+                           "my_job": {"job": j["jid"], "tier": j["tier"],
+                                      "deadline": j["deadline"], "note": j.get("note") or "",
+                                      "market_gave": alloc.get(j["jid"], 0),
+                                      "my_opening_delta": (mine or {}).get("delta", 0)},
+                           "other_positions": view}, indent=1)
+        o = _ask(SYSTEM_DEMAND_REBUT, user, model, host, cache, tag=f"dem-rebut-{j['jid']}")
+        try:
+            n = int(round(float((o or {}).get("delta_gpus", (mine or {}).get("delta", 0)) or 0)))
+        except (TypeError, ValueError):
+            n = (mine or {}).get("delta", 0)
+        if n:
+            revised.append({"jid": j["jid"], "delta": n,
+                            "evidence": (mine or {}).get("evidence", ""),
+                            "argument": str((o or {}).get("argument", ""))[:200]})
+
+    sup = props["supply"]
+    if sup or props["demand"]:
+        user = json.dumps({"free_gpus": free, "allocated": sum(alloc.values()),
+                           "supply_note": supply_note or "",
+                           "my_opening_hold_free": (sup or {}).get("hold_free", 0),
+                           "job_positions": [{"job": p["jid"], "proposed_delta": p["delta"],
+                                              "evidence": p["evidence"]}
+                                             for p in props["demand"]]}, indent=1)
+        o = _ask(SYSTEM_SUPPLY_REBUT, user, model, host, cache, tag="sup-rebut")
+        try:
+            h = max(0, int(round(float((o or {}).get("hold_free_gpus",
+                                                     (sup or {}).get("hold_free", 0)) or 0))))
+        except (TypeError, ValueError):
+            h = (sup or {}).get("hold_free", 0)
+        sup = ({"hold_free": h, "evidence": (sup or {}).get("evidence", ""),
+                "argument": str((o or {}).get("argument", ""))[:200]} if h else None)
+
+    return {"demand": revised, "supply": sup, "opening": props, "debated": True}

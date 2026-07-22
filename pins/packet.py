@@ -161,6 +161,11 @@ def build_packet(jobs: list[dict], supply_note: str, free: int, alloc: dict[str,
             "max_gpus_moved_per_decision": max_delta,
         },
         "history": history or [],
+        **({"history_usage": (
+            "PRECEDENTS from past allocations. Apply one only when its WHEN clause actually "
+            "matches this scene, and cite its id in your justification. A precedent whose "
+            "condition does not hold here is not evidence, and a precedent never overrides an "
+            "operator instruction or a physical limit stated in a note.")} if history else {}),
         "candidate_actions": candidate_actions(alloc, free, ranking, floors, max_delta),
         "decision_rules": rules,
     }
