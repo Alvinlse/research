@@ -43,6 +43,29 @@ was run. Disclosed rather than silently applied.
   It is applied uniformly to every arm and model, it is strictly more conservative, and it
   cannot select the interaction's direction — b and c are reported under both scorings.
 
+COMPETENCE BAR, locked 2026-07-22 22:44 JST — after qwen2.5:1.5b and gemma2:2b, while
+qwen2.5:3b was at 33/40 with NO result file written and none of its numbers seen.
+
+  Why: both sub-3b models allocate ~150% of the pool and fail rule 1 (feasibility) on ~80% of
+  cases. Their bare `handled` counts come from awarding GPUs that do not exist. An arm that
+  breaks feasibility has not produced an allocation, it has produced a number, so a predicate
+  it happens to satisfy is not evidence of judgement — and an interaction measured among such
+  arms cannot support a claim about scheduling.
+
+  Rule: a model enters the CONFIRMATORY pool iff its infeasibility rate over PRIMARY, counted
+  across all four arms (over-awarded arm-case pairs / (4 x 31)), is BELOW 25%.
+
+  The criterion is deliberately FEASIBILITY, not score. Feasibility is rule-1 compliance — a
+  format/competence property, orthogonal to the difference-in-differences under test. Barring
+  on `handled` would risk selecting on the outcome; barring on over-award cannot, because b and
+  c are differences of differences that the rate does not enter.
+
+  Excluded models are still printed in full, and the pooled statistic is reported BOTH ways
+  (confirmatory-only and all-models) so the exclusion can never hide a result.
+
+  Current rates: qwen2.5:1.5b 70%, gemma2:2b 81%, qwen2.5:14b 1.6%. The bar separates these
+  cleanly and was not tuned to any threshold in between.
+
   .venv/bin/python -m pins.exp79_analyse
 """
 from __future__ import annotations
@@ -81,6 +104,15 @@ def ok(res: dict, cid: str, arm: str, strict: bool) -> int:
     return int(a["handled"] and not (strict and a["overcommitted"]))
 
 
+BAR = 0.25          # locked 2026-07-22 22:44 JST, before qwen2.5:3b's results existed
+
+
+def infeasibility(res: dict, ids: list[str]) -> float:
+    """Share of arm-case pairs whose allocation broke rule 1. The competence bar."""
+    bad = sum(res[c]["arms"][a]["overcommitted"] for c in ids for a in ARMS)
+    return bad / (len(ARMS) * len(ids))
+
+
 def counts(res: dict, ids: list[str], strict: bool = True) -> dict:
     h = {a: sum(ok(res, c, a, strict) for c in ids) for a in ARMS}
     dd = [(ok(res, c, "referee", strict) - ok(res, c, "referee-noarg", strict))
@@ -112,21 +144,30 @@ def main() -> None:
         for label, ids in (("PRIMARY (pre-registered)", PRIMARY), ("CONTROLS", CONTROLS)):
             print(f"\n=== {label}  n={len(ids)} ===")
             print(f"{'model':18s}{'single':>16s}{'referee':>16s}"
-                  f"{'text S':>8s}{'text R':>8s}{'inter':>7s}{'b':>4s}{'c':>4s}{'p':>8s}")
-            B = C = 0
+                  f"{'text S':>8s}{'text R':>8s}{'inter':>7s}{'b':>4s}{'c':>4s}{'p':>8s}"
+                  f"{'infeas':>8s}")
+            B = C = Bc = Cc = 0
             for m in models:
                 k = counts(runs[m], ids, strict)
+                rate = infeasibility(runs[m], PRIMARY)
+                elig = rate < BAR
                 if label.startswith("PRIMARY"):
-                    B += k["b"]
-                    C += k["c"]
+                    B += k["b"]; C += k["c"]
+                    if elig:
+                        Bc += k["b"]; Cc += k["c"]
                 print(f"{m:18s}{k['h']['single']:>8d}/{k['h']['single-noarg']:<7d}"
                       f"{k['h']['referee']:>8d}/{k['h']['referee-noarg']:<7d}"
                       f"{k['text_single']:>+8d}{k['text_referee']:>+8d}"
                       f"{k['text_referee'] - k['text_single']:>+7d}"
-                      f"{k['b']:>4d}{k['c']:>4d}{exact_p(k['b'], k['c']):>8.3f}")
+                      f"{k['b']:>4d}{k['c']:>4d}{exact_p(k['b'], k['c']):>8.3f}"
+                      f"{rate:>7.0%}{'' if elig else ' *below bar'}")
             if label.startswith("PRIMARY"):
-                print(f"\n  POOLED stratified McNemar over {len(models)} model(s): "
-                      f"b={B} c={C}  one-sided exact p={exact_p(B, C):.4f}")
+                elig = [m for m in models if infeasibility(runs[m], PRIMARY) < BAR]
+                print(f"\n  CONFIRMATORY pool (infeasibility < {BAR:.0%}), "
+                      f"{len(elig)}/{len(models)} model(s) {elig}:")
+                print(f"    b={Bc} c={Cc}  one-sided exact p={exact_p(Bc, Cc):.4f}")
+                print(f"  all models incl. below-bar ({len(models)}): "
+                      f"b={B} c={C}  p={exact_p(B, C):.4f}")
                 print("  (b = referee-favoured discordant pairs, c = single-favoured)")
 
     print("\n=== rescue view (STRICT): among PRIMARY cases the single LLM fails, "
