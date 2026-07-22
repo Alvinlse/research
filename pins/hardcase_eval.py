@@ -30,7 +30,9 @@ from pins.ilp import allocate
 from pins.referee import _rule_referee, check_allocation, referee_decide
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, "results_hardcases.json")
+# honour PINS_RESULTS like h2_eval/trace_replay: a --no-llm smoke run must not be able to
+# overwrite a completed LLM run's per-case detail (this file is rewritten on every run)
+OUT = os.environ.get("PINS_RESULTS", os.path.join(HERE, "results_hardcases.json"))
 
 # PRE-REGISTERED static objective for the ILP arm. Value per GPU, highest first.
 TIER_VALUE = {("prod", "behind"): 4.0, ("prod", "ontrack"): 3.5, ("prod", "ahead"): 3.0,
@@ -97,10 +99,18 @@ def main() -> None:
     ap.add_argument("--model", default="qwen2.5:14b")
     ap.add_argument("--no-think", action="store_true")
     ap.add_argument("--no-llm", action="store_true", help="rule referee only (smoke test)")
+    ap.add_argument("--suite", default="r12", choices=["r12", "r3", "all"],
+                    help="r12 = rounds 1-2 (Exp 54/66), r3 = the 40 round-3 cases")
     a = ap.parse_args()
 
+    cases, categories = CASES, CATEGORIES
+    if a.suite != "r12":
+        from pins.hardcases_r3 import CASES_R3, CATEGORIES_R3
+        cases = CASES_R3 if a.suite == "r3" else CASES + CASES_R3
+        categories = CATEGORIES_R3
+
     results: dict[str, dict] = {}
-    for case in CASES:
+    for case in cases:
         arms: dict[str, dict] = {}
 
         r = ilp_arm(case)
@@ -126,7 +136,7 @@ def main() -> None:
 
     arm_names = list(next(iter(results.values()))["arms"])
     print(f"\n{'category':16s}" + "".join(f"{n:>12s}" for n in arm_names))
-    for cat in CATEGORIES:
+    for cat in categories:
         rows = [r for r in results.values() if r["category"] == cat]
         line = f"{cat:16s}"
         for n in arm_names:
