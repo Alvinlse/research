@@ -1,0 +1,2693 @@
+{
+ "model": "qwen2.5:14b",
+ "suite": "r3",
+ "arms": [
+  "market",
+  "single-corr",
+  "referee-corr"
+ ],
+ "results": {
+  "P3-POLICY-01": {
+   "category": "nl_policy",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 5,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 3,
+      "r00": 5
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The operator note restricts allocations to bases only during the demand-response event, overriding spike risk considerations.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 3,
+      "r00": 5
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The proposed change is due to external operational constraints not reflected in the bids, but it does not provide specific evidence for adjusting any job's allocation beyond the general directive.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-POLICY-02": {
+   "category": "nl_policy",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 2,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The operator's supply note limits the total GPU count to 3 due to a chiller failure.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 2,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The failure of the chiller provides valid evidence to reduce GPU allocation.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-POLICY-03": {
+   "category": "nl_policy",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The operator note instructs to not schedule jobs for the account owning r00, thus r01 deserves the available GPUs.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 0,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The account owning job r00 is suspended, justifying withholding one of its allocated GPUs.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-POLICY-04": {
+   "category": "nl_policy",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 3,
+      "r00": 1
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 3,
+      "r00": 1
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The operator note specifies that vision-group jobs take precedence over routine retraining for the rest of the week.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 3,
+      "r00": 1
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The vision-group job takes precedence over routine retraining.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-POLICY-05": {
+   "category": "nl_policy",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 4,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 4,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 has a funding agreement for 2 dedicated GPUs.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 4,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The evidence cites a separate funding agreement that secures 2 GPUs for r00 regardless of queue position.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-POLICY-06": {
+   "category": "nl_policy",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 2,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The market allocation does not need to be adjusted as there is no evidence provided by the jobs' notes that justifies a deviation from the current allocation.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 2,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The proposed change does not cite a fact that could be contained in a job bid and thus cannot override the market allocation.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-POLICY-07": {
+   "category": "nl_policy",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The market allocation respects the supply note by not allocating GPUs to jobs that would be interrupted, and there is no evidence in the notes justifying a change.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The proposed change does not provide a fact that justifies altering the market allocation beyond what is already priced in the bids.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-UNMOD-01": {
+   "category": "unmodeled",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 3,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 3,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 has data that will be purged at midnight, making it eligible for the available GPUs despite its tier and deadline status.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 3,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The evidence cites a risk of data needing to be re-staged if the job does not start immediately, justifying an urgent allocation.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-UNMOD-02": {
+   "category": "unmodeled",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 2,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 2,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 has an interactive user waiting for each frame, indicating active use that deserves priority over a batch job.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 2,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The evidence indicates immediate user availability, which justifies the reallocation.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-UNMOD-03": {
+   "category": "unmodeled",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 6,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 0,
+      "r00": 6
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The job's note specifies a precise baseline requirement of 4 GPUs that the bid could not express.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 6
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "no contextual evidence raised",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-UNMOD-04": {
+   "category": "unmodeled",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 0,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 is in a crash-restart loop and deserves additional resources to break the cycle.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 0,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The job is in a crash-restart loop, indicating a need for additional resources beyond its bid.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-UNMOD-05": {
+   "category": "unmodeled",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 2,
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Both jobs have already received their base allocation without any additional evidence to justify extra GPUs beyond the market allocation.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 2,
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Neither proposal provides a fact the bid could not contain, thus neither is justified for acceptance under the rules.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-UNMOD-06": {
+   "category": "unmodeled",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The market allocation of 4 GPUs for job r00 is correct as only 2 GPU licences are available until 18:00.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "no contextual evidence raised",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-UNMOD-07": {
+   "category": "unmodeled",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r01 has a user waiting on its result, while r00's output is no longer needed.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "no contextual evidence raised",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-UNMOD-08": {
+   "category": "unmodeled",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 0,
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r01 has model weights already resident in the node's GPU memory, avoiding a costly reload.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The evidence shows a significant cost savings by not reloading the model weights, justifying the change.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-CORRUPT-01": {
+   "category": "corrupt",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 0,
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The clock discrepancy means the job is not actually behind schedule despite its reported deadline.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "no contextual evidence raised",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-CORRUPT-02": {
+   "category": "corrupt",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 0,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 is a hyperparameter sweep, not production work, while job r01 is critical live inference traffic mis-tagged as best-effort.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "no contextual evidence raised",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-CORRUPT-03": {
+   "category": "corrupt",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 6,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 6
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The job r00's true need is for 4 GPUs, not the declared 8.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 6
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "no contextual evidence raised",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-CORRUPT-04": {
+   "category": "corrupt",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 4,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The historical spike margin is no longer necessary due to the dataloader fix.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 4,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "no contextual evidence raised",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-CORRUPT-05": {
+   "category": "corrupt",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 is running on 3 GPUs and must keep them to avoid dying.",
+     "meta": {
+      "delta": {
+       "r00": 3
+      },
+      "l1": 3,
+      "rejected": true,
+      "violations": [
+       "r00: 3 exceeds its usable ceiling 0"
+      ],
+      "fired": true
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The evidence shows that the job requires its current GPUs to avoid failure.",
+     "meta": {
+      "delta": {
+       "r00": 3
+      },
+      "l1": 3,
+      "rejected": true,
+      "violations": [
+       "r00: 3 exceeds its usable ceiling 0"
+      ],
+      "fired": true
+     }
+    }
+   }
+  },
+  "P3-CONTRA-01": {
+   "category": "contradiction",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The operator note to protect student jobs conflicts with the freeze for the grant benchmark, but protecting the benchmark takes precedence as it is a hard contractual obligation.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The operator note provides valid external evidence to increase the allocation.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-CONTRA-02": {
+   "category": "contradiction",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 0,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r01 must finish before r00 can start due to dependency and owner instruction.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The proposal cites a fact the bid could not contain, indicating urgency.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-CONTRA-03": {
+   "category": "contradiction",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The firmware bug constraint limits the number of concurrent GPUs to 2.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The HARD CONSTRAINT citing a firmware bug justifies reducing the allocation to ensure data integrity.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-CONTRA-04": {
+   "category": "contradiction",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 2,
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The note indicates a conflict where only one job can run without corrupting results.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 2,
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "no contextual evidence raised",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-AMBIG-01": {
+   "category": "ambiguous",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Both jobs are equally critical and behind deadline; no evidence to prefer one over the market allocation.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "no contextual evidence raised",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-AMBIG-02": {
+   "category": "ambiguous",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 6,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 6
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00's note provides evidence that a partial allocation still has proportional value, justifying the market's base allocation without change.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 6
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "no contextual evidence raised",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-AMBIG-03": {
+   "category": "ambiguous",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 2,
+      "r00": 2,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The note indicates r02 is from a user who has not used the cluster, while r00 and r01 are from a user who has held resources all morning.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 2,
+      "r00": 2,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The proposal provides evidence that r00 and r01 are controlled by a single user, justifying an adjustment for fairness.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-INFEAS-01": {
+   "category": "infeasible",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 4,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "No evidence provided that would justify overriding the market allocation beyond what is already priced in the bids.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 4,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "no contextual evidence raised",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-INFEAS-02": {
+   "category": "infeasible",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 2,
+      "r00": 2,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r02 requires extra GPUs because missing its deadline means redoing the entire experiment.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 2,
+      "r00": 2,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The evidence indicates a significant risk if the job misses its deadline, justifying the requested allocation.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-INFEAS-03": {
+   "category": "infeasible",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 3,
+      "r00": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The market allocation already accounts for the available resources, and no job's note provides additional evidence to override it.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 3,
+      "r00": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The proposal cites blocked GPUs that the bid could not contain.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-PLACEBO-01": {
+   "category": "placebo",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 3,
+      "r00": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Neither job provides evidence that justifies more GPUs than their numerical bids indicate.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 3,
+      "r00": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "no contextual evidence raised",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-PLACEBO-02": {
+   "category": "placebo",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 4,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 4,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The notes do not provide evidence that justifies overriding the market allocation beyond what is already priced into their bids.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 4,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "no contextual evidence raised",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-PLACEBO-03": {
+   "category": "placebo",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 3,
+      "r00": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Neither job presents evidence that justifies a deviation from the market allocation.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 3,
+      "r00": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "no contextual evidence raised",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-PLACEBO-04": {
+   "category": "placebo",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 2,
+      "r00": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "No evidence provided that would justify overriding the market allocation.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 2,
+      "r00": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "no contextual evidence raised",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-PLACEBO-05": {
+   "category": "placebo",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 4,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 4,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The market allocation respects the current policy that the student protection window has ended.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 4,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The proposal cites a specific policy, which is evidence not contained in the bid and justifies the requested change.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-CONFIRM-01": {
+   "category": "confirm",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 0,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "No evidence in the notes justifies overriding the market allocation beyond what is already priced into the bids.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 0,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The bid already includes urgency and deadline, which are priced into the numerical value; 'no second chance' does not provide new factual evidence.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-CONFIRM-02": {
+   "category": "confirm",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The market allocation of 4 GPUs for r00 matches its requested amount and there is no additional evidence to justify overriding the market.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The proposed change does not provide new evidence beyond urgency, which is already priced into the bid.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-CONFIRM-03": {
+   "category": "confirm",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 0,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "No evidence in the notes justifies overriding the market allocation.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 0,
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "no contextual evidence raised",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-CONFIRM-04": {
+   "category": "confirm",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 8
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 8
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The job's note confirms its bid accurately represents its needs, providing no evidence to override the market allocation.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 8
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "no contextual evidence raised",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  },
+  "P3-POLICY-08": {
+   "category": "nl_policy",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The operator's note explicitly states that the power cap allows for a maximum of 2 GPUs with no exceptions.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    },
+    "referee-corr": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The power cap is a constraint that affects the entire system and cannot be addressed by altering individual job allocations.",
+     "meta": {
+      "delta": {},
+      "l1": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": false
+     }
+    }
+   }
+  }
+ }
+}
