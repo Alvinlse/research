@@ -3556,3 +3556,39 @@ protocol (the single-LLM baseline is still unmatched on tokens), §6–8 explici
 credits + seriousness gate, §12 quality-aware cache with false-reuse rate, §15 resize
 cooldowns, §17 ρ/λ sweeps. And the headline LLM arms (14b referee, r1:32b) have NOT been
 re-run under `--law sat` or scored on `u_useful`/`regret` — the table above is rule-tier only.
+
+## Build 68b — THE REST OF THE ELEVATED PLAN'S MEASURABLE LAYER: lateness, starvation, resize physics, seriousness gate, Holm (2026-07-22)
+
+Built while Exp 69 held the GPU. Every knob defaults to the pre-Exp-68 behaviour, so no
+existing tier's numbers move; each was verified live by sweeping it.
+
+| plan § | what landed | flag / metric | verified by |
+|---|---|---|---|
+| §5 | normalised lateness `L_j = max(0,(C_j−d_j)/(d_j−r_j))`, censored at the horizon | `lateness` | reported per seed |
+| §15 | resize cost `c0 + c1·|Δg|`; resizing **cooldown** K | `--resize-c1`, `--cooldown K` | cooldown 0/2/5 moves prodSLA 55.3→60.6→60.6% |
+| §16 | starvation rate (wait ≥ 30 ticks), max wait, **Jain** share fairness; ageing bonus `φ·min(1, waited/30)` on grant priority | `starved`,`wait_max`,`jain`, `--phi` | φ=20/200 at pool 4 moves prodSLA 66.0→74.1% |
+| §8 | **seriousness score Γ_t** = mean(SLA risk, clearing ambiguity, uncertainty, starvation, job-set churn); deliberation fires on Γ>θ *or* a hard trigger | `--gamma THETA` | rebuttal rounds/seed 192 → 24.5 → 24 at θ = 0.1/0.5/0.9 |
+| §18 | **Holm correction** over the whole vs-floor family, with the plan's t-vs-Wilcoxon selection by Shapiro | printed under every pool | see below |
+| §17 | sensitivity grid driver (ρ, caps regime, λ, resize, cooldown, φ, granularity, law) | `pins/run_sensitivity.sh` | smoke at 4 seeds |
+
+**Two things this immediately exposed.**
+
+1. **Holm is brutal, and it should be.** The vs-floor block is 18 simultaneous tests (3 arms ×
+   6 metrics). At n=8 the two `dregret*` stars vanish: *"NOTHING survives correction"*. Every
+   single-pool `*` in this log's history was reported uncorrected — the n=32 headline results
+   (e.g. Exp 53's −7.5\*, Exp 68's `duseful`) need re-reading against their own families
+   before the paper quotes them.
+2. **Γ_t is a usable throttle, not a binary.** θ=0.5 cuts rebuttal rounds 8× (192→24.5/seed)
+   and lands exactly where `--hard-trigger` alone sits (24), i.e. the score reproduces the
+   pre-registered hard triggers as a *special case* and lets us tune below them. Whether the
+   outcome survives the throttle is Exp 71.
+
+**Not built, and why.** §6 explicit bid/ask formulas and §7 virtual credits both replace the
+decision mechanism rather than measure it — `mechanism.clear()` already clears marginal-bid
+curves, but the bid *content* (`αΔp+βR_SLA+γW_wait−δC_resize`) and the credit purse would
+change every arm's behaviour, so they need their own pre-registered experiment, not a
+side-build. §12's quality-aware cache needs a design decision first: `Q_i` is defined on the
+outcome of a decision, and in a 300-tick simulation a decision's regret is only attributable
+at the end of the run — so either the cache scores entries offline (post-hoc, not deployable)
+or on a proxy available at decision time. §10's diversity ablation needs temperature plumbing
+in the advocate reasoners; `--samples` already provides the single-LLM half of it.

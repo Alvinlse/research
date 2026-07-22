@@ -143,7 +143,7 @@ def _rule_strategy(ctx: dict) -> dict:
 # Every ollama client in the codebase is built through metered_client(), which tallies the
 # counts ollama already returns. CACHE HITS NEVER REACH HERE — the meter therefore reports
 # the true marginal cost of an arm, not its cold-start cost.
-TOKENS = {"calls": 0, "prompt": 0, "completion": 0}
+TOKENS = {"calls": 0, "prompt": 0, "completion": 0, "wall": 0.0}
 LATENCIES: list = []   # (model, seconds) per live call, session-cumulative (RQ5); never reset
 import time as _time
 
@@ -178,6 +178,7 @@ def metered_client(host: str):
         resp = inner(*a, **kw)
         LATENCIES.append((kw.get("model", "?"), _time.monotonic() - t0))  # RQ5: per-call wall s
         TOKENS["calls"] += 1
+        TOKENS["wall"] += LATENCIES[-1][1]      # plan §13: the T_wall term of C_LLM
         TOKENS["prompt"] += _count(resp, "prompt_eval_count")
         TOKENS["completion"] += _count(resp, "eval_count")
         return resp
@@ -189,7 +190,7 @@ def metered_client(host: str):
 def take_tokens() -> dict:
     """Read and reset the meter — trace_replay calls this once per (seed, arm)."""
     out = dict(TOKENS)
-    TOKENS.update(calls=0, prompt=0, completion=0)
+    TOKENS.update(calls=0, prompt=0, completion=0, wall=0.0)
     return out
 
 
@@ -839,11 +840,18 @@ def _rule_joint(ctx: dict) -> dict:
 
 
 def llm_joint(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
-              host: str = HOST, cache: dict | None = None) -> dict:
+              host: str = HOST, cache: dict | None = None, samples: int = 1) -> dict:
     """Return `{margin, reserve, justification, _source}` for a joint demand+supply state, cached.
-    The single-agent control for the two-sided negotiation (pins/negotiation_protocol.py)."""
+    The single-agent control for the two-sided negotiation (pins/negotiation_protocol.py).
+
+    `samples` (Exp 69, elevated plan §13): draw N independent samples at temperature 0.7 and
+    aggregate them by MEDIAN ordinal level — the plan's "multiple independent single-LLM
+    samples" rung of the fair-comparison ladder, and the knob that funds this control to the
+    multi-agent arms' inference budget. samples=1 keeps the temperature-0 single shot every
+    experiment through Exp 68 used, byte-identical."""
     cache = load_cache() if cache is None else cache
-    key = f"joint|{joint_state_key(ctx)}|{'llm:' + model if use_llm else 'rule'}"
+    tag = f"|n{samples}" if samples > 1 else ""
+    key = f"joint|{joint_state_key(ctx)}|{'llm:' + model if use_llm else 'rule'}{tag}"
     if key in cache:
         return cache[key]
 
@@ -852,14 +860,18 @@ def llm_joint(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
         try:
             import ollama
             client = metered_client(host)
-            resp = client.chat(
-                model=model, format="json",
-                options={"temperature": 0, "num_predict": 150, **CTX_OPT},
-                messages=[{"role": "system", "content": SYSTEM_JOINT},
-                          {"role": "user", "content": _joint_prompt(ctx)}],
-            )
-            obj = _parse(resp.message.content)
-            if obj is not None:
+            draws = []
+            for i in range(max(1, samples)):
+                resp = client.chat(
+                    model=model, format="json",
+                    options={"temperature": 0 if samples == 1 else 0.7, "seed": i,
+                             "num_predict": 150, **CTX_OPT},
+                    messages=[{"role": "system", "content": SYSTEM_JOINT},
+                              {"role": "user", "content": _joint_prompt(ctx)}],
+                )
+                obj = _parse(resp.message.content)
+                if obj is None:
+                    continue
                 m = str(obj.get("margin", "")).strip().lower()
                 r = str(obj.get("reserve", "")).strip().lower()
                 if m not in MARGIN_HEDGES:
@@ -867,7 +879,16 @@ def llm_joint(ctx: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
                 if r not in RESERVE_LEVELS:
                     r = "none"
                 why = str(obj.get("justification", "")).strip().replace("\n", " ")[:200]
-                out = {"margin": m, "reserve": r, "justification": why, "_source": f"llm:{model}"}
+                draws.append((m, r, why))
+            if draws:
+                # self-consistency: median of the ORDINAL levels, not a majority vote — the
+                # levels are ordered (none < some < heavy), so the median is the aggregate that
+                # cannot be dragged to an extreme by one outlying sample.
+                mi = sorted(MARGIN_HEDGES.index(d[0]) for d in draws)[len(draws) // 2]
+                ri = sorted(RESERVE_LEVELS.index(d[1]) for d in draws)[len(draws) // 2]
+                out = {"margin": MARGIN_HEDGES[mi], "reserve": RESERVE_LEVELS[ri],
+                       "justification": draws[0][2], "_source": f"llm:{model}"
+                                                                + (f"|n{samples}" if samples > 1 else "")}
         except Exception as e:
             print(f"  ! llm_joint fallback for [{joint_state_key(ctx)}]: {type(e).__name__}: {e}")
     if out is None:

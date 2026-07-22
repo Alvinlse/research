@@ -46,6 +46,7 @@ from pins.uncertainty_sim import (assign, assign_gpu, load_gpu_distribution,
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DORDER = {"ahead": 0, "ontrack": 1, "behind": 2}
+STARVE_TICKS = 30    # plan §16: a job waiting this long for its first GPU counts as starved
 TTF_HORIZON = 2      # Exp 39: "imminent" release = believed remaining work <= this many ticks
 
 
@@ -178,9 +179,10 @@ def make_policy_negotiated(use_llm, model, cache, trace, seen, admit=False):
     return policy
 
 
-def make_policy_single(use_llm, model, cache, trace, seen):
+def make_policy_single(use_llm, model, cache, trace, seen, samples: int = 1):
     def policy(demand, supply_ctx, free, **_):
-        o = single_llm_plan(demand, supply_ctx, free, use_llm=use_llm, model=model, cache=cache)
+        o = single_llm_plan(demand, supply_ctx, free, use_llm=use_llm, model=model, cache=cache,
+                            samples=samples)
         _record_outcome(trace, seen, "single-llm", o)
         return o.margins, o.reserve, o
     return policy
@@ -245,7 +247,8 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
              ttf_work: dict[str, float] | str | None = None,
              dyn_cap_map: dict[str, int] | None = None, dyn_after: int = 3,
              realloc_cost: float = 0.0, alpha: float = 0.0,
-             alpha_norm: str = "c0", law: str = "amdahl", kappa: float = 2.0) -> dict:
+             alpha_norm: str = "c0", law: str = "amdahl", kappa: float = 2.0,
+             cooldown: int = 0, resize_c1: float = 0.0, phi: float = 0.0) -> dict:
     """One run of a policy on a fresh workload copy. Rigid: a running job is never involuntarily
     preempted; it only shrinks VOLUNTARILY to its ceiling (cap0 + this tick's negotiated margin).
     Spikes: a train phase's true work is inflated; margin GPUs grant rate>1 to absorb it, capped at
@@ -290,7 +293,19 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
     `law`/`kappa` (Exp 68, elevated plan §3): which counterfactual progress model the dynamics
     run on — 'amdahl' (default, pre-Exp-68 byte-identical) or 'sat', the plan's primary
     saturating law. See `_rate`. Both feed the new §4/§14 metrics `u_useful`, `u_waste` and
-    `regret`, which are computed under whichever law is active."""
+    `regret`, which are computed under whichever law is active.
+
+    `cooldown`/`resize_c1` (Exp 68b, elevated plan §15): reallocation is not free and not
+    instant. `resize_c1` adds a PER-GPU term to the flat `realloc_cost`, so the penalty is
+    c0 + c1*|delta g| rather than a constant — a 1-GPU tweak and a full reshape no longer cost
+    the same. `cooldown` K forbids a job's ceiling from moving within K ticks of its last
+    move, the plan's resizing-cooldown constraint. Both default to the pre-Exp-68b behaviour
+    (0 = no per-GPU term, no cooldown), which is byte-identical.
+
+    `phi` (elevated plan §16): starvation protection. A job's grant priority gains
+    phi * min(1, waited/STARVE_TICKS), so a long-waiting job outranks a fresher peer of equal
+    bid instead of losing to it forever. Tier precedence is untouched — prod is still served
+    before besteffort. 0.0 (default) reproduces the un-aged ordering."""
     jobs = [Job(j.jid, j.arrival, list(j.phases), list(j.need), j.urgency, j.deadline, j.tier)
             for j in jobs_proto]
     by_id = {j.jid: j for j in jobs}
@@ -307,6 +322,8 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
     busy_steps = 0
     useful_sum = 0.0       # plan §4: useful GPU-equivalents actually produced
     oracle_sum = 0.0       # plan §14: what the per-tick oracle allocation would have produced
+    gpu_ticks = {j.jid: 0.0 for j in jobs}       # plan §16: per-job share, for Jain fairness
+    last_change: dict[str, int] = {}             # plan §15: tick of each job's last resize
     n_fallback = 0
     n_decisions = 0
     churn_gpu = 0.0        # sum |delta GPUs| across ticks (the quantity an overhead model prices)
@@ -395,6 +412,10 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
         ceiling = {j.jid: 0 if (j.jid in defer and ran[j.jid] == 0) else
                           cap0(j) + (margins.get(j.jid, 0) if phase_of(j) == "train" else 0)
                    for j in active}
+        if cooldown:                                   # plan §15: a recent resize locks the
+            for j in active:                           # ceiling until the cooldown expires
+                if t - last_change.get(j.jid, -10**9) < cooldown and held[j.jid] > 0:
+                    ceiling[j.jid] = held[j.jid]
         for j in active:                                   # voluntary shrink to the new ceiling
             if held[j.jid] > ceiling[j.jid]:
                 held[j.jid] = ceiling[j.jid]
@@ -405,8 +426,10 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
         # as the tie-break, so jobs the policy said nothing about keep their original relative order
         # and tier precedence (prod before besteffort) is never overridden.
         prio = getattr(outcome, "priority", None)
-        key = ((lambda j: (-prio.get(j.jid, 0.0), -frozen[j.jid], j.jid)) if prio
-               else (lambda j: (-frozen[j.jid], j.jid)))
+        aged = ({j.jid: frozen[j.jid] + phi * min(1.0, (t - j.arrival) / STARVE_TICKS)
+                 for j in active} if phi else frozen)
+        key = ((lambda j: (-prio.get(j.jid, 0.0), -aged[j.jid], j.jid)) if prio
+               else (lambda j: (-aged[j.jid], j.jid)))
         prod_w = sorted([j for j in wanters if j.tier == "prod"], key=key)
         be_w = sorted([j for j in wanters if j.tier != "prod"], key=key)
 
@@ -424,13 +447,14 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
         grant(be_w, max(0, free - reserve))                # best-effort, minus reserved headroom
 
         # churn probe: |delta| GPUs re-tuned this tick, and how many jobs were touched
-        resized = set()
+        resized = {}
         for j in active:
             d = abs(held[j.jid] - pre_tick[j.jid])
             if d > 0:
                 churn_gpu += d
                 churn_jobs += 1
-                resized.add(j.jid)
+                resized[j.jid] = d
+                last_change[j.jid] = t
         churn_ticks += 1
 
         # --- advance: margin GPUs buy spike-absorbing speed ------------------------------------
@@ -458,11 +482,14 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
             #         nominal speed, so every deadline silently tightens. Sensitivity only.
             ceil_use = c0 + (useful[j.jid] if phase_of(j) == "train" else 0)
             rate = _rate(g, c0, ceil_use, alpha, alpha_norm, law, kappa)
-            if realloc_cost and j.jid in resized:
-                rate *= max(0.0, 1.0 - realloc_cost)       # resize = checkpoint/restart/reload
+            if (realloc_cost or resize_c1) and j.jid in resized:
+                # plan §15: c0 + c1*|delta g| — checkpoint/restart is a fixed cost, moving each
+                # GPU (rank reconfiguration, data reshard) is a marginal one.
+                rate *= max(0.0, 1.0 - realloc_cost - resize_c1 * resized[j.jid])
             # plan §4: allocated GPUs that the job cannot convert into progress are WASTE, so
             # useful work is counted in GPU-equivalents (c0 * rate), never in GPUs held.
             useful_sum += _useful_units(g, c0, rate)
+            gpu_ticks[j.jid] += g
             caps_tick.append((float(c0), float(ceil_use)))
             progress[j.jid] += rate
             while done_at[j.jid] is None and progress[j.jid] >= work[j.jid][pidx[j.jid]] - 1e-9:
@@ -488,9 +515,22 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
     fulls = [(full_at[j.jid] if full_at[j.jid] is not None else horizon) - j.arrival
              for j in jobs]
     slow = [(done_at[j.jid] - j.arrival) / j.nominal for j in fin if j.nominal > 0]
+    # plan §5: normalised lateness distinguishes a job that missed by one tick from one that
+    # missed by ten — SVR alone counts both as a single violation. An unfinished job is
+    # censored at the horizon (same convention as `waits`), never dropped.
+    late = [max(0.0, ((done_at[j.jid] if done_at[j.jid] is not None else horizon) - j.deadline)
+                / max(1.0, j.deadline - j.arrival)) for j in jobs]
+    # plan §16: starvation is a tail property SLA and mean-wait both average away.
+    shares = [gpu_ticks[j.jid] for j in jobs]
+    jain = ((sum(shares) ** 2) / (len(shares) * sum(x * x for x in shares))
+            if any(shares) else 1.0)
     return {
         "sla": sum(1 for j in jobs if violated(j)) / len(jobs),
         "prod_sla": sum(1 for j in prod if violated(j)) / max(len(prod), 1),
+        "lateness": sum(late) / max(len(late), 1),
+        "starved": sum(1 for w in waits if w >= STARVE_TICKS) / max(len(waits), 1),
+        "wait_max": float(waits[-1]) if waits else 0.0,
+        "jain": jain,
         "util": busy_sum / max(busy_steps, 1),             # plan §4: U_alloc (occupancy)
         "u_useful": useful_sum / max(busy_steps, 1) / total_gpus,
         "u_waste": (busy_sum - useful_sum / total_gpus) / max(busy_steps, 1),
@@ -545,6 +585,7 @@ def simulate_backfill(jobs_proto: list[Job], total_gpus: int, horizon: int,
     busy_steps = 0
     useful_sum = 0.0
     oracle_sum = 0.0
+    gpu_ticks = {j.jid: 0.0 for j in jobs}
 
     def req(j) -> int:                                   # all-or-nothing request, held to completion
         return max(1, cap_map[j.jid])
@@ -608,6 +649,7 @@ def simulate_backfill(jobs_proto: list[Job], total_gpus: int, horizon: int,
             ceil_use = c0 + useful[j.jid]
             rate = _rate(g, c0, ceil_use, 0.0, "c0", "amdahl", 0.0)   # EASY: linear, as before
             useful_sum += _useful_units(g, c0, rate)
+            gpu_ticks[j.jid] += g
             caps_tick.append((float(c0), float(ceil_use)))
             progress[j.jid] += rate
             while done_at[j.jid] is None and progress[j.jid] >= work[j.jid][pidx[j.jid]] - 1e-9:
@@ -631,9 +673,18 @@ def simulate_backfill(jobs_proto: list[Job], total_gpus: int, horizon: int,
     waits = sorted((start_at[j.jid] if start_at[j.jid] is not None else horizon) - j.arrival
                    for j in jobs)
     slow = [(done_at[j.jid] - j.arrival) / j.nominal for j in fin if j.nominal > 0]
+    late = [max(0.0, ((done_at[j.jid] if done_at[j.jid] is not None else horizon) - j.deadline)
+                / max(1.0, j.deadline - j.arrival)) for j in jobs]
+    shares = [gpu_ticks[j.jid] for j in jobs]
+    jain = ((sum(shares) ** 2) / (len(shares) * sum(x * x for x in shares))
+            if any(shares) else 1.0)
     return {
         "sla": sum(1 for j in jobs if violated(j)) / len(jobs),
         "prod_sla": sum(1 for j in prod if violated(j)) / max(len(prod), 1),
+        "lateness": sum(late) / max(len(late), 1),
+        "starved": sum(1 for w in waits if w >= STARVE_TICKS) / max(len(waits), 1),
+        "wait_max": float(waits[-1]) if waits else 0.0,
+        "jain": jain,
         "util": busy_sum / max(busy_steps, 1),
         "u_useful": useful_sum / max(busy_steps, 1) / total_gpus,
         "u_waste": (busy_sum - useful_sum / total_gpus) / max(busy_steps, 1),

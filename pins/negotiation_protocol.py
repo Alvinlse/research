@@ -213,12 +213,13 @@ def aggregate_joint_ctx(demand: list[DemandJob], supply_ctx: dict) -> dict:
 
 def single_llm_plan(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
                     margin_gpus=default_margin_gpus, use_llm: bool = False,
-                    model: str = "qwen2.5:3b", cache: dict | None = None) -> NegotiationOutcome:
+                    model: str = "qwen2.5:3b", cache: dict | None = None,
+                    samples: int = 1) -> NegotiationOutcome:
     """The must-have control: ONE llm_joint call sets a uniform margin level (applied to every
     train job) and the reserve, in a single shot. Same NegotiationOutcome shape as `negotiate`."""
     cache = {} if cache is None else cache
     jctx = aggregate_joint_ctx(demand, supply_ctx)
-    d = llm_joint(jctx, use_llm=use_llm, model=model, cache=cache)
+    d = llm_joint(jctx, use_llm=use_llm, model=model, cache=cache, samples=samples)
     hedge = d["margin"]
     margins = {j.jid: margin_gpus(j, hedge if j.is_train else "none") for j in demand}
     return NegotiationOutcome(

@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import sys
 from dataclasses import dataclass, field
@@ -521,9 +522,10 @@ def take_shell_stats() -> dict:
 def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None, think=True,
                         debate=False, trigger="bucket", theta=None, stale="fresh",
                         extend=False, no_argue=False, prev_input=False, fast_negotiate=False,
-                        hard_trigger=False, admit=False):
+                        hard_trigger=False, admit=False, gamma=None):
     assert not (debate and no_argue), "--debate rewrites the arguments --no-argue removes"
     assert not hard_trigger or debate, "--hard-trigger gates the debate round"
+    assert gamma is None or debate, "--gamma gates the debate round"
     """Referee as a `two_sided_sim` policy: each tick it decides the margin/reserve split of
     the free pool directly (in the sim the demand table is margins-only, forecast_cap=0).
 
@@ -596,6 +598,31 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
         st["free"], st["jids"], st["behind"] = free, jids, behind
         return d
 
+    def _gamma(demand, free, waiting) -> float:
+        """Elevated plan §8: the SERIOUSNESS score, the continuous generalisation of `_hard`.
+
+        Gamma_t = mean of five normalised risk terms; deliberation fires above threshold theta
+        (or on any hard trigger, per the plan). Three terms are read straight off the scene
+        (SLA risk, uncertainty, starvation). The plan's D_ambiguity is defined on bid/ask
+        closeness, which this arm has no explicit market for — the proxy here is how nearly the
+        free pool ties the contested want, which is the same quantity the closeness measures:
+        a scene that clears by one GPU is the scene where a prediction error flips the outcome.
+        C_churn is the share of contesting jobs that were absent from the last executed
+        ruling — job-set turnover, the churn signal this scene actually carries."""
+        n = max(len(demand), 1)
+        r_sla = sum(1 for j in demand if j.ctx.get("deadline") == "behind") / n
+        unc = sum({"high": 1.0, "medium": 0.5}.get(j.ctx.get("uncertainty"), 0.0)
+                  for j in demand) / n
+        # near-tie proxy for D_ambiguity: every contesting job wants at least one margin GPU,
+        # so |free - n| is the clearing slack. A scene that clears by one GPU is exactly where
+        # a prediction error flips the award.
+        ambiguity = math.exp(-abs(free - n) / 2.0)
+        starv = ((sum(1 for w in (waiting or []) if w.get("waited_ticks", 0) >= 10)
+                  / max(len(waiting), 1)) if waiting else 0.0)
+        prev = st.get("executed") or {}
+        churn = (sum(1 for j in demand if j.jid not in prev) / n) if prev else 0.0
+        return (r_sla + ambiguity + unc + starv + churn) / 5.0
+
     def _hard(demand, free) -> bool:
         """E3: does this scene deserve a deliberation round? Fires on the events the plan
         pre-registered as hard triggers; routine arrival/departure churn does not."""
@@ -664,7 +691,11 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
         if debate:
             stmts = gather_statements(dec_demand, dec_supply, use_llm=use_llm,
                                       model=statement_model or model, cache=cache)
-            if not hard_trigger or _hard(dec_demand, dec_free):
+            if gamma is not None:            # plan §8: score gate, OR any hard trigger
+                fire = _gamma(dec_demand, dec_free, waiting) > gamma or _hard(dec_demand, dec_free)
+            else:
+                fire = not hard_trigger or _hard(dec_demand, dec_free)
+            if fire:
                 stmts = rebut(stmts, dec_free, use_llm=use_llm, model=statement_model or model,
                               cache=cache)
                 SHELL_STATS["debate"] += 1

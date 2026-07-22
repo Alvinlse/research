@@ -570,6 +570,11 @@ Amdahl demoted to the §3.3 robustness check), §4 `U_useful`/`U_alloc`/`U_waste
 oracle regret. Consequence: **occupancy `util` is no longer a headline metric.** Any claim of
 "+util" from Exp 22–63 is a claim about occupancy and must be re-stated with `u_useful`.
 
+**Landed (build 68b).** §5 lateness, §15 resize cost + cooldown, §16 starvation/Jain/ageing,
+§8 seriousness score `Gamma_t`, §18 Holm correction, §17 grid driver. Consequence: the
+vs-floor block is now reported as a *family* — uncorrected single-metric stars are no longer
+the standard of evidence.
+
 **Queued, in the order they change conclusions:**
 1. **Re-run the headline arms under the new metrics** — 14b referee and r1:32b, `--law sat`
    and `--law amdahl`, scored on `u_useful` + `regret`. Exp 68 showed the rule-tier util story
@@ -578,9 +583,9 @@ oracle regret. Consequence: **occupancy `util` is no longer a headline metric.**
    single-LLM baseline funded to match each multi-agent arm. Today's single-LLM control is
    *cheaper* than the arms it validates, which is the plan's headline fairness risk and
    currently un-mitigated. The `llm_calls`/`llm_tokens` per-seed counters already exist.
-3. **§6–8 explicit market** — marginal bid `b_(j,k,t)`, ask `a_(k,t)`, virtual credits with
-   equal endowment + redistribution (§7), seriousness score `Gamma_t` as the negotiation gate
-   (§8, generalises `--hard-trigger`).
+3. **§6–7 explicit market** — marginal bid `b_(j,k,t)`, ask `a_(k,t)`, virtual credits with
+   equal endowment + redistribution (§7) (§8's gate is built; the bid/ask
+   content and the purse are not).
 4. **§12 quality-aware cache** — similarity × quality × age decay, and **false-reuse rate**
    rather than hit rate.
 5. **§17 sensitivity grid** — offered load rho, SLA tightness lambda, resize cooldown.

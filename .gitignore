@@ -22,3 +22,5 @@ pins/results_trace_replay.json
 pins/results_backup_*.json
 pins/llm_agent_cache.json.lock
 pins/llm_agent_cache.json.tmp*
+pins/sensitivity/
+pins/cache_exp69.json

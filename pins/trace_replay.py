@@ -235,7 +235,9 @@ METRICS = ("sla", "prod_sla", "util", "slowdown", "finished", "fallback_rate",
            "churn_gpu", "churn_jobs", "wait", "wait_p95", "wait_full",
            # elevated plan §4/§14: occupancy is NOT productive work, so report useful
            # utilisation and waste separately, plus regret vs the per-tick oracle.
-           "u_useful", "u_waste", "regret")
+           "u_useful", "u_waste", "regret",
+           # §5 normalised lateness; §16 starvation tail + Jain share fairness
+           "lateness", "starved", "wait_max", "jain")
 RESULTS = os.environ.get("PINS_RESULTS", os.path.join(HERE, "results_trace_replay.json"))
 
 
@@ -299,6 +301,77 @@ def print_paired_vs_floor(per_seed_pool: dict[str, list[dict]]) -> None:
             parts.append(f"{label} {m*u:+6.1f} ±{h*u:4.1f}{sig}")
         print(f"      {name:<12} vs floor:  " + "  ".join(parts))
     print(f"      (* = 95% CI excludes 0, paired by seed, n={len(floor)})")
+
+
+# Elevated plan §18: the vs-floor block is a FAMILY of tests (arms x metrics). Reporting each
+# at alpha=.05 inflates the family error rate — with 3 arms x 6 metrics, ~1 in 4 runs shows a
+# spurious star. Holm is the plan's prescribed correction: uniformly more powerful than
+# Bonferroni, and valid under any dependence structure (which paired scheduling metrics have
+# in abundance — SLA, lateness and regret all move with the same seed's contention).
+HOLM_METRICS = (("sla", "SLA"), ("prod_sla", "prodSLA"), ("util", "util"),
+                ("u_useful", "useful"), ("regret", "regret"), ("lateness", "lateness"))
+
+
+def _paired_p(diffs: list[float]) -> tuple[float, str]:
+    """Paired p-value: t-test when the differences look normal, Wilcoxon otherwise (plan §18)."""
+    from scipy import stats
+    d = [x for x in diffs]
+    if len(d) < 3 or max(d) - min(d) < 1e-12:
+        return (1.0, "degenerate")
+    normal = len(d) < 8 or stats.shapiro(d).pvalue > 0.05
+    if normal:
+        return (float(stats.ttest_1samp(d, 0.0).pvalue), "t")
+    return (float(stats.wilcoxon(d).pvalue), "wilcoxon")
+
+
+def holm(pvals: dict) -> dict:
+    """Holm-Bonferroni step-down adjustment. Returns {key: adjusted p}, monotone by construction."""
+    items = sorted(pvals.items(), key=lambda kv: kv[1])
+    n, out, running = len(items), {}, 0.0
+    for i, (k, p) in enumerate(items):
+        running = max(running, min(1.0, (n - i) * p))
+        out[k] = running
+    return out
+
+
+def print_holm(per_seed_pool: dict[str, list[dict]]) -> None:
+    """The vs-floor family, Holm-corrected — which stars survive multiplicity (plan §18)."""
+    floor = per_seed_pool.get("no-llm")
+    if not floor or len(floor) < 3:
+        return
+    raw, tests = {}, {}
+    for name, rows_ in per_seed_pool.items():
+        if name == "no-llm":
+            continue
+        for metric, label in HOLM_METRICS:
+            if metric not in rows_[0]:
+                continue
+            diffs = [a[metric] - b[metric] for a, b in zip(rows_, floor)]
+            p, how = _paired_p(diffs)
+            raw[(name, label)] = p
+            tests[(name, label)] = how
+    if not raw:
+        return
+    adj = holm(raw)
+    survivors = sorted((k for k, v in adj.items() if v < 0.05), key=lambda k: adj[k])
+    print(f"      Holm (family of {len(raw)} vs-floor tests): "
+          + (", ".join(f"{a}/{m} p={adj[(a, m)]:.3f}[{tests[(a, m)]}]" for a, m in survivors)
+             if survivors else "NOTHING survives correction"))
+
+
+def print_budget(per_seed_pool: dict[str, list[dict]]) -> None:
+    """Elevated plan §13: the inference bill of each arm, so an outcome difference can be read
+    against the budget that bought it. C_LLM = calls + tokens + wall-clock, reported in full
+    rather than collapsed into one weighted number — the weights (a, b, c) are venue-specific,
+    the three components are not."""
+    if not any(row.get("llm_calls") for rows_ in per_seed_pool.values() for row in rows_):
+        return                                   # rule tier / cache-only run: no bill to show
+    print(f"      {'arm':<12} {'calls/seed':>11} {'tokens/seed':>12} {'wall s/seed':>12}")
+    for name, rows_ in per_seed_pool.items():
+        n = max(len(rows_), 1)
+        print(f"      {name:<12} {sum(r.get('llm_calls', 0) for r in rows_) / n:>11.1f} "
+              f"{sum(r.get('llm_tokens', 0) for r in rows_) / n:>12.0f} "
+              f"{sum(r.get('llm_wall', 0) for r in rows_) / n:>12.1f}")
 
 
 def load_results() -> dict:
@@ -383,7 +456,9 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           prev_input: bool = False, fast_negotiate: bool = False,
           burst_s: int | None = None, hard_trigger: bool = False,
           slack_mult: float = 1.0, admit: bool = False,
-          law: str = "amdahl", kappa: float = 2.0) -> None:
+          law: str = "amdahl", kappa: float = 2.0, samples: int = 0,
+          cooldown: int = 0, resize_c1: float = 0.0, gamma: float | None = None,
+          phi: float = 0.0) -> None:
     assert not (referee and single_ilp), "--referee and --single-ilp are separate arms"
     assert not debate or referee, "--debate is a referee-arm round"
     assert not (fast_negotiate and extend), "--fast-negotiate replaces the --extend replay path"
@@ -498,6 +573,11 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                                                        admit=admit)),
             ("negotiated", lambda: make_policy_negotiated(use_llm, model, cache, decisions, seen, admit=admit)),
         ]
+        if samples:               # plan §13: the EQUALLY FUNDED centralised control. One LLM
+            # decides margin+reserve from the same joint state, but with `samples` independent
+            # draws aggregated by median — the knob that buys it the referee arm's token budget.
+            rows.append(("single-llm", lambda: make_policy_single(
+                use_llm, model, cache, decisions, seen, samples=samples)))
         if debate:                # cross-talk round, same referee stage -> isolates the round.
             # Advocates run at `advocates` in BOTH rows: the round is the only difference, so a
             # debate win cannot be charged to a stronger advocate model.
@@ -505,7 +585,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                 use_llm, model, cache, decisions, seen, statement_model=advocates,
                 think=not no_think, debate=True, trigger=trigger, theta=theta,
                 stale=stale, extend=extend, fast_negotiate=fast_negotiate,
-                hard_trigger=hard_trigger, admit=admit)))
+                hard_trigger=hard_trigger, admit=admit, gamma=gamma)))
     elif single_ilp:              # Exp 54: LLMSched spine — one LLM proposes, the ILP repairs
         from pins.two_sided_sim import make_policy_single_ilp
         rows = [
@@ -566,13 +646,15 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                                  spike_max, cap_map, true_cap_map=tcap,
                                  belief_work=belief if time_mode else None, ttf_work=ttf,
                                  dyn_cap_map=dyn_map, realloc_cost=realloc_cost, alpha=alpha,
-                                 alpha_norm=alpha_norm, law=law, kappa=kappa)
+                                 alpha_norm=alpha_norm, law=law, kappa=kappa,
+                                 cooldown=cooldown, resize_c1=resize_c1, phi=phi)
                 tk = take_tokens()          # marginal inference cost of THIS (seed, arm)
                 from pins.referee import take_shell_stats
                 sh = take_shell_stats()     # fast/llm tick split of the controller shell
                 per_seed.append({k: r[k] for k in METRICS}
                                 | {"llm_calls": float(tk["calls"]),
                                    "llm_tokens": float(tk["prompt"] + tk["completion"]),
+                                   "llm_wall": float(tk.get("wall", 0.0)),
                                    "shell_fast": float(sh["fast"]),
                                    "shell_llm": float(sh["llm"]),
                                    "shell_debate": float(sh["debate"])})
@@ -598,6 +680,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                   f"{r['fallback_rate']:>5.0%} "
                   f"{r['finished']:>4.1f}/{n_jobs:<3}")
         print_paired_vs_floor(per_seed_pool)
+        print_holm(per_seed_pool)
+        print_budget(per_seed_pool)
         print()
         if use_llm:
             save_cache(cache)
@@ -675,6 +759,26 @@ def main() -> None:
                     help="Exp 57: diminishing-returns coefficient in P(g)=g/(1+A*(g-1)). "
                          "0.0 = the linear scaling Exp 22-56b assumed; try 0.1/0.3 as "
                          "sensitivity. Cannot be calibrated from v2020 (no counterfactuals).")
+    ap.add_argument("--phi", type=float, default=0.0, metavar="P",
+                    help="elevated plan S16: starvation protection — add P*waiting_fraction to "
+                         "a job's grant priority so long waits eventually win a tie. 0 = off.")
+    ap.add_argument("--gamma", type=float, default=None, metavar="THETA",
+                    help="elevated plan S8: gate the debate round on the SERIOUSNESS score "
+                         "Gamma_t (mean of SLA risk, clearing ambiguity, uncertainty, "
+                         "starvation, job-set churn) exceeding THETA, or any hard trigger. "
+                         "Generalises --hard-trigger; sweep .1/.2/.3/.4/.5 per the plan.")
+    ap.add_argument("--cooldown", type=int, default=0, metavar="K",
+                    help="elevated plan S15: forbid a job's ceiling from moving within K ticks "
+                         "of its last move. 0 (default) = unconstrained resizing, as in "
+                         "Exp 22-68. Sweep 1/2/5 per the plan.")
+    ap.add_argument("--resize-c1", type=float, default=0.0, metavar="C",
+                    help="elevated plan S15: per-GPU term of the resize penalty, so the cost "
+                         "is --realloc-cost + C*|delta g| instead of a flat fraction.")
+    ap.add_argument("--samples", type=int, default=0, metavar="N",
+                    help="elevated plan S13: add an EQUAL-BUDGET single-LLM control to a "
+                         "--referee run, funded with N independent samples per decision "
+                         "(median-aggregated). Pick N so its c_llm matches the referee arm's; "
+                         "0 (default) omits the control entirely.")
     ap.add_argument("--law", default="amdahl", choices=("amdahl", "sat"),
                     help="counterfactual progress model (elevated plan S3): 'amdahl' = the "
                          "Exp 57 law all results through Exp 63 used (default, unchanged); "
@@ -797,7 +901,8 @@ def main() -> None:
           alpha=a.alpha, alpha_norm=a.alpha_norm, trigger=a.trigger, theta=a.theta,
           stale=a.stale, extend=a.extend, no_argue=a.no_argue, prev_input=a.prev_input,
           burst_s=a.burst, hard_trigger=a.hard_trigger, slack_mult=a.slack_mult,
-          admit=a.admit, law=a.law, kappa=a.kappa,
+          admit=a.admit, law=a.law, kappa=a.kappa, samples=a.samples,
+          cooldown=a.cooldown, resize_c1=a.resize_c1, gamma=a.gamma, phi=a.phi,
           fast_negotiate=a.fast_negotiate)
 
 
