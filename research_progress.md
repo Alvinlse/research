@@ -4103,6 +4103,37 @@ mechanism has been ignoring — rather than pay a model to read it. The LLM's re
 rests on residuals that are NOT tabulatable (genuine operator exception text), which this trace
 does not contain and run 1 confirmed it cannot supply.
 
-**In flight:** the role-controlled ablation grid (`--ablate no-numbers|no-role|shuffled-role`)
-to confirm the source of signal, and an ordinal marginal-value prompt scored by
-ρ(level, measured util) against the 0.270/0.334 bars.
+### Exp 78c — the role-controlled ablation grid (240 real jobs each, 14b)
+
+| condition | note contains | P(ask\|BUSY) | P(ask\|IDLE) | DISCRIM | ask rate | acc vs lookup |
+|---|---|---|---|---|---|---|
+| full | role + inst + plan_gpu | 69.0% | 50.4% | +18.6% | 59.2% | 58.8 vs 57.5 (p=.82) |
+| no-numbers | role + inst only | 75.2% | 55.9% | **+19.3%** | 65.0% | 58.8 vs 57.5 (p=.82) |
+| no-role | inst + plan_gpu only | 54.0% | 39.4% | +14.6% | 46.2% | 57.5 vs 57.5 (p=1.0) |
+| shuffled-role | WRONG role + real numbers | 45.1% | 38.6% | **+6.6%** | 41.7% | 53.8 vs 57.5 (p=.47) |
+| lookup table | (deterministic control) | 44.2% | 30.7% | +13.5% | — | — |
+
+1. **Role is the CAUSAL channel.** Shuffling the label (real numbers, another job's role)
+   collapses discrimination +18.6% → +6.6%, and the fake label drives the answer: ask-rate
+   spans **0%–92%** across the eight shuffled labels. The model reads role semantics; it is not
+   pattern-matching on position or instance count.
+2. **The declaration is NOT load-bearing.** `no-numbers` removes plan_gpu/quanta entirely and
+   discrimination *rises* (+19.3%). **This falsifies the run-2 diagnosis above**, which
+   attributed the within-role effect to `plan_gpu ≈ quanta` (ρ=0.98). That correlation is real
+   within `tensorflow` but does not carry the result; the generalisation from it was wrong, and
+   the ablation is what caught it.
+3. **The two channels are independent** — numbers alone (no role) still give +14.6%.
+4. **None of it beats a table.** Accuracy ties the held-out role lookup in every condition
+   (p = 0.82, 0.82, 1.00, 0.47). The LLM's higher discrimination is bought with a much higher
+   ask rate (65% vs ~37%), i.e. a 55.9% false-positive rate on jobs measuring <1% util.
+
+**Precise conclusion.** The model's role reasoning is real and causal, and *exactly as
+informative as tabulating the same field*. The information lives in a categorical feature the
+bid ignores; reading it with a language model buys nothing over `GROUP BY role`.
+
+**Consequence:** condition `usable` on task role in the bid (`pins/market.py`) and drop the
+reviewer on this trace. The LLM's remaining case is residuals that cannot be tabulated —
+which this trace does not contain, and run 1 confirmed it cannot supply.
+
+**Not run (deferred):** the ordinal marginal-value prompt scored by ρ(level, measured util)
+against the 0.270/0.334 bars, and the H2 14b re-run to restore the per-case detail lost above.
