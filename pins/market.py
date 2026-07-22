@@ -62,11 +62,25 @@ def bid_curve(facts: dict, ctx: dict, env: dict, w=BID_W) -> list[float]:
         return []
     r_sla = SLA_RISK.get(ctx.get("deadline"), 0.4)
     w_wait = min(1.0, facts.get("waited", 0) / STARVE_TICKS)
-    # each extra GPU is one more rank to reconfigure on the next resize (plan §15's c1 term)
-    c_res = env.get("resize_c1", 0.0) + env.get("realloc_cost", 0.0)
+    # plan §15/§6.1: C_resize prices the CHANGE from what the job holds now, not the size of
+    # the award. Exp 75 found the first version charged `k` — so a job was billed the same to
+    # KEEP three margin GPUs as to acquire them, the bid had no notion of stability, and the
+    # delta term could not damp thrash at fast ticks (the cooldown had to). With
+    # m = margin currently held, C(k) = c_fixed*[k != m] + c1*|k - m|, and the k-th unit
+    # carries the increment C(k) - C(k-1): NEGATIVE below m (awarding it avoids a shrink),
+    # positive above (acquiring costs). c_fixed/c1 are already fractions of a tick's progress,
+    # the same scale as the normalised gain.
+    c_fix, c1 = env.get("realloc_cost", 0.0), env.get("resize_c1", 0.0)
+    m = max(0, facts.get("held", base) - base)
     curve, prev = [], float("inf")
     for k, gain in enumerate(gains, start=1):
-        v = a * (gain / top) + b * r_sla + g * w_wait - d * min(1.0, c_res * k)
+        if k <= m:
+            adj = -c1                          # keeping a held GPU avoids a shrink
+        elif k == m + 1:
+            adj = c_fix + c1                   # first acquisition pays the fixed restart too
+        else:
+            adj = c1
+        v = a * (gain / top) + b * r_sla + g * w_wait - d * min(1.0, max(-1.0, adj))
         v = min(max(v, 0.0), prev)            # plan §6.1: bids must be non-increasing
         curve.append(v)
         prev = v
