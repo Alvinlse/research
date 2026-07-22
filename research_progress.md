@@ -3638,3 +3638,57 @@ predicts, and the false-reuse metric earns its keep:
 **Scope.** Rule tier only, so this measures the cache's DECISION quality, not its token
 saving — the point of caching at the LLM tier. `--qcache` at 14b is the follow-up, and there
 the fast-tick counter (`shell_fast`) turns reuse into a real bill reduction.
+
+## Experiment 69 — THE EQUAL-BUDGET CONTROL, FIRST LOOK: the centralised LLM does more with 41% of the referee's tokens (2026-07-22)
+
+**Setup.** 14b, caps=predicted, pool 8, n=8 paired seeds, v2020 replay, **cold cache**
+(`pins/cache_exp69.json`) so the reported bill is the true cold cost of each arm rather than
+its post-amortisation cost. `--samples 4` on the single-LLM control, sized from a dry-run
+call count (referee 62.5 vs single-llm 18.0 calls/seed).
+
+```
+   8  no-llm        45.3%   52.4%    76%     73%      6%      7.45   16.6    0% 15.6/16
+   8  referee       45.3%   46.4%    75%     70%     10%      7.14   17.0    0% 15.6/16
+   8  negotiated    42.2%*  45.3%    77%     72%      7%      6.48   15.2    0% 15.6/16
+   8  single-llm    43.0%   40.7%*   76%     69%     11%      6.67   16.3    0% 15.6/16
+
+      referee      vs floor:  dSLA +0.0 ±6.8  dprodSLA  -6.0 ± 7.5  dutil -1.3 ±5.2  duseful -2.9 ±4.4   dregret +4.3 ±4.9
+      negotiated   vs floor:  dSLA -3.1 ±9.6  dprodSLA  -7.1 ±16.6  dutil +0.9 ±2.5  duseful -0.7 ±1.6   dregret +0.9 ±2.0
+      single-llm   vs floor:  dSLA -2.3 ±9.6  dprodSLA -11.7 ±13.4  dutil -0.1 ±5.0  duseful -3.1 ±2.3*  dregret +5.0 ±2.8*
+
+      arm           calls/seed  tokens/seed  wall s/seed
+      referee             44.9        27420        181.7
+      negotiated           8.9         3920         23.2
+      single-llm          32.0        11274         93.0
+```
+
+Holm over the 15-test family (computed post-hoc; the process had imported `trace_replay`
+before `print_holm` was added): **only `single-llm/regret` survives, p=0.037** — i.e. the one
+statistically defensible statement in this run is that the centralised control is WORSE than
+the floor on allocation regret.
+
+**1. Sizing on calls was wrong, and it failed toward the thesis.** `--samples 4` matched
+calls (32.0 vs 44.9) but not tokens: referee prompts cost 610 tok/call against the control's
+352, so the control ran on **41% of the referee's token budget** (11.3k vs 27.4k) and 51% of
+its wall-clock. §13 is therefore NOT discharged by this run — it is a lower bound on the
+control.
+
+**2. On that under-funded budget the control already shows the larger prod-tier effect.**
+dprodSLA −11.7 (single-llm) vs −6.0 (referee); both ns at n=8 with wide CIs, so this is a
+direction, not a result. But the direction is the one the plan warned about: the multi-agent
+arm's advantage may be budget, not structure. The referee spends 2.4× the tokens and 2× the
+wall-clock for a smaller effect, and pays `duseful −2.9`, `dregret +4.3`.
+
+**3. The auction remains the only arm that buys useful utilisation** (`negotiated`, dutil
++0.9, duseful −0.7, dregret +0.9) at 1/7th of the referee's bill — consistent with the
+standing conclusion after Exp 60/61.
+
+**Exp 70 (in flight).** The token-matched rerun: `--samples 10` (≈27k tok/seed) at n=32,
+same pool/caps, cold cache. That is the run that actually answers §13.
+
+**Reproduce.**
+```bash
+PINS_NUM_CTX=8192 PINS_CACHE=pins/cache_exp69.json PINS_RESULTS=pins/results_exp69.json \
+  .venv/bin/python -u -m pins.trace_replay --referee --llm --model qwen2.5:14b \
+  --caps predicted --pools 8 --seeds 8 --samples 4
+```
