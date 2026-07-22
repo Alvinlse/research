@@ -1,0 +1,77 @@
+P3-POLICY-01   nl_policy    market=. single-pkt=.* referee-pkt=.* debate-pkt=.*
+P3-POLICY-02   nl_policy    market=. single-pkt=H* referee-pkt=.* debate-pkt=.*
+P3-POLICY-03   nl_policy    market=. single-pkt=.* referee-pkt=.* debate-pkt=.*
+P3-POLICY-04   nl_policy    market=. single-pkt=H* referee-pkt=H* debate-pkt=H*
+P3-POLICY-05   nl_policy    market=. single-pkt=H* referee-pkt=H* debate-pkt=H*
+P3-POLICY-06   nl_policy    market=. single-pkt=.* referee-pkt=.* debate-pkt=.*
+P3-POLICY-07   nl_policy    market=. single-pkt=.* referee-pkt=. debate-pkt=.
+P3-UNMOD-01    unmodeled    market=. single-pkt=H* referee-pkt=H* debate-pkt=H*
+P3-UNMOD-02    unmodeled    market=. single-pkt=H* referee-pkt=H* debate-pkt=H*
+P3-UNMOD-03    unmodeled    market=. single-pkt=.* referee-pkt=.* debate-pkt=.*
+P3-UNMOD-04    unmodeled    market=. single-pkt=H* referee-pkt=.* debate-pkt=H*
+P3-UNMOD-05    unmodeled    market=. single-pkt=. referee-pkt=.* debate-pkt=.*
+P3-UNMOD-06    unmodeled    market=. single-pkt=.* referee-pkt=.* debate-pkt=.*
+P3-UNMOD-07    unmodeled    market=. single-pkt=.* referee-pkt=H* debate-pkt=H*
+P3-UNMOD-08    unmodeled    market=. single-pkt=.* referee-pkt=H* debate-pkt=H*
+P3-CORRUPT-01  corrupt      market=. single-pkt=.* referee-pkt=H* debate-pkt=H*
+P3-CORRUPT-02  corrupt      market=. single-pkt=H* referee-pkt=H* debate-pkt=H*
+P3-CORRUPT-03  corrupt      market=. single-pkt=.* referee-pkt=.* debate-pkt=.*
+P3-CORRUPT-04  corrupt      market=. single-pkt=H* referee-pkt=H* debate-pkt=H*
+P3-CORRUPT-05  corrupt      market=. single-pkt=.* referee-pkt=.* debate-pkt=.*
+P3-CONTRA-01   contradiction market=. single-pkt=.* referee-pkt=.* debate-pkt=.*
+P3-CONTRA-02   contradiction market=. single-pkt=H* referee-pkt=H* debate-pkt=H*
+P3-CONTRA-03   contradiction market=. single-pkt=.* referee-pkt=.* debate-pkt=H*
+P3-CONTRA-04   contradiction market=. single-pkt=H* referee-pkt=H* debate-pkt=H*
+P3-AMBIG-01    ambiguous    market=. single-pkt=.* referee-pkt=.* debate-pkt=.*
+P3-AMBIG-02    ambiguous    market=. single-pkt=. referee-pkt=. debate-pkt=.
+P3-AMBIG-03    ambiguous    market=. single-pkt=H* referee-pkt=H* debate-pkt=.*
+P3-INFEAS-01   infeasible   market=. single-pkt=.* referee-pkt=.* debate-pkt=.*
+P3-INFEAS-02   infeasible   market=. single-pkt=. referee-pkt=H* debate-pkt=H*
+P3-INFEAS-03   infeasible   market=. single-pkt=.* referee-pkt=.* debate-pkt=.*
+P3-PLACEBO-01  placebo      market=H single-pkt=H referee-pkt=H debate-pkt=H
+P3-PLACEBO-02  placebo      market=H single-pkt=.* referee-pkt=.* debate-pkt=.*
+P3-PLACEBO-03  placebo      market=H single-pkt=H referee-pkt=H debate-pkt=H
+P3-PLACEBO-04  placebo      market=H single-pkt=H referee-pkt=H debate-pkt=H
+P3-PLACEBO-05  placebo      market=H single-pkt=H referee-pkt=H debate-pkt=.*
+P3-CONFIRM-01  confirm      market=H single-pkt=.* referee-pkt=.* debate-pkt=H
+P3-CONFIRM-02  confirm      market=. single-pkt=.* referee-pkt=.* debate-pkt=.*
+P3-CONFIRM-03  confirm      market=H single-pkt=H referee-pkt=H debate-pkt=H
+P3-CONFIRM-04  confirm      market=H single-pkt=H referee-pkt=H debate-pkt=H
+P3-POLICY-08   nl_policy    market=. single-pkt=. referee-pkt=. debate-pkt=H*
+
+=== PRIMARY  n=31 ===
+  arm            handled  fired  invalid  rescued  broke   net  badid
+  market            0/31       0        0        0      0    +0      0
+  single-pkt       11/31      27        0       11      0   +11      0
+  referee-pkt      13/31      28        0       13      0   +13      0
+  debate-pkt       15/31      29        0       15      0   +15      0
+  head-to-head referee-pkt vs single-pkt: referee-pkt-only 4, single-pkt-only 2
+  head-to-head debate-pkt vs referee-pkt: debate-pkt-only 3, referee-pkt-only 1
+  head-to-head debate-pkt vs single-pkt: debate-pkt-only 6, single-pkt-only 2
+
+=== CONTROLS  n=9 ===
+  arm            handled  fired  invalid  rescued  broke   net  badid
+  market            8/9        0        0        0      0    +0      0
+  single-pkt        6/9        3        0        0      2    -2      0
+  referee-pkt       6/9        3        0        0      2    -2      0
+  debate-pkt        6/9        3        0        0      2    -2      0
+  head-to-head referee-pkt vs single-pkt: referee-pkt-only 0, single-pkt-only 0
+  head-to-head debate-pkt vs referee-pkt: debate-pkt-only 1, referee-pkt-only 1
+  head-to-head debate-pkt vs single-pkt: debate-pkt-only 1, single-pkt-only 1
+
+=== ALL  n=40 ===
+  arm            handled  fired  invalid  rescued  broke   net  badid
+  market            8/40       0        0        0      0    +0      0
+  single-pkt       17/40      30        0       11      2    +9      0
+  referee-pkt      19/40      31        0       13      2   +11      0
+  debate-pkt       21/40      32        0       15      2   +13      0
+  head-to-head referee-pkt vs single-pkt: referee-pkt-only 4, single-pkt-only 2
+  head-to-head debate-pkt vs referee-pkt: debate-pkt-only 4, referee-pkt-only 2
+  head-to-head debate-pkt vs single-pkt: debate-pkt-only 7, single-pkt-only 3
+
+=== confidence calibration (PRIMARY): does conf >= 0.70 predict a correct override? ===
+  single-pkt    fired 27   conf>=0.70 correct   11/27   conf<0.70 correct     n/a
+  referee-pkt   fired 28   conf>=0.70 correct   13/28   conf<0.70 correct     n/a
+  debate-pkt    fired 29   conf>=0.70 correct   15/29   conf<0.70 correct     n/a
+
+max_delta=6  history=manual(8)   full detail -> pins/results_exp83_qwen2514b_debate_hist.json
