@@ -1,0 +1,2409 @@
+{
+  "model": "qwen2.5:14b",
+  "n": 240,
+  "p_busy": 0.6902654867256637,
+  "p_idle": 0.5039370078740157,
+  "discrimination": 0.18632847885164794,
+  "results": [
+    {
+      "jid": "c52b60be4eb25becc38a19bd",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 10% per instance.",
+      "quanta": 1,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The task role 'tensorflow' with only 10% GPU share per instance suggests that the job is not fully utilizing the allocat"
+    },
+    {
+      "jid": "fdec261a4f2746429d83d0a1",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role 'tensorflow' typically involves running dense training or compute kernels which can saturate the available"
+    },
+    {
+      "jid": "7772b6f7a0de555915172fa7",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 55.094,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The job has a single instance running TensorFlow with only 50% of one GPU unit planned for it out of the two allocated u"
+    },
+    {
+      "jid": "94cc06b8fdb4d03865b193c5",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 44.244,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The job has a single instance running TensorFlow with only 50% of one GPU unit planned per instance. Given that TensorFl"
+    },
+    {
+      "jid": "9d0f1e4a347c41e91e5436e8",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 6 instances in total; planned GPU 100% per instance.",
+      "quanta": 20,
+      "util": 0.882,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes 'ps' (parameter server) and 'worker' roles with a total of 20 GPU units allocated across 6"
+    },
+    {
+      "jid": "644421583be333df88d3c1b9",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 10% per instance.",
+      "quanta": 1,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The task role 'tensorflow' with only 10% GPU share implies the job is not fully utilizing its allocated GPU capacity. Th"
+    },
+    {
+      "jid": "b92ef91a76ab9b2f2257adec",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 25% per instance.",
+      "quanta": 1,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role 'tensorflow' typically involves training or inference workloads that can effectively utilize a significant"
+    },
+    {
+      "jid": "ca0379e8b5cd7d70df246d6a",
+      "roles": "worker",
+      "note": "task roles: worker; 2 instances in total; requested GPU class V100; planned GPU 400% per instance.",
+      "quanta": 32,
+      "util": 144.307,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The job has 2 instances of 'worker' role each requesting 400% of a V100 GPU. This implies that the tasks are computation"
+    },
+    {
+      "jid": "6182bc35d84e88dd5c61568b",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 25% per instance.",
+      "quanta": 1,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role 'tensorflow' typically involves training or running inference with dense computational kernels which can e"
+    },
+    {
+      "jid": "dfa1309c296ec9de6cbeb89e",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 25% per instance.",
+      "quanta": 1,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The task role 'tensorflow' with only 25% GPU share per instance suggests underutilization of the allocated GPU capacity."
+    },
+    {
+      "jid": "5d6dd85c92b630d392281e20",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 10% per instance.",
+      "quanta": 1,
+      "util": 0.007,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The task role 'tensorflow' with only 10% GPU share implies the job is not utilizing the full capacity of the allocated G"
+    },
+    {
+      "jid": "4878e73021f38848140b263d",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 25% per instance.",
+      "quanta": 1,
+      "util": 0.077,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role 'tensorflow' typically involves training or inference workloads that can effectively utilize a significant"
+    },
+    {
+      "jid": "ff9ddda132fbba23d2cf0a96",
+      "roles": "worker",
+      "note": "task roles: worker; 10 instances in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 20,
+      "util": 42.138,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The job has 10 instances each using only 50% of a T4 GPU, indicating that the tasks are not fully utilizing their alloca"
+    },
+    {
+      "jid": "eb3fc360334457b5ecaad941",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role 'tensorflow' typically involves running dense training or compute kernels which can saturate the available"
+    },
+    {
+      "jid": "cb7f76fb8f6a4a07264404b1",
+      "roles": "worker",
+      "note": "task roles: worker; 10 instances in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 20,
+      "util": 39.117,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The role 'worker' with only 50% GPU utilization per instance suggests that each instance is not fully utilizing its allo"
+    },
+    {
+      "jid": "da3569cfd57795d250558fcb",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 35.882,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute-intensive kernels which would likely use more than the initia"
+    },
+    {
+      "jid": "69edcaf711e8568efc250b0d",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role 'tensorflow' typically involves running dense training or compute kernels which can saturate the available"
+    },
+    {
+      "jid": "cce93f53fbc8867fb6480620",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; requested GPU class P100; planned GPU 10% per instance.",
+      "quanta": 1,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The task role 'tensorflow' with only 10% GPU usage per instance suggests that the job is not fully utilizing the allocat"
+    },
+    {
+      "jid": "9e4cc8c660d15f1010d25d35",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role 'tensorflow' typically involves running dense training or compute kernels which can saturate the available"
+    },
+    {
+      "jid": "25e5ef86cda1cc62a947b455",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 77.513,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' typically involves running dense training or compute-intensive tasks which would fully utilize "
+    },
+    {
+      "jid": "040103dc86b7ebfe6a31dc3c",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role 'tensorflow' typically involves running dense training or compute kernels which can saturate the available"
+    },
+    {
+      "jid": "c09d2d74dc92379f8ab878ff",
+      "roles": "worker",
+      "note": "task roles: worker; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role is 'worker', which typically implies running dense training or compute kernels that can effectively use ad"
+    },
+    {
+      "jid": "e58b9dcf66ca65e3e3c29563",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 25% per instance.",
+      "quanta": 1,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The task role 'tensorflow' with only 25% GPU share per instance suggests that the job is not fully utilizing the allocat"
+    },
+    {
+      "jid": "65b5345e42997a51d50ae878",
+      "roles": "worker",
+      "note": "task roles: worker; 10 instances in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 20,
+      "util": 50.099,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The role 'worker' with only 50% GPU utilization per instance suggests that each instance is not fully utilizing the allo"
+    },
+    {
+      "jid": "595fcb48a73ea5cffe71018f",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 15 instances in total; planned GPU 100% per instance.",
+      "quanta": 40,
+      "util": 46.017,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile includes 'ps' (parameter server) and 'worker' roles with a total of 40 GPU units allocated across 1"
+    },
+    {
+      "jid": "af61347d160ef3d0061baa0d",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; requested GPU class V100M32; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 96.041,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The task role 'PyTorchWorker' typically involves running dense training or compute kernels which would saturate the avai"
+    },
+    {
+      "jid": "4a7b66ca66324ab80648d63a",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 39.059,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The task role 'tensorflow' typically involves running dense training or compute kernels which can saturate the available"
+    },
+    {
+      "jid": "b76677a126b97ea391b3f86e",
+      "roles": "worker",
+      "note": "task roles: worker; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.735,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The workload profile shows a single 'worker' role which typically implies tasks that run dense training or compute kerne"
+    },
+    {
+      "jid": "ef6de8d32e93c3f04c647da0",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role 'tensorflow' typically involves running dense training or compute kernels which can saturate the available"
+    },
+    {
+      "jid": "7a6199fbaaa960f95acc8260",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 35.338,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' typically involves running dense training or compute kernels which can saturate the available G"
+    },
+    {
+      "jid": "f2f98bf4cc195bc2f6982361",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 10% per instance.",
+      "quanta": 1,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The task role 'tensorflow' with only 10% GPU share indicates the job is not utilizing its allocated GPU capacity fully. "
+    },
+    {
+      "jid": "d814a5c36924a22f987a9f3b",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; requested GPU class T4; planned GPU 25% per instance.",
+      "quanta": 1,
+      "util": 0.726,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The task role 'tensorflow' with only 25% GPU utilization implies the job is not fully utilizing the allocated GPU capaci"
+    },
+    {
+      "jid": "213293f247505444cc366d4c",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 0.026,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile shows only 50% GPU usage per instance on a T4 GPU, indicating underutilization. With an additional "
+    },
+    {
+      "jid": "3ccd73358981be55a32d0465",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 41.999,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The job runs a TensorFlow task with 50% GPU share per instance and is currently using 2 GPU units. Given that only half "
+    },
+    {
+      "jid": "97b8290cbe5b0e11a08fe57f",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 36.417,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute-intensive workloads such as training or inference kernels whi"
+    },
+    {
+      "jid": "b4b68df1d065e821b2314ad5",
+      "roles": "worker",
+      "note": "task roles: worker; 100 instances in total; planned GPU 50% per instance.",
+      "quanta": 200,
+      "util": 48.901,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The job has 100 instances with a planned GPU usage of 50% per instance out of the allocated 200 GPU units. This implies "
+    },
+    {
+      "jid": "ee0d857581b84efdcfcf4bf7",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 25% per instance.",
+      "quanta": 1,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The job is running a TensorFlow task with only 25% of the GPU utilized per instance, indicating underutilization. Alloca"
+    },
+    {
+      "jid": "7fe626e04b7a24dbd6c5c138",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 10% per instance.",
+      "quanta": 1,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The task role 'tensorflow' with only 10% GPU share indicates the job is not utilizing its allocated GPU capacity fully. "
+    },
+    {
+      "jid": "9084bb3edaf5bcfb61bcf4a8",
+      "roles": "worker",
+      "note": "task roles: worker; 10 instances in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 40,
+      "util": 41.557,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The task role is 'worker', which typically implies running dense training or compute kernels that can effectively use ad"
+    },
+    {
+      "jid": "27e37cf8ea68129abc4cc70f",
+      "roles": "worker",
+      "note": "task roles: worker; 10 instances in total; planned GPU 100% per instance.",
+      "quanta": 40,
+      "util": 57.194,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The job has 10 instances each using 100% of a GPU unit, indicating that the tasks are likely running dense training or c"
+    },
+    {
+      "jid": "8483d48e4e1c9674f7567fc1",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 36.927,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The task role 'tensorflow' typically involves running dense training or compute kernels which can saturate the available"
+    },
+    {
+      "jid": "4d855be80db5bf49dabc825c",
+      "roles": "worker",
+      "note": "task roles: worker; 48 instances in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 96,
+      "util": 45.142,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The role 'worker' with only 50% GPU utilization per instance suggests that each instance is not fully utilizing its allo"
+    },
+    {
+      "jid": "c80804a484bb8136d8b5c0b2",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; planned GPU 15% per instance.",
+      "quanta": 1,
+      "util": 30.051,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The role 'PyTorchWorker' with only 15% GPU share implies that the task is not heavily utilizing the allocated GPU capaci"
+    },
+    {
+      "jid": "cb9f91125d496326411632d2",
+      "roles": "worker",
+      "note": "task roles: worker; 18 instances in total; planned GPU 100% per instance.",
+      "quanta": 72,
+      "util": 0.578,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The job has 18 instances each using 100% of a GPU unit, indicating that the tasks are likely running dense training or c"
+    },
+    {
+      "jid": "c3e01e5e8e61ad09b7a2b314",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 31.408,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The job has a role of 'tensorflow', which typically involves running dense training or compute kernels that can saturate"
+    },
+    {
+      "jid": "58033717a9eb956bbc78dfc1",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 51 instances in total; planned GPU 30% per instance.",
+      "quanta": 60,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile indicates that the job has a high number of instances (51) with only 30% GPU share per instance. Th"
+    },
+    {
+      "jid": "9686062a2088cbd81a6f71d7",
+      "roles": "ps|worker",
+      "note": "task roles: worker, ps; 13 instances in total; requested GPU class T4; planned GPU 25% per instance.",
+      "quanta": 12,
+      "util": 0.081,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile indicates that there are 13 instances with only one allocated GPU unit (12 units allocated but 13 i"
+    },
+    {
+      "jid": "86d89ffe804c1224cd078d17",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 67.001,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The task role 'PyTorchWorker' implies that the job is running dense training or compute kernels which typically saturate"
+    },
+    {
+      "jid": "8155f11daee6a01bc43d18ad",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 53.979,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The task role 'PyTorchWorker' typically involves running dense training or compute kernels which would saturate the avai"
+    },
+    {
+      "jid": "2eb3c11b2fc08e4b18bdc4eb",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 41.553,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute kernels or dense training workloads which would likely satura"
+    },
+    {
+      "jid": "17f1343fbcf2dd4fb90fd1fd",
+      "roles": "worker",
+      "note": "task roles: worker; 10 instances in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 40,
+      "util": 38.5,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'worker' typically implies tasks that involve training or running compute-intensive kernels which can effective"
+    },
+    {
+      "jid": "9156224ba996d9c9efd6ed73",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 56.469,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The task role 'tensorflow' typically involves running dense training or compute kernels which can saturate the available"
+    },
+    {
+      "jid": "06b853abc821f4627a12353f",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 36.904,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute kernels or dense training workloads which would likely satura"
+    },
+    {
+      "jid": "d22a1da611e47fd2c81bbb4b",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 11 instances in total; planned GPU 25% per instance.",
+      "quanta": 10,
+      "util": 0.62,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile indicates that the job has a mix of 'ps' and 'worker' roles with 11 instances in total, each planne"
+    },
+    {
+      "jid": "273409dab69acd6c0147b303",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 2 instances in total; planned GPU 20% per instance.",
+      "quanta": 1,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The role 'ps' (Parameter Server) typically does not involve significant GPU computation and the overall planned GPU usag"
+    },
+    {
+      "jid": "efa90089dad49db1ad6957f5",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 30.35,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The task role 'tensorflow' typically involves running dense training or compute kernels which can saturate the available"
+    },
+    {
+      "jid": "3df7461cdf3a3cd4d1b24b17",
+      "roles": "TVMTuneMain",
+      "note": "task roles: TVMTuneMain; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 33.248,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The role 'TVMTuneMain' typically involves tuning and optimizing models rather than saturating the GPU with continuous co"
+    },
+    {
+      "jid": "77468aeb2e9c6d143877127c",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' implies that the task is running dense training or compute kernels with PyTorch, which typicall"
+    },
+    {
+      "jid": "e90833d9b18af8dace94c044",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' implies that the task is running dense training or compute kernels which would saturate the ava"
+    },
+    {
+      "jid": "9f63f8ecd31510a67aebec67",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 37.914,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute-intensive workloads such as training or inference kernels whi"
+    },
+    {
+      "jid": "d66697419490be7573c811a9",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 60.709,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The job has a role of 'tensorflow', which typically involves running dense training or compute kernels that can saturate"
+    },
+    {
+      "jid": "e4b69a310f127b6721e84600",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 9 instances in total; planned GPU 25% per instance.",
+      "quanta": 1,
+      "util": 0.071,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The task roles include 'ps' (parameter server) and 'worker', with a planned GPU usage of only 25% per instance. These ro"
+    },
+    {
+      "jid": "4efdaa2d09029cdffb360f05",
+      "roles": "worker",
+      "note": "task roles: worker; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role is 'worker', which typically implies running dense training or compute kernels that can effectively use ad"
+    },
+    {
+      "jid": "853eb11b28ab91f8b9426499",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 37.242,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile shows only 50% GPU usage is planned per instance on a single T4 GPU, indicating underutilization ev"
+    },
+    {
+      "jid": "869d7662187fdf215d5c7597",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 2 instances in total; planned GPU 25% per instance.",
+      "quanta": 1,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile indicates that the job has two instances with one 'ps' (parameter server) role and one 'worker' rol"
+    },
+    {
+      "jid": "c85f769ffe418fb32416e5d1",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 32.127,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The task role 'PyTorchWorker' implies that the job involves running dense training or compute kernels with PyTorch, whic"
+    },
+    {
+      "jid": "3096e2765bce20af33875004",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 96.065,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' typically involves running dense training or compute kernels which can fully utilize the alloca"
+    },
+    {
+      "jid": "f952b9b9cb6594e12cf9dbcf",
+      "roles": "worker",
+      "note": "task roles: worker; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role is 'worker', which typically implies running dense training or compute kernels that can effectively use ad"
+    },
+    {
+      "jid": "8d92b780f32568d6bd716604",
+      "roles": "worker",
+      "note": "task roles: worker; 8 instances in total; requested GPU class T4; planned GPU 5% per instance.",
+      "quanta": 2,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The task role 'worker' with only 5% GPU usage per instance suggests that the tasks are not heavily reliant on GPU resour"
+    },
+    {
+      "jid": "3169b9de6be931bb29708ddd",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 61.403,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The task role 'tensorflow' typically involves running dense training or compute kernels which can saturate the available"
+    },
+    {
+      "jid": "8c0be5785b616a52a298190b",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 37.44,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The task role 'tensorflow' typically involves running dense training or compute kernels which can saturate the available"
+    },
+    {
+      "jid": "527eab034c6a1f30fa1f88b9",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 80.053,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The task role 'PyTorchWorker' implies that the job is running dense training or compute kernels with PyTorch, which typi"
+    },
+    {
+      "jid": "dbb9f1602fcedd71e01787c9",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 34.0,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a compute-intensive task that would likely use available GPU resources for computation"
+    },
+    {
+      "jid": "84c213a11f9130f23b513443",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 31.494,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' implies that the task is running dense training or compute kernels which would saturate the ava"
+    },
+    {
+      "jid": "069674c7de25b4614e043edc",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 46.714,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The job has a single instance running TensorFlow with only 50% of one GPU unit planned, indicating underutilization. Add"
+    },
+    {
+      "jid": "9f2e1015bc9d53341aed8b26",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 49.462,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The job runs a TensorFlow task with 50% GPU share per instance and is allocated only 2 GPU units. Given that TensorFlow "
+    },
+    {
+      "jid": "69f8ee59a585fd871eefebe5",
+      "roles": "TVMTuneMain",
+      "note": "task roles: TVMTuneMain; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 78.904,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "TVMTuneMain role implies a tuning or training workload which typically involves running compute kernels and would benefi"
+    },
+    {
+      "jid": "58563228cedb65260deea4e6",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; requested GPU class V100M32; planned GPU 800% per instance.",
+      "quanta": 32,
+      "util": 564.51,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile shows that the job has only 1 instance of a task role (PyTorchWorker) running with an extremely hig"
+    },
+    {
+      "jid": "86420ad9564a2f1477ba0b9f",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 25% per instance.",
+      "quanta": 1,
+      "util": 32.118,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The task role 'tensorflow' with only 25% GPU share implies underutilization of the allocated GPU unit, suggesting that a"
+    },
+    {
+      "jid": "bd16b3fd9c8c40f462208271",
+      "roles": "worker",
+      "note": "task roles: worker; 10 instances in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 20,
+      "util": 0.09,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The role 'worker' with only 50% GPU utilization per instance suggests that each instance is not fully utilizing the allo"
+    },
+    {
+      "jid": "7dad62bb2f1a079ddb60e532",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 50.057,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The job runs a TensorFlow task with 50% GPU share per instance and is allocated only 2 GPU units. Given that TensorFlow "
+    },
+    {
+      "jid": "d88c7708f89a085e7f557dde",
+      "roles": "worker",
+      "note": "task roles: worker; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.727,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role is 'worker', which typically implies running dense training or compute kernels that can effectively use ad"
+    },
+    {
+      "jid": "e267d6298e11c75b1c194635",
+      "roles": "ps|worker",
+      "note": "task roles: worker, ps; 55 instances in total; planned GPU 25% per instance.",
+      "quanta": 50,
+      "util": 0.374,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile indicates that the job has a mix of 'worker' and 'ps' (presumably parameter server) tasks, with eac"
+    },
+    {
+      "jid": "5796e088e3f57337601fe741",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 300% per instance.",
+      "quanta": 12,
+      "util": 78.905,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The job has a single instance running TensorFlow with a high planned GPU share of 300%. This indicates that the role is "
+    },
+    {
+      "jid": "8564f80d714cf8c4a5aa27e8",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 33.521,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The task role 'tensorflow' typically involves running dense training or compute kernels which can saturate the available"
+    },
+    {
+      "jid": "ae3238fd1150b5a1f7811a91",
+      "roles": "worker",
+      "note": "task roles: worker; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role is 'worker', which typically implies running dense training or compute kernels that can effectively use ad"
+    },
+    {
+      "jid": "8a106a00fd831ab7fe4e1c81",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 45.461,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' implies that the tasks are running dense training or compute kernels which would saturate the a"
+    },
+    {
+      "jid": "7eae9b4c081e9c3b98cf1927",
+      "roles": "ps|worker",
+      "note": "task roles: worker, ps; 9 instances in total; planned GPU 25% per instance.",
+      "quanta": 8,
+      "util": 0.721,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile indicates that the job has a mix of 'worker' and 'ps' (presumably parameter server) tasks, with eac"
+    },
+    {
+      "jid": "46c882553ef89c176536bc83",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 74.227,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The job has a single instance running TensorFlow with 50% of one GPU unit planned for it. Allocating an additional GPU u"
+    },
+    {
+      "jid": "6abec88577589998f9f791b6",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 2 instances in total; planned GPU 20% per instance.",
+      "quanta": 1,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The task roles include 'ps' (parameter server) which typically does not involve significant GPU computation. The workers"
+    },
+    {
+      "jid": "917bcffb228d48d3c90a862f",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 47.167,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute kernels or dense training workloads which would likely satura"
+    },
+    {
+      "jid": "5a6d7e08b566eef18cd52a65",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 51 instances in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 200,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes 'ps' and 'worker' roles which typically do not require full utilization of a GPU unit for "
+    },
+    {
+      "jid": "fd5e235ff52b646d9fce7a3e",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; planned GPU 300% per instance.",
+      "quanta": 12,
+      "util": 175.286,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' implies that the tasks are running dense training or compute kernels which would saturate the g"
+    },
+    {
+      "jid": "b653f6a82e519cffe8eea891",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 91.149,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' implies that the task is running dense training or compute kernels which would saturate the giv"
+    },
+    {
+      "jid": "a2c42ad9fe9c819b48c75d5f",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 4 instances in total; planned GPU 100% per instance.",
+      "quanta": 16,
+      "util": 0.883,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' typically implies running dense training or compute kernels which would saturate the given GPU "
+    },
+    {
+      "jid": "dce3e44817fe6371ec825ea6",
+      "roles": "worker",
+      "note": "task roles: worker; 8 instances in total; planned GPU 25% per instance.",
+      "quanta": 8,
+      "util": 0.162,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The task role 'worker' with only 25% GPU share per instance suggests that each instance is not fully utilizing the alloc"
+    },
+    {
+      "jid": "ba59372763d7cd1a3a99f44c",
+      "roles": "worker",
+      "note": "task roles: worker; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.327,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role is 'worker', which typically implies running dense training or compute kernels that can effectively use ad"
+    },
+    {
+      "jid": "64459e864111b22b9e316b7b",
+      "roles": "tensorflow",
+      "note": "task roles: tensorflow; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 92.586,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The task role 'tensorflow' typically involves running dense training or compute kernels which can saturate the available"
+    },
+    {
+      "jid": "f9016617f3595fc2ae584fe4",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 6 instances in total; planned GPU 100% per instance.",
+      "quanta": 20,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes 'ps' and 'worker' roles with a total of 20 GPU units allocated across 6 instances (planned"
+    },
+    {
+      "jid": "cf30229d932a15a9ac8820bd",
+      "roles": "ps|worker",
+      "note": "task roles: worker, ps; 2 instances in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The job has 2 instances with one running as a 'worker' and the other as 'ps'. Given that it is allocated 4 GPU units but"
+    },
+    {
+      "jid": "03712f3ef4a0a209718b143d",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; requested GPU class V100; planned GPU 500% per instance.",
+      "quanta": 20,
+      "util": 187.443,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile shows that the job has only 1 instance of a PyTorchWorker role with a planned GPU usage of 500%. Gi"
+    },
+    {
+      "jid": "1076bdf5ded7c01fea90ca1c",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 51 instances in total; requested GPU class V100M32; planned GPU 100% per instance.",
+      "quanta": 200,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes 'ps' and 'worker' roles which typically do not require full utilization of a GPU unit for "
+    },
+    {
+      "jid": "31e1604e3f477ed982910318",
+      "roles": "ps|worker",
+      "note": "task roles: worker, ps; 2 instances in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The workload profile indicates that there are two instances running with one being a 'worker' role and the other a 'ps' "
+    },
+    {
+      "jid": "3ae2b49c08cfbd771bc23bbc",
+      "roles": "worker",
+      "note": "task roles: worker; 5 instances in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 20,
+      "util": 53.674,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'worker' typically implies tasks that involve training or running compute-intensive kernels which can effective"
+    },
+    {
+      "jid": "67d6d76fe8a7b0587004605c",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.422,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' implies that the task is running dense training or compute kernels which would saturate the ava"
+    },
+    {
+      "jid": "de1ec65dc389829059e2ffba",
+      "roles": "worker",
+      "note": "task roles: worker; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 82.307,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The task role is 'worker', which typically implies running dense training or compute kernels that can effectively use ad"
+    },
+    {
+      "jid": "54f44e56234c0f8d2c9ba644",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 2 instances in total; planned GPU 100% per instance.",
+      "quanta": 8,
+      "util": 90.699,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' typically involves running dense training or compute-intensive tasks which would likely saturat"
+    },
+    {
+      "jid": "ae0fee714c9078c4986779ae",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a compute-intensive task that would likely use available GPU resources for computation"
+    },
+    {
+      "jid": "f6f764807eb430b0db5cabe2",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 35.551,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a compute-intensive task that would likely use available GPU resources for computation"
+    },
+    {
+      "jid": "3e69580f59835b5866237937",
+      "roles": "worker",
+      "note": "task roles: worker; 6 instances in total; planned GPU 100% per instance.",
+      "quanta": 24,
+      "util": 46.956,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The job has 6 instances of 'worker' role each using 100% of a GPU unit, and it was allocated 24 GPU units. Since the rol"
+    },
+    {
+      "jid": "f2ac3da5e0ae9793363f4eb3",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 39.833,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a compute-intensive task that would likely use available GPU resources for computation"
+    },
+    {
+      "jid": "54041a9af0667423bda1550d",
+      "roles": "worker",
+      "note": "task roles: worker; 16 instances in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 32,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The role 'worker' with only 50% GPU utilization per instance suggests that each instance is not fully utilizing its allo"
+    },
+    {
+      "jid": "83c6626920242a775eadc838",
+      "roles": "worker",
+      "note": "task roles: worker; 10 instances in total; planned GPU 100% per instance.",
+      "quanta": 40,
+      "util": 0.283,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The job has 10 instances each using 100% of a GPU unit, indicating that the tasks are likely running dense training or c"
+    },
+    {
+      "jid": "a6ce6c5fff897a1061b0b5fe",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.548,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' typically involves running dense training or compute kernels which would saturate the available"
+    },
+    {
+      "jid": "bd8c479b8b7d2b251cdf5181",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 48.324,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute kernels or dense training workloads which would likely satura"
+    },
+    {
+      "jid": "f56c62b32d440b1dbe083b7d",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 40.727,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute-intensive workloads such as training or inference kernels whi"
+    },
+    {
+      "jid": "4011a57ed0395d9dd45fa816",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 2 instances in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes 'ps' and 'worker' roles with only 2 instances in total for 4 allocated GPUs. Given that pa"
+    },
+    {
+      "jid": "00ac3c8c18650e925e4b995e",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 3 instances in total; planned GPU 100% per instance.",
+      "quanta": 12,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes 'ps' (parameter server) and 'worker' roles with a total of 3 instances allocated across th"
+    },
+    {
+      "jid": "2e3464087d24363bde437450",
+      "roles": "worker",
+      "note": "task roles: worker; 8 instances in total; planned GPU 25% per instance.",
+      "quanta": 8,
+      "util": 0.873,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The job has 8 instances of workers each using only 25% of a GPU unit, indicating underutilization. Adding an additional "
+    },
+    {
+      "jid": "1b6891778aa3db9256a430aa",
+      "roles": "ps|worker",
+      "note": "task roles: worker, ps; 11 instances in total; planned GPU 25% per instance.",
+      "quanta": 10,
+      "util": 0.438,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile indicates that the job has a mix of 'worker' and 'ps' (presumably parameter server) tasks with only"
+    },
+    {
+      "jid": "d340278ff40e8e2c21452d19",
+      "roles": "ps|worker",
+      "note": "task roles: worker, ps; 31 instances in total; planned GPU 25% per instance.",
+      "quanta": 30,
+      "util": 0.084,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile indicates that the job has a mix of 'worker' and 'ps' (presumably parameter server) tasks with each"
+    },
+    {
+      "jid": "65ce38fdb85175b62b68da43",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 16 instances in total; requested GPU class T4; planned GPU 25% per instance.",
+      "quanta": 16,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "Each instance of the role 'PyTorchWorker' is only planned to use 25% of a single T4 GPU, indicating that even with an ad"
+    },
+    {
+      "jid": "6d912db464944eb3dadf0488",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 32.097,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' implies that the task is running dense training or compute kernels which would saturate the ava"
+    },
+    {
+      "jid": "f5f5f341abf6b09189140cd5",
+      "roles": "worker",
+      "note": "task roles: worker; 10 instances in total; requested GPU class T4; planned GPU 25% per instance.",
+      "quanta": 10,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The role 'worker' with only 25% GPU usage per instance on a T4 GPU suggests that each instance is not fully utilizing it"
+    },
+    {
+      "jid": "83c2b164159f0543cd42905a",
+      "roles": "ps|worker",
+      "note": "task roles: worker, ps; 100 instances in total; planned GPU 20% per instance.",
+      "quanta": 40,
+      "util": 0.027,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile indicates that there are 100 instances with a planned GPU usage of only 20% per instance. This sugg"
+    },
+    {
+      "jid": "b2f4c114f61af2dc8add80fb",
+      "roles": "worker",
+      "note": "task roles: worker; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role is 'worker', which typically implies running dense training or compute kernels that can effectively use ad"
+    },
+    {
+      "jid": "041665d260984ea2320d5910",
+      "roles": "worker",
+      "note": "task roles: worker; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The workload profile indicates a single 'worker' role which typically implies tasks that run dense training or compute k"
+    },
+    {
+      "jid": "a3f641eaa7a1ec5c480c40cc",
+      "roles": "ps|worker",
+      "note": "task roles: worker, ps; 55 instances in total; planned GPU 25% per instance.",
+      "quanta": 50,
+      "util": 30.441,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile indicates that the job has a mix of 'worker' and 'ps' (presumably parameter server) tasks. Given th"
+    },
+    {
+      "jid": "0cd3a8b2114ea26afa0a4863",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.375,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' implies that the task is running dense training or compute kernels which would saturate the ava"
+    },
+    {
+      "jid": "dc628d05c65022424112724f",
+      "roles": "worker",
+      "note": "task roles: worker; 10 instances in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 40,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role is 'worker', which typically implies running dense training or compute kernels that can effectively use ad"
+    },
+    {
+      "jid": "380c5035481c7df5ff467c19",
+      "roles": "worker",
+      "note": "task roles: worker; 4 instances in total; planned GPU 100% per instance.",
+      "quanta": 16,
+      "util": 49.066,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The job has 4 instances of 'worker' tasks each using 100% of a GPU unit, and it was allocated 16 GPU units. Since only 4"
+    },
+    {
+      "jid": "163b75f31c4a8b2a692a7f7d",
+      "roles": "worker",
+      "note": "task roles: worker; 18 instances in total; planned GPU 100% per instance.",
+      "quanta": 72,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The job has 18 instances each using 100% of a GPU unit, indicating that the tasks are running dense training or compute "
+    },
+    {
+      "jid": "cc77850806efc9f9e1a30fec",
+      "roles": "worker",
+      "note": "task roles: worker; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 31.78,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The task role is 'worker', which typically implies running dense training or compute kernels that can fully utilize the "
+    },
+    {
+      "jid": "b1c4b0ad87dd88fd9e207953",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 36.534,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The task role 'PyTorchWorker' implies that the job is running dense training or compute kernels which would saturate the"
+    },
+    {
+      "jid": "e017c82b0ef31e873590edf8",
+      "roles": "worker",
+      "note": "task roles: worker; 10 instances in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 20,
+      "util": 45.786,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The role 'worker' with only 50% GPU utilization per instance on a T4 GPU suggests that the tasks are not fully saturatin"
+    },
+    {
+      "jid": "356df1fdf79e5704d896241a",
+      "roles": "ps|worker",
+      "note": "task roles: worker, ps; 65 instances in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 200,
+      "util": 34.786,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The workload profile indicates that the job has 'worker' tasks which typically involve running dense training or compute"
+    },
+    {
+      "jid": "cc1f3d52a296e889e63bb7be",
+      "roles": "worker",
+      "note": "task roles: worker; 10 instances in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 40,
+      "util": 51.841,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The task role 'worker' typically implies running dense training or compute kernels which would saturate the available GP"
+    },
+    {
+      "jid": "6faa7656f210f58aad2c18bd",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 34.419,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a compute-intensive task that would likely use the available GPU resources effectively"
+    },
+    {
+      "jid": "132cb7cc1885594660e6b783",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' typically involves running dense training or compute-intensive tasks which would likely saturat"
+    },
+    {
+      "jid": "31cc6d0a82752f5785ac03d7",
+      "roles": "ps|worker",
+      "note": "task roles: worker, ps; 20 instances in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 64,
+      "util": 58.341,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The 'worker' role typically involves running dense training or compute kernels which would saturate the given GPU capaci"
+    },
+    {
+      "jid": "f9247b4e4172fb853c36d3a8",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 9 instances in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 32,
+      "util": 72.919,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile includes 'ps' and 'worker' roles with a total of 9 instances. Given that parameter servers (ps) typ"
+    },
+    {
+      "jid": "2005145a1c2899c594638fdd",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.423,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' implies that the task is running dense training or compute kernels which would saturate the ava"
+    },
+    {
+      "jid": "f951fafd2effca726dc676e3",
+      "roles": "worker",
+      "note": "task roles: worker; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role is 'worker', which typically implies running dense training or compute kernels that can effectively use ad"
+    },
+    {
+      "jid": "8f1450a7a3352268d6ed4c1e",
+      "roles": "worker",
+      "note": "task roles: worker; 10 instances in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 40,
+      "util": 31.207,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'worker' typically implies tasks that involve training or running compute-intensive kernels which can effective"
+    },
+    {
+      "jid": "bf2fa3af6fd760c853bc185a",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; requested GPU class V100; planned GPU 500% per instance.",
+      "quanta": 20,
+      "util": 105.196,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The task role 'PyTorchWorker' typically involves running dense training or compute kernels which can effectively utilize"
+    },
+    {
+      "jid": "29aead26b5e6898c4692d9b5",
+      "roles": "worker",
+      "note": "task roles: worker; 10 instances in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 40,
+      "util": 43.438,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'worker' typically implies tasks that involve training or running compute-intensive kernels which can effective"
+    },
+    {
+      "jid": "1ad9f4ed4c90029933f46b89",
+      "roles": "worker",
+      "note": "task roles: worker; 30 instances in total; planned GPU 50% per instance.",
+      "quanta": 60,
+      "util": 49.157,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The job has 30 instances with a planned GPU usage of 50% per instance out of the allocated 60 GPU units. This means each"
+    },
+    {
+      "jid": "e833133b2295b1db98c9fb52",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 6 instances in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 24,
+      "util": 51.746,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' implies that the tasks are running dense training or compute kernels which would saturate the a"
+    },
+    {
+      "jid": "ed0a38c2157d29a04a58cae9",
+      "roles": "worker",
+      "note": "task roles: worker; 10 instances in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 40,
+      "util": 43.348,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The task role is 'worker', which typically implies running dense training or compute kernels that can effectively use ad"
+    },
+    {
+      "jid": "9fd87405f434cf28cb40343b",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 45.63,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a compute-intensive task that would likely use the available GPU resources effectively"
+    },
+    {
+      "jid": "5e384c1f4968b08ca81b63a5",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 5 instances in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 20,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' implies that the tasks are running dense training or compute kernels which would saturate the g"
+    },
+    {
+      "jid": "2f60184b38e02d5262be27ac",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 38.612,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute kernels or dense training workloads which would likely satura"
+    },
+    {
+      "jid": "993e7b782a9b4ba778ec2e32",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 32.145,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute-intensive workloads such as training or inference kernels whi"
+    },
+    {
+      "jid": "4a13b66ab7b75a0dc619d997",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute-intensive workloads such as training or inference kernels whi"
+    },
+    {
+      "jid": "75ab333d86a60dda5e564c7d",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 33.645,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute-intensive workloads such as training or inference kernels whi"
+    },
+    {
+      "jid": "7d37c9ff494653e965bba494",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: evaluator, ps, worker; 13 instances in total; requested GPU class V100; planned GPU 100% per instance.",
+      "quanta": 40,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes roles such as 'evaluator', 'ps' (presumably parameter server), and 'worker'. These roles t"
+    },
+    {
+      "jid": "af9c7dec515bd90a58ca04a4",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 7 instances in total; planned GPU 100% per instance.",
+      "quanta": 20,
+      "util": 68.1,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile includes 'ps' (parameter server) and 'worker' roles with a total of 20 GPU units allocated. Given t"
+    },
+    {
+      "jid": "c842ee01382b53bff7359e69",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 37.268,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a compute-intensive task that would likely use available GPU resources for computation"
+    },
+    {
+      "jid": "40febe9c601a275ff7a2333a",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 40.69,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute kernels or dense training workloads which would likely satura"
+    },
+    {
+      "jid": "f5ce5d0bb18f6ecda6ea6ed2",
+      "roles": "TVMTuneMain",
+      "note": "task roles: TVMTuneMain; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 54.608,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'TVMTuneMain' implies a task that is likely to use the full capacity of the GPU for tuning or training purposes"
+    },
+    {
+      "jid": "ef81c7d9f3753ff63d3a6f10",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: ps, evaluator, worker; 3 instances in total; requested GPU class T4; planned GPU 25% per instance.",
+      "quanta": 2,
+      "util": 0.154,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes roles such as 'ps' (parameter server) and 'evaluator', which typically do not consume sign"
+    },
+    {
+      "jid": "eec1886ba18ec0961eadf544",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 39.342,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a compute-intensive task that would likely use available GPU resources for computation"
+    },
+    {
+      "jid": "3b5cb531a691b1ff2a5c5b6a",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 37.36,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute-intensive workloads such as training or inference kernels whi"
+    },
+    {
+      "jid": "607d013edfe00e464e86dfee",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 40 instances in total; requested GPU class V100M32; planned GPU 100% per instance.",
+      "quanta": 160,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' typically involves running dense training or compute kernels which can effectively utilize a la"
+    },
+    {
+      "jid": "d9a31bd138bd3b7b372fc4ae",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.86,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role 'PyTorchWorker' typically involves running dense training or compute kernels which would saturate the avai"
+    },
+    {
+      "jid": "16ea48ce7bd039a953b74132",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 14 instances in total; requested GPU class T4; planned GPU 25% per instance.",
+      "quanta": 10,
+      "util": 30.122,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile includes 'ps' and 'worker' roles which typically do not require significant GPU computation. With o"
+    },
+    {
+      "jid": "47cdf7d3de53cba74e409276",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; requested GPU class V100M32; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.309,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' implies that the task is running dense training or compute kernels which would saturate the giv"
+    },
+    {
+      "jid": "800327e8ac4eb1891c4f7b9b",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.534,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role is PyTorchWorker which implies running dense training or compute kernels that would saturate the given GPU"
+    },
+    {
+      "jid": "da78c71b928e240acc03b2f8",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 8 instances in total; planned GPU 100% per instance.",
+      "quanta": 32,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role 'PyTorchWorker' typically involves running dense training or compute kernels which would saturate the give"
+    },
+    {
+      "jid": "d2cc5249e09c3bcab151592d",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 0.588,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a compute-intensive task that would likely use available GPU resources for computation"
+    },
+    {
+      "jid": "a928df04374ae77c94ad88c4",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 5 instances in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 8,
+      "util": 39.432,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile includes 'ps' and 'worker' roles with a planned GPU usage of only 50% per instance. These roles typ"
+    },
+    {
+      "jid": "eba1ffd182d20afe79925d41",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 4 instances in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 16,
+      "util": 0.001,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' implies that the tasks are running dense training or compute kernels which would saturate the a"
+    },
+    {
+      "jid": "97d2dfe351ab14a883545221",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.333,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role 'PyTorchWorker' typically involves running dense training or compute kernels which would saturate the avai"
+    },
+    {
+      "jid": "06b4d79173d0407adf669594",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.312,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' typically involves running dense training or compute kernels which would saturate the available"
+    },
+    {
+      "jid": "23d96d88fb74ea60a2f66d59",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 6 instances in total; planned GPU 100% per instance.",
+      "quanta": 16,
+      "util": 31.576,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile includes 'ps' (parameter server) and 'worker' roles with a total of 6 instances allocated 100% GPU "
+    },
+    {
+      "jid": "5c3ab002275ce3a9ea52cee2",
+      "roles": "TVMTuneMain",
+      "note": "task roles: TVMTuneMain; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 81.59,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The role 'TVMTuneMain' typically involves tuning and optimizing models rather than saturating the GPU with heavy computa"
+    },
+    {
+      "jid": "e8821f721a0e7b66126a1401",
+      "roles": "TVMTuneMain",
+      "note": "task roles: TVMTuneMain; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 50.268,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The role 'TVMTuneMain' typically involves tuning and optimizing models rather than saturating the GPU with intensive tra"
+    },
+    {
+      "jid": "ff62fb2ce97251a10b3451fe",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 5 instances in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 20,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'PyTorchWorker' typically involves running dense training or compute kernels which can effectively utilize the "
+    },
+    {
+      "jid": "c6f0c6433fab7dd4590d9009",
+      "roles": "PyTorchWorker",
+      "note": "task roles: PyTorchWorker; 1 instance in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.955,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The task role 'PyTorchWorker' typically involves running dense training or compute kernels which can saturate the availa"
+    },
+    {
+      "jid": "467226171587487849a39c70",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 15 instances in total; planned GPU 100% per instance.",
+      "quanta": 40,
+      "util": 41.282,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile includes 'ps' and 'worker' roles with a total of 15 instances allocated across these roles. Given t"
+    },
+    {
+      "jid": "3d941e19c95c5f97bdf82a16",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 51 instances in total; requested GPU class P100; planned GPU 200% per instance.",
+      "quanta": 400,
+      "util": 31.025,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The role 'ps' typically stands for parameter server which does not involve heavy GPU computation. The high percentage of"
+    },
+    {
+      "jid": "9c86786b4f9d5a925675eed7",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: evaluator, ps, worker; 3 instances in total; requested GPU class T4; planned GPU 25% per instance.",
+      "quanta": 2,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The task roles include 'evaluator' and 'ps', which typically do not consume significant GPU resources despite holding ca"
+    },
+    {
+      "jid": "32c8be7d00769a5fc9863afc",
+      "roles": "TVMTuneMain",
+      "note": "task roles: TVMTuneMain; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 63.261,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The role 'TVMTuneMain' implies a task that is likely to use the full capacity of the allocated GPUs for tuning or traini"
+    },
+    {
+      "jid": "eae2328cd107ecc7fb028620",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute-intensive kernels which would likely use more GPU capacity if"
+    },
+    {
+      "jid": "791c48659f2215ebfe05ef12",
+      "roles": "ps|worker",
+      "note": "task roles: worker, ps; 4 instances in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 12,
+      "util": 46.106,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile indicates 4 instances with a role split between 'worker' and 'ps'. Given that parameter servers (ps"
+    },
+    {
+      "jid": "d39996d80988a17060dcec4f",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: worker, ps, evaluator; 3 instances in total; requested GPU class T4; planned GPU 25% per instance.",
+      "quanta": 2,
+      "util": 0.062,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes roles such as 'ps' (parameter server) and 'evaluator', which typically do not consume sign"
+    },
+    {
+      "jid": "5d15242b4f1848301b10d19b",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: evaluator, worker, ps; 3 instances in total; requested GPU class T4; planned GPU 25% per instance.",
+      "quanta": 2,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes an 'evaluator' role which typically does not consume significant GPU resources despite hol"
+    },
+    {
+      "jid": "bca44b584ddd2420b3a90b2b",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 7 instances in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 24,
+      "util": 30.408,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile includes 'ps' and 'worker' roles which typically do not require full utilization of a GPU unit for "
+    },
+    {
+      "jid": "d8d9dbb99a9c652f30ddf3fb",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 41 instances in total; planned GPU 100% per instance.",
+      "quanta": 160,
+      "util": 70.274,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile includes 'ps' and 'worker' roles with a total of 41 instances, each allocated 100% of a GPU unit. T"
+    },
+    {
+      "jid": "dd809f6aa22c389d2b00c325",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies that the task is involved in running compute-intensive operations such as training or "
+    },
+    {
+      "jid": "e546b1aa2c9c88c59f0b2b87",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 2 instances in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 44.917,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile includes 'ps' (parameter server) and 'worker' roles with 2 instances in total, each allocated 100% "
+    },
+    {
+      "jid": "3263696056f072b6550755f5",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 45 instances in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 80,
+      "util": 32.731,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile includes 'ps' and 'worker' roles which typically do not require extensive GPU usage for parameter s"
+    },
+    {
+      "jid": "61d59e4d779c7cd61814c73c",
+      "roles": "ps|worker",
+      "note": "task roles: worker, ps; 9 instances in total; planned GPU 100% per instance.",
+      "quanta": 32,
+      "util": 30.922,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "The job has 9 instances with a planned GPU usage of 100% per instance and is allocated 32 GPU units. Given that the allo"
+    },
+    {
+      "jid": "2ad0de11a333a4a37469b266",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: evaluator, worker, ps; 4 instances in total; requested GPU class T4; planned GPU 25% per instance.",
+      "quanta": 3,
+      "util": 0.417,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes a role 'evaluator' which typically does not consume significant GPU resources despite hold"
+    },
+    {
+      "jid": "c63ec243678a3ef410603c67",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 150 instances in total; planned GPU 50% per instance.",
+      "quanta": 280,
+      "util": 47.846,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The role 'ps' typically coordinates and serves parameters with minimal GPU computation, while 'worker' tasks might run c"
+    },
+    {
+      "jid": "328c1d127830b3470c766343",
+      "roles": "ps|worker",
+      "note": "task roles: worker, ps; 7 instances in total; planned GPU 100% per instance.",
+      "quanta": 20,
+      "util": 51.22,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The job has a total of 20 GPU units with 7 instances (6 workers and 1 parameter server), each using 100% of the allocate"
+    },
+    {
+      "jid": "9f8b20fefb2d1566cee23f40",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute kernels or dense training workloads which would likely satura"
+    },
+    {
+      "jid": "c70c0c17a50c8c24f7d56756",
+      "roles": "ps|worker",
+      "note": "task roles: ps, worker; 12 instances in total; planned GPU 100% per instance.",
+      "quanta": 40,
+      "util": 56.489,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile includes 'ps' (parameter server) and 'worker' roles with a total of 12 instances running at 100% GP"
+    },
+    {
+      "jid": "81d76b192210818896587c53",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: worker, ps, evaluator; 3 instances in total; requested GPU class T4; planned GPU 25% per instance.",
+      "quanta": 2,
+      "util": 0.5,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes roles such as 'ps' and 'evaluator', which typically do not consume significant GPU resourc"
+    },
+    {
+      "jid": "ef0b04fd9f07c383fc2d9434",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: ps, worker, evaluator; 6 instances in total; planned GPU 100% per instance.",
+      "quanta": 20,
+      "util": 0.294,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes roles such as 'ps' (parameter server) and 'evaluator', which typically do not consume sign"
+    },
+    {
+      "jid": "dfc7fea381650ed64235dd95",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: ps, worker, evaluator; 12 instances in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 22,
+      "util": 63.98,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile includes roles such as 'ps' (parameter server) and 'evaluator', which typically do not consume sign"
+    },
+    {
+      "jid": "39310f045f6a3e6d1cd37b3c",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: ps, evaluator, worker; 37 instances in total; planned GPU 25% per instance.",
+      "quanta": 16,
+      "util": 0.29,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes roles such as 'ps' (parameter server), 'evaluator', and 'worker'. Given that parameter ser"
+    },
+    {
+      "jid": "f902455a24616f47b90c074f",
+      "roles": "OpenmpiTracker|OpenmpiWorker",
+      "note": "task roles: OpenmpiWorker, OpenmpiTracker; 6 instances in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 20,
+      "util": 0.521,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The role 'OpenmpiTracker' typically does not consume significant GPU resources and the majority of roles being 'OpenmpiW"
+    },
+    {
+      "jid": "1f5a61c6cac12d33ec96750f",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: evaluator, worker, ps; 3 instances in total; requested GPU class T4; planned GPU 25% per instance.",
+      "quanta": 2,
+      "util": 0.479,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes a role 'evaluator' which typically does not consume significant GPU resources despite hold"
+    },
+    {
+      "jid": "6a1434179ec734f1c9836d68",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: ps, evaluator, worker; 12 instances in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 22,
+      "util": 71.94,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile includes roles such as 'ps' (parameter server) and 'evaluator', which typically do not consume sign"
+    },
+    {
+      "jid": "5e27341703873526a1030bdf",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 0.087,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute kernels or performs dense computations which would likely ben"
+    },
+    {
+      "jid": "b0365f413d4270129c6a90b2",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: ps, evaluator, worker; 4 instances in total; planned GPU 100% per instance.",
+      "quanta": 12,
+      "util": 0.378,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes roles such as 'ps' (parameter server) and 'evaluator', which typically do not consume sign"
+    },
+    {
+      "jid": "f5c801eb68f7d8c51ef9b569",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: worker, ps, evaluator; 3 instances in total; requested GPU class T4; planned GPU 25% per instance.",
+      "quanta": 2,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes roles such as 'ps' (parameter server) and 'evaluator', which typically do not consume sign"
+    },
+    {
+      "jid": "b4309cc7f4535e6fff138419",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: worker, evaluator, ps; 3 instances in total; requested GPU class T4; planned GPU 25% per instance.",
+      "quanta": 2,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes roles such as 'worker', 'evaluator', and 'ps' (presumably parameter server), with only 25%"
+    },
+    {
+      "jid": "9e612847a82d5d4eba79a1ab",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: ps, worker, evaluator; 3 instances in total; requested GPU class T4; planned GPU 25% per instance.",
+      "quanta": 2,
+      "util": 0.4,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes roles such as 'ps' (parameter server) and 'evaluator', which typically do not consume sign"
+    },
+    {
+      "jid": "24b6192586207724dfc79ee4",
+      "roles": "OpenmpiTracker|OpenmpiWorker",
+      "note": "task roles: OpenmpiTracker, OpenmpiWorker; 2 instances in total; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The role 'OpenmpiTracker' typically coordinates tasks and does not involve significant GPU computation. Similarly, 'Open"
+    },
+    {
+      "jid": "d3e27dea964fe73a2e6d34d0",
+      "roles": "OssToVolumeWorker",
+      "note": "task roles: OssToVolumeWorker; 32 instances in total; planned GPU 1% per instance.",
+      "quanta": 1,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The role 'OssToVolumeWorker' implies a coordination or parameter-serving task which does not heavily utilize the GPU. Wi"
+    },
+    {
+      "jid": "6b633ab73093d3702fe46560",
+      "roles": "chief|evaluator|ps|worker",
+      "note": "task roles: evaluator, worker, ps, chief; 21 instances in total; planned GPU 100% per instance.",
+      "quanta": 64,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes roles such as 'evaluator', 'ps' (parameter server), and 'chief', which typically do not co"
+    },
+    {
+      "jid": "cedc4910c84aeb54211e6579",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a compute-intensive task that would likely use available GPU resources for computation"
+    },
+    {
+      "jid": "db5c76cbba2062dfa7d47ba3",
+      "roles": "OpenmpiTracker|OpenmpiWorker",
+      "note": "task roles: OpenmpiWorker, OpenmpiTracker; 4 instances in total; planned GPU 100% per instance.",
+      "quanta": 12,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The role 'OpenmpiWorker' typically involves distributed computing tasks where the workload is split across multiple node"
+    },
+    {
+      "jid": "c42f97bf73b6e9ac763944c0",
+      "roles": "JupyterTask",
+      "note": "task roles: JupyterTask; 1 instance in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "JupyterTask role typically hosts an interactive session and does not consume significant GPU resources despite the capac"
+    },
+    {
+      "jid": "a605238a43ce9d2005afc71b",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: worker, ps, evaluator; 3 instances in total; requested GPU class T4; planned GPU 25% per instance.",
+      "quanta": 2,
+      "util": 0.269,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes roles such as 'ps' (parameter server) and 'evaluator', which typically do not consume sign"
+    },
+    {
+      "jid": "126324f6e85605fb654ca643",
+      "roles": "TVMTuneMain",
+      "note": "task roles: TVMTuneMain; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 77.051,
+      "class": "BUSY",
+      "extra": 1,
+      "evidence": "TVMTuneMain role implies a tuning or training workload which typically involves running dense computations and would ben"
+    },
+    {
+      "jid": "b55b28e082065dd56c50ca61",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: ps, worker, evaluator; 3 instances in total; requested GPU class T4; planned GPU 25% per instance.",
+      "quanta": 2,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes roles such as 'ps' (parameter server) and 'evaluator', which typically do not consume sign"
+    },
+    {
+      "jid": "1c2abc5471ce9b57589edcf3",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: ps, worker, evaluator; 6 instances in total; planned GPU 100% per instance.",
+      "quanta": 20,
+      "util": 0.503,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes 'ps' and 'evaluator' roles which typically do not consume significant GPU resources despit"
+    },
+    {
+      "jid": "f1eecb8c99a30ead70fe97d3",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: worker, ps, evaluator; 3 instances in total; requested GPU class T4; planned GPU 25% per instance.",
+      "quanta": 2,
+      "util": 0.211,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes roles such as 'ps' (parameter server) and 'evaluator', which typically do not consume sign"
+    },
+    {
+      "jid": "e7c0db0381e28017090fe9ca",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 0.235,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a compute-intensive task that would likely use the available GPU resources effectively"
+    },
+    {
+      "jid": "91dbff307565f7c0bdbead7f",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: evaluator, worker, ps; 305 instances in total; requested GPU class T4; planned GPU 200% per instance.",
+      "quanta": 300,
+      "util": 0.344,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile indicates that the job has a significant number of 'evaluator' tasks which typically do not consume"
+    },
+    {
+      "jid": "f9d259d38cd285a80003ba02",
+      "roles": "OpenmpiTracker|OpenmpiWorker",
+      "note": "task roles: OpenmpiTracker, OpenmpiWorker; 6 instances in total; requested GPU class V100; planned GPU 100% per instance.",
+      "quanta": 20,
+      "util": 0.381,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The tasks are OpenmpiTracker and OpenmpiWorker which typically involve coordination and communication rather than dense "
+    },
+    {
+      "jid": "675abdc99e3f784c15710590",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 0.821,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute-intensive workloads such as training or inference kernels whi"
+    },
+    {
+      "jid": "9ef962caf74828fe3f96a20d",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 0.842,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute kernels or dense training workloads which would likely satura"
+    },
+    {
+      "jid": "b6d09e00bdbc22e8e377fbc6",
+      "roles": "TVMTuneMain",
+      "note": "task roles: TVMTuneMain; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 81.74,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The role 'TVMTuneMain' typically involves tuning and optimizing models rather than saturating the GPU with continuous co"
+    },
+    {
+      "jid": "7e0e14eeaab75968d30d80d4",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute kernels or dense training workloads which would likely satura"
+    },
+    {
+      "jid": "0e00300e0c8a3d53c384beef",
+      "roles": "TVMTuneMain",
+      "note": "task roles: TVMTuneMain; 1 instance in total; requested GPU class T4; planned GPU 100% per instance.",
+      "quanta": 4,
+      "util": 52.443,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The role 'TVMTuneMain' typically involves tuning and optimizing models rather than saturating the GPU with intensive com"
+    },
+    {
+      "jid": "2abda743ebda00878f67be95",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: evaluator, worker, ps; 6 instances in total; planned GPU 100% per instance.",
+      "quanta": 20,
+      "util": 0.394,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The workload profile includes 'evaluator' and 'ps' roles which typically do not consume significant GPU resources despit"
+    },
+    {
+      "jid": "66de6d42325aabdd94ba5a5b",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 0.824,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a compute-intensive task that would likely use the available GPU resources effectively"
+    },
+    {
+      "jid": "4353543d05ff19580361b5e1",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute kernels or dense training workloads which would likely satura"
+    },
+    {
+      "jid": "0b2f7c08fa1d2ff94e4d4320",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute kernels or dense training workloads which would likely satura"
+    },
+    {
+      "jid": "cd0a7d21568afad02af1bdc9",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute kernels or dense training workloads which would likely satura"
+    },
+    {
+      "jid": "efc4a424926956c7ea12b7ba",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 0.25,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute-intensive kernels which would likely use more than the initia"
+    },
+    {
+      "jid": "495f3f6a347b9f965ecb6b57",
+      "roles": "OpenmpiTracker|OpenmpiWorker",
+      "note": "task roles: OpenmpiWorker, OpenmpiTracker; 11 instances in total; planned GPU 100% per instance.",
+      "quanta": 40,
+      "util": 0.597,
+      "class": "IDLE",
+      "extra": 0,
+      "evidence": "The role 'OpenmpiTracker' typically coordinates tasks and does not consume significant GPU resources, while 'OpenmpiWork"
+    },
+    {
+      "jid": "f0efa50ab00d26af1b836543",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a compute-intensive task that would likely use available GPU resources for computation"
+    },
+    {
+      "jid": "e9d7faafb6b6d09e76b9c833",
+      "roles": "evaluator|worker",
+      "note": "task roles: worker, evaluator; 5 instances in total; requested GPU class P100; planned GPU 100% per instance.",
+      "quanta": 16,
+      "util": 36.352,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile includes 'evaluator' tasks which typically do not saturate the GPU with computation despite holding"
+    },
+    {
+      "jid": "a78a64866fcefa2fe9e425a8",
+      "roles": "evaluator|ps|worker",
+      "note": "task roles: worker, evaluator, ps; 12 instances in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 22,
+      "util": 65.246,
+      "class": "BUSY",
+      "extra": 0,
+      "evidence": "The workload profile includes roles such as 'worker', 'evaluator', and 'ps' (presumably parameter server), which typical"
+    },
+    {
+      "jid": "9156940e9304421afedba16f",
+      "roles": "xComputeWorker",
+      "note": "task roles: xComputeWorker; 1 instance in total; requested GPU class T4; planned GPU 50% per instance.",
+      "quanta": 2,
+      "util": 0.0,
+      "class": "IDLE",
+      "extra": 1,
+      "evidence": "The role 'xComputeWorker' implies a task that runs compute-intensive workloads such as training or inference kernels whi"
+    }
+  ]
+}

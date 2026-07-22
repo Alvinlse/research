@@ -1,0 +1,2167 @@
+{
+  "model": "qwen2.5:14b",
+  "results": {
+    "INFEAS-01": {
+      "category": "infeasible",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r01": 4,
+            "r00": 1
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r01": 4,
+            "r00": 1
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "INFEAS-02": {
+      "category": "infeasible",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 3,
+            "r01": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r01": 0,
+            "r00": 3
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "INFEAS-03": {
+      "category": "infeasible",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r00": 4,
+            "r01": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r01": 2,
+            "r00": 4
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "INFEAS-04": {
+      "category": "infeasible",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "INFEAS-05": {
+      "category": "infeasible",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 2,
+            "r01": 2,
+            "r02": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r01": 2,
+            "r00": 2,
+            "r02": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "INFEAS-06": {
+      "category": "infeasible",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r00": 5,
+            "r01": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r01": 0,
+            "r00": 5
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "POLICY-01": {
+      "category": "nl_policy",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r01": 2,
+            "r00": 4
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r01": 2,
+            "r00": 4
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "POLICY-02": {
+      "category": "nl_policy",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r00": 3,
+            "r01": 1
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r01": 1,
+            "r00": 3
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "POLICY-03": {
+      "category": "nl_policy",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r00": 5,
+            "r01": 3
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r01": 3,
+            "r00": 5
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "POLICY-04": {
+      "category": "nl_policy",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r00": 3,
+            "r01": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r01": 2,
+            "r00": 3
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "POLICY-05": {
+      "category": "nl_policy",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r00": 4,
+            "r01": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r01": 0,
+            "r00": 4
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "POLICY-06": {
+      "category": "nl_policy",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r00": 3,
+            "r01": 3
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r01": 3,
+            "r00": 3
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "CONTRA-01": {
+      "category": "contradiction",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 4,
+            "r01": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r01": 0,
+            "r00": 4
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "CONTRA-02": {
+      "category": "contradiction",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 4
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 4
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "CONTRA-03": {
+      "category": "contradiction",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r00": 3,
+            "r01": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r01": 2,
+            "r00": 3
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "CONTRA-04": {
+      "category": "contradiction",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r01": 2,
+            "r00": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r01": 2,
+            "r00": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "CONTRA-05": {
+      "category": "contradiction",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 2,
+            "r01": 1
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r01": 1,
+            "r00": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "CONTRA-06": {
+      "category": "contradiction",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r00": 8,
+            "r01": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r01": 0,
+            "r00": 8
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "UNMOD-01": {
+      "category": "unmodeled",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r00": 2,
+            "r01": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r01": 2,
+            "r00": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "UNMOD-02": {
+      "category": "unmodeled",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r00": 4,
+            "r01": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r01": 2,
+            "r00": 4
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "UNMOD-03": {
+      "category": "unmodeled",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r00": 3,
+            "r01": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r01": 2,
+            "r00": 3
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "UNMOD-04": {
+      "category": "unmodeled",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r00": 4,
+            "r01": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r01": 0,
+            "r00": 4
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "UNMOD-05": {
+      "category": "unmodeled",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r00": 3,
+            "r01": 3
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r01": 3,
+            "r00": 3
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "UNMOD-06": {
+      "category": "unmodeled",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r00": 5,
+            "r01": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r01": 0,
+            "r00": 5
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "CORRUPT-01": {
+      "category": "corrupt",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r00": 8,
+            "r01": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r01": 0,
+            "r00": 8
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "CORRUPT-02": {
+      "category": "corrupt",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 0,
+            "r01": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r01": 2,
+            "r00": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "CORRUPT-03": {
+      "category": "corrupt",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 3,
+            "r01": 3
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r01": 3,
+            "r00": 3
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "CORRUPT-04": {
+      "category": "corrupt",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "CORRUPT-05": {
+      "category": "corrupt",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r00": 3,
+            "r01": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r01": 2,
+            "r00": 3
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "CORRUPT-06": {
+      "category": "corrupt",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "AMBIG-01": {
+      "category": "ambiguous",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 2,
+            "r01": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r01": 2,
+            "r00": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "AMBIG-02": {
+      "category": "ambiguous",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": null,
+          "alloc": {
+            "r00": 5,
+            "r01": 1,
+            "r02": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": null,
+          "alloc": {
+            "r01": 1,
+            "r00": 5,
+            "r02": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "AMBIG-03": {
+      "category": "ambiguous",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r00": 4,
+            "r01": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r01": 0,
+            "r00": 4
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "AMBIG-04": {
+      "category": "ambiguous",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 3,
+            "r01": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r01": 2,
+            "r00": 3
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "AMBIG-05": {
+      "category": "ambiguous",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": null,
+          "alloc": {
+            "r00": 8,
+            "r01": 0,
+            "r02": 0,
+            "r03": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": null,
+          "alloc": {
+            "r01": 0,
+            "r00": 8,
+            "r02": 0,
+            "r03": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "AMBIG-06": {
+      "category": "ambiguous",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r00": 2,
+            "r01": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": false,
+          "alloc": {
+            "r01": 2,
+            "r00": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "ROUTINE-01": {
+      "category": "routine",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 3,
+            "r01": 3
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r01": 3,
+            "r00": 3
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "ROUTINE-02": {
+      "category": "routine",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 3,
+            "r01": 3
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r01": 3,
+            "r00": 3
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "ROUTINE-03": {
+      "category": "routine",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": null,
+          "alloc": {
+            "r00": 2,
+            "r01": 2,
+            "r02": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": null,
+          "alloc": {
+            "r01": 2,
+            "r00": 2,
+            "r02": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "ROUTINE-04": {
+      "category": "routine",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 4
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 4
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "ROUTINE-05": {
+      "category": "routine",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": null,
+          "alloc": {
+            "r00": 2,
+            "r01": 2,
+            "r02": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": null,
+          "alloc": {
+            "r01": 2,
+            "r00": 2,
+            "r02": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "ROUTINE-06": {
+      "category": "routine",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 6,
+            "r01": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r01": 2,
+            "r00": 6
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "INFEAS-07": {
+      "category": "infeasible",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": null,
+          "alloc": {
+            "r00": 8,
+            "r01": 0,
+            "r02": 0,
+            "r03": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": null,
+          "alloc": {
+            "r01": 0,
+            "r00": 8,
+            "r02": 0,
+            "r03": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "INFEAS-08": {
+      "category": "infeasible",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": null,
+          "alloc": {
+            "r00": 4
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": null,
+          "alloc": {
+            "r00": 4
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "INFEAS-09": {
+      "category": "infeasible",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r00": 3,
+            "r01": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r01": 0,
+            "r00": 3
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "CONTRA-07": {
+      "category": "contradiction",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": null,
+          "alloc": {
+            "r00": 2,
+            "r01": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": null,
+          "alloc": {
+            "r01": 2,
+            "r00": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "CONTRA-08": {
+      "category": "contradiction",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": null,
+          "alloc": {
+            "r00": 4,
+            "r01": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": null,
+          "alloc": {
+            "r01": 0,
+            "r00": 4
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "CONTRA-09": {
+      "category": "contradiction",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r00": 5,
+            "r01": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r01": 0,
+            "r00": 5
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "AMBIG-07": {
+      "category": "ambiguous",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r00": 5,
+            "r01": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r01": 0,
+            "r00": 5
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "AMBIG-08": {
+      "category": "ambiguous",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r00": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r00": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "AMBIG-09": {
+      "category": "ambiguous",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r00": 4,
+            "r01": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r01": 0,
+            "r00": 4
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "CORRUPT-07": {
+      "category": "corrupt",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": null,
+          "alloc": {
+            "r00": 0,
+            "r01": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": null,
+          "alloc": {
+            "r01": 0,
+            "r00": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "CORRUPT-08": {
+      "category": "corrupt",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r00": 4,
+            "r01": 0
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": false,
+          "cited": false,
+          "alloc": {
+            "r01": 0,
+            "r00": 4
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    },
+    "CORRUPT-09": {
+      "category": "corrupt",
+      "arms": {
+        "market": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r00": 2,
+            "r01": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "market: bases then \u00a76 margin clearing"
+        },
+        "corrected": {
+          "resolved": true,
+          "overcommitted": false,
+          "handled": true,
+          "cited": null,
+          "alloc": {
+            "r01": 2,
+            "r00": 2
+          },
+          "reserve": 0,
+          "hard_violations": [],
+          "policy_flags": [],
+          "justification": "no contextual evidence raised",
+          "meta": {
+            "delta": {},
+            "l1": 0,
+            "rejected": false,
+            "violations": [],
+            "proposals": 0
+          }
+        }
+      }
+    }
+  }
+}

@@ -34,7 +34,9 @@ from pins.market import ask_curve, bid_curve
 from pins.referee import referee_decide
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, "results_h2.json")
+# honour PINS_RESULTS like trace_replay does: a --no-llm smoke run must not be able to
+# overwrite a completed LLM run's per-case detail (it did, once, and the scratch arm was lost)
+OUT = os.environ.get("PINS_RESULTS", os.path.join(HERE, "results_h2.json"))
 DORDER = {"behind": 0, "ontrack": 1, "ahead": 2}
 
 
@@ -59,10 +61,15 @@ def build_anchor(case) -> tuple[dict, dict, list, dict]:
                1 for s in case.stmts if s.get("side") == "supply"
                and int(s.get("requested_reserve_gpus", 0) or 0) > 0),
            "n_waiting": 0, "n_active": max(len(dem), 1), "law": "amdahl", "alpha": 0.0}
-    # margin market over what the bases left
+    # margin market over what the bases left. ONLY jobs standing at their full minimum may
+    # bid: the unit of negotiation is "is the NEXT extra GPU worth giving to this job?", which
+    # a job still short of its protected base cannot ask. A job whose base was rationed
+    # (the INFEASIBLE scenes) belongs to admission, not to the margin market.
     units = []
     for s in dem:
         jid = s["job_id"]
+        if alloc.get(jid, 0) < int(s.get("base_gpus", 0)):
+            continue
         facts = {"base": max(1, int(s.get("base_gpus", 0)) or 1),
                  "usable": max(0, int(s.get("requested_margin_gpus", 0))),
                  "waited": 0, "held": alloc.get(jid, 0)}
@@ -114,6 +121,7 @@ def main() -> None:
     ap.add_argument("--no-think", action="store_true")
     a = ap.parse_args()
     use_llm = not a.no_llm
+    out = OUT if use_llm else OUT.replace(".json", "_rule.json")   # smoke runs get their own file
 
     results, agg = {}, collections.defaultdict(lambda: collections.Counter())
     for i, case in enumerate(CASES, 1):
@@ -152,9 +160,9 @@ def main() -> None:
     print(f"\ncorrected: fired on {agg['corrected']['fired']}/{agg['corrected']['n']} cases, "
           f"{agg['corrected']['rejected']} corrections rejected by the validator, "
           f"total ||dA||_1 = {agg['corrected']['l1']}")
-    with open(OUT, "w") as f:
-        json.dump({"model": a.model, "results": results}, f, indent=2)
-    print(f"-> {OUT}")
+    with open(out, "w") as f:
+        json.dump({"model": a.model, "use_llm": use_llm, "results": results}, f, indent=2)
+    print(f"-> {out}")
 
 
 if __name__ == "__main__":

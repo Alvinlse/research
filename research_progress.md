@@ -3872,6 +3872,16 @@ for L in amdahl sat; do PINS_RESULTS=pins/results_exp72_$L.json \
   .venv/bin/python -m pins.trace_replay --market --seeds 32 --pools 4,6,8 --law $L; done
 ```
 
+> **AMENDED 2026-07-22 (Exp 74).** The comparison above is NOT information-matched. The market
+> received each job's usable extra parallelism as an exact integer (`facts["usable"]`), while
+> the LLM arms see the same quantity only as a `low/medium/high` spike-risk bucket. Re-running
+> with `--bid-info bucket` (the market told only what the LLM arms are told) **halves every
+> gain**: at pool 8/amdahl `dutil +2.1* -> +1.1*`, `duseful +2.1* -> +1.1*`,
+> `dregret -2.8* -> -1.6*`; at pool 8/sat `dutil +2.3* -> +1.3*`. The mechanism half survives
+> and the market still beats `negotiated` on useful utilisation and regret in all six cells at
+> equal information — but the headline number in the table above is the *exact-information*
+> figure and must not be quoted without this qualifier. See Exp 74.
+
 ## Experiment 73 — THE COMPOSED ARM: the referee's whole contribution is one scalar, and protection trades against efficiency through the SAME resource (2026-07-22)
 
 **Design.** `--composed` (`pins/market.py::make_policy_composed`): the LLM sees only the
@@ -3935,3 +3945,164 @@ for L in amdahl sat; do PINS_NUM_CTX=8192 PINS_CACHE=pins/cache_exp73.json \
   --referee --market --composed --llm --model qwen2.5:14b --caps predicted \
   --pools 8 --seeds 32 --law $L; done
 ```
+
+## Experiments 74–76 — THE MARKET'S THREE QUALIFIERS (2026-07-22)
+
+### Exp 74 — information ablation (`--bid-info bucket`)
+
+Exp 72 was NOT information-matched: the market saw a job's usable extra parallelism as an
+exact integer, the LLM arms see only a `low/medium/high` bucket. Matching it (bucket midpoints
+`{low:0, medium:1, high:2}`, which coincide with `HEDGE_GPUS`, so derived not tuned):
+
+| law | pool | dutil exact→bucket | duseful exact→bucket | dregret exact→bucket |
+|---|---|---|---|---|
+| amdahl | 8 | +2.1\* → +1.1\* | +2.1\* → +1.1\* | −2.8\* → −1.6\* |
+| amdahl | 4 | +0.9\* → +0.4 ns | +0.9\* → +0.4 ns | −1.3\* → −0.6\* |
+| sat | 8 | +2.3\* → +1.3\* | +0.5\* → +0.3\* | −0.5\* → −0.3\* |
+
+**~50% of the effect was the information channel.** The rest survives (5/6 cells vs floor), and
+the market still beats `negotiated` on useful util and regret in **all six** cells at equal
+information. Claim to state: *explicit marginal-value pricing beats negotiation at equal
+information, and its advantage roughly doubles when the marginal-value estimate is sharp* —
+which makes Stage-1 prediction quality load-bearing again, the opposite of Exp 38/39.
+
+### Exp 75 — the fast-tick regime
+
+Clearing costs **0.13 ms (8 bidders) → 3.0 ms (200)**: a 1 s tick is a 0.3% duty cycle. The 14b
+referee is 5.4 s P95 *per call* × ~37 calls/tick — unusable below a minute. But resize physics
+bites: sweeping `--realloc-cost` as the fraction of a tick a restart costs (market vs floor,
+pool 8):
+
+| law | rc | duseful | dregret | dprodSLA |
+|---|---|---|---|---|
+| sat | 0.0 | +0.5\* | −0.5\* | −0.8 |
+| sat | 0.9 | **−0.8\*** | **+1.8\*** | **+5.8\*** |
+| sat | 0.9 + `--cooldown 5` | −0.3 ns | +0.5\* | +2.4 |
+| amdahl | 0.9 + `--cooldown 5` | **+1.2\*** | **−1.3\*** | +1.1 |
+
+**The advantage inverts under the primary law at high resize cost.** `util` keeps rising (+2.8\*)
+while `useful` goes negative — Exp 68's lesson biting Exp 72's winner. **Deployable claim:
+clearing latency is irrelevant; the DECISION INTERVAL must be several reconfiguration times.**
+
+### Exp 76 — the principled bid fix that did nothing (negative result)
+
+The bid charged `δ·C_resize` on **k** (award size) not **|Δg|** (change from current holding),
+so a job paid the same to KEEP margin as to acquire it. Corrected to the plan's
+`C(k) = c₀·[k≠m] + c₁·|k−m|` as a marginal increment; byte-identical at zero cost.
+**It changed nothing**: rc=0.9/sat `duseful −0.8*→−0.7*`, `dregret +1.8*→+1.7*`, jobs touched
+`0.157→0.148` (needed ~40%, got 6%). Why: the market touches 0.138 jobs/tick even at rc=0,
+where the term is zero, vs the floor's 0.089. The churn is **structural** — the market
+re-solves each tick and the ask curve (`a_q ∝ q/free`) moves the crossing point. A per-unit
+price cannot hold an allocation still; the cooldown works because it acts on the ceiling,
+outside the clearing. Caveat: the corrected sweep added `--resize-c1 0.05` which Exp 75 lacked,
+so a clean A/B at matched `(c₀,c₁)` is still owed.
+
+## Experiment 77 (H2) — BID-FIRST CORRECTION vs FROM-SCRATCH GENERATION, on the hard-case suite (2026-07-22)
+
+Architecture (user's design, `pins/correction.py`): market allocates → demand/supply reviewers
+propose corrections *only where free text exists* → referee says **who deserves how much** →
+`fund()` moves margin from the market's least-valued units (never a base) → non-repairing
+validator → invalid ⇒ **the market's allocation stands** (fallback is the strongest baseline,
+not the floor).
+
+```
+arm          ambiguous  contradic    corrupt  infeasibl  nl_policy    routine  unmodeled    TOTAL   over
+market          4/9        4/9        6/9        5/9        3/6        4/6        4/6     30/54        0
+corrected       4/9        4/9        6/9        5/9        3/6        4/6        4/6     30/54        0
+scratch         5/9        5/9        8/9        2/9        5/6        5/6        4/6     34/54        2
+corrected: fired on 2/54 cases, 1 rejected, total ||dA||_1 = 4
+```
+
+1. **H2 supported, but nearly vacuously.** `corrected` overcommits 0 vs `scratch`'s 2, total
+   change ‖ΔA‖₁ = 4 across 54 cases. It cannot make a harmful change — but it fired twice.
+2. **H1's exception half NOT supported.** `corrected` == `market` exactly, category by category.
+3. **`scratch` wins the text-heavy categories** (nl_policy 5/6 vs 3/6, corrupt 8/9 vs 6/9) and
+   **collapses on infeasible** (2/9 vs 5/9 — it awards capacity that does not exist). Clean
+   split: **the anchor protects where feasibility is hard; free generation wins where reading
+   the text is hard.** `corrected` handled 6 cases `scratch` missed (3 INFEAS); `scratch`
+   handled 10 `corrected` missed.
+4. Reviewers raised proposals in 24/54 cases; the referee accepted almost none — rules 1+4
+   ("no evidence, no change"; "urgency/tier/deadline are already priced") were written after
+   earlier over-award behaviour and over-corrected into silence.
+
+**Design finding during bring-up:** the referee accepted the right evidence on POLICY-01 and
+then broke its own zero-sum rule funding it (transferred from `_pool` when unsold=0). Removing
+arithmetic from the LLM entirely — it names who deserves how much, `fund()` does the books —
+removed that failure mode by construction. The Exp 1–7 lesson, one level up.
+
+**Data loss (mine):** a `--no-llm` smoke run overwrote `results_h2.json`, destroying the
+per-case 14b detail including the whole `scratch` arm. The table above survives in
+`pins/h2_14b.log`. `h2_eval` now honours `PINS_RESULTS` and writes `*_rule.json` for smoke
+runs. A 14b re-run is owed.
+
+## Experiment 78 — DOES THE REVIEWER'S JUDGEMENT TRACK MEASURED USAGE ON REAL JOBS? (2026-07-22)
+
+First evaluation of the correction layer on the **real trace** rather than authored scenes.
+Built two joins over Alibaba v2020 (`pins/build_job_context.py`, `pins/build_job_usage.py`):
+
+* `job_context.csv` — **100%** of 606,421 replay jobs: task roles, instance count, GPU class
+  from `pai_task_table`. Genuine out-of-model context; the bid never sees it.
+* `job_usage.csv` — **81%** (491,504 jobs): measured `gpu_wrk_util` from `pai_sensor_table`.
+  **Scoring ground truth only — never an input to the bid or any prompt.** Feeding it in would
+  test double-counting resistance while looking like exception handling.
+
+Signal check before spending GPU: declared quanta predicts measured util at ρ=0.270; the role
+context at ρ=0.334; **36.2% of real jobs measure <1% GPU utilisation while holding quanta.**
+
+**Run 1 — the correction layer's own reviewer (social-exception prompt): a clean null.**
+240 stratified jobs (127 IDLE <1% util, 113 BUSY >30%), numeric state held identical so only
+the note varies. Ask rate **0.4% (1/240)**, discrimination **−0.8%**. Diagnosis: the prompt
+defines evidence as *social* exceptions (starvation history, operator instruction, external
+deadline); the trace's notes are *technical* (roles, instances). Mis-pairing of prompt to
+channel, and mine — the model applied my definition correctly.
+
+**Run 2 — pre-registered workload prompt ("would this job convert an extra GPU into work?").**
+
+```
+  P(ask | BUSY) = 69.0% (78/113)     P(ask | IDLE) = 50.4% (64/127)
+  DISCRIMINATION = +18.6%            Fisher exact p = 0.0038
+  BASELINE (held-out role lookup)    = +13.5%
+  accuracy: LLM 58.8% · lookup 57.5% · majority-class floor 52.9%
+  McNemar LLM vs lookup: 38 vs 35, p = 0.815      240 calls, 78k tokens
+```
+
+**Role-controlled analysis (free, no new inference) — where the signal actually comes from:**
+
+| role | P(ask\|BUSY) | P(ask\|IDLE) | within |
+|---|---|---|---|
+| tensorflow | 90% (18/20) | 45% (9/20) | **+45%** |
+| ps\|worker | 15% | 10% | +5% |
+| worker | 80% | 75% | +5% |
+| PyTorchWorker | 85% | 95% | −10% |
+| xComputeWorker | 100% | 100% | 0% |
+| evaluator\|ps\|worker | 0% (0/3) | 0% (0/20) | 0% |
+
+Pooled within-role discrimination **+18.1%** (p=0.008) — the effect survives conditioning on
+role, but is concentrated **entirely in `tensorflow`**. Within that role the only varying
+inputs are instance count and planned GPU%:
+
+```
+  BUSY  median plan_gpu 50%, quanta 2, ask 90%     IDLE  median plan_gpu 25%, quanta 1, ask 45%
+  model ask vs plan_gpu:      r   = 0.551 (p=0.0002)
+  plan_gpu vs measured util:  rho = 0.402
+  plan_gpu vs quanta:         rho = 0.983     <- the SAME variable
+```
+
+**The within-role signal is the declared request, which the bid already prices.** The prompt
+explicitly said "a large request is not evidence of capacity to use it"; the model used it
+anyway, and it pays off only because the declaration weakly tracks usage (ρ=0.40).
+
+**Decomposition of the +18.6%:** (a) between-role ≈ a lookup table (+13.5%, tie at p=0.82),
+(b) within-role = the declaration (already in the bid). **Neither part needs a language model.**
+This is the third architecture in a row whose LLM contribution survives isolation but not a
+cheap deterministic control (Exp 70: one centralised call; Exp 72: the market; Exp 78: a table).
+
+**Consequence for the design:** on this trace the residual is a *tabulatable feature*, so the
+right move is to put `roles` into the bid — conditioning `usable` on task role, a signal the
+mechanism has been ignoring — rather than pay a model to read it. The LLM's remaining case
+rests on residuals that are NOT tabulatable (genuine operator exception text), which this trace
+does not contain and run 1 confirmed it cannot supply.
+
+**In flight:** the role-controlled ablation grid (`--ablate no-numbers|no-role|shuffled-role`)
+to confirm the source of signal, and an ordinal marginal-value prompt scored by
+ρ(level, measured util) against the 0.270/0.334 bars.

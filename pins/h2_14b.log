@@ -1,0 +1,9 @@
+  1/54 INFEAS-01     2/54 INFEAS-02     3/54 INFEAS-03     4/54 INFEAS-04     5/54 INFEAS-05     6/54 INFEAS-06     7/54 POLICY-01     8/54 POLICY-02     9/54 POLICY-03     10/54 POLICY-04     11/54 POLICY-05     12/54 POLICY-06     13/54 CONTRA-01     14/54 CONTRA-02     15/54 CONTRA-03     16/54 CONTRA-04     17/54 CONTRA-05     18/54 CONTRA-06     19/54 UNMOD-01      20/54 UNMOD-02      21/54 UNMOD-03      22/54 UNMOD-04      23/54 UNMOD-05      24/54 UNMOD-06      25/54 CORRUPT-01    26/54 CORRUPT-02    27/54 CORRUPT-03    28/54 CORRUPT-04    29/54 CORRUPT-05    30/54 CORRUPT-06    31/54 AMBIG-01      32/54 AMBIG-02      33/54 AMBIG-03      34/54 AMBIG-04      35/54 AMBIG-05      36/54 AMBIG-06      37/54 ROUTINE-01    38/54 ROUTINE-02    39/54 ROUTINE-03    40/54 ROUTINE-04    41/54 ROUTINE-05    42/54 ROUTINE-06    43/54 INFEAS-07     44/54 INFEAS-08     45/54 INFEAS-09     46/54 CONTRA-07     47/54 CONTRA-08     48/54 CONTRA-09     49/54 AMBIG-07      50/54 AMBIG-08      51/54 AMBIG-09      52/54 CORRUPT-07    53/54 CORRUPT-08    54/54 CORRUPT-09  
+
+arm          ambiguous  contradic    corrupt  infeasibl  nl_policy    routine  unmodeled    TOTAL   over
+market          4/9        4/9        6/9        5/9        3/6        4/6        4/6     30/54        0
+corrected       4/9        4/9        6/9        5/9        3/6        4/6        4/6     30/54        0
+scratch         5/9        5/9        8/9        2/9        5/6        5/6        4/6     34/54        2
+
+corrected: fired on 2/54 cases, 1 corrections rejected by the validator, total ||dA||_1 = 4
+-> /import/gp-home.ciero/kimseng/Research/pins/results_h2.json
