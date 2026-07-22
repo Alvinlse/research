@@ -94,14 +94,24 @@ def _has_text(s) -> bool:
     return bool((s or "").strip())
 
 
-def _ask(system: str, user: str, model: str, host: str, cache: dict, tag: str) -> dict | None:
+def _ask(system: str, user: str, model: str, host: str, cache: dict, tag: str,
+         num_predict: int = 200, think: bool | None = None) -> dict | None:
+    """Defaults are Exp 77's exactly, so those tiers keep replaying byte-identically.
+
+    `num_predict`/`think` exist for hybrid reasoners: with thinking on, deepseek-r1 and qwen3
+    spend the whole budget in the thinking channel and emit no JSON at all, which would read as
+    "the model proposed nothing" when in fact it never got to answer. Callers testing those
+    models must raise the budget (see pins/correction_signed.py).
+    """
     key = f"{PROMPT_VERSION}|{tag}|{user}|{model}"
     if key in cache:
         return cache[key]
     try:
+        from pins.referee import _HYBRID
         client = metered_client(host)
-        resp = client.chat(model=model, format="json",
-                           options={"temperature": 0, "num_predict": 200, **CTX_OPT},
+        kw = {"think": think} if (think is not None and _HYBRID(model)) else {}
+        resp = client.chat(model=model, format="json", **kw,
+                           options={"temperature": 0, "num_predict": num_predict, **CTX_OPT},
                            messages=[{"role": "system", "content": system},
                                      {"role": "user", "content": user}])
         out = _parse(resp.message.content)

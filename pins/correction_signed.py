@@ -20,7 +20,7 @@ The design rule is untouched: the LLM still names WHO deserves WHAT and never do
 Code still funds every grant, still decides who pays, still guarantees feasibility, and an
 invalid decision still leaves the market's allocation standing.
 
-Three deliberate departures from correction.py, each of which could be wrong and so is stated:
+Four deliberate departures from correction.py, each of which could be wrong and so is stated:
 
 1. A NEGATIVE ENTRY MAY BREACH A JOB'S FLOOR. In correction.py a job's base is sacred and only
    its margin is contested. That rule makes the suspended-account and killed-by-maintenance
@@ -49,8 +49,23 @@ Three deliberate departures from correction.py, each of which could be wrong and
 """
 from __future__ import annotations
 
-from pins.correction import HOST, _ask
+from pins.correction import HOST, _ask as _ask_raw
 from pins.llm_agent import DEFAULT_MODEL
+from pins.referee import _HYBRID
+
+
+def _ask(system, user, model, host, cache, tag):
+    """Give hybrid reasoners room to think AND still emit the JSON.
+
+    correction._ask caps output at 200 tokens, which is ample for a non-reasoner emitting a
+    small object but is entirely consumed by deepseek-r1/qwen3's thinking channel -- the model
+    would return nothing parseable and be scored as 'proposed no change'. Exp 79 dodged this by
+    forcing --no-think; here the reasoners are tested at FULL STRENGTH instead, with the budget
+    raised to match referee.py's 4096."""
+    hybrid = _HYBRID(model)
+    return _ask_raw(system, user, model, host, cache, tag,
+                    num_predict=4096 if hybrid else 200,
+                    think=True if hybrid else None)
 
 SIGNED_BUDGET = 6
 
