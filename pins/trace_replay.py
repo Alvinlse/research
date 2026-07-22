@@ -458,7 +458,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           slack_mult: float = 1.0, admit: bool = False,
           law: str = "amdahl", kappa: float = 2.0, samples: int = 0,
           cooldown: int = 0, resize_c1: float = 0.0, gamma: float | None = None,
-          phi: float = 0.0, qcache: float | None = None, market: bool = False) -> None:
+          phi: float = 0.0, qcache: float | None = None, market: bool = False,
+          composed: bool = False) -> None:
     assert not (referee and single_ilp), "--referee and --single-ilp are separate arms"
     assert not debate or referee, "--debate is a referee-arm round"
     assert not (fast_negotiate and extend), "--fast-negotiate replaces the --extend replay path"
@@ -604,6 +605,10 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
     if market:                    # Exp 72 (plan §6): the explicit bid/ask market arm
         from pins.market import make_policy_market
         rows.append(("market", lambda: make_policy_market(decisions, seen)))
+    if composed:                  # Exp 73: LLM sets the reserve, the market clears the rest
+        from pins.market import make_policy_composed
+        rows.append(("composed", lambda: make_policy_composed(use_llm, model, cache,
+                                                              decisions, seen)))
 
     print(f"\n{'='*86}")
     print(f"TRACE REPLAY ({trace_name}) — two-sided sim on real jobs; agents={tag}")
@@ -769,6 +774,11 @@ def main() -> None:
                          "bids (alpha*dp_hat + beta*SLA risk + gamma*wait - delta*resize) vs a "
                          "rising supply ask, cleared at b>=a. The unsold remainder IS the "
                          "reserve. Deterministic, no LLM.")
+    ap.add_argument("--composed", action="store_true",
+                    help="Exp 73: the composed arm — the LLM (or its rule fallback) sets ONLY "
+                         "the reserve, the plan's market clears the remaining pool into "
+                         "margins. Tests whether the reasoning layer's prod-tier protection "
+                         "survives when it no longer controls the margin.")
     ap.add_argument("--qcache", type=float, default=None, metavar="THR",
                     help="elevated plan S12: quality-aware similarity cache on the referee arm. "
                          "Reuse a past ruling when sim*quality*age-decay > THR, adapted by job "
@@ -919,7 +929,7 @@ def main() -> None:
           burst_s=a.burst, hard_trigger=a.hard_trigger, slack_mult=a.slack_mult,
           admit=a.admit, law=a.law, kappa=a.kappa, samples=a.samples,
           cooldown=a.cooldown, resize_c1=a.resize_c1, gamma=a.gamma, phi=a.phi,
-          qcache=a.qcache, market=a.market,
+          qcache=a.qcache, market=a.market, composed=a.composed,
           fast_negotiate=a.fast_negotiate)
 
 

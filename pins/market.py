@@ -129,3 +129,52 @@ def make_policy_market(trace=None, seen=None, bid_w=BID_W, ask_w=ASK_W,
                               "units_sold": sold, "reserve": reserve, "margins": margins})
         return margins, reserve, out
     return policy
+
+
+# --------------------------------------------------------------------------- #
+#  The COMPOSED arm (Exp 73): LLM sets the reserve, the market clears the rest   #
+# --------------------------------------------------------------------------- #
+def make_policy_composed(use_llm=False, model="qwen2.5:14b", cache=None, trace=None, seen=None,
+                         bid_w=BID_W, ask_w=ASK_W):
+    """Each layer does only what Exp 68-72 showed it is good at.
+
+    Exp 70/71: the reasoning layer's one distinctive, reproducible effect is PROD-TIER
+    PROTECTION (dprodSLA -8.9*/-6.3*), and it pays for it in regret and utilisation.
+    Exp 72: the explicit market wins utilisation, useful utilisation and regret everywhere,
+    but moves the prod tier not at all.
+
+    So: the LLM (or its rule fallback) sets ONLY the reserve — how much headroom to withhold
+    for incoming prod — and the market clears the REMAINING pool into margins on the plan's
+    bid/ask rule. The LLM no longer touches the margin, which is where its regret came from.
+
+    The falsifiable claim: if the referee's protection was real reasoning about arrivals, it
+    survives this amputation; if it was margin-hoarding, it disappears and the arm collapses
+    onto plain `market`.
+    """
+    from pins.llm_agent import llm_reserve, reserve_amount
+
+    def policy(demand, supply_ctx, free, waiting=None, env=None, **_):
+        env = dict(env or {})
+        env.setdefault("n_waiting", len(waiting or []))
+        env.setdefault("n_active", max(len(demand), 1))
+        rd = llm_reserve(supply_ctx, use_llm=use_llm, model=model, cache=cache)
+        reserve = min(reserve_amount(rd["reserve"]), free)
+        # the market only ever sees what the supply side did not withhold
+        margins, unsold, price, sold = clear_market(demand, free - reserve, env, bid_w, ask_w)
+        out = NegotiationOutcome(
+            margins=margins, reserve=reserve, rounds=1, agreed=True,
+            transcript=[{"round": 0, "actor": "supply", "level": rd["reserve"],
+                         "why": rd.get("justification", ""), "_source": rd.get("_source")},
+                        {"round": 1, "actor": "market", "price": round(price, 4),
+                         "units_sold": sold, "free": free - reserve, "unsold": unsold,
+                         "why": f"reserve {reserve} withheld by {rd.get('_source')}; "
+                                f"market cleared {sold}/{free - reserve} at {price:.3f}"}])
+        if trace is not None and seen is not None:
+            sig = f"composed|free={free}|r={reserve}|sold={sold}"
+            if sig not in seen:
+                seen.add(sig)
+                trace.append({"policy": "composed", "free_gpus": free, "reserve": reserve,
+                              "reserve_level": rd["reserve"], "units_sold": sold,
+                              "price": price, "margins": margins})
+        return margins, reserve, out
+    return policy

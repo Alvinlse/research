@@ -3871,3 +3871,67 @@ the LLM's protection survives when it no longer controls the margin.
 for L in amdahl sat; do PINS_RESULTS=pins/results_exp72_$L.json \
   .venv/bin/python -m pins.trace_replay --market --seeds 32 --pools 4,6,8 --law $L; done
 ```
+
+## Experiment 73 — THE COMPOSED ARM: the referee's whole contribution is one scalar, and protection trades against efficiency through the SAME resource (2026-07-22)
+
+**Design.** `--composed` (`pins/market.py::make_policy_composed`): the LLM sees only the
+supply context and returns a reserve LEVEL; that headroom is withheld and the plan's §6 market
+clears the REMAINING pool into margins. The LLM never touches the margin — the part Exp 70/71
+showed it pays for in regret. Pre-registered falsification: if the referee's protection was
+reasoning about arrivals it survives the amputation; if it was margin-hoarding, `composed`
+collapses onto plain `market`.
+
+**Setup.** 14b, caps=predicted, pool 8, n=32 paired seeds, both laws, all five arms on
+identical seeds. (Cache warm from Exp 71, so marginal tokens read 0 here; the cost comparison
+stands on Exp 70's cold-cache bills.)
+
+vs the floor:
+
+| law | arm | dSLA | dprodSLA | dutil | duseful | dregret |
+|---|---|---|---|---|---|---|
+| amdahl | referee | −1.4 | **−8.9\*** | −1.2 | −1.9\* | +3.2\* |
+| amdahl | market | −2.1\* | −3.8\* | +1.3\* | +0.7\* | −1.3\* |
+| amdahl | composed | +0.4 | **−5.6\*** | −0.1 | −0.2 | +0.8 |
+| sat | referee | −0.2 | **−6.3\*** | −0.8 | −2.2\* | +4.4\* |
+| sat | market | +0.4 | −0.7 | +2.5\* | +1.2\* | −0.8\* |
+| sat | composed | −1.0 | **−7.5\*** | +0.2 | −0.8 | +1.7\* |
+
+**1. The protection survives, and the margin reasoning was pure cost.** composed − referee:
+prodSLA **+3.3 (ns) / −1.1 (ns)** — indistinguishable — while regret improves **−2.4\* / −2.6\***
+and useful utilisation **+1.7\* / +1.4**. **`composed` dominates `referee` on both laws** and
+should replace it as the LLM arm. The referee's entire measurable contribution is reproducible
+by choosing a single scalar; its per-job statements, rebuttals and rulings are the part that
+costs regret, useful work, and 24k tokens/seed.
+
+**2. Composition does NOT dominate — protection and efficiency draw on the same resource.**
+composed − market: prodSLA −1.8 (ns) / **−6.7\*** but util **−1.4\* / −2.3\***, useful
+**−0.9\* / −2.0\***, regret **+2.0\* / +2.5\***. The reserve protects by holding GPUs IDLE, and
+idle GPUs are exactly what the market's utilisation gain was made of. This is not two
+complementary layers; it is one dial.
+
+**3. The result is a Pareto frontier, not a winner.**
+
+| arm | buys | costs | bill |
+|---|---|---|---|
+| `market` | util, useful util, regret (all \*) | no prod protection | 0 tokens |
+| `composed` | referee-equivalent protection | efficiency, significantly | 1 cheap call/tick |
+| `referee` | nothing `composed` doesn't | regret\*, useful\* | 24,240 tok/seed |
+
+Which of `market`/`composed` is preferable is an operator preference (throughput vs
+production protection), not something the data settles. Reporting it as an interpretable
+frontier with a single dial is a stronger claim than "the LLM wins" — and it is what the
+evidence supports.
+
+**Consequence for the thesis.** The multi-agent architecture is now dominated on the mean by a
+one-scalar LLM plus a deterministic market. What remains genuinely untested is the TAIL:
+hard-case flexibility (`[[referee-flexibility-thesis]]`, `[[hardcase-suite]]`) — where a
+scalar reserve manifestly cannot express the decision, and the destroyed Exp 64-67 arms were
+the probe.
+
+**Reproduce.**
+```bash
+for L in amdahl sat; do PINS_NUM_CTX=8192 PINS_CACHE=pins/cache_exp73.json \
+  PINS_RESULTS=pins/results_exp73_$L.json .venv/bin/python -u -m pins.trace_replay \
+  --referee --market --composed --llm --model qwen2.5:14b --caps predicted \
+  --pools 8 --seeds 32 --law $L; done
+```
