@@ -4137,3 +4137,50 @@ which this trace does not contain, and run 1 confirmed it cannot supply.
 
 **Not run (deferred):** the ordinal marginal-value prompt scored by ρ(level, measured util)
 against the 0.270/0.334 bars, and the H2 14b re-run to restore the per-case detail lost above.
+
+## Experiment 78d — THE WORKER-HOLDOUT VENUE IS TRIVIAL: the idle gate belongs in the mechanism (2026-07-22)
+
+Exp 78c showed the reviewer's signal was the role LABEL and no better than a lookup table. The
+proposed fix was to remove role names and reason from runtime behaviour instead. Two blockers,
+both established BEFORE spending GPU:
+
+**1. The runtime evidence is the ground truth.** We score against `gpu_wrk_util`; showing
+"current utilisation" as evidence is showing the answer. And `pai_sensor_table` has **no
+timestamp** (16 fields, one row per WORKER) — so trend, progress-per-interval and resize
+history do not exist in v2020 at all. Only a SPATIAL split is available.
+
+**2. The spatial split is trivially solvable.** `pins/build_worker_holdout.py`: for the 91,785
+jobs with ≥4 workers, show statistics from alternating workers (median 5) and score against the
+held-out half (median 5).
+
+```
+evidence util vs held-out util:  Spearman rho = 0.967
+scored: 32,800 jobs (BUSY 15,566 / IDLE 17,234)
+  rule ev_util >=  1%:  P|BUSY 100.0%  P|IDLE 11.5%  DISCRIM +88.5  acc 93.9%
+  rule ev_util >=  5%:  P|BUSY 100.0%  P|IDLE  0.8%  DISCRIM +99.2  acc 99.6%
+  rule ev_util >= 15%:  P|BUSY  99.8%  P|IDLE  0.1%  DISCRIM +99.8  acc 99.9%
+```
+
+Workers within a job are near-identical, so the split creates no real inference problem. The
+target for the revised design (P(ask|BUSY)≈70%, P(ask|IDLE)≤20%, ~50 points) is **exceeded by
+`if ev_util >= 5%`** at 99.2 points. An LLM could only fail to match a one-line comparison, and
+running it would have produced a number that looked like reasoning and was not.
+
+**The positive result this hands us.** In deployment telemetry IS available at decision time —
+that is the scheduler's normal input, not leakage. Combined with Exp 78's population figure
+(**36.2% of real jobs measure <1% GPU utilisation while holding quanta**), the conclusion is a
+MECHANISM change, not a model:
+
+> Condition `usable` on observed utilisation in the market bid, so a job measuring ~0% stops
+> bidding for margin. `two_sided_sim` already re-bases allocations on telemetry after
+> `dyn_after` ticks (Exp 45, `dyn_cap_map`); the bid does not yet use the same signal.
+
+**Venue conclusion.** v2020 cannot host a runtime-evidence reasoning experiment: no time axis,
+and the observable quantity settles the question by threshold. That experiment needs MIT
+Supercloud (10 s CPU / 100 ms GPU sampling), where the target is genuinely a FUTURE interval
+rather than a copy of what was shown. Recorded so the design is not re-attempted on this trace.
+
+**Next (not started):** (a) the utilisation-gated bid in `pins/market.py`, measured against the
+current `market` arm in the sim — no LLM, cheap, and the actionable product of Exp 68–78;
+(b) the H2 14b re-run to restore the per-case detail lost earlier; (c) the Exp 64–67 hard-case
+arms destroyed at the start of this session.

@@ -26,3 +26,11 @@ pins/sensitivity/
 pins/cache_exp69.json
 data/alibaba-gpu-v2020/job_context.csv
 data/alibaba-gpu-v2020/job_usage.csv
+data/alibaba-gpu-v2020/worker_holdout.csv
+# session hygiene (2026-07-22): a bulk `git add -A` swept these in
+*.swp
+*.corrupt_bak
+pins/*.json.lock
+pins/cache_exp*.json
+pins/llm_agent_cache.bak*
+pins/*.done
