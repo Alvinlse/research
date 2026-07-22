@@ -173,19 +173,25 @@ def referee_delta(alloc: dict[str, int], props: dict, free: int, use_llm: bool =
             continue
         if n > 0:
             accept[str(jid)] = n
-    delta = fund(alloc, accept, free, ranking=props.get("ranking"))
+    delta = fund(alloc, accept, free, ranking=props.get("ranking"),
+                 floors=props.get("floors"))
     return {"delta": delta, "justification": str(out.get("justification", ""))[:200],
             "_source": f"llm:{model}"}
 
 
 def fund(alloc: dict[str, int], accept: dict[str, int], free: int,
-         ranking: list[tuple[float, str]] | None = None) -> dict[str, int]:
+         ranking: list[tuple[float, str]] | None = None,
+         floors: dict[str, int] | None = None) -> dict[str, int]:
     """Turn the referee's judgement into a feasible dA, or return {} if it cannot be funded.
 
     Spend the market's unsold remainder first, then revoke the units the MARKET ITSELF valued
     least — `ranking` is its ascending (value, jid) list, so funding a correction is exactly
     'the beneficiary's bid was higher than we thought'. That keeps the mechanism the decider
-    of who pays, and the LLM the decider of who deserves. Never revokes from a beneficiary."""
+    of who pays, and the LLM the decider of who deserves. Never revokes from a beneficiary.
+
+    `floors` is each job's guaranteed MINIMUM (its base). Only the MARGIN above that floor was
+    ever contested — a job's minimum is not a fundable resource, so a correction that could
+    only be paid for out of someone's base cannot be funded at all."""
     delta: dict[str, int] = {j: n for j, n in accept.items()}
     need = sum(accept.values()) - max(0, free - sum(alloc.values()))
     if need <= 0:
@@ -196,7 +202,8 @@ def fund(alloc: dict[str, int], accept: dict[str, int], free: int,
             break
         if jid in accept:
             continue
-        can = alloc.get(jid, 0) + delta.get(jid, 0)
+        floor = (floors or {}).get(jid, 0)
+        can = alloc.get(jid, 0) + delta.get(jid, 0) - floor      # margin only, never the base
         take = min(can, need)
         if take > 0:
             delta[jid] = delta.get(jid, 0) - take
@@ -206,7 +213,8 @@ def fund(alloc: dict[str, int], accept: dict[str, int], free: int,
 
 def validate_delta(alloc: dict[str, int], delta: dict[str, int], free: int,
                    caps: dict[str, int] | None = None,
-                   budget: int = DEFAULT_BUDGET) -> list[str]:
+                   budget: int = DEFAULT_BUDGET,
+                   floors: dict[str, int] | None = None) -> list[str]:
     """Non-repairing check on A_bid + dA. Any violation drops the WHOLE correction, and the
     market's allocation executes — so the failure mode of this layer is 'no worse than the
     best deterministic baseline', not 'fall back to the floor'."""
@@ -223,6 +231,9 @@ def validate_delta(alloc: dict[str, int], delta: dict[str, int], free: int,
         for jid, v in cand.items():
             if jid in caps and v > caps[jid]:
                 bad.append(f"{jid}: {v} exceeds its usable ceiling {caps[jid]}")
+    for jid, fl in (floors or {}).items():          # the base is guaranteed, never fundable
+        if cand.get(jid, 0) < fl:
+            bad.append(f"{jid}: {cand.get(jid, 0)} below its guaranteed base {fl}")
     l1 = sum(abs(v) for v in delta.values())
     if l1 > budget:
         bad.append(f"change budget: ||dA||_1 = {l1} > {budget}")
