@@ -131,18 +131,32 @@ def build_packet(jobs: list[dict], supply_note: str, free: int, alloc: dict[str,
         },
         "market_baseline": {
             "allocation": dict(sorted(alloc.items())),
-            "valued_least_first": [j for _v, j in (ranking or [])],
-            "note": "the market funds any grant by revoking from the jobs it valued least",
+            # the ranking covers CONTESTED margin units only. When every allocated GPU is a
+            # base it is empty, and a bare [] beside the note below would promise information
+            # the packet is not delivering — say so instead.
+            "contested_units_valued_least_first": [j for _v, j in (ranking or [])] or None,
+            "note": ("the market funds any grant by revoking from the jobs it valued least"
+                     if ranking else
+                     "nothing here is contested — every allocated GPU is a job's base, so a "
+                     "grant can only be funded by explicitly taking GPUs from a named job"),
         },
         "demand_claims": [
             {"job_id": j["jid"], "tier": j["tier"], "deadline": j["deadline"],
-             "requested": j["requested"], "market_gave": alloc.get(j["jid"], 0),
+             "declared_base": j.get("base", j["requested"]),
+             "declared_margin": j.get("margin", 0),
+             "market_gave": alloc.get(j["jid"], 0),
              "note": j.get("note") or ""} for j in jobs
         ],
         "supply_claim": {"note": supply_note or ""},
         "hard_constraints": {
             "pool_capacity": free,
-            "guaranteed_minimum_per_job": dict(sorted((floors or {}).items())),
+            # NOT the job's declared base: it is what the ANCHOR managed to guarantee, which is
+            # 0 for any job the pool could not seat. Named accordingly, because reading it as a
+            # property of the job argues against helping exactly the jobs that got nothing.
+            "market_guaranteed_minimum": dict(sorted((floors or {}).items())),
+            "market_guaranteed_minimum_means": (
+                "what the market could protect, not what the job asked for; a 0 here means the "
+                "pool could not seat that job, not that the job needs nothing"),
             "allocations_cannot_be_negative": True,
             "max_gpus_moved_per_decision": max_delta,
         },

@@ -60,6 +60,8 @@ def run_case(case, model: str, use_llm: bool, arm: str, max_delta: int):
     floors, alloc, ranking, _env = build_anchor(case)
     dem = [s for s in case.stmts if s.get("side") == "demand"]
     jobs = [{"jid": s["job_id"], "tier": s.get("tier"), "deadline": s.get("deadline"),
+             "base": int(s.get("base_gpus", 0)),
+             "margin": int(s.get("requested_margin_gpus", 0)),
              "requested": int(s.get("base_gpus", 0)) + int(s.get("requested_margin_gpus", 0)),
              "note": s.get("justification", "")} for s in dem]
     sup = next((s.get("justification", "") for s in case.stmts if s.get("side") == "supply"), "")
