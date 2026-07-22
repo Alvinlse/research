@@ -458,7 +458,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           slack_mult: float = 1.0, admit: bool = False,
           law: str = "amdahl", kappa: float = 2.0, samples: int = 0,
           cooldown: int = 0, resize_c1: float = 0.0, gamma: float | None = None,
-          phi: float = 0.0, qcache: float | None = None) -> None:
+          phi: float = 0.0, qcache: float | None = None, market: bool = False) -> None:
     assert not (referee and single_ilp), "--referee and --single-ilp are separate arms"
     assert not debate or referee, "--debate is a referee-arm round"
     assert not (fast_negotiate and extend), "--fast-negotiate replaces the --extend replay path"
@@ -600,6 +600,10 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
             ("negotiated", lambda: make_policy_negotiated(use_llm, model, cache, decisions, seen, admit=admit)),
             ("single-llm", lambda: make_policy_single(use_llm, model, cache, decisions, seen)),
         ]
+
+    if market:                    # Exp 72 (plan §6): the explicit bid/ask market arm
+        from pins.market import make_policy_market
+        rows.append(("market", lambda: make_policy_market(decisions, seen)))
 
     print(f"\n{'='*86}")
     print(f"TRACE REPLAY ({trace_name}) — two-sided sim on real jobs; agents={tag}")
@@ -760,6 +764,11 @@ def main() -> None:
                     help="Exp 57: diminishing-returns coefficient in P(g)=g/(1+A*(g-1)). "
                          "0.0 = the linear scaling Exp 22-56b assumed; try 0.1/0.3 as "
                          "sensitivity. Cannot be calibrated from v2020 (no counterfactuals).")
+    ap.add_argument("--market", action="store_true",
+                    help="elevated plan S6: add the explicit-market arm — per-GPU marginal "
+                         "bids (alpha*dp_hat + beta*SLA risk + gamma*wait - delta*resize) vs a "
+                         "rising supply ask, cleared at b>=a. The unsold remainder IS the "
+                         "reserve. Deterministic, no LLM.")
     ap.add_argument("--qcache", type=float, default=None, metavar="THR",
                     help="elevated plan S12: quality-aware similarity cache on the referee arm. "
                          "Reuse a past ruling when sim*quality*age-decay > THR, adapted by job "
@@ -910,7 +919,7 @@ def main() -> None:
           burst_s=a.burst, hard_trigger=a.hard_trigger, slack_mult=a.slack_mult,
           admit=a.admit, law=a.law, kappa=a.kappa, samples=a.samples,
           cooldown=a.cooldown, resize_c1=a.resize_c1, gamma=a.gamma, phi=a.phi,
-          qcache=a.qcache,
+          qcache=a.qcache, market=a.market,
           fast_negotiate=a.fast_negotiate)
 
 

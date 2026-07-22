@@ -388,7 +388,9 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
                                     db, con_demand)
             rank = DORDER.get(db, 0) * 2 + (1 if j.tier == "prod" else 0)
             if phase_of(j) == "train" and held[j.jid] >= cap0(j) > 0:
-                demand.append(DemandJob(j.jid, ctx, 0, True, float(rank)))
+                demand.append(DemandJob(j.jid, ctx, 0, True, float(rank),
+                                        facts={"base": cap0(j), "usable": useful[j.jid],
+                                               "waited": t - j.arrival, "held": held[j.jid]}))
         free_now = total_gpus - sum(held[j.jid] for j in active)
         # Exp 63 admission lever: the jobs the margin table CANNOT see — arrived, never started,
         # still short of their base. Whether these start now or keep waiting is the decision that
@@ -398,7 +400,13 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
                     "waited_ticks": t - j.arrival,
                     "deadline": bridge.deadline_bucket(remaining(j), j.deadline - t)}
                    for j in active if ran[j.jid] == 0 and held[j.jid] < cap0(j)]
-        margins, reserve, outcome = policy(demand, supply_ctx, free_now, waiting=waiting)
+        # plan §6: numeric environment for a market-style policy. Every existing policy takes
+        # **_, so this kwarg is invisible to them.
+        env = {"total_gpus": total_gpus, "t": t, "incoming_prod": n_inc,
+               "law": law, "kappa": kappa, "alpha": alpha, "alpha_norm": alpha_norm,
+               "realloc_cost": realloc_cost, "resize_c1": resize_c1}
+        margins, reserve, outcome = policy(demand, supply_ctx, free_now, waiting=waiting,
+                                           env=env)
         n_decisions += 1
         if outcome is not None and not getattr(outcome, "agreed", True):
             n_fallback += 1

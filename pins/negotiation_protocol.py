@@ -47,6 +47,10 @@ class DemandJob:
     forecast_cap: int         # the job's point-forecast GPU need this round (cap0)
     is_train: bool = True     # margin is only useful in the spike-prone train phase
     concede_rank: float = 0.0  # lower = concedes its margin FIRST (low priority / much slack)
+    # Exp 72 (plan §6): the NUMERIC facts an explicit market needs — base GPUs, usable extra
+    # parallelism, ticks waited. Optional and ignored by every pre-market arm, so no existing
+    # policy, prompt or cache key sees it.
+    facts: dict | None = None
 
 
 @dataclass

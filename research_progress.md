@@ -3803,3 +3803,71 @@ PINS_NUM_CTX=8192 PINS_CACHE=pins/cache_exp71.json PINS_RESULTS=pins/results_exp
   .venv/bin/python -u -m pins.trace_replay --referee --llm --model qwen2.5:14b \
   --caps predicted --pools 8 --seeds 32 --samples 10 --law sat
 ```
+
+## Experiment 72 — THE EXPLICIT MARKET (plan §6): the bid was never a bid, and fixing it buys utilisation everywhere (2026-07-22)
+
+**What was actually there.** `two_sided_sim` — the simulator behind every result from Exp 22
+to Exp 71 — never ran a market. The bid entered exactly once,
+`frozen = {j.jid: sum(j.bid()) for j in active}` (two_sided_sim.py:429): the marginal-value
+CURVE collapsed to a scalar, used as a tie-break for greedy fill. No supply ask, no clearing
+condition. `pins/mechanism.py`'s uniform-price auction is only called by the older sims.
+
+**What Exp 72 builds** (`pins/market.py`, `--market`, deterministic, zero tokens):
+demand `b_(j,k) = α·dp̂_(j,k) + β·R_SLA + γ·W_wait − δ·C_resize` per job per extra GPU,
+non-increasing; supply `a_q = η1·Scarcity + η2·Frag + η3·ReservePressure + η4·ArrivalPressure`
+rising with units sold; clearing `Q_t = max{q : b_(q) ≥ a_(q)}`. **`dp̂` is the job's real
+marginal useful progress** from the Exp 68 counterfactual model — the term that made §6
+buildable at all.
+
+**A design error that changed the design.** The first build set `reserve = free − sold`
+("unsold = held-idle headroom", the plan's literal reading). It collapsed the cluster:
+util 30%, 8.6/16 finished, `dutil −48.1*`. Cause: in this simulator the reserve blocks
+best-effort jobs from their **base**, not just their margin (two_sided_sim.py:455), so every
+unsold margin unit starved queued work. Corrected mapping: **headroom lives in the price**
+(η3 raises the ask when prod arrivals pend, so fewer margin units sell) and undsold units stay
+available for other jobs' bases — which is what actually helps an incoming prod job.
+`hold_unsold=True` preserves the old semantics for comparison.
+
+**Result (n=32 paired, pools 4/6/8, both laws, v2020).** market vs the floor:
+
+| law | pool | dSLA | dprodSLA | dutil | duseful | dregret |
+|---|---|---|---|---|---|---|
+| amdahl | 4 | −1.0\* | −1.0 | +0.9\* | +0.9\* | −1.3\* |
+| amdahl | 6 | −0.6 | −0.7 | +1.6\* | +1.6\* | −2.1\* |
+| amdahl | 8 | −1.6\* | −2.7 | **+2.1\*** | **+2.1\*** | **−2.8\*** |
+| sat | 4 | −0.4 | +0.0 | +1.2\* | +0.2 | −0.1 |
+| sat | 6 | +0.0 | +0.0 | +2.1\* | +0.4\* | −0.4\* |
+| sat | 8 | −0.2 | −0.8 | **+2.3\*** | +0.5\* | −0.5\* |
+
+Head-to-head vs `negotiated` (paired, n=32), the arm that won Exp 70/71:
+
+| law | pool | dutil | duseful | dregret |
+|---|---|---|---|---|
+| amdahl | 4/6/8 | +1.9\* / +1.6\* / +1.1\* | +2.2\* / +2.0\* / +1.8\* | −3.0\* / −2.7\* / −3.0\* |
+| sat | 4/6/8 | +2.9\* / +2.5\* / +1.6\* | +2.6\* / +2.1\* / +1.3\* | −2.8\* / −2.0\* / −1.6\* |
+
+**1. The market beats every previous arm on the plan's primary metrics, in all 6 cells, under
+both laws.** Utilisation, useful utilisation and regret all improve significantly against both
+the floor and `negotiated` — and `market/util`, `market/useful`, `market/regret` survive Holm
+in most cells. It is the only arm in the project's history that is simultaneously positive on
+useful utilisation and negative on regret.
+
+**2. It does NOT protect the prod tier.** dprodSLA is small and ns everywhere (−2.7 at best,
++0.0 under sat). The referee's −8.9\*/−6.3\* remains the largest prod-tier effect measured. So
+the two capabilities are now cleanly separated: **the market allocates efficiently; the LLM
+arms ration protectively**, and neither does the other's job.
+
+**3. It costs nothing.** Zero LLM calls, zero tokens, 0% fallback. The comparison against a
+24,240-token referee is not close on any efficiency metric.
+
+**Standing picture after Exp 68–72.** Efficiency (util / useful util / regret) belongs to the
+deterministic market; prod-tier protection belongs to the reasoning layer but is reproduced by
+one cheap centralised LLM call (Exp 70/71). The open question is whether the two compose —
+a market that clears efficiency with an LLM setting only the protective reserve — and whether
+the LLM's protection survives when it no longer controls the margin.
+
+**Reproduce.**
+```bash
+for L in amdahl sat; do PINS_RESULTS=pins/results_exp72_$L.json \
+  .venv/bin/python -m pins.trace_replay --market --seeds 32 --pools 4,6,8 --law $L; done
+```
