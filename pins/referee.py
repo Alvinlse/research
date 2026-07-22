@@ -63,6 +63,19 @@ SYSTEM_REFEREE = (
     "until it fits."
 )
 
+# Exp 79 (perspective x text): the SINGLE-LLM control. Rules 1-5, the JSON schema and the
+# self-check are copied VERBATIM from SYSTEM_REFEREE — the only edit is the framing, which
+# drops the two-sided adjudication structure. Same facts, same rules, no perspective split;
+# that difference is the whole manipulation, so nothing else may vary.
+SYSTEM_SINGLE = SYSTEM_REFEREE.replace(
+    "You are the REFEREE of a supercomputer GPU pool. A demand side (one statement per job) "
+    "and a supply side (one statement) have each submitted what they claim to need or hold, "
+    "with justifications. You alone decide the allocation.",
+    "You are the SCHEDULER of a supercomputer GPU pool. You are given the current "
+    "submissions: one entry per job saying what it needs and one entry for the pool's own "
+    "reserve request, each with its justification. You decide the allocation.")
+assert SYSTEM_SINGLE != SYSTEM_REFEREE, "SYSTEM_SINGLE framing swap failed to apply"
+
 PROMPT_VERSION = "v2"                 # busts the scene cache whenever SYSTEM_REFEREE changes
 
 # Exp 58/E1 (research_plan Phase 6): the referee gains MEMORY of its own last executed
@@ -345,6 +358,7 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
                    cache: dict | None = None, statement_model: str | None = None,
                    think: bool = True, stmts: list[dict] | None = None,
                    trigger: str = "bucket", no_argue: bool = False,
+                   perspective: bool = True,
                    prev_alloc: dict | None = None,
                    waiting: list[dict] | None = None) -> RefereeOutcome:
     """Full reason-then-referee round: gather statements, ask the referee LLM for the
@@ -352,7 +366,9 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
     `statement_model` pins the demand/supply statement LLM independently of the referee's
     `model`, so referee-model ablations hold the submissions fixed.
     `stmts` overrides the gathering step with hand-authored submissions — the hard-case suite
-    (pins/hardcases.py) uses it to put an exceptional fact in a job's own justification."""
+    (pins/hardcases.py) uses it to put an exceptional fact in a job's own justification.
+    `perspective=False` swaps the referee framing for SYSTEM_SINGLE (one scheduler, same facts
+    and rules, no two-sided split) — the Exp 79 control. It is a distinct cache key."""
     cache = load_cache() if cache is None else cache
     if stmts is None:
         stmts = gather_statements(demand, supply_ctx, use_llm=use_llm,
@@ -364,7 +380,7 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
         stmts = [{**s, "justification": ""} for s in stmts]
     key = (f"{PROMPT_VERSION}{_MANUAL_TAG}|{_scene_key(stmts, free_gpus, trigger)}"
            f"|{'llm:' + model if use_llm else 'rule'}{'' if think else '|nothink'}"
-           f"{'|noarg' if no_argue else ''}")
+           f"{'|noarg' if no_argue else ''}{'' if perspective else '|single'}")
     if prev_alloc is not None:
         # v3-prev arm: the ruling depends on the executed history, so the history is part
         # of the scene identity — two ticks with equal statements but different pasts must
@@ -400,7 +416,7 @@ def referee_decide(demand: list[DemandJob], supply_ctx: dict, free_gpus: int,
                 options={"temperature": 0, "num_predict": 4096, **CTX_OPT},  # reasoning models (r1) spend
                 # most of the budget in the thinking channel before emitting the JSON
                 messages=[{"role": "system",
-                           "content": SYSTEM_REFEREE
+                           "content": (SYSTEM_REFEREE if perspective else SYSTEM_SINGLE)
                                       + (RULE6_PREV if prev_alloc is not None else "")
                                       + (RULE7_ADMIT if waiting is not None else "")
                                       + ("\n\n" + _MANUAL if _MANUAL else "")},

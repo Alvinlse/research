@@ -101,13 +101,24 @@ def main() -> None:
     ap.add_argument("--no-llm", action="store_true", help="rule referee only (smoke test)")
     ap.add_argument("--suite", default="r12", choices=["r12", "r3", "all"],
                     help="r12 = rounds 1-2 (Exp 54/66), r3 = the 40 round-3 cases")
+    ap.add_argument("--arms", default="referee",
+                    help="comma list from single,single-noarg,referee,referee-noarg. "
+                         "The 2x2 perspective x text design is all four.")
+    ap.add_argument("--limit", type=int, default=0, help="first N cases only (smoke runs)")
     a = ap.parse_args()
+
+    llm_arms = [x for x in a.arms.split(",") if x]
+    bad = set(llm_arms) - {"single", "single-noarg", "referee", "referee-noarg"}
+    if bad:
+        ap.error(f"unknown arm(s): {sorted(bad)}")
 
     cases, categories = CASES, CATEGORIES
     if a.suite != "r12":
         from pins.hardcases_r3 import CASES_R3, CATEGORIES_R3
         cases = CASES_R3 if a.suite == "r3" else CASES + CASES_R3
         categories = CATEGORIES_R3
+    if a.limit:
+        cases = cases[:a.limit]
 
     results: dict[str, dict] = {}
     for case in cases:
@@ -120,19 +131,25 @@ def main() -> None:
         arms["rule"] = score(case, f["alloc"], f["reserve"], f.get("justification", ""), True)
 
         if not a.no_llm:
-            # fresh cache per case: the scene key does not hash the justification text, so a
-            # shared cache would collide two cases that differ only in their exception
-            out = referee_decide(case.demand(), {}, case.free_gpus, use_llm=True,
-                                 model=a.model, cache={}, think=not a.no_think,
-                                 stmts=case.stmts)
-            arms["referee"] = score(case, out.alloc, out.reserve, out.justification, True)
+            for name in llm_arms:
+                # fresh cache per arm AND per case: the scene key does not hash the
+                # justification text, so a shared cache would collide two cases that differ
+                # only in their exception, and `noarg` blanks that text to the empty string —
+                # which would make every no-text case in a suite share one entry.
+                out = referee_decide(case.demand(), {}, case.free_gpus, use_llm=True,
+                                     model=a.model, cache={}, think=not a.no_think,
+                                     stmts=case.stmts,
+                                     perspective=not name.startswith("single"),
+                                     no_argue=name.endswith("-noarg"))
+                arms[name] = score(case, out.alloc, out.reserve, out.justification, True)
 
         results[case.id] = {"category": case.category, "expect": case.expect, "arms": arms}
         marks = " ".join(f"{k}={'H' if v['handled'] else ('f' if v['resolved'] else 'X')}"
                          for k, v in arms.items())
         print(f"{case.id:12s} {case.category:14s} {marks}")
 
-    json.dump({"model": a.model, "results": results}, open(OUT, "w"), indent=1)
+    json.dump({"model": a.model, "suite": a.suite, "arms": llm_arms, "results": results},
+              open(OUT, "w"), indent=1)
 
     arm_names = list(next(iter(results.values()))["arms"])
     print(f"\n{'category':16s}" + "".join(f"{n:>12s}" for n in arm_names))
@@ -152,10 +169,41 @@ def main() -> None:
         unres = sum(1 for r in results.values() if not r["arms"][n]["resolved"])
         soft = sum(1 for r in results.values() if r["arms"][n]["policy_flags"])
         print(f"  {n:10s} over-awarded {over:2d}   unresolved {unres:2d}   policy-flagged {soft:2d}")
-    cites = [r["arms"]["referee"]["cited"] for r in results.values()
-             if "referee" in r["arms"] and r["arms"]["referee"]["cited"] is not None]
-    if cites:
-        print(f"  referee cited the driving fact in {sum(cites)}/{len(cites)} cases that name one")
+    for n in llm_arms:
+        cites = [r["arms"][n]["cited"] for r in results.values()
+                 if r["arms"][n]["cited"] is not None]
+        if cites:
+            print(f"  {n:14s} cited the driving fact in {sum(cites)}/{len(cites)} "
+                  f"cases that name one")
+
+    # The pre-registered PRIMARY test (pins/hardcases_r3.py): does the text buy the referee
+    # more than it buys a single LLM? Reported as the 2x2 plus the per-case discordant counts
+    # McNemar needs. Printed only when the full design was run; never averaged with controls.
+    if {"single", "single-noarg", "referee", "referee-noarg"} <= set(llm_arms):
+        from pins.hardcases_r3 import CONTROLS, PRIMARY
+        for label, ids in (("PRIMARY (pre-registered)", PRIMARY),
+                           ("CONTROLS (text effect must be ~0)", CONTROLS),
+                           ("all cases run", list(results))):
+            rows = [r for cid, r in results.items() if cid in set(ids)]
+            if not rows:
+                continue
+            h = {n: sum(1 for r in rows if r["arms"][n]["handled"]) for n in llm_arms}
+            eff_s = h["single"] - h["single-noarg"]
+            eff_r = h["referee"] - h["referee-noarg"]
+            # difference-in-differences, per case: +1 = text helped the referee only
+            b = sum(1 for r in rows
+                    if (r["arms"]["referee"]["handled"] - r["arms"]["referee-noarg"]["handled"])
+                    > (r["arms"]["single"]["handled"] - r["arms"]["single-noarg"]["handled"]))
+            c = sum(1 for r in rows
+                    if (r["arms"]["referee"]["handled"] - r["arms"]["referee-noarg"]["handled"])
+                    < (r["arms"]["single"]["handled"] - r["arms"]["single-noarg"]["handled"]))
+            print(f"\n{label}  n={len(rows)}")
+            print(f"  single   {h['single']:2d} with text vs {h['single-noarg']:2d} without"
+                  f"   -> text effect {eff_s:+d}")
+            print(f"  referee  {h['referee']:2d} with text vs {h['referee-noarg']:2d} without"
+                  f"   -> text effect {eff_r:+d}")
+            print(f"  interaction {eff_r - eff_s:+d}   discordant pairs "
+                  f"referee-favoured={b} single-favoured={c}")
     print(f"\nfull transcripts -> {OUT}")
 
 
