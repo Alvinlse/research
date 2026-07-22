@@ -28,6 +28,21 @@ Note on a bias that does NOT apply here: the suite was sharpened until the rigid
 which inflates any LLM-vs-ILP comparison. It is neutral for the text ablation and for the
 interaction, since every arm faces the identical sharpened cases.
 
+AMENDMENT, 2026-07-22, after qwen2.5:1.5b (the FIRST ladder model) and before any other model
+was run. Disclosed rather than silently applied.
+
+  qwen2.5:1.5b allocated 146-156% of the pool and "passed" 12/31 primary cases by awarding
+  capacity that does not exist: it over-awarded on 25 of 31. Bare `handled` therefore rewards
+  infeasibility, and on a weak model it measures brute force rather than judgement. Under
+  STRICT scoring (handled AND feasible) its 12 becomes 2, while qwen2.5:14b moves 13 -> 12.
+
+  So STRICT is the headline metric for the ladder and bare `handled` is reported beside it.
+  This is not a new invention chosen to fit a result: over-award is named as a secondary axis
+  in the pins/hardcases_r3.py pre-registration, feasibility is rule 1 of the referee prompt,
+  and Exp 54 already reported round 2 as "4/12, or 3/12 scoring over-award as auto-fail".
+  It is applied uniformly to every arm and model, it is strictly more conservative, and it
+  cannot select the interaction's direction — b and c are reported under both scorings.
+
   .venv/bin/python -m pins.exp79_analyse
 """
 from __future__ import annotations
@@ -61,10 +76,15 @@ def load() -> dict[str, dict]:
     return out
 
 
-def counts(res: dict, ids: list[str]) -> dict:
-    h = {a: sum(1 for c in ids if res[c]["arms"][a]["handled"]) for a in ARMS}
-    dd = [(res[c]["arms"]["referee"]["handled"] - res[c]["arms"]["referee-noarg"]["handled"])
-          - (res[c]["arms"]["single"]["handled"] - res[c]["arms"]["single-noarg"]["handled"])
+def ok(res: dict, cid: str, arm: str, strict: bool) -> int:
+    a = res[cid]["arms"][arm]
+    return int(a["handled"] and not (strict and a["overcommitted"]))
+
+
+def counts(res: dict, ids: list[str], strict: bool = True) -> dict:
+    h = {a: sum(ok(res, c, a, strict) for c in ids) for a in ARMS}
+    dd = [(ok(res, c, "referee", strict) - ok(res, c, "referee-noarg", strict))
+          - (ok(res, c, "single", strict) - ok(res, c, "single-noarg", strict))
           for c in ids]
     return {"h": h, "b": sum(1 for x in dd if x > 0), "c": sum(1 for x in dd if x < 0),
             "text_single": h["single"] - h["single-noarg"],
@@ -85,34 +105,43 @@ def main() -> None:
              "qwen3.5:35b"]
     models = sorted(runs, key=lambda m: (order.index(m) if m in order else 99, m))
 
-    for label, ids in (("PRIMARY (pre-registered)", PRIMARY), ("CONTROLS", CONTROLS)):
-        print(f"\n=== {label}  n={len(ids)} ===")
-        print(f"{'model':18s}{'single':>16s}{'referee':>16s}"
-              f"{'text S':>8s}{'text R':>8s}{'inter':>7s}{'b':>4s}{'c':>4s}{'p':>8s}")
-        B = C = 0
-        for m in models:
-            k = counts(runs[m], ids)
+    for strict in (True, False):
+        tag = ("STRICT: handled AND feasible (headline)" if strict
+               else "BARE handled: over-award NOT penalised (reported for continuity)")
+        print(f"\n########## {tag} ##########")
+        for label, ids in (("PRIMARY (pre-registered)", PRIMARY), ("CONTROLS", CONTROLS)):
+            print(f"\n=== {label}  n={len(ids)} ===")
+            print(f"{'model':18s}{'single':>16s}{'referee':>16s}"
+                  f"{'text S':>8s}{'text R':>8s}{'inter':>7s}{'b':>4s}{'c':>4s}{'p':>8s}")
+            B = C = 0
+            for m in models:
+                k = counts(runs[m], ids, strict)
+                if label.startswith("PRIMARY"):
+                    B += k["b"]
+                    C += k["c"]
+                print(f"{m:18s}{k['h']['single']:>8d}/{k['h']['single-noarg']:<7d}"
+                      f"{k['h']['referee']:>8d}/{k['h']['referee-noarg']:<7d}"
+                      f"{k['text_single']:>+8d}{k['text_referee']:>+8d}"
+                      f"{k['text_referee'] - k['text_single']:>+7d}"
+                      f"{k['b']:>4d}{k['c']:>4d}{exact_p(k['b'], k['c']):>8.3f}")
             if label.startswith("PRIMARY"):
-                B += k["b"]; C += k["c"]
-            print(f"{m:18s}{k['h']['single']:>8d}/{k['h']['single-noarg']:<7d}"
-                  f"{k['h']['referee']:>8d}/{k['h']['referee-noarg']:<7d}"
-                  f"{k['text_single']:>+8d}{k['text_referee']:>+8d}"
-                  f"{k['text_referee'] - k['text_single']:>+7d}"
-                  f"{k['b']:>4d}{k['c']:>4d}{exact_p(k['b'], k['c']):>8.3f}")
-        if label.startswith("PRIMARY"):
-            print(f"\n  POOLED stratified McNemar over {len(models)} model(s): "
-                  f"b={B} c={C}  one-sided exact p={exact_p(B, C):.4f}")
-            print("  (b = referee-favoured discordant pairs, c = single-favoured)")
+                print(f"\n  POOLED stratified McNemar over {len(models)} model(s): "
+                      f"b={B} c={C}  one-sided exact p={exact_p(B, C):.4f}")
+                print("  (b = referee-favoured discordant pairs, c = single-favoured)")
 
-    print("\n=== rescue view: among cases the SINGLE LLM fails with text, does referee save it? ===")
-    print(f"{'model':18s}{'single fails':>13s}{'rescued':>9s}{'broken':>8s}{'net':>6s}{'p':>8s}")
+    print("\n=== rescue view (STRICT): among PRIMARY cases the single LLM fails, "
+          "does the referee save it? ===")
+    print(f"{'model':18s}{'single fails':>13s}{'rescued':>9s}{'broken':>8s}{'net':>6s}{'p':>8s}"
+          f"{'  feasibility of single':>24s}")
     for m in models:
         res = runs[m]
-        fails = [c for c in PRIMARY if not res[c]["arms"]["single"]["handled"]]
-        b = sum(1 for c in fails if res[c]["arms"]["referee"]["handled"])
-        cc = sum(1 for c in PRIMARY if res[c]["arms"]["single"]["handled"]
-                 and not res[c]["arms"]["referee"]["handled"])
-        print(f"{m:18s}{len(fails):>13d}{b:>9d}{cc:>8d}{b - cc:>+6d}{exact_p(b, cc):>8.3f}")
+        fails = [c for c in PRIMARY if not ok(res, c, "single", True)]
+        b = sum(1 for c in fails if ok(res, c, "referee", True))
+        cc = sum(1 for c in PRIMARY if ok(res, c, "single", True)
+                 and not ok(res, c, "referee", True))
+        over = sum(1 for c in PRIMARY if res[c]["arms"]["single"]["overcommitted"])
+        print(f"{m:18s}{len(fails):>13d}{b:>9d}{cc:>8d}{b - cc:>+6d}{exact_p(b, cc):>8.3f}"
+              f"{f'  over-awarded {over}/{len(PRIMARY)}':>24s}")
 
 
 if __name__ == "__main__":
