@@ -3692,3 +3692,63 @@ PINS_NUM_CTX=8192 PINS_CACHE=pins/cache_exp69.json PINS_RESULTS=pins/results_exp
   .venv/bin/python -u -m pins.trace_replay --referee --llm --model qwen2.5:14b \
   --caps predicted --pools 8 --seeds 8 --samples 4
 ```
+
+## Experiment 70 — §13 SETTLED: the referee does not earn its budget. A cheaper centralised control ties it, and the auction beats both (2026-07-22)
+
+**Setup.** 14b, caps=predicted, pool 8, **n=32 paired seeds**, v2020 replay, cold cache
+(`pins/cache_exp70.json`), single-LLM control at `--samples 10` (median-aggregated).
+
+```
+   8  no-llm        53.9%   59.1%    80%     75%     10%      8.73   22.7    0% 15.3/16
+   8  referee       52.5%   50.2%    78%     74%     13%      8.53   24.0    1% 15.2/16
+   8  negotiated    52.3%*  52.5%    81%     76%      9%      8.10   21.3    0% 15.5/16
+   8  single-llm    54.1%   50.1%*   81%     74%     12%      9.43   24.5    0% 15.3/16
+
+      referee      vs floor:  dSLA -1.4 ±2.0  dprodSLA -8.9 ±5.1*  dutil -1.2 ±1.6   duseful -1.9 ±1.2*  dregret +3.2 ±1.6*
+      negotiated   vs floor:  dSLA -1.6 ±2.2  dprodSLA -6.6 ±4.6*  dutil +1.8 ±1.1*  duseful +0.8 ±0.8   dregret -0.7 ±1.2   dslow -0.6 ±0.6*
+      single-llm   vs floor:  dSLA +0.2 ±3.2  dprodSLA -9.0 ±6.3*  dutil +1.4 ±1.9   duseful -0.9 ±1.5   dregret +2.1 ±1.9*
+      Holm (18 tests): referee/regret p=0.006[t], referee/prodSLA p=0.024[wilcoxon], negotiated/util p=0.046[t]
+
+      arm           calls/seed  tokens/seed  wall s/seed
+      referee             36.7        24240        154.5
+      negotiated           3.7         1639          9.6
+      single-llm          30.9        10902         89.9
+```
+
+**1. The multi-agent structure buys nothing over a centralised LLM.** Paired head-to-head,
+referee − single-llm on prod SLA is **+0.1 ± 4.6 pts, p=0.965** (Wilcoxon) — indistinguishable,
+and the referee is the more expensive side of the tie. On utilisation the referee is
+significantly WORSE (−2.5 ± 1.3, p<0.001); on useful utilisation and regret the two are
+TOST-equivalent within ±3. There is no metric on which the referee beats the control.
+
+**2. And it still isn't a fair fight — in the referee's favour.** `--samples 10` put the
+control at 10.9k tokens/seed against the referee's 24.2k: the control ties while spending
+**45%** of the budget. §13's protocol exists to stop a multi-agent arm winning on budget; here
+the multi-agent arm does not win *despite* a 2.2× budget advantage, so funding the control
+further is unnecessary to reach the conclusion. (Matching exactly would need `--samples ~22`;
+it could only strengthen this.)
+
+**3. The deterministic auction dominates both, at 6.8% of the referee's bill.** `negotiated`
+is the only arm that is *positive* on utilisation (+1.8\*, Holm-surviving), non-negative on
+useful utilisation (+0.8), the only arm with NEGATIVE regret (−0.7, i.e. better decisions
+than the floor), significantly faster (dslow −0.6\*), and it still protects the prod tier
+(−6.6\*) — for 1,639 tokens/seed against the referee's 24,240.
+
+**4. What survives multiplicity.** Three of eighteen: `referee/regret +3.2` (worse than the
+floor), `referee/prodSLA −8.9` (better), `negotiated/util +1.8` (better). Note that the
+referee's Holm-surviving results point in *both* directions: it protects production by making
+measurably worse allocations.
+
+**Standing conclusion.** Across Exp 60, 61, 68, 69 and now 70 the reasoning layer has not
+paid for itself on any outcome the plan treats as primary. The referee's prod-tier protection
+is real and reproducible — but it is reproduced by one cheap centralised LLM call, and it is
+bought with regret and utilisation the auction does not have to pay. The defensible thesis
+claim is narrowing to the *tail* (hard-case flexibility, `[[referee-flexibility-thesis]]`),
+not the mean.
+
+**Reproduce.**
+```bash
+PINS_NUM_CTX=8192 PINS_CACHE=pins/cache_exp70.json PINS_RESULTS=pins/results_exp70.json \
+  .venv/bin/python -u -m pins.trace_replay --referee --llm --model qwen2.5:14b \
+  --caps predicted --pools 8 --seeds 32 --samples 10
+```
