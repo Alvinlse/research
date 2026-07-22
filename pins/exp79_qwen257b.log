@@ -1,0 +1,79 @@
+P3-POLICY-01 nl_policy      ilp=f rule=f single=H single-noarg=H referee=H referee-noarg=H
+P3-POLICY-02 nl_policy      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-POLICY-03 nl_policy      ilp=f rule=f single=f single-noarg=f referee=H referee-noarg=f
+P3-POLICY-04 nl_policy      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-POLICY-05 nl_policy      ilp=f rule=f single=H single-noarg=f referee=H referee-noarg=f
+P3-POLICY-06 nl_policy      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-POLICY-07 nl_policy      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-UNMOD-01  unmodeled      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-UNMOD-02  unmodeled      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-UNMOD-03  unmodeled      ilp=f rule=f single=H single-noarg=f referee=H referee-noarg=f
+P3-UNMOD-04  unmodeled      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-UNMOD-05  unmodeled      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-UNMOD-06  unmodeled      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-UNMOD-07  unmodeled      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-UNMOD-08  unmodeled      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-CORRUPT-01 corrupt        ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-CORRUPT-02 corrupt        ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-CORRUPT-03 corrupt        ilp=f rule=f single=H single-noarg=f referee=H referee-noarg=f
+P3-CORRUPT-04 corrupt        ilp=f rule=f single=H single-noarg=H referee=H referee-noarg=H
+P3-CORRUPT-05 corrupt        ilp=f rule=f single=H single-noarg=f referee=H referee-noarg=f
+P3-CONTRA-01 contradiction  ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-CONTRA-02 contradiction  ilp=f rule=f single=H single-noarg=f referee=H referee-noarg=f
+P3-CONTRA-03 contradiction  ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-CONTRA-04 contradiction  ilp=f rule=f single=H single-noarg=f referee=f referee-noarg=f
+P3-AMBIG-01  ambiguous      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-AMBIG-02  ambiguous      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-AMBIG-03  ambiguous      ilp=f rule=f single=H single-noarg=f referee=H referee-noarg=f
+P3-INFEAS-01 infeasible     ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-INFEAS-02 infeasible     ilp=f rule=f single=H single-noarg=f referee=H referee-noarg=f
+P3-INFEAS-03 infeasible     ilp=f rule=f single=H single-noarg=f referee=H referee-noarg=f
+P3-PLACEBO-01 placebo        ilp=H rule=H single=H single-noarg=H referee=H referee-noarg=f
+P3-PLACEBO-02 placebo        ilp=H rule=H single=H single-noarg=H referee=H referee-noarg=H
+P3-PLACEBO-03 placebo        ilp=H rule=H single=f single-noarg=f referee=f referee-noarg=f
+P3-PLACEBO-04 placebo        ilp=H rule=H single=H single-noarg=H referee=H referee-noarg=H
+P3-PLACEBO-05 placebo        ilp=H rule=H single=H single-noarg=H referee=H referee-noarg=H
+P3-CONFIRM-01 confirm        ilp=H rule=H single=H single-noarg=H referee=H referee-noarg=H
+P3-CONFIRM-02 confirm        ilp=H rule=f single=H single-noarg=H referee=H referee-noarg=f
+P3-CONFIRM-03 confirm        ilp=H rule=H single=H single-noarg=H referee=H referee-noarg=H
+P3-CONFIRM-04 confirm        ilp=H rule=H single=H single-noarg=H referee=H referee-noarg=H
+P3-POLICY-08 nl_policy      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+
+category                 ilp        rule      singlesingle-noarg     refereereferee-noarg
+infeasible            0/3         0/3         2/3         0/3         2/3         0/3   
+nl_policy             0/8         0/8         2/8         1/8         3/8         1/8   
+contradiction         0/4         0/4         2/4         0/4         1/4         0/4   
+unmodeled             0/8         0/8         1/8         0/8         1/8         0/8   
+corrupt               0/5         0/5         3/5         1/5         3/5         1/5   
+ambiguous             0/3         0/3         1/3         0/3         1/3         0/3   
+routine               0/0         0/0         0/0         0/0         0/0         0/0   
+placebo               5/5         5/5         4/5         4/5         4/5         3/5   
+confirm               4/4         3/4         4/4         4/4         4/4         3/4   
+TOTAL                 9/40        8/40       19/40       10/40       19/40        8/40  
+  ilp        over-awarded  0   unresolved  0   policy-flagged  1
+  rule       over-awarded  0   unresolved  0   policy-flagged  0
+  single     over-awarded  2   unresolved  0   policy-flagged  4
+  single-noarg over-awarded  2   unresolved  0   policy-flagged  4
+  referee    over-awarded  2   unresolved  0   policy-flagged  4
+  referee-noarg over-awarded  2   unresolved  0   policy-flagged  4
+  single         cited the driving fact in 0/31 cases that name one
+  single-noarg   cited the driving fact in 0/31 cases that name one
+  referee        cited the driving fact in 0/31 cases that name one
+  referee-noarg  cited the driving fact in 0/31 cases that name one
+
+PRIMARY (pre-registered)  n=31
+  single   11 with text vs  2 without   -> text effect +9
+  referee  11 with text vs  2 without   -> text effect +9
+  interaction +0   discordant pairs referee-favoured=1 single-favoured=1
+
+CONTROLS (text effect must be ~0)  n=9
+  single    8 with text vs  8 without   -> text effect +0
+  referee   8 with text vs  6 without   -> text effect +2
+  interaction +2   discordant pairs referee-favoured=2 single-favoured=0
+
+all cases run  n=40
+  single   19 with text vs 10 without   -> text effect +9
+  referee  19 with text vs  8 without   -> text effect +11
+  interaction +2   discordant pairs referee-favoured=3 single-favoured=1
+
+full transcripts -> pins/results_hardcases_r3_2x2_qwen257b.json

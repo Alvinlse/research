@@ -1,0 +1,7 @@
+== qwen2.5:7b -> pins/results_exp81_qwen257b.json
+   exit=0 40 cases
+== qwen2.5:3b -> pins/results_exp81_qwen253b.json
+   exit=0 40 cases
+== gemma2:2b -> pins/results_exp81_gemma22b.json
+   exit=0 40 cases
+== llama3:8b -> pins/results_exp81_llama38b.json

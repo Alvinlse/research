@@ -1,0 +1,3121 @@
+{
+ "model": "qwen2.5:3b",
+ "suite": "r3",
+ "arms": [
+  "market",
+  "single-sgn",
+  "referee-sgn"
+ ],
+ "budget": 6,
+ "results": {
+  "P3-POLICY-01": {
+   "category": "nl_policy",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 5,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 3,
+      "r01": 1
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r01'] while margin/reserve was granted",
+      "envy within tier 'prod': margin granted while a peer's base is unmet"
+     ],
+     "justification": "OPERATOR NOTE limits GPU allocation to a total of 4 GPUs due to grid demand-response event.",
+     "meta": {
+      "changes": {
+       "r00": -2,
+       "r01": -2
+      },
+      "hold_free": 4,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 5,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "OPERATOR NOTE requires holding total grid draw at or below 8 GPUs",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 8,
+      "moved": 0,
+      "rejected": true,
+      "violations": [
+       "cannot fund: 2 GPUs short of the requested hold/grants"
+      ],
+      "fired": true,
+      "proposals": 3
+     }
+    }
+   }
+  },
+  "P3-POLICY-02": {
+   "category": "nl_policy",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": true,
+     "alloc": {
+      "r00": 1,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [
+      "prod base unmet while besteffort was served"
+     ],
+     "justification": "OPERATOR NOTE limits total GPU run to 3 due to failed chiller",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 3,
+      "moved": 3,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [
+      "prod base unmet while besteffort was served"
+     ],
+     "justification": "deadline in 2 ticks for job r00 and chiller failure limiting total GPU usage to 3",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 2,
+      "moved": 2,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 3
+     }
+    }
+   }
+  },
+  "P3-POLICY-03": {
+   "category": "nl_policy",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "OPERATOR NOTE restricts scheduling of job r00 due to account suspension.",
+     "meta": {
+      "changes": {
+       "r00": -4
+      },
+      "hold_free": 0,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "deadline=behind for r00 and account suspension for r00",
+     "meta": {
+      "changes": {
+       "r00": -4,
+       "r01": -1
+      },
+      "hold_free": 1,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 3
+     }
+    }
+   }
+  },
+  "P3-POLICY-04": {
+   "category": "nl_policy",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 3,
+      "r00": 1
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 3,
+      "r00": 1
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "VISION-GROUP JOBS TAKE PRECEDENCE OVER ROUTINE RETRAINING FOR THE REST OF THE WEEK",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 4,
+      "moved": 0,
+      "rejected": true,
+      "violations": [
+       "cannot fund: 3 GPUs short of the requested hold/grants"
+      ],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 2,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "OPERATOR NOTE mandates prioritizing conference deadline jobs over other vision-group jobs.",
+     "meta": {
+      "changes": {
+       "r00": -1,
+       "r01": -1
+      },
+      "hold_free": 1,
+      "moved": 2,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 3
+     }
+    }
+   }
+  },
+  "P3-POLICY-05": {
+   "category": "nl_policy",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 4,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r01": 4,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 requires and should retain all allocated GPUs as per the department's funding agreement.",
+     "meta": {
+      "changes": {
+       "r00": -2
+      },
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 4,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Deadline is behind, adjusting allocation to meet this urgency.",
+     "meta": {
+      "changes": {
+       "r00": -2,
+       "r01": 4
+      },
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": true,
+      "violations": [
+       "cannot fund: 4 GPUs short of the requested hold/grants",
+       "infeasible: 8 > 4"
+      ],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-POLICY-06": {
+   "category": "nl_policy",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "OPERATOR NOTE requires keeping 3 GPUs free for walk-in student sessions.",
+     "meta": {
+      "changes": {
+       "r00": -2,
+       "r01": -2
+      },
+      "hold_free": 3,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 1,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "deadline:ahead evidence conflicts with the demand reviewer's proposal to reduce r01",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 3,
+      "moved": 3,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 3
+     }
+    }
+   }
+  },
+  "P3-POLICY-07": {
+   "category": "nl_policy",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "OPERATOR NOTE requires stopping jobs that will still be running two ticks from now due to mandatory security patch.",
+     "meta": {
+      "changes": {
+       "r00": -2
+      },
+      "hold_free": 2,
+      "moved": 2,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "OPERATOR NOTE requires holding free GPUs to accommodate mandatory security patching.",
+     "meta": {
+      "changes": {
+       "r00": -4
+      },
+      "hold_free": 4,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 3
+     }
+    }
+   }
+  },
+  "P3-UNMOD-01": {
+   "category": "unmodeled",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 3,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 3,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 requires immediate processing due to its input dataset purging deadline in one tick.",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 3,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The proposed change is to allocate one GPU more to job r00 to avoid data re-statement delays.",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 3,
+      "moved": 0,
+      "rejected": true,
+      "violations": [
+       "cannot fund: 3 GPUs short of the requested hold/grants"
+      ],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-UNMOD-02": {
+   "category": "unmodeled",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 2,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 2,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 is interactive and currently in use, warranting more GPUs to ensure it remains available.",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 2,
+      "moved": 0,
+      "rejected": true,
+      "violations": [
+       "cannot fund: 2 GPUs short of the requested hold/grants"
+      ],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 0,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Both reviewers propose reducing the allocation of jobs that should not run at all.",
+     "meta": {
+      "changes": {
+       "r00": -1,
+       "r01": -1
+      },
+      "hold_free": 2,
+      "moved": 2,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-UNMOD-03": {
+   "category": "unmodeled",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 6,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 requires exactly 4 GPUs as per a previous baseline comparison, not the market's allocation of 6.",
+     "meta": {
+      "changes": {
+       "r00": -2
+      },
+      "hold_free": 6,
+      "moved": 6,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Evidence from the demand reviewer, r00, requires giving exactly 4 GPUs, which is less than the proposed change of 2 GPUs.",
+     "meta": {
+      "changes": {
+       "r00": -2
+      },
+      "hold_free": 6,
+      "moved": 6,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-UNMOD-04": {
+   "category": "unmodeled",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 has restarted multiple times and is stuck at epoch 0, indicating it requires more resources to stabilize.",
+     "meta": {
+      "changes": {
+       "r00": -2
+      },
+      "hold_free": 0,
+      "moved": 2,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "job r00 is in a crash-restart loop and has never progressed past epoch 0",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 4,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-UNMOD-05": {
+   "category": "unmodeled",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r01 requires more GPUs due to its checkpointing requirement, leaving two GPUs unallocated.",
+     "meta": {
+      "changes": {
+       "r01": -1
+      },
+      "hold_free": 2,
+      "moved": 2,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Both reviewers' evidence points to a deadline being behind, warranting the smallest change that addresses this.",
+     "meta": {
+      "changes": {
+       "r00": -1,
+       "r01": -1
+      },
+      "hold_free": 4,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 3
+     }
+    }
+   }
+  },
+  "P3-UNMOD-06": {
+   "category": "unmodeled",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 requires one licence seat per GPU and only two seats are free until 18:00.",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 4,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The 'NOTE' indicates that only two GPU licences are free until 18:00, making the third GPU unusable for job r00.",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 4,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-UNMOD-07": {
+   "category": "unmodeled",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 has a decommissioned downstream service and should be reduced to reflect its decreased urgency.",
+     "meta": {
+      "changes": {
+       "r00": -1,
+       "r01": -1
+      },
+      "hold_free": 1,
+      "moved": 1,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "NOTE: the downstream service that consumed this output was decommissioned last week \u2014 nobody reads the result any more.",
+     "meta": {
+      "changes": {
+       "r00": -3
+      },
+      "hold_free": 0,
+      "moved": 3,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-UNMOD-08": {
+   "category": "unmodeled",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r01 requires GPUs for model reloading which cannot be provided by the market allocation.",
+     "meta": {
+      "changes": {
+       "r01": -1
+      },
+      "hold_free": 2,
+      "moved": 0,
+      "rejected": true,
+      "violations": [
+       "cannot fund: 2 GPUs short of the requested hold/grants"
+      ],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "evidence that the job should not be restarted due to its model weights being already resident in the node's GPU memory",
+     "meta": {
+      "changes": {
+       "r01": -1
+      },
+      "hold_free": 2,
+      "moved": 0,
+      "rejected": true,
+      "violations": [
+       "cannot fund: 2 GPUs short of the requested hold/grants"
+      ],
+      "fired": true,
+      "proposals": 1
+     }
+    }
+   }
+  },
+  "P3-CORRUPT-01": {
+   "category": "corrupt",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 1,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 has a valid justification for its request due to clock discrepancy, while job r01 is genuinely behind schedule.",
+     "meta": {
+      "changes": {
+       "r00": -1,
+       "r01": -1
+      },
+      "hold_free": 0,
+      "moved": 1,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 1,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Both jobs have a deadline behind, and the smallest change is to reduce r00's allocation by one GPU",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 0,
+      "moved": 1,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-CORRUPT-02": {
+   "category": "corrupt",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r01 is marked as besteffort but should be treated as production due to its actual usage",
+     "meta": {
+      "changes": {
+       "r01": -4
+      },
+      "hold_free": 4,
+      "moved": 0,
+      "rejected": true,
+      "violations": [
+       "cannot fund: 4 GPUs short of the requested hold/grants"
+      ],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The proposed change from the demand reviewers to allocate one GPU less to job r00 is justified by their lack of provided evidence.",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 4,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-CORRUPT-03": {
+   "category": "corrupt",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 6,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00's true need is 4 workers, aligning with its tier and deadline status.",
+     "meta": {
+      "changes": {
+       "r00": -4
+      },
+      "hold_free": 6,
+      "moved": 6,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The demand reviewers propose reducing the allocation of job r00 by one GPU to reallocate resources.",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 6,
+      "moved": 6,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-CORRUPT-04": {
+   "category": "corrupt",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 has a history of spikes that are not related to the current spike history, warranting a reduction in allocation.",
+     "meta": {
+      "changes": {
+       "r00": -2
+      },
+      "hold_free": 8,
+      "moved": 0,
+      "rejected": true,
+      "violations": [
+       "cannot fund: 4 GPUs short of the requested hold/grants"
+      ],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The demand reviewer for job r00 requests a reduction of 1 GPU, which is the smallest change that addresses this evidence.",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 0,
+      "moved": 1,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-CORRUPT-05": {
+   "category": "corrupt",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 is critical and must keep its current allocation of GPUs to avoid failure.",
+     "meta": {
+      "changes": {
+       "r00": -3
+      },
+      "hold_free": 6,
+      "moved": 0,
+      "rejected": true,
+      "violations": [
+       "cannot fund: 3 GPUs short of the requested hold/grants"
+      ],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Base allocation of r00 is zero and it must keep its current GPUs to avoid failure.",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 3,
+      "moved": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 3
+     }
+    }
+   }
+  },
+  "P3-CONTRA-01": {
+   "category": "contradiction",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "OPERATOR NOTE: cluster freeze for the grant benchmark starting now \u2014 protect student jobs this week.",
+     "meta": {
+      "changes": {},
+      "hold_free": 3,
+      "moved": 0,
+      "rejected": true,
+      "violations": [
+       "cannot fund: 3 GPUs short of the requested hold/grants"
+      ],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "OPERATOR NOTE: cluster freeze for the grant benchmark starting now",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 1,
+      "moved": 1,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-CONTRA-02": {
+   "category": "contradiction",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 requires job r01 to finish first as per OWNER INSTRUCTION.",
+     "meta": {
+      "changes": {
+       "r00": -4
+      },
+      "hold_free": 0,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "OWNER INSTRUCTION requires r00 to wait until r01 finishes.",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 4,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-CONTRA-03": {
+   "category": "contradiction",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": true,
+     "alloc": {
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Firmware bug limits to a maximum of 2 concurrent GPUs, forcing reduction from the market allocation of 4.",
+     "meta": {
+      "changes": {
+       "r00": -4
+      },
+      "hold_free": 4,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": true,
+     "alloc": {
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "deadline is behind and there is a HARD CONSTRAINT limiting GPU usage to avoid firmware corruption",
+     "meta": {
+      "changes": {
+       "r00": -4
+      },
+      "hold_free": 1,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-CONTRA-04": {
+   "category": "contradiction",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 must be reduced to ensure only one job writes to the output path to avoid corruption.",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 4,
+      "moved": 0,
+      "rejected": true,
+      "violations": [
+       "cannot fund: 2 GPUs short of the requested hold/grants"
+      ],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Both jobs write to the same output path and running both would result in data corruption.",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 4,
+      "moved": 0,
+      "rejected": true,
+      "violations": [
+       "cannot fund: 2 GPUs short of the requested hold/grants"
+      ],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-AMBIG-01": {
+   "category": "ambiguous",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r01 has a critical deadline and job r00 is already at its requested allocation.",
+     "meta": {
+      "changes": {
+       "r00": -1,
+       "r01": -2
+      },
+      "hold_free": 1,
+      "moved": 1,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Deadline is behind for both jobs and the change minimizes GPU reallocation.",
+     "meta": {
+      "changes": {
+       "r00": -3
+      },
+      "hold_free": 0,
+      "moved": 3,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-AMBIG-02": {
+   "category": "ambiguous",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 6,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r01 requires all GPUs for its allocation, leaving no free GPUs to satisfy job r00's partial request.",
+     "meta": {
+      "changes": {
+       "r00": -6
+      },
+      "hold_free": 0,
+      "moved": 6,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 5,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Deadline is behind for job r00",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 0,
+      "moved": 1,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-AMBIG-03": {
+   "category": "ambiguous",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 0,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "User's resource requests are prioritized due to their long-standing hold on the cluster.",
+     "meta": {
+      "changes": {
+       "r00": -1,
+       "r01": -1
+      },
+      "hold_free": 4,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 0,
+      "r01": 0,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "r00 and r01 belong to the same user, who has held the cluster all morning. r02 is a different user with no allocation today.",
+     "meta": {
+      "changes": {
+       "r00": -1,
+       "r01": -1
+      },
+      "hold_free": 4,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 3
+     }
+    }
+   }
+  },
+  "P3-INFEAS-01": {
+   "category": "infeasible",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 0,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 and r01 are deadline-bound production jobs that require their full allocation to meet deadlines, while job r02 is an elastic best-effort job with remaining work.",
+     "meta": {
+      "changes": {
+       "r00": -4,
+       "r01": -3
+      },
+      "hold_free": 1,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 0,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "job r00 cannot start on fewer GPUs due to remaining work and approaching deadline",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 4,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 3
+     }
+    }
+   }
+  },
+  "P3-INFEAS-02": {
+   "category": "infeasible",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 2,
+      "r01": 2,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r02 is critical and must not be missed as its failure would require redoing the experiment from scratch.",
+     "meta": {
+      "changes": {
+       "r02": -1
+      },
+      "hold_free": 4,
+      "moved": 0,
+      "rejected": true,
+      "violations": [
+       "cannot fund: 4 GPUs short of the requested hold/grants"
+      ],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 0,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "All jobs are behind their deadlines and require fewer GPUs to catch up.",
+     "meta": {
+      "changes": {
+       "r00": -1,
+       "r01": -1,
+       "r02": -1
+      },
+      "hold_free": 4,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 3
+     }
+    }
+   }
+  },
+  "P3-INFEAS-03": {
+   "category": "infeasible",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 0,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [
+      "prod base unmet while besteffort was served"
+     ],
+     "justification": "Zombie process holding two GPUs prevents allocation of all requested GPUs.",
+     "meta": {
+      "changes": {
+       "r00": -1,
+       "r01": -1
+      },
+      "hold_free": 4,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "deadline in 2 ticks",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 4,
+      "moved": 0,
+      "rejected": true,
+      "violations": [
+       "cannot fund: 1 GPUs short of the requested hold/grants"
+      ],
+      "fired": true,
+      "proposals": 3
+     }
+    }
+   }
+  },
+  "P3-PLACEBO-01": {
+   "category": "placebo",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [
+      "prod base unmet while besteffort was served"
+     ],
+     "justification": "Jobs r00 and r01 are at their base allocation and no evidence provided suggests they should receive more resources.",
+     "meta": {
+      "changes": {
+       "r00": -1,
+       "r01": -1
+      },
+      "hold_free": 2,
+      "moved": 2,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [
+      "prod base unmet while besteffort was served"
+     ],
+     "justification": "unsold_in_pool: 2 and free_gpus: 8 limit the change to reducing allocation of r00 and r01 by one GPU each",
+     "meta": {
+      "changes": {
+       "r00": -1,
+       "r01": -1
+      },
+      "hold_free": 2,
+      "moved": 2,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 3
+     }
+    }
+   }
+  },
+  "P3-PLACEBO-02": {
+   "category": "placebo",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 4,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 4,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 has a critical deadline and urgent nature; job r01 is in the prod tier with an acceptable deadline.",
+     "meta": {
+      "changes": {
+       "r00": -1,
+       "r01": 3
+      },
+      "hold_free": 1,
+      "moved": 0,
+      "rejected": true,
+      "violations": [
+       "cannot fund: 4 GPUs short of the requested hold/grants",
+       "infeasible: 7 > 4"
+      ],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 4,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The deadline being behind is the only valid evidence provided for reducing the allocation of job r01.",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-PLACEBO-03": {
+   "category": "placebo",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 is a tier=prod job with a deadline behind and requires more GPUs than the market allocation allows.",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 6,
+      "moved": 0,
+      "rejected": true,
+      "violations": [
+       "cannot fund: 3 GPUs short of the requested hold/grants"
+      ],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Deadline is behind as evidenced by the demand reviewer's proposal",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 6,
+      "moved": 0,
+      "rejected": true,
+      "violations": [
+       "cannot fund: 3 GPUs short of the requested hold/grants"
+      ],
+      "fired": true,
+      "proposals": 1
+     }
+    }
+   }
+  },
+  "P3-PLACEBO-04": {
+   "category": "placebo",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 1
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [
+      "prod base unmet while besteffort was served"
+     ],
+     "justification": "Jobs r00 and r01 are at their requested allocations; no change is needed as per the supply note.",
+     "meta": {
+      "changes": {
+       "r00": -1,
+       "r01": -1
+      },
+      "hold_free": 0,
+      "moved": 2,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [
+      "prod base unmet while besteffort was served"
+     ],
+     "justification": "Deadline in 2 ticks for job r00 requires reducing its allocation",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 0,
+      "moved": 1,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-PLACEBO-05": {
+   "category": "placebo",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 4,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 4,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Student-protection policy has ended and normal tier order applies.",
+     "meta": {
+      "changes": {
+       "r00": -4
+      },
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 4,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Deadline is behind and student protection policy",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-CONFIRM-01": {
+   "category": "confirm",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 is a critical deadline production job that requires all allocated GPUs to ensure timely completion.",
+     "meta": {
+      "changes": {
+       "r00": -4
+      },
+      "hold_free": 0,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Deadline is behind for job r00",
+     "meta": {
+      "changes": {
+       "r00": -4
+      },
+      "hold_free": 0,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-CONFIRM-02": {
+   "category": "confirm",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Prod jobs with 1-tick deadlines require reserved GPUs to ensure they can run next tick.",
+     "meta": {
+      "changes": {},
+      "hold_free": 2,
+      "moved": 2,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "To reserve exactly the number of GPUs needed for jobs with 1-tick deadlines without over-provisioning.",
+     "meta": {
+      "changes": {
+       "r00": -2
+      },
+      "hold_free": 2,
+      "moved": 2,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 1
+     }
+    }
+   }
+  },
+  "P3-CONFIRM-03": {
+   "category": "confirm",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 is tiered as prod with a deadline behind and requires all 4 GPUs to proceed, which is available in the current market allocation.",
+     "meta": {
+      "changes": {
+       "r00": -4
+      },
+      "hold_free": 0,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "The demand reviewer for job r00 proposes removing all allocated GPUs to free up the pool.",
+     "meta": {
+      "changes": {
+       "r00": -4
+      },
+      "hold_free": 0,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  },
+  "P3-CONFIRM-04": {
+   "category": "confirm",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 8
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 8
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 requires an 8-GPU allocation for its tensor-parallel model to function, as requested and noted in the job's free-text.",
+     "meta": {
+      "changes": {
+       "r00": -8
+      },
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": true,
+      "violations": [
+       "change budget: 8 GPUs moved > 6"
+      ],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 8
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Demand reviewer's evidence is insufficient to override the market allocation without additional specific constraints or evidence.",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 8,
+      "moved": 0,
+      "rejected": true,
+      "violations": [
+       "change budget: 8 GPUs moved > 6"
+      ],
+      "fired": true,
+      "proposals": 1
+     }
+    }
+   }
+  },
+  "P3-POLICY-08": {
+   "category": "nl_policy",
+   "arms": {
+    "market": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "market: bases then \u00a76 margin clearing",
+     "meta": {
+      "changes": {},
+      "hold_free": 0,
+      "moved": 0,
+      "rejected": false,
+      "fired": false
+     }
+    },
+    "single-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": true,
+     "alloc": {
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00's deadline is behind and it requests more GPUs than allowed by the power cap.",
+     "meta": {
+      "changes": {
+       "r00": -4
+      },
+      "hold_free": 2,
+      "moved": 4,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": null
+     }
+    },
+    "referee-sgn": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "OPERATOR NOTE: power cap in force this window \u2014 at most 2 GPUs total, no exceptions.",
+     "meta": {
+      "changes": {
+       "r00": -1
+      },
+      "hold_free": 2,
+      "moved": 1,
+      "rejected": false,
+      "violations": [],
+      "fired": true,
+      "proposals": 2
+     }
+    }
+   }
+  }
+ }
+}

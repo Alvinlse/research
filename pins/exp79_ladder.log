@@ -1,0 +1,13 @@
+== qwen2.5:1.5b -> pins/results_hardcases_r3_2x2_qwen2515b.json
+   exit=0 74 log lines
+== gemma2:2b -> pins/results_hardcases_r3_2x2_gemma22b.json
+   exit=0 74 log lines
+== qwen2.5:3b -> pins/results_hardcases_r3_2x2_qwen253b.json
+   exit=0 74 log lines
+== qwen2.5:7b -> pins/results_hardcases_r3_2x2_qwen257b.json
+   exit=0 74 log lines
+== llama3:8b -> pins/results_hardcases_r3_2x2_llama38b.json
+   exit=0 74 log lines
+== gemma2:9b -> pins/results_hardcases_r3_2x2_gemma29b.json
+   exit=0 74 log lines
+== done; analyse with: .venv/bin/python -m pins.exp79_analyse

@@ -1,0 +1,11 @@
+P3-POLICY-01   nl_policy    market=. single-sgn=.* referee-sgn=.*
+P3-POLICY-02   nl_policy    market=. single-sgn=H* referee-sgn=H*
+P3-POLICY-03   nl_policy    market=. single-sgn=.* referee-sgn=.*
+P3-POLICY-04   nl_policy    market=. single-sgn=.* referee-sgn=.*
+P3-POLICY-05   nl_policy    market=. single-sgn=.* referee-sgn=.!
+P3-POLICY-06   nl_policy    market=. single-sgn=H* referee-sgn=H*
+P3-POLICY-07   nl_policy    market=. single-sgn=.* referee-sgn=.!
+P3-UNMOD-01    unmodeled    market=. single-sgn=.* referee-sgn=.*
+P3-UNMOD-02    unmodeled    market=. single-sgn=.* referee-sgn=.!
+P3-UNMOD-03    unmodeled    market=. single-sgn=.* referee-sgn=.*
+P3-UNMOD-04    unmodeled    market=. single-sgn=.* referee-sgn=.*

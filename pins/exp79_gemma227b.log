@@ -1,0 +1,15 @@
+P3-POLICY-01 nl_policy      ilp=f rule=f single=H single-noarg=H referee=H referee-noarg=H
+P3-POLICY-02 nl_policy      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-POLICY-03 nl_policy      ilp=f rule=f single=H single-noarg=f referee=H referee-noarg=f
+P3-POLICY-04 nl_policy      ilp=f rule=f single=H single-noarg=H referee=f referee-noarg=H
+P3-POLICY-05 nl_policy      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-POLICY-06 nl_policy      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-POLICY-07 nl_policy      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-UNMOD-01  unmodeled      ilp=f rule=f single=f single-noarg=H referee=f referee-noarg=f
+P3-UNMOD-02  unmodeled      ilp=f rule=f single=f single-noarg=H referee=f referee-noarg=f
+P3-UNMOD-03  unmodeled      ilp=f rule=f single=H single-noarg=f referee=H referee-noarg=f
+P3-UNMOD-04  unmodeled      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-UNMOD-05  unmodeled      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-UNMOD-06  unmodeled      ilp=f rule=f single=H single-noarg=f referee=H referee-noarg=f
+P3-UNMOD-07  unmodeled      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f
+P3-UNMOD-08  unmodeled      ilp=f rule=f single=f single-noarg=f referee=f referee-noarg=f

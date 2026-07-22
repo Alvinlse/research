@@ -1,0 +1,63 @@
+P3-POLICY-01   nl_policy    market=. single-sgn=.! referee-sgn=.*
+P3-POLICY-02   nl_policy    market=. single-sgn=H* referee-sgn=H*
+P3-POLICY-03   nl_policy    market=. single-sgn=.* referee-sgn=.*
+P3-POLICY-04   nl_policy    market=. single-sgn=.! referee-sgn=.*
+P3-POLICY-05   nl_policy    market=. single-sgn=.* referee-sgn=.!
+P3-POLICY-06   nl_policy    market=. single-sgn=.! referee-sgn=H*
+P3-POLICY-07   nl_policy    market=. single-sgn=.* referee-sgn=.*
+P3-UNMOD-01    unmodeled    market=. single-sgn=.* referee-sgn=.!
+P3-UNMOD-02    unmodeled    market=. single-sgn=.* referee-sgn=.!
+P3-UNMOD-03    unmodeled    market=. single-sgn=.* referee-sgn=.*
+P3-UNMOD-04    unmodeled    market=. single-sgn=.* referee-sgn=.*
+P3-UNMOD-05    unmodeled    market=. single-sgn=.* referee-sgn=.*
+P3-UNMOD-06    unmodeled    market=. single-sgn=.* referee-sgn=.*
+P3-UNMOD-07    unmodeled    market=. single-sgn=.* referee-sgn=.*
+P3-UNMOD-08    unmodeled    market=. single-sgn=.* referee-sgn=.*
+P3-CORRUPT-01  corrupt      market=. single-sgn=.! referee-sgn=.*
+P3-CORRUPT-02  corrupt      market=. single-sgn=.* referee-sgn=.!
+P3-CORRUPT-03  corrupt      market=. single-sgn=.* referee-sgn=.*
+P3-CORRUPT-04  corrupt      market=. single-sgn=H* referee-sgn=H*
+P3-CORRUPT-05  corrupt      market=. single-sgn=.* referee-sgn=.*
+P3-CONTRA-01   contradiction market=. single-sgn=.* referee-sgn=.*
+P3-CONTRA-02   contradiction market=. single-sgn=.* referee-sgn=.*
+P3-CONTRA-03   contradiction market=. single-sgn=H* referee-sgn=H*
+P3-CONTRA-04   contradiction market=. single-sgn=H* referee-sgn=H*
+P3-AMBIG-01    ambiguous    market=. single-sgn=.! referee-sgn=.*
+P3-AMBIG-02    ambiguous    market=. single-sgn=.* referee-sgn=.*
+P3-AMBIG-03    ambiguous    market=. single-sgn=H* referee-sgn=.*
+P3-INFEAS-01   infeasible   market=. single-sgn=.* referee-sgn=.*
+P3-INFEAS-02   infeasible   market=. single-sgn=.* referee-sgn=.*
+P3-INFEAS-03   infeasible   market=. single-sgn=.! referee-sgn=.*
+P3-PLACEBO-01  placebo      market=H single-sgn=.* referee-sgn=.*
+P3-PLACEBO-02  placebo      market=H single-sgn=H! referee-sgn=H!
+P3-PLACEBO-03  placebo      market=H single-sgn=.* referee-sgn=.*
+P3-PLACEBO-04  placebo      market=H single-sgn=.* referee-sgn=.*
+P3-PLACEBO-05  placebo      market=H single-sgn=H* referee-sgn=H!
+P3-CONFIRM-01  confirm      market=H single-sgn=.* referee-sgn=.*
+P3-CONFIRM-02  confirm      market=. single-sgn=.* referee-sgn=.*
+P3-CONFIRM-03  confirm      market=H single-sgn=.* referee-sgn=.*
+P3-CONFIRM-04  confirm      market=H single-sgn=H! referee-sgn=H!
+P3-POLICY-08   nl_policy    market=. single-sgn=H* referee-sgn=H*
+
+=== PRIMARY  n=31 ===
+  arm             handled  fired  invalid  rescued  broke   net
+  market             0/31       0        0        0      0    +0
+  single-sgn         6/31      31        6        6      0    +6
+  referee-sgn        6/31      31        4        6      0    +6
+  head-to-head referee vs single: referee-only 1, single-only 1
+
+=== CONTROLS  n=9 ===
+  arm             handled  fired  invalid  rescued  broke   net
+  market             8/9        0        0        0      0    +0
+  single-sgn         3/9        9        2        0      5    -5
+  referee-sgn        3/9        9        3        0      5    -5
+  head-to-head referee vs single: referee-only 0, single-only 0
+
+=== ALL  n=40 ===
+  arm             handled  fired  invalid  rescued  broke   net
+  market             8/40       0        0        0      0    +0
+  single-sgn         9/40      40        8        6      5    +1
+  referee-sgn        9/40      40        7        6      5    +1
+  head-to-head referee vs single: referee-only 1, single-only 1
+
+budget=6   full detail -> pins/results_exp81_gemma22b.json
