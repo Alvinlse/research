@@ -511,6 +511,7 @@ def check_allocation(alloc: dict[str, int], reserve: int, demand: list[DemandJob
 # same way take_tokens() is. fast = ticks governed by an adapted standing ruling (no LLM);
 # llm = ticks that invoked referee_decide.
 SHELL_STATS = {"fast": 0, "llm": 0, "debate": 0}
+QSTATS: dict = {}          # plan §12: last policy's quality-cache counters (reuse/false-reuse)
 
 
 def take_shell_stats() -> dict:
@@ -519,10 +520,16 @@ def take_shell_stats() -> dict:
     return out
 
 
+def take_qcache_stats() -> dict:
+    out = dict(QSTATS) or {"qcache_reuse": 0.0, "qcache_false": 0.0, "qcache_entries": 0.0}
+    QSTATS.clear()
+    return out
+
+
 def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None, think=True,
                         debate=False, trigger="bucket", theta=None, stale="fresh",
                         extend=False, no_argue=False, prev_input=False, fast_negotiate=False,
-                        hard_trigger=False, admit=False, gamma=None):
+                        hard_trigger=False, admit=False, gamma=None, qcache=None):
     assert not (debate and no_argue), "--debate rewrites the arguments --no-argue removes"
     assert not hard_trigger or debate, "--hard-trigger gates the debate round"
     assert gamma is None or debate, "--gamma gates the debate round"
@@ -573,7 +580,13 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
           "prev_in": None,             # (demand, supply_ctx, free) of the previous tick
           "h_free": None, "h_jids": None,      # E3 hard-trigger state, kept SEPARATE from the
           "h_behind": frozenset(),             # theta shell's so the two gates can compose
-          "h_fell": False}
+          "h_fell": False,
+          "tick": 0}                    # §12: age clock for the quality cache
+    qc = None
+    if qcache is not None:
+        from pins.qcache import QualityCache
+        qc = QualityCache(threshold=qcache)
+        QSTATS.clear()
 
     def _delta(demand, free):
         jids = frozenset(j.jid for j in demand)
@@ -684,6 +697,30 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
             # infeasible (standing ruling no longer fits, or negotiate() couldn't clear) ->
             # fall through and re-invoke the referee
 
+        # plan §12: quality-aware similarity reuse. Retrieve -> adapt by category -> RE-VALIDATE
+        # (never repair) -> execute. A rejected candidate is counted as a false reuse and the
+        # tick falls through to a fresh ruling, so the safety layer is never bypassed.
+        if qc is not None:
+            prev_exec = {k: v for k, v in (st.get("executed") or {}).items() if k != "_reserve"}
+            want = sum(1 for _ in demand)
+            z = qc.state(demand, free, want, prev_exec)
+            hit = qc.retrieve(z, st["tick"])
+            if hit is not None:
+                entry, _score = hit
+                cand = qc.adapt(entry, demand, free)
+                bad = check_allocation(cand, entry.reserve, demand, free)
+                live_q = qc.quality(cand, entry.reserve, demand, free, bool(bad), prev_exec)
+                qc.note_reuse(entry.q, live_q)
+                if not bad:
+                    SHELL_STATS["fast"] += 1
+                    st["prev_in"] = (demand, supply_ctx, free)
+                    st["executed"] = dict(cand) | {"_reserve": entry.reserve}
+                    st["tick"] += 1
+                    return cand, entry.reserve, NegotiationOutcome(
+                        margins=cand, reserve=entry.reserve, rounds=0, agreed=True,
+                        transcript=[{"round": 0, "actor": "qcache",
+                                     "why": f"reused a ruling of quality {entry.q:.2f}"}])
+
         dec_demand, dec_supply, dec_free = (
             st["prev_in"] if (stale == "one" and st["prev_in"] is not None)
             else (demand, supply_ctx, free))
@@ -719,6 +756,14 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
         else:
             st["standing"] = (dict(o.alloc), reserve)
         st["prev_in"] = (demand, supply_ctx, free)
+        if qc is not None:               # §12: store only what VALIDATED and executed
+            prev_exec = {k: v for k, v in (st.get("executed") or {}).items() if k != "_reserve"}
+            if feasible:
+                qc.store(qc.state(demand, free, len(demand), prev_exec), margins, reserve,
+                         qc.quality(margins, reserve, demand, free, False, prev_exec),
+                         st["tick"], demand)
+            st["tick"] += 1
+            QSTATS.update(qc.stats())
         st["executed"] = dict(margins) | {"_reserve": reserve}   # E1: what actually ran
         out = NegotiationOutcome(margins=margins, reserve=reserve, rounds=1,
                                  agreed=feasible, transcript=o.transcript,

@@ -3592,3 +3592,49 @@ outcome of a decision, and in a 300-tick simulation a decision's regret is only 
 at the end of the run — so either the cache scores entries offline (post-hoc, not deployable)
 or on a proxy available at decision time. §10's diversity ablation needs temperature plumbing
 in the advocate reasoners; `--samples` already provides the single-LLM half of it.
+
+## Build 68c — THE QUALITY-AWARE CACHE ON A DECISION-TIME PROXY (plan §12), and what it costs (2026-07-22)
+
+**The design decision (made, not deferred).** §12 scores a cache entry with
+`Q_i = a·U_useful − b·SVR − c·C_resize − d·R_invalid` — all *outcome* quantities. In a
+300-tick simulation an outcome is attributable only at the end of the run, so an
+outcome-scored cache is not deployable: a live scheduler cannot wait for the job to finish
+before deciding whether to trust a cached ruling. We therefore score on **decision-time
+signals only**:
+
+* `fill` — share of the free pool the ruling put to work, capped at each job's usable
+  parallelism (the immediate stand-in for `U_useful`: over-award is visible at once),
+* `invalid` — the deterministic validator's verdict (the plan's own `R_invalid`),
+* `churn` — share of jobs whose award moved vs the last executed allocation (`C_resize`).
+
+`Q = fill − invalid − 0.3·churn`, clipped to [0,1]. Retrieval is the plan's
+`R_i = cos(z_t, z_i)·Q_i·exp(−0.01·age)`; adaptation maps awards by **job category**
+(`tier|deadline`), never by raw job id; the candidate is then **re-validated, never repaired**,
+and a rejected candidate falls through to a fresh ruling. `pins/qcache.py`, opt-in via
+`--qcache THR`.
+
+**Result (rule-tier referee, pool 8, n=4, v2020).** The threshold does exactly what the plan
+predicts, and the false-reuse metric earns its keep:
+
+| threshold | reuse rate | **false-reuse rate** | SLA | prodSLA |
+|---|---|---|---|---|
+| — (no cache) | — | — | 28.1% | 37.3% |
+| 0.95 | 2% | 35% | 28.1% | 37.3% |
+| 0.85 | 6% | 40% | 28.1% | 37.3% |
+| 0.70 | 13% | 43% | 28.1% | 37.3% |
+| 0.50 | 15% | 64% | 28.1% | 37.3% |
+| 0.30 | 20% | 64% | 29.7% | **43.6%** |
+
+1. **Reuse is free until it isn't, and the false-reuse rate says where the edge is.** Down to
+   θ=0.50 the outcomes are bit-identical to no cache while 15% of rulings are served from it.
+   At θ=0.30 outcomes degrade (+6.3 prodSLA pts) — and the false-reuse rate had already
+   jumped to 64% one step earlier. **Hit rate would have told us nothing here: it rises
+   smoothly across the whole range.** This is the plan's §12 argument, demonstrated.
+2. **A ~35-40% false-reuse floor even at θ=0.95** is a caution about the decision-time proxy
+   itself: a ruling can be locally sensible (fills the pool, validates, doesn't churn) and
+   still travel badly to a similar-looking scene. The proxy cannot see that; only outcomes
+   can. Reported as the honest limitation of the deployable design.
+
+**Scope.** Rule tier only, so this measures the cache's DECISION quality, not its token
+saving — the point of caching at the LLM tier. `--qcache` at 14b is the follow-up, and there
+the fast-tick counter (`shell_fast`) turns reuse into a real bill reduction.

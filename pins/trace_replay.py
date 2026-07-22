@@ -458,7 +458,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           slack_mult: float = 1.0, admit: bool = False,
           law: str = "amdahl", kappa: float = 2.0, samples: int = 0,
           cooldown: int = 0, resize_c1: float = 0.0, gamma: float | None = None,
-          phi: float = 0.0) -> None:
+          phi: float = 0.0, qcache: float | None = None) -> None:
     assert not (referee and single_ilp), "--referee and --single-ilp are separate arms"
     assert not debate or referee, "--debate is a referee-arm round"
     assert not (fast_negotiate and extend), "--fast-negotiate replaces the --extend replay path"
@@ -570,7 +570,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                                                        extend=extend, no_argue=no_argue,
                                                        prev_input=prev_input,
                                                        fast_negotiate=fast_negotiate,
-                                                       admit=admit)),
+                                                       admit=admit, qcache=qcache)),
             ("negotiated", lambda: make_policy_negotiated(use_llm, model, cache, decisions, seen, admit=admit)),
         ]
         if samples:               # plan §13: the EQUALLY FUNDED centralised control. One LLM
@@ -649,15 +649,16 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                                  alpha_norm=alpha_norm, law=law, kappa=kappa,
                                  cooldown=cooldown, resize_c1=resize_c1, phi=phi)
                 tk = take_tokens()          # marginal inference cost of THIS (seed, arm)
-                from pins.referee import take_shell_stats
+                from pins.referee import take_shell_stats, take_qcache_stats
                 sh = take_shell_stats()     # fast/llm tick split of the controller shell
+                qs = take_qcache_stats()    # §12 reuse + FALSE-reuse rate
                 per_seed.append({k: r[k] for k in METRICS}
                                 | {"llm_calls": float(tk["calls"]),
                                    "llm_tokens": float(tk["prompt"] + tk["completion"]),
                                    "llm_wall": float(tk.get("wall", 0.0)),
                                    "shell_fast": float(sh["fast"]),
                                    "shell_llm": float(sh["llm"]),
-                                   "shell_debate": float(sh["debate"])})
+                                   "shell_debate": float(sh["debate"])} | qs)
                 if use_llm:
                     save_cache(cache)   # per-seed: a reaped run loses at most one seed
                 el, done = time.time() - _t0, i + 1
@@ -759,6 +760,12 @@ def main() -> None:
                     help="Exp 57: diminishing-returns coefficient in P(g)=g/(1+A*(g-1)). "
                          "0.0 = the linear scaling Exp 22-56b assumed; try 0.1/0.3 as "
                          "sensitivity. Cannot be calibrated from v2020 (no counterfactuals).")
+    ap.add_argument("--qcache", type=float, default=None, metavar="THR",
+                    help="elevated plan S12: quality-aware similarity cache on the referee arm. "
+                         "Reuse a past ruling when sim*quality*age-decay > THR, adapted by job "
+                         "category and RE-VALIDATED. Quality is scored on decision-time "
+                         "signals only (fill, validator verdict, churn). Sweep .70/.80/.90/.95; "
+                         "watch qcache_false, not the hit rate.")
     ap.add_argument("--phi", type=float, default=0.0, metavar="P",
                     help="elevated plan S16: starvation protection — add P*waiting_fraction to "
                          "a job's grant priority so long waits eventually win a tie. 0 = off.")
@@ -903,6 +910,7 @@ def main() -> None:
           burst_s=a.burst, hard_trigger=a.hard_trigger, slack_mult=a.slack_mult,
           admit=a.admit, law=a.law, kappa=a.kappa, samples=a.samples,
           cooldown=a.cooldown, resize_c1=a.resize_c1, gamma=a.gamma, phi=a.phi,
+          qcache=a.qcache,
           fast_negotiate=a.fast_negotiate)
 
 
