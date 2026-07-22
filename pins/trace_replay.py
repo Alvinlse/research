@@ -459,7 +459,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           law: str = "amdahl", kappa: float = 2.0, samples: int = 0,
           cooldown: int = 0, resize_c1: float = 0.0, gamma: float | None = None,
           phi: float = 0.0, qcache: float | None = None, market: bool = False,
-          composed: bool = False) -> None:
+          composed: bool = False, bid_info: str = "exact") -> None:
     assert not (referee and single_ilp), "--referee and --single-ilp are separate arms"
     assert not debate or referee, "--debate is a referee-arm round"
     assert not (fast_negotiate and extend), "--fast-negotiate replaces the --extend replay path"
@@ -656,7 +656,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                                  belief_work=belief if time_mode else None, ttf_work=ttf,
                                  dyn_cap_map=dyn_map, realloc_cost=realloc_cost, alpha=alpha,
                                  alpha_norm=alpha_norm, law=law, kappa=kappa,
-                                 cooldown=cooldown, resize_c1=resize_c1, phi=phi)
+                                 cooldown=cooldown, resize_c1=resize_c1, phi=phi,
+                                 bid_info=bid_info)
                 tk = take_tokens()          # marginal inference cost of THIS (seed, arm)
                 from pins.referee import take_shell_stats, take_qcache_stats
                 sh = take_shell_stats()     # fast/llm tick split of the controller shell
@@ -774,6 +775,11 @@ def main() -> None:
                          "bids (alpha*dp_hat + beta*SLA risk + gamma*wait - delta*resize) vs a "
                          "rising supply ask, cleared at b>=a. The unsold remainder IS the "
                          "reserve. Deterministic, no LLM.")
+    ap.add_argument("--bid-info", default="exact", choices=("exact", "bucket"),
+                    help="Exp 74 information ablation: what the market knows about a job's "
+                         "usable extra parallelism. 'exact' = the true integer (Exp 72); "
+                         "'bucket' = only the spike-risk bucket the LLM arms see. Dynamics "
+                         "are unchanged either way.")
     ap.add_argument("--composed", action="store_true",
                     help="Exp 73: the composed arm — the LLM (or its rule fallback) sets ONLY "
                          "the reserve, the plan's market clears the remaining pool into "
@@ -929,7 +935,7 @@ def main() -> None:
           burst_s=a.burst, hard_trigger=a.hard_trigger, slack_mult=a.slack_mult,
           admit=a.admit, law=a.law, kappa=a.kappa, samples=a.samples,
           cooldown=a.cooldown, resize_c1=a.resize_c1, gamma=a.gamma, phi=a.phi,
-          qcache=a.qcache, market=a.market, composed=a.composed,
+          qcache=a.qcache, market=a.market, composed=a.composed, bid_info=a.bid_info,
           fast_negotiate=a.fast_negotiate)
 
 

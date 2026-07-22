@@ -46,6 +46,9 @@ from pins.uncertainty_sim import (assign, assign_gpu, load_gpu_distribution,
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DORDER = {"ahead": 0, "ontrack": 1, "behind": 2}
+# Exp 74: usable-parallelism implied by each spike-risk bucket (bucket midpoint at
+# spike_max=0.6, scale=3) — the market's view when information-matched to the LLM arms.
+BUCKET_USABLE = {"low": 0, "medium": 1, "high": 2}
 STARVE_TICKS = 30    # plan §16: a job waiting this long for its first GPU counts as starved
 TTF_HORIZON = 2      # Exp 39: "imminent" release = believed remaining work <= this many ticks
 
@@ -248,7 +251,8 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
              dyn_cap_map: dict[str, int] | None = None, dyn_after: int = 3,
              realloc_cost: float = 0.0, alpha: float = 0.0,
              alpha_norm: str = "c0", law: str = "amdahl", kappa: float = 2.0,
-             cooldown: int = 0, resize_c1: float = 0.0, phi: float = 0.0) -> dict:
+             cooldown: int = 0, resize_c1: float = 0.0, phi: float = 0.0,
+             bid_info: str = "exact") -> dict:
     """One run of a policy on a fresh workload copy. Rigid: a running job is never involuntarily
     preempted; it only shrinks VOLUNTARILY to its ceiling (cap0 + this tick's negotiated margin).
     Spikes: a train phase's true work is inflated; margin GPUs grant rate>1 to absorb it, capped at
@@ -301,6 +305,13 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
     the same. `cooldown` K forbids a job's ceiling from moving within K ticks of its last
     move, the plan's resizing-cooldown constraint. Both default to the pre-Exp-68b behaviour
     (0 = no per-GPU term, no cooldown), which is byte-identical.
+
+    `bid_info` (Exp 74): what the MARKET arm is told about a job's usable extra parallelism.
+    'exact' (default, Exp 72 behaviour) hands it the true integer `useful[jid]`. 'bucket'
+    hands it only the spike-risk bucket the LLM arms see, mapped to that bucket's midpoint
+    usable count {low:0, medium:1, high:2} — the same 0/1/2 resolution as HEDGE_GPUS. The
+    DYNAMICS always use the true value; only the market's BELIEF changes, so this isolates
+    the information channel from the mechanism. Exp 72 vs 74 is that ablation.
 
     `phi` (elevated plan §16): starvation protection. A job's grant priority gains
     phi * min(1, waited/STARVE_TICKS), so a long-waiting job outranks a fresher peer of equal
@@ -388,8 +399,12 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
                                     db, con_demand)
             rank = DORDER.get(db, 0) * 2 + (1 if j.tier == "prod" else 0)
             if phase_of(j) == "train" and held[j.jid] >= cap0(j) > 0:
+                # Exp 74: information-matching. 'bucket' gives the market the same coarse
+                # spike-risk signal the LLM arms get, not the true usable count.
+                us = (useful[j.jid] if bid_info == "exact"
+                      else BUCKET_USABLE.get(ctx.get("spike_risk"), 1))
                 demand.append(DemandJob(j.jid, ctx, 0, True, float(rank),
-                                        facts={"base": cap0(j), "usable": useful[j.jid],
+                                        facts={"base": cap0(j), "usable": us,
                                                "waited": t - j.arrival, "held": held[j.jid]}))
         free_now = total_gpus - sum(held[j.jid] for j in active)
         # Exp 63 admission lever: the jobs the margin table CANNOT see — arrived, never started,
