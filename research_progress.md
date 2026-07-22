@@ -3752,3 +3752,54 @@ PINS_NUM_CTX=8192 PINS_CACHE=pins/cache_exp70.json PINS_RESULTS=pins/results_exp
   .venv/bin/python -u -m pins.trace_replay --referee --llm --model qwen2.5:14b \
   --caps predicted --pools 8 --seeds 32 --samples 10
 ```
+
+## Experiment 71 — THE VERDICT SURVIVES THE PLAN'S PRIMARY PROGRESS LAW (--law sat, n=32) (2026-07-22)
+
+Exp 70's configuration re-run under the elevated plan's §3.2 saturating law — the robustness
+pair the plan demands (§3.3: a conclusion counts only if it holds under both models). Warm
+cache from Exp 70, so the bills here are marginal, not cold; §13's budget verdict stands on
+Exp 70.
+
+```
+   8  referee       39.3%   39.7%    77%     69%     14%      7.57   20.0    1% 15.7/16
+   8  negotiated    37.5%*  37.6%*   79%     71%     10%      6.45   16.9    0% 15.7/16
+   8  single-llm    41.0%   39.2%    80%     70%     13%      7.68   19.8    0% 15.7/16
+
+      referee      vs floor:  dSLA -0.2 ±1.9   dprodSLA -6.3 ±3.5*  dutil -0.8 ±1.8   duseful -2.2 ±1.6*  dregret +4.4 ±1.8*
+      negotiated   vs floor:  dSLA -2.0 ±1.3*  dprodSLA -8.4 ±4.4*  dutil +1.7 ±1.6*  duseful -0.2 ±1.3   dregret +0.6 ±1.1   dslow -0.8 ±0.7*
+      single-llm   vs floor:  dSLA +1.6 ±2.6   dprodSLA -6.8 ±5.1*  dutil +2.5 ±2.3*  duseful -1.4 ±1.6   dregret +3.1 ±2.0*
+      Holm (18): referee/regret p=0.001, referee/useful p=0.011, negotiated/prodSLA p=0.023,
+                 single-llm/regret p=0.048, referee/prodSLA p=0.048, negotiated/lateness p=0.048
+```
+
+**1. Both of Exp 70's conclusions hold under the other law.** Referee − single-llm on prod SLA
+is **+0.5 ± 5.2, p=0.789** (was +0.1, p=0.965): still indistinguishable. The referee is again
+significantly worse on utilisation (−3.3 ± 1.5, p<0.001). The multi-agent structure buys
+nothing on the mean under either progress model.
+
+**2. Under the primary law the AUCTION becomes the best prod-tier protector too.** dprodSLA
+−8.4\* (negotiated) vs −6.3\* (referee) — a reversal of the amdahl ordering, and negotiated is
+the only arm also positive on utilisation (+1.7\*) and significantly better on SLA (−2.0\*) and
+slowdown (−0.8\*). Head-to-head, referee − negotiated: prod SLA +2.1 ± 5.1 (ns), util
+−2.5 (p<0.001), **useful util −1.9 (p<0.001), regret +3.7 (p<0.001)** — the referee is
+significantly worse on three of four, tied on the fourth.
+
+**3. Six survivors under Holm, and the referee's are split in sign** — `regret +4.4` (worse,
+p=0.001) and `useful −2.2` (worse, p=0.011) rank ABOVE its `prodSLA −6.3` (better, p=0.048).
+Under the plan's primary law the strongest thing that can be said about the referee is what
+it costs.
+
+**Standing conclusion (Exp 68→71), both laws, Holm-corrected, budget-metered.** The reasoning
+layer does not pay for itself on the mean: it is matched on prod-tier protection by one
+cheaper centralised LLM call, and beaten outright by the deterministic auction on
+utilisation, useful utilisation, regret, slowdown — and, under the primary law, on prod-tier
+protection as well. The thesis claim that remains open is the TAIL: hard-case flexibility
+(`[[referee-flexibility-thesis]]`, `[[hardcase-suite]]`), which no mean-based experiment in
+this log has ever tested.
+
+**Reproduce.**
+```bash
+PINS_NUM_CTX=8192 PINS_CACHE=pins/cache_exp71.json PINS_RESULTS=pins/results_exp71_sat.json \
+  .venv/bin/python -u -m pins.trace_replay --referee --llm --model qwen2.5:14b \
+  --caps predicted --pools 8 --seeds 32 --samples 10 --law sat
+```
