@@ -74,15 +74,20 @@ def load_history(which: str) -> list:
         return json.load(f)
 
 
-def run_case(case, model: str, use_llm: bool, arm: str, max_delta: int, history=None):
+def run_case(case, model: str, use_llm: bool, arm: str, max_delta: int, history=None,
+             no_text: bool = False):
     floors, alloc, ranking, _env = build_anchor(case)
     dem = [s for s in case.stmts if s.get("side") == "demand"]
+    # `no_text` is the pre-registered ablation (pins/hardcases_r3.py): identical numeric packet,
+    # every note blanked. Blanking here covers the reviewers AND the packet in one place, since
+    # both read `jobs`/`sup`.
     jobs = [{"jid": s["job_id"], "tier": s.get("tier"), "deadline": s.get("deadline"),
              "base": int(s.get("base_gpus", 0)),
              "margin": int(s.get("requested_margin_gpus", 0)),
              "requested": int(s.get("base_gpus", 0)) + int(s.get("requested_margin_gpus", 0)),
-             "note": s.get("justification", "")} for s in dem]
-    sup = next((s.get("justification", "") for s in case.stmts if s.get("side") == "supply"), "")
+             "note": "" if no_text else s.get("justification", "")} for s in dem]
+    sup = "" if no_text else next(
+        (s.get("justification", "") for s in case.stmts if s.get("side") == "supply"), "")
     cache: dict = {}
 
     if arm == "market":
@@ -131,6 +136,9 @@ def main() -> None:
                     help="add the debate-pkt arm: one rebuttal round before the referee rules")
     ap.add_argument("--history", default="none", choices=["none", "manual"],
                     help="manual = load pins/manual_learned.json into packet.history")
+    ap.add_argument("--no-text", action="store_true",
+                    help="pre-registered ablation: blank every job/supply note, same numbers. "
+                         "Round-3 PRIMARY answers live in the note, so this is the floor arm")
     a = ap.parse_args()
 
     from pins.hardcases import CASES
@@ -150,7 +158,7 @@ def main() -> None:
         arms = {}
         for arm in arms_run:
             final, why, meta = run_case(case, a.model, not a.no_llm and arm != "market",
-                                        arm, a.max_delta, history=hist)
+                                        arm, a.max_delta, history=hist, no_text=a.no_text)
             arms[arm] = score(case, final, 0, why, True) | {"meta": meta}
         results[case.id] = {"category": case.category, "arms": arms}
         print(f"{case.id:14s} {case.category:12s} " + " ".join(
@@ -159,7 +167,7 @@ def main() -> None:
             for k, v in arms.items()))
 
     json.dump({"model": a.model, "suite": a.suite, "arms": arms_run, "max_delta": a.max_delta,
-               "history": a.history, "n_precedents": len(hist),
+               "history": a.history, "n_precedents": len(hist), "no_text": a.no_text,
                "results": results}, open(out_path, "w"), indent=1)
 
     ids = [c.id for c in cases]

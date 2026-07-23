@@ -459,6 +459,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           law: str = "amdahl", kappa: float = 2.0, samples: int = 0,
           cooldown: int = 0, resize_c1: float = 0.0, gamma: float | None = None,
           phi: float = 0.0, qcache: float | None = None, market: bool = False,
+          gated: bool = False,
           composed: bool = False, bid_info: str = "exact") -> None:
     assert not (referee and single_ilp), "--referee and --single-ilp are separate arms"
     assert not debate or referee, "--debate is a referee-arm round"
@@ -535,11 +536,13 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         suffix += "+single-ilp"           # Exp 54: single LLM proposes, ILP repairs
     manual = manual or os.environ.get("PINS_MANUAL")   # flag and env are the same arm
     if manual:
-        assert referee, "--manual is a referee-arm option"
+        assert referee or gated, "--manual needs the referee or gated arm"
         from pins.referee import load_manual
         load_manual(manual)               # Exp 51: precedent block + cache-key hash
         # tiers must never mix rulings across manuals or with vanilla (results merge per tier)
         suffix += ("+manual-learned" if "learned" in os.path.basename(manual) else "+manual")
+    if gated:
+        suffix += "+gated"
     if hard_trigger:
         assert debate, "--hard-trigger gates the debate round"
         suffix += "+hardtrig"             # E3: deliberation gated, ruling still per-tick
@@ -605,6 +608,10 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
     if market:                    # Exp 72 (plan §6): the explicit bid/ask market arm
         from pins.market import make_policy_market
         rows.append(("market", lambda: make_policy_market(decisions, seen)))
+    if gated:                     # validated auction by default, debate arm on trigger
+        from pins.market import make_policy_gated
+        rows.append(("gated", lambda: make_policy_gated(use_llm, model, cache, decisions, seen,
+                                                        debate=True)))
     if composed:                  # Exp 73: LLM sets the reserve, the market clears the rest
         from pins.market import make_policy_composed
         rows.append(("composed", lambda: make_policy_composed(use_llm, model, cache,
@@ -713,6 +720,12 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
     if use_llm:
         save_cache(cache)
     print(f"{len(decisions)} distinct decisions/transcripts -> {RESULTS} (tier '{tag}')")
+    if gated:                     # how often did the contextual trigger actually fire?
+        from pins.market import take_gate_stats
+        g = take_gate_stats()
+        tot = g["auction"] + g["escalated"] or 1
+        print(f"gate: {g['auction']} auction ticks, {g['escalated']} escalated "
+              f"({g['escalated']/tot:.1%}), {g['escalated_invalid']} escalated rulings infeasible")
 
 
 def main() -> None:
@@ -770,6 +783,10 @@ def main() -> None:
                     help="Exp 57: diminishing-returns coefficient in P(g)=g/(1+A*(g-1)). "
                          "0.0 = the linear scaling Exp 22-56b assumed; try 0.1/0.3 as "
                          "sensitivity. Cannot be calibrated from v2020 (no counterfactuals).")
+    ap.add_argument("--gated", action="store_true",
+                    help="validated auction every tick; escalate to the debate arm only on a "
+                         "contextual trigger (validator reject, prod arrival, job newly behind, "
+                         "capacity crossing). Add --manual for the precedent docs")
     ap.add_argument("--market", action="store_true",
                     help="elevated plan S6: add the explicit-market arm — per-GPU marginal "
                          "bids (alpha*dp_hat + beta*SLA risk + gamma*wait - delta*resize) vs a "
@@ -928,7 +945,7 @@ def main() -> None:
           use_llm=a.llm, model=a.model, caps_mode=a.caps, quantile=a.quantile,
           truth_mode=a.truth, time_mode=a.time, ttf_mode=a.ttf, baseline=a.baseline,
           dyncap=a.dyncap, trace_name=a.trace, quantum={"quarter": 1, "whole": 4}[a.quantum],
-          referee=a.referee, manual=a.manual, single_ilp=a.single_ilp, debate=a.debate,
+          gated=a.gated, referee=a.referee, manual=a.manual, single_ilp=a.single_ilp, debate=a.debate,
           no_think=a.no_think, advocates=a.advocates, realloc_cost=a.realloc_cost,
           alpha=a.alpha, alpha_norm=a.alpha_norm, trigger=a.trigger, theta=a.theta,
           stale=a.stale, extend=a.extend, no_argue=a.no_argue, prev_input=a.prev_input,

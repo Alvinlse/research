@@ -4184,3 +4184,85 @@ rather than a copy of what was shown. Recorded so the design is not re-attempted
 current `market` arm in the sim — no LLM, cheap, and the actionable product of Exp 68–78;
 (b) the H2 14b re-run to restore the per-case detail lost earlier; (c) the Exp 64–67 hard-case
 arms destroyed at the start of this session.
+
+## Experiment 87 — THE GATED ARCHITECTURE: validated auction every tick, debate+docs only on a contextual trigger — SLA is UNCHANGED vs the bare auction (2026-07-23)
+
+The design under test (user's spec): every tick runs the deterministic clearing, then a cheap
+code validator (`market.validate_clearing` — rule-1 feasibility + unknown-id + negativity,
+reusing `referee.check_allocation`). If the clearing is valid AND no contextual trigger fires,
+the auction's allocation is applied with **zero LLM calls**. On a trigger (validator reject,
+prod arrival, job newly behind deadline, contested-capacity crossing, cold start — the Exp-61
+`_hard` event set) the **debate arm** rules instead, and an infeasible ruling falls back and
+re-fires next tick. Escalation is DEBATE+precedent-docs (`--manual referee_manual_learned.md`),
+the 15/31 hard-case configuration (Exp 83), not the plain referee. `market.make_policy_gated`,
+new `--gated` flag, own tier `qwen2.5:14b+pred+manual-learned+gated`.
+
+The point of the experiment: Exp 83 showed debate+docs FIXES the single LLM's unreliable
+exception suggestions on the text suite (15/31 vs single 9–11/31, zero harm). This asks the
+orthogonal question — **does layering that arm onto the validated auction cost SLA?**
+
+**Run.** qwen2.5:14b, caps=predicted, pool 8, seeds 0-31. Paired within seed against `market`
+(validated auction alone) and the `no-llm` floor.
+
+| pool | arm | SLA | prodSLA | util | useful | regret | done |
+|---|---|---|---|---|---|---|---|
+| 8 | no-llm (floor) | 53.9% | 59.1% | 80% | 75% | 10% | 15.3/16 |
+| 8 | market | 51.8% | 55.3% | 81% | 76% | 8% | 15.4/16 |
+| 8 | gated | 51.6%\* | 54.7% | 81% | 76% | 9% | 15.4/16 |
+
+```
+market vs floor:  dSLA -2.1 ± 1.7*  dprodSLA -3.8 ± 3.1*  dutil +1.3 ± 0.5*  duseful +0.7 ± 0.4*  dregret -1.3 ± 0.8*
+gated  vs floor:  dSLA -2.3 ± 1.9*  dprodSLA -4.4 ± 4.1*  dutil +1.1 ± 0.7*  duseful +0.3 ± 0.6   dregret -0.8 ± 0.8
+gated MINUS market (paired, n=32):  dSLA -0.20 ± 1.40   dprodSLA -0.63 ± 3.34   dutil -0.21 ± 0.38   dregret +0.49 ± 0.39*   duseful -0.40 ± 0.40*
+gate: 5791 auction ticks, 1076 escalated (15.7%), 9 escalated rulings infeasible
+cost: gated 83.2 calls/seed, 52,853 tokens/seed, 293.9 s/seed;  every other arm 0 tokens
+```
+
+**Findings.**
+
+1. **SLA is unchanged. gated − market = −0.20 ± 1.40 SLA, ns** — statistically identical to the
+   0-token auction. The escalation genuinely ran (15.7% of ticks, 1,076 debates, only 9
+   infeasible), it simply did not move the outcome. The two arms track each other on every
+   headline metric (prodSLA −0.63 ns, util −0.21 ns); the only starred paired diffs are a
+   trivial +0.49\* regret and −0.40\* useful — the debate arm's known small efficiency drag,
+   not an SLA effect.
+
+2. **This is the EXPECTED result, and it is the thesis, not a null.** The trace has no text
+   exceptions (4-tuple jobs, bucketed enums — see the debate-mechanism thread and Exp 57f).
+   The 15.7% of ticks that escalated were capacity crossings and prod arrivals — numeric scenes
+   where the auction was already correct and the docs had nothing to catch. So the arm behaves
+   exactly as the gated design predicts: **cheap validated auction on routine ticks, escalate on
+   triggers, and where the escalation has real text to reason about (the hard-case suite) it wins
+   15/31; where it does not (this trace) it is SLA-neutral rather than harmful.**
+
+3. **The paired claim now holds both halves cleanly.** Debate+docs improves the unreliable
+   single-LLM suggestion on text-dependent exceptions (Exp 83, 15/31 vs 9/31), AND layering that
+   same arm onto the validated auction does not cost SLA (Exp 87, −0.2 ns). Efficiency-neutral
+   capability-add, which is stronger and more defensible than any "debate raises SLA" claim —
+   the sim cannot raise SLA with debate because it contains nothing for debate to fix (compare
+   Exp 84's plain 14b debate row: dSLA +0.8 ns, but −12.0\* prodSLA when it REPLACES the auction
+   rather than gating on top of it).
+
+4. **The validator is confirmed inert on correct clearings (Exp 86 companion).** Re-running the
+   bare `market` arm with the new per-tick validator reproduced Exp 72's numbers byte-identically
+   across amdahl+sat × pools 4/6/8 × 32 seeds, fb 0% throughout — so the validator is a
+   bug/stale-input guard that never rejects a well-formed auction output, exactly what a safety
+   layer should be. Fault-injection (oversubscription, negative award, unknown id) confirmed it
+   fires when it should.
+
+**Honest cost caveat.** The escalation buys the exception-handling CAPABILITY at 52,853
+tokens/seed for an SLA result identical to the free auction ON THIS TRACE — because this trace
+never exercises the capability. The token bill is only justified in a venue with genuine text
+exceptions; on a pure-numeric workload the bare `market` arm dominates on cost at equal SLA.
+
+**Reproduce.**
+```bash
+PINS_NUM_CTX=8192 .venv/bin/python -u -m pins.trace_replay --gated --market --llm \
+  --model qwen2.5:14b --caps predicted --pools 8 --seeds 32 --manual pins/referee_manual_learned.md
+```
+Backup of the pre-run results at `pins/results_backup_pre_exp87_gated.json`.
+
+**Next (unchanged from Exp 78, plus):** (d) if the gated arm is to show an SLA gain in-sim, the
+trace needs a text-exception channel — no public GPU trace carries one (they are scrubbed of the
+user-authored free text by construction; see the dataset thread), so this is an AOBA-data /
+authored-notes question, not an engineering one.

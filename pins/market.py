@@ -119,6 +119,44 @@ def clear_market(demand, free: int, env: dict, bid_w=BID_W, ask_w=ASK_W):
     return margins, max(0, free - sold), price, sold
 
 
+# --------------------------------------------------------------------------- #
+#  Auction-output validation — every tick, deterministic, no LLM (2026-07-23)   #
+# --------------------------------------------------------------------------- #
+# Until now `check_allocation` was wired to the REFEREE arm only (referee.py fast path,
+# qcache path, and post-ruling), so the market — the arm that wins utilisation, useful
+# utilisation and regret — was the one arm applying its clearing unvalidated. Same rule set,
+# same fallback convention: violations -> concede the margins (ceilings drop to base, which
+# is the floor's behaviour for that tick) and report agreed=False so two_sided_sim counts it
+# in `fb`.
+#
+# SCOPE, so a 0% rejection rate is not over-read: trace_replay builds every DemandJob with
+# forecast_cap=0, so check_allocation's rules 2-4 (base unmet / prod-before-besteffort /
+# within-tier envy) are inert there and this reduces to rule 1 feasibility, unknown job ids
+# and the negativity check added below. Those are exactly the failures a clearing bug or a
+# stale `free` would produce, which is what the validator is for.
+VALIDATOR_STATS = {"checked": 0, "rejected": 0}
+
+
+def take_validator_stats() -> dict:
+    """Read-and-reset, same convention as referee.take_shell_stats()."""
+    out = dict(VALIDATOR_STATS)
+    VALIDATOR_STATS.update(checked=0, rejected=0)
+    return out
+
+
+def validate_clearing(margins: dict[str, int], reserve: int, demand, free: int) -> list[str]:
+    """Cheap deterministic check of the auction's own output. [] == apply it."""
+    from pins.referee import check_allocation      # local: referee imports the sim, market too
+    v = [f"negative award {jid}={n}" for jid, n in sorted(margins.items()) if n < 0]
+    if reserve < 0:
+        v.append(f"negative reserve {reserve}")
+    v += check_allocation(margins, reserve, demand, free)
+    VALIDATOR_STATS["checked"] += 1
+    if v:
+        VALIDATOR_STATS["rejected"] += 1
+    return v
+
+
 def make_policy_market(trace=None, seen=None, bid_w=BID_W, ask_w=ASK_W,
                        hold_unsold: bool = False):
     """A `two_sided_sim` policy: the market decides margins AND (implicitly) the reserve."""
@@ -128,6 +166,13 @@ def make_policy_market(trace=None, seen=None, bid_w=BID_W, ask_w=ASK_W,
         env.setdefault("n_active", max(len(demand), 1))
         margins, unsold, price, sold = clear_market(demand, free, env, bid_w, ask_w)
         reserve = unsold if hold_unsold else 0      # see module docstring
+        bad = validate_clearing(margins, reserve, demand, free)
+        if bad:
+            return {}, 0, NegotiationOutcome(
+                margins={}, reserve=0, rounds=0, agreed=False,
+                transcript=[{"round": 0, "actor": "validator", "free": free,
+                             "violations": bad,
+                             "why": f"clearing rejected ({'; '.join(bad)}); margins conceded"}])
         out = NegotiationOutcome(
             margins=margins, reserve=reserve, rounds=0, agreed=True,
             transcript=[{"round": 0, "actor": "market", "price": round(price, 4),
@@ -142,6 +187,78 @@ def make_policy_market(trace=None, seen=None, bid_w=BID_W, ask_w=ASK_W,
                 trace.append({"policy": "market", "free_gpus": free, "price": price,
                               "units_sold": sold, "reserve": reserve, "margins": margins})
         return margins, reserve, out
+    return policy
+
+
+# --------------------------------------------------------------------------- #
+#  The GATED arm (2026-07-23): validated auction by default, debate on trigger   #
+# --------------------------------------------------------------------------- #
+# The user's architecture:
+#
+#   demand bids / supply asks -> deterministic clearing -> automatic validation
+#     valid and no contextual trigger  -> apply the auction's allocation
+#     contextual trigger, ruling valid -> apply the debate arm's allocation
+#     otherwise                        -> fall back
+#
+# The escalation arm is DEBATE (+ the precedent manual when --manual is set), not the plain
+# referee: on the only venue with text, debate beats referee 14/31 vs 11/31 and one call
+# 9/31 (Exp 83), and 15/31 with the manual. This measures what that arm costs in SLA when it
+# sits on top of the auction instead of replacing it.
+#
+# The trigger mirrors `referee._hard` (Exp 61) rather than importing it, because that closure
+# is built inside make_policy_referee and reaching into it would change the existing
+# +hardtrig tier's behaviour. Kept deliberately identical so the two are comparable.
+GATE_STATS = {"auction": 0, "escalated": 0, "escalated_invalid": 0}
+
+
+def take_gate_stats() -> dict:
+    out = dict(GATE_STATS)
+    GATE_STATS.update(auction=0, escalated=0, escalated_invalid=0)
+    return out
+
+
+def make_policy_gated(use_llm=True, model="qwen2.5:14b", cache=None, trace=None, seen=None,
+                      bid_w=BID_W, ask_w=ASK_W, debate=True, statement_model=None):
+    """Validated auction as the default path; the debate arm only on a contextual trigger."""
+    from pins.referee import make_policy_referee
+    ref = make_policy_referee(use_llm, model, cache, trace, seen,
+                              statement_model=statement_model, debate=debate)
+    st = {"jids": None, "free": None, "behind": frozenset(), "fell": False}
+
+    def _trigger(demand, free) -> bool:
+        jids = frozenset(j.jid for j in demand)
+        behind = frozenset(j.jid for j in demand if j.ctx.get("deadline") == "behind")
+        bucket = lambda f: 0 if f == 0 else (1 if f <= 2 else 2)
+        fire = (st["jids"] is None                       # cold start
+                or st["fell"]                            # last escalated ruling was infeasible
+                or bucket(free) != bucket(st["free"])    # contested-capacity crossing
+                or bool(behind - st["behind"])           # a job newly behind deadline
+                or any(j.jid not in st["jids"] and j.ctx.get("tier") == "prod"
+                       for j in demand))                 # prod arrival
+        st["jids"], st["free"], st["behind"] = jids, free, behind
+        return fire
+
+    def policy(demand, supply_ctx, free, waiting=None, env=None, **_):
+        env = dict(env or {})
+        env.setdefault("n_waiting", len(waiting or []))
+        env.setdefault("n_active", max(len(demand), 1))
+        margins, unsold, price, sold = clear_market(demand, free, env, bid_w, ask_w)
+        bad = validate_clearing(margins, 0, demand, free)
+        if bad or _trigger(demand, free):
+            GATE_STATS["escalated"] += 1
+            m, r, out = ref(demand, supply_ctx, free, waiting=waiting, env=env)
+            st["fell"] = not getattr(out, "agreed", True)   # infeasible ruling re-fires next tick
+            if st["fell"]:
+                GATE_STATS["escalated_invalid"] += 1
+            return m, r, out
+        GATE_STATS["auction"] += 1
+        st["fell"] = False
+        return margins, 0, NegotiationOutcome(
+            margins=margins, reserve=0, rounds=0, agreed=True,
+            transcript=[{"round": 0, "actor": "market", "price": round(price, 4),
+                         "units_sold": sold, "free": free, "unsold": unsold,
+                         "why": f"routine tick: cleared {sold}/{free} at {price:.3f}, "
+                                f"validated, no contextual trigger"}])
     return policy
 
 
@@ -175,6 +292,13 @@ def make_policy_composed(use_llm=False, model="qwen2.5:14b", cache=None, trace=N
         reserve = min(reserve_amount(rd["reserve"]), free)
         # the market only ever sees what the supply side did not withhold
         margins, unsold, price, sold = clear_market(demand, free - reserve, env, bid_w, ask_w)
+        bad = validate_clearing(margins, reserve, demand, free)
+        if bad:
+            return {}, 0, NegotiationOutcome(
+                margins={}, reserve=0, rounds=1, agreed=False,
+                transcript=[{"round": 0, "actor": "validator", "free": free,
+                             "violations": bad,
+                             "why": f"clearing rejected ({'; '.join(bad)}); margins conceded"}])
         out = NegotiationOutcome(
             margins=margins, reserve=reserve, rounds=1, agreed=True,
             transcript=[{"round": 0, "actor": "supply", "level": rd["reserve"],
