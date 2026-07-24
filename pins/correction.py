@@ -95,13 +95,20 @@ def _has_text(s) -> bool:
 
 
 def _ask(system: str, user: str, model: str, host: str, cache: dict, tag: str,
-         num_predict: int = 200, think: bool | None = None) -> dict | None:
+         num_predict: int = 200, think: bool | None = None,
+         temperature: float = 0) -> dict | None:
     """Defaults are Exp 77's exactly, so those tiers keep replaying byte-identically.
 
     `num_predict`/`think` exist for hybrid reasoners: with thinking on, deepseek-r1 and qwen3
     spend the whole budget in the thinking channel and emit no JSON at all, which would read as
     "the model proposed nothing" when in fact it never got to answer. Callers testing those
     models must raise the budget (see pins/correction_signed.py).
+
+    `temperature` defaults to 0 (every existing tier is unaffected). Exp 88 raises it for the
+    self-consistency control ONLY: at temperature 0 the sampler is deterministic, so drawing K
+    samples of one prompt returns K identical answers and best-of-N is impossible to build.
+    Note the cache key does NOT include temperature -- callers drawing multiple samples must
+    vary `tag` per sample, which Exp 88 does.
     """
     key = f"{PROMPT_VERSION}|{tag}|{user}|{model}"
     if key in cache:
@@ -111,7 +118,8 @@ def _ask(system: str, user: str, model: str, host: str, cache: dict, tag: str,
         client = metered_client(host)
         kw = {"think": think} if (think is not None and _HYBRID(model)) else {}
         resp = client.chat(model=model, format="json", **kw,
-                           options={"temperature": 0, "num_predict": num_predict, **CTX_OPT},
+                           options={"temperature": temperature, "num_predict": num_predict,
+                                    **CTX_OPT},
                            messages=[{"role": "system", "content": system},
                                      {"role": "user", "content": user}])
         out = _parse(resp.message.content)

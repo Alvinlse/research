@@ -1,0 +1,246 @@
+"""Exp 88 — is debate's hard-case win STRUCTURE, or just a bigger inference budget?
+
+PRE-REGISTERED 2026-07-24, written and committed BEFORE the run. Nothing below was chosen
+after seeing a number.
+
+WHY THIS EXPERIMENT EXISTS. Exp 83 is the only surviving pro-LLM result in the project:
+on the round-3 PRIMARY 31, market 0/31 -> single-pkt 9/31 -> referee-pkt 11/31 ->
+debate-pkt 14/31, monotone, zero harm on controls. But debate spends 2N+3 calls per case
+against single's 1 (N = demand jobs; N=1..3 here, so 5-9 calls/case, 217 vs 31 over the
+suite -- a 7x budget gap). Exp 70/71 already showed what happens when this project's
+pro-LLM results meet a budget control: the referee TIED a single-LLM control running on
+45% of its tokens and LOST to a 0-token auction, and the mean-outcome case collapsed. The
+elevated plan's Sec.13 equal-inference-budget protocol has been open since Exp 68
+(research_progress.md:3554) and has never been applied to the tail claim.
+
+  H_0 (the one this experiment is built to be able to CONFIRM): debate-pkt is EQUIVALENT to
+  a single LLM given the same number of calls. If so, debate is sampling, not argument, and
+  the multi-agent line is closed on evidence -- parallel review is already dead (Exp 79,
+  p=0.50) and the split is interface-bound (Exp 81 vs 82).
+
+  H_1: debate-pkt beats the budget-matched single arm, i.e. the STRUCTURE of a rebuttal
+  round buys something more samples cannot.
+
+THE CONTROL ARM: `single-pkt-boN`. Identical packet, identical system prompt, identical
+menu as `single-pkt`. It draws K = 2N+3 samples -- matched to debate PER CASE, not merely
+in total -- and majority-votes the selected action_ids.
+
+  SAMPLING. correction._ask pins temperature 0, so K draws of one prompt are K identical
+  answers and self-consistency is unbuildable without changing it. This arm therefore runs
+  at temperature 0.8 (`--temp`), and per-sample cache tags keep the draws distinct.
+  DECLARED CONFOUND: the control differs from debate on temperature as well as on call
+  count. This is intrinsic to best-of-N and is not removable -- deterministic sampling has
+  no N. It is disclosed here, before the run, rather than discovered afterwards. It biases
+  in the CONTROL's favour if anything (more diverse proposals), which is the conservative
+  direction for a test whose interesting outcome is equivalence.
+
+  AGGREGATION. Majority vote over the frozenset of chosen action_ids. Ties are broken
+  toward FEWER actions (packet rule 2: "prefer the smallest correction that addresses the
+  evidence"), then lexicographically on the id tuple for determinism. The tie-break follows
+  the referee prompt's own stated rule rather than being invented to fit an outcome, and it
+  is applied identically whatever the result. No extra LLM call is used to aggregate --
+  a judge call would re-introduce the structure under test.
+
+SCORING. STRICT (handled AND feasible) is the headline, bare `handled` reported beside it,
+exactly as amended in pins/exp79_analyse.py. PRIMARY n=31 only; the 9 controls are reported
+separately and NEVER pooled in.
+
+TEST. Pre-registered in pins/exp88_analyse.py: TOST equivalence on the paired per-case
+outcomes, margin +/-3 cases, alpha 0.05, via exact conditional (Clopper-Pearson) bounds on
+the discordant pairs. Equivalence is the RIGHT frame because the informative result here is
+the null; a one-sided McNemar in debate's favour would be the generous direction for the
+very claim under suspicion. Project precedent for TOST: Exp 55 (debate-vs-referee increment
+EQUIVALENT +/-3), Exp 43/44 (3b == 14b).
+
+DEBATE IS RE-RUN, NOT REPLAYED. debate-pkt is deterministic at temperature 0, so
+results_exp83_qwen2514b_debate.json would have been a valid replay. It is re-run anyway so
+the harness is shown to reproduce 14/31 end-to-end before anything is compared against it --
+the same guard Exp 86 applied to the validator. A mismatch against Exp 83 is itself a
+finding and must be reported, not silently accepted.
+
+AMENDMENT, 2026-07-24, made BEFORE the run after a power calculation, disclosed rather than
+silently applied. THIS IS A SCREENING RUN, NOT A CONFIRMATORY ONE.
+
+  The +/-3-case margin cannot be met at n=31 by any method. Exact conditional TOST can only
+  return PASS when total discordant pairs m <= 3; the unconditional (Wald) version is worse
+  still -- a perfect 2v2 tie gives a 90% CI of [-3.29, +3.29], already outside the margin.
+  A balanced 5v5 tie yields a CI halfwidth of 16.8pp against a 9.7pp margin. Clearing it
+  needs ~217 pairs (7 models x 31), and pooling models is itself unsafe here because Exp 82
+  showed the packet is capability-gated (worth -6 at 7b, both arms driven to 0/31): weak
+  models would contribute pairs where NEITHER arm handles anything, manufacturing fake
+  equivalence out of a floor effect.
+
+  So the formal equivalence test is expected to return INCONCLUSIVE, and that outcome is
+  declared in advance so it cannot later be reported as support for either hypothesis. What
+  this run is actually for is the POINT ESTIMATE, which is decisive in practice at the
+  effect sizes in play:
+
+    boN reaches ~13-14/31  -> debate's Exp 83 win is inference budget, not argument.
+    boN stays at ~9-10/31  -> structure survives its most serious objection, and a powered
+                              confirmatory run (more CASES, not more models) is then worth
+                              the authoring cost.
+    anything between       -> genuinely undecided; report as such and do not spin it.
+
+  The TOST remains pre-registered and is still reported; it is simply not expected to be the
+  informative half. No number below was chosen after seeing a result.
+
+  .venv/bin/python -m pins.exp88_budget_control --model qwen2.5:14b
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+from collections import Counter
+
+from pins.correction_signed import _ask, apply_signed, debate_signed, disruption, gather_signed
+from pins.h2_eval import build_anchor
+from pins.hardcase_eval import score
+from pins.packet import SYSTEM_PACKET_SINGLE, build_packet, decision_from_ids
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ARMS = ["market", "single-pkt", "single-pkt-boN", "debate-pkt"]
+
+
+def _jobs_of(case, no_text: bool = False):
+    """The exp82 packet inputs, rebuilt identically so arms stay paired on the same scene."""
+    dem = [s for s in case.stmts if s.get("side") == "demand"]
+    jobs = [{"jid": s["job_id"], "tier": s.get("tier"), "deadline": s.get("deadline"),
+             "base": int(s.get("base_gpus", 0)),
+             "margin": int(s.get("requested_margin_gpus", 0)),
+             "requested": int(s.get("base_gpus", 0)) + int(s.get("requested_margin_gpus", 0)),
+             "note": "" if no_text else s.get("justification", "")} for s in dem]
+    sup = "" if no_text else next(
+        (s.get("justification", "") for s in case.stmts if s.get("side") == "supply"), "")
+    return jobs, sup
+
+
+def _decide_once(packet, model, cache, tag, temperature):
+    obj = _ask(SYSTEM_PACKET_SINGLE, json.dumps(packet, indent=1), model, None, cache, tag,
+               temperature=temperature) or {}
+    ids = obj.get("action_ids") or []
+    ids = tuple(sorted(str(i) for i in ids))
+    return ids, str(obj.get("justification", ""))[:300]
+
+
+def _vote(samples):
+    """Modal action_id set. Ties -> fewer actions (packet rule 2), then lexicographic."""
+    counts = Counter(ids for ids, _ in samples)
+    best = min(counts.items(), key=lambda kv: (-kv[1], len(kv[0]), kv[0]))[0]
+    why = next(j for ids, j in samples if ids == best)
+    return best, why, dict(sorted(((",".join(k) or "(none)", v) for k, v in counts.items())))
+
+
+def run_case(case, model, use_llm, arm, max_delta, temperature, no_text=False):
+    floors, alloc, ranking, _env = build_anchor(case)
+    jobs, sup = _jobs_of(case, no_text)
+    cache: dict = {}
+    n_jobs = len(jobs)
+    k = 2 * n_jobs + 3                     # debate's per-case call count, matched exactly
+
+    if arm == "market":
+        return alloc, "market: bases then §6 margin clearing", {
+            "changes": {}, "hold_free": 0, "moved": 0, "rejected": False, "fired": False,
+            "n_calls": 0, "k": 0, "votes": {}}
+
+    props = None
+    if arm == "debate-pkt":
+        p = gather_signed(jobs, sup, case.free_gpus, alloc, use_llm=use_llm,
+                          model=model, cache=cache)
+        p = debate_signed(jobs, sup, case.free_gpus, alloc, p, use_llm=use_llm,
+                          model=model, cache=cache)
+        props = {kk: v for kk, v in p.items() if kk in ("demand", "supply", "opening", "debated")}
+
+    packet = build_packet(jobs, sup, case.free_gpus, alloc, ranking, floors,
+                          max_delta=max_delta, reviewer_proposals=props, history=None)
+
+    votes: dict = {}
+    if not use_llm:
+        d, why, n_calls = {"changes": {}, "hold_free": 0, "picked": [], "unknown_ids": []}, \
+            "rule: market stands", 0
+    elif arm == "single-pkt-boN":
+        samples = [_decide_once(packet, model, cache, f"sgl-pkt-bon-s{i}", temperature)
+                   for i in range(k)]
+        ids, why, votes = _vote(samples)
+        d = decision_from_ids(packet, list(ids))
+        n_calls = k
+    else:                                   # single-pkt (1 call) and debate-pkt (referee call)
+        from pins.packet import SYSTEM_PACKET_REFEREE
+        sysmsg = SYSTEM_PACKET_REFEREE if arm == "debate-pkt" else SYSTEM_PACKET_SINGLE
+        obj = _ask(sysmsg, json.dumps(packet, indent=1), model, None, cache, arm) or {}
+        d = decision_from_ids(packet, obj.get("action_ids"))
+        why = str(obj.get("justification", ""))[:300]
+        n_calls = (2 * n_jobs + 3) if arm == "debate-pkt" else 1
+
+    fired = bool(d["changes"]) or bool(d["hold_free"])
+    final, viol = apply_signed(alloc, d, case.free_gpus, ranking=ranking, floors=floors,
+                               budget=max_delta)
+    meta = {"changes": d["changes"], "hold_free": d["hold_free"],
+            "moved": disruption(alloc, final), "rejected": bool(viol), "fired": fired,
+            "n_calls": n_calls, "k": k if arm == "single-pkt-boN" else 0, "votes": votes,
+            "unknown_ids": d.get("unknown_ids", []), "n_jobs": n_jobs}
+    return final, why, meta
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--model", default="qwen2.5:14b")
+    ap.add_argument("--no-llm", action="store_true")
+    ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--max-delta", type=int, default=6)
+    ap.add_argument("--temp", type=float, default=0.8,
+                    help="temperature for the boN control ONLY; every other arm stays at 0")
+    a = ap.parse_args()
+
+    from pins.hardcases_r3 import CASES_R3, CONTROLS, PRIMARY
+    cases = CASES_R3[:a.limit] if a.limit else CASES_R3
+
+    out_path = os.environ.get(
+        "PINS_RESULTS",
+        os.path.join(HERE, f"results_exp88_{a.model.replace(':', '')}_t{a.temp}.json"))
+    results: dict = {}
+    for case in cases:
+        arms = {}
+        for arm in ARMS:
+            temp = a.temp if arm == "single-pkt-boN" else 0
+            final, why, meta = run_case(case, a.model, not a.no_llm and arm != "market",
+                                        arm, a.max_delta, temp)
+            arms[arm] = score(case, final, 0, why, True) | {"meta": meta}
+        results[case.id] = {"category": case.category, "arms": arms}
+        print(f"{case.id:14s} {case.category:12s} " + " ".join(
+            f"{k}={'H' if v['handled'] else '.'}"
+            f"{'!' if v['meta']['rejected'] else ('*' if v['meta']['fired'] else '')}"
+            for k, v in arms.items()), flush=True)
+
+    json.dump({"model": a.model, "suite": "r3", "arms": ARMS, "max_delta": a.max_delta,
+               "temperature_boN": a.temp, "results": results}, open(out_path, "w"), indent=1)
+
+    ids = [c.id for c in cases]
+    for label, sub in (("PRIMARY", [c for c in ids if c in set(PRIMARY)]),
+                       ("CONTROLS", [c for c in ids if c in set(CONTROLS)])):
+        if not sub:
+            continue
+        print(f"\n=== {label}  n={len(sub)} ===")
+        print(f"  {'arm':15s}{'strict':>9s}{'handled':>9s}{'fired':>7s}{'invalid':>9s}{'calls':>7s}")
+        for arm in ARMS:
+            st = sum(1 for c in sub if results[c]["arms"][arm]["handled"]
+                     and not results[c]["arms"][arm]["meta"]["rejected"])
+            h = sum(1 for c in sub if results[c]["arms"][arm]["handled"])
+            f = sum(1 for c in sub if results[c]["arms"][arm]["meta"]["fired"])
+            r = sum(1 for c in sub if results[c]["arms"][arm]["meta"]["rejected"])
+            nc = sum(results[c]["arms"][arm]["meta"]["n_calls"] for c in sub)
+            print(f"  {arm:15s}{st:>6d}/{len(sub):<3d}{h:>6d}/{len(sub):<3d}"
+                  f"{f:>7d}{r:>9d}{nc:>7d}")
+        for x, y in (("debate-pkt", "single-pkt-boN"), ("debate-pkt", "single-pkt"),
+                     ("single-pkt-boN", "single-pkt")):
+            b = sum(1 for c in sub if results[c]["arms"][x]["handled"]
+                    and not results[c]["arms"][y]["handled"])
+            cc = sum(1 for c in sub if results[c]["arms"][y]["handled"]
+                     and not results[c]["arms"][x]["handled"])
+            print(f"  head-to-head {x} vs {y}: b={b} c={cc}")
+
+    print(f"\nfull detail -> {out_path}\nnow run: .venv/bin/python -m pins.exp88_analyse {out_path}")
+
+
+if __name__ == "__main__":
+    main()

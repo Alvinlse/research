@@ -56,7 +56,7 @@ from pins.llm_agent import DEFAULT_MODEL
 from pins.referee import _HYBRID
 
 
-def _ask(system, user, model, host, cache, tag):
+def _ask(system, user, model, host, cache, tag, temperature: float = 0):
     """Give hybrid reasoners room to think AND still emit the JSON.
 
     correction._ask caps output at 200 tokens, which is ample for a non-reasoner emitting a
@@ -67,7 +67,8 @@ def _ask(system, user, model, host, cache, tag):
     hybrid = _HYBRID(model)
     return _ask_raw(system, user, model, host, cache, tag,
                     num_predict=4096 if hybrid else 200,
-                    think=True if hybrid else None)
+                    think=True if hybrid else None,
+                    temperature=temperature)
 
 SIGNED_BUDGET = 6
 
