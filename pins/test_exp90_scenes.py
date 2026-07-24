@@ -30,6 +30,13 @@ def test_correct_action_is_retain_market():
         assert c.free_gpus > base_sum             # genuine idle headroom to meddle with
 
 
+def test_free_exceeds_base_at_minimum():
+    # smallest possible bases (all 1) with the lowest slack must still leave idle headroom
+    from pins.no_exception_scenes import _scene
+    case, m = _scene(0, [1, 1, 1], 0.15)
+    assert case.free_gpus > m["base_sum"]
+
+
 def test_non_vacuous_menu():
     from pins.packet import candidate_actions
     scenes, meta = sample_scenes(30, seed=3)
