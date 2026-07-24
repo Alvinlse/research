@@ -128,13 +128,14 @@ _SLACK = (0.15, 0.6)           # idle headroom as a fraction of the seated bases
 
 def _scene(idx: int, quanta: list[int], slack: float) -> tuple[HardCase, dict]:
     bases = [min(CAP_CLIP, max(1, q)) for q in quanta]
-    free = round(sum(bases) * (1 + slack))
-    stmts = [d(f"r{j:02d}", "best-effort", "ontrack", b, 0, "") for j, b in enumerate(bases)]
+    base_sum = sum(bases)
+    free = base_sum + max(1, round(base_sum * slack))   # guarantee free > base_sum: real idle headroom
+    stmts = [d(f"r{j:02d}", "besteffort", "ontrack", b, 0, "") for j, b in enumerate(bases)]
     stmts.append(s(0, "none", ""))                # neutral supply; no reserve, no text
     case = HardCase(id=f"NE-{idx:04d}", category="no_exception", free_gpus=free, stmts=stmts,
                     predicate=lambda a, r: True, rationale="no-exception scene",
                     expect="rigid arm retains the market", must_cite=[])
-    return case, {"id": case.id, "J": len(bases), "free": free, "base_sum": sum(bases)}
+    return case, {"id": case.id, "J": len(bases), "free": free, "base_sum": base_sum}
 
 
 def sample_scenes(n: int, seed: int, max_delta: int = 6):
