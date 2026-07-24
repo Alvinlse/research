@@ -4266,3 +4266,71 @@ Backup of the pre-run results at `pins/results_backup_pre_exp87_gated.json`.
 trace needs a text-exception channel — no public GPU trace carries one (they are scrubbed of the
 user-authored free text by construction; see the dataset thread), so this is an AOBA-data /
 authored-notes question, not an engineering one.
+
+## Experiment 90 — NO-EXCEPTION SPECIFICITY: the packet arms make ZERO false suggestions on real jobs (2026-07-24)
+
+Pre-reg: `docs/superpowers/specs/2026-07-24-exp90-no-exception-specificity-design.md`;
+plan: `docs/superpowers/plans/2026-07-24-exp90-no-exception-specificity.md`.
+
+The mirror of the hard-case suite. That suite measures **recall** on authored text exceptions
+(Exp 89: debate 43/81). This measures **precision / specificity** on **200 real v2020
+job-scenes with no authored text**, where the correct action is retain-market and a false
+suggestion = any override (`meta["fired"]`). Motive: the hard cases are self-authored and few;
+this half uses jobs straight from the trace and asks the dual question — on an ordinary job with
+no exception, does the machinery correctly do **nothing**?
+
+**Scenes** (`pins/no_exception_scenes.py`): 200 real jobs sampled from v2020, 3–5 per scene,
+inelastic (`margin 0`), with idle headroom (`slack 0.15–0.6`, `free = base_sum + max(1,
+round(base_sum·slack))` so `free > base_sum` by construction) as the only meddling surface. A
+non-vacuity gate keeps only scenes whose code-enumerated action menu is non-trivial — **mean menu
+≈ 77 legal grant/transfer/hold options per scene**, so "change nothing" is a real choice, not the
+only option. `qwen2.5:14b`, temperature 0, `max_delta 6`.
+
+**Result.**
+```
+per-arm false-suggestion rate (n=200)              of which harmful
+  market          0/200                             0
+  single-no-pkt   0/200                             0
+  single-pkt      0/200                             0
+  debate-pkt      0/200                             0
+PRIMARY McNemar debate-pkt vs single-pkt (H1 debate fires LESS):
+  b=0 c=0   one-sided p=1.0000   -> tie at the floor
+```
+
+**Findings.**
+
+1. **Perfect specificity.** Every arm retained the market on all 200 real no-exception scenes.
+   Despite ~77 legal alternatives per scene, both `single-pkt` and `debate-pkt` chose "change
+   nothing" every time — zero false suggestions, zero harmful overrides.
+
+2. **Validity anchored by Exp 89, not assumed.** The identical arms fired **5/17** on Exp 89's
+   authored placebo/confirm controls and **27–43/81** on its primary — so they *can and do* fire.
+   The ~70-min run for 200 scenes rules out a silent no-op (a broken arm returns in seconds). So
+   0/200 is a genuine "the LLM chose restraint," not a wiring artifact.
+
+3. **The primary is a NULL, and that is the correct outcome.** Debate cannot beat `single-pkt` on
+   false suggestions when both sit at the floor. Debate's edge lives in text-dependent exceptions
+   (Exp 89); on ordinary jobs there is nothing to reason about, so it neither helps nor harms —
+   consistent with Exp 87's SLA-neutral result, now shown with a cleaner per-decision metric.
+   (This retires the original "debate beats floor and single on the no-text trace" hypothesis: it
+   ties them, at the floor.)
+
+4. **Sensitivity/specificity pair.** Exp 89 = recall on real exceptions (43/81, p=0.0007); Exp 90
+   = precision on non-exceptions (0/200 false). The machinery catches authored exceptions AND does
+   no harm on real jobs it was never authored for — the direct answer to "your text cases are
+   self-authored and few."
+
+5. **Honest caveat — informativeness.** 0/200 is clean enough that "the real scenes are not
+   adversarial" is a live alternative to "the machinery is restrained." The Exp 89 control contrast
+   (**5/17 fired on authored tension vs 0/200 on real jobs**) is what makes the restraint reading
+   credible — and simultaneously argues that hand-authored placebo scenes **overstate** the
+   meddling risk. A harder-scene variant (real jobs perturbed toward tension) would stress-test
+   restraint further; not built.
+
+**Reproduce.**
+```bash
+PINS_NUM_CTX=8192 .venv/bin/python -u -m pins.exp90_specificity \
+  --model qwen2.5:14b --n 200 --seed 0 --max-delta 6
+```
+Built subagent-driven (sampler + driver, TDD, `pins/test_exp90_scenes.py` +
+`pins/test_exp90_analysis.py`); results at `pins/results_exp90_qwen2514b.json`.
