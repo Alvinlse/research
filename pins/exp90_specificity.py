@@ -41,8 +41,10 @@ def fired_discordant(res: dict, x: str, y: str) -> tuple[int, int]:
     return bx, cy
 
 
-def run(model: str, n: int, seed: int, max_delta: int) -> dict:
-    scenes, _meta = sample_scenes(n, seed, max_delta)
+def run(model: str, n: int, seed: int, max_delta: int,
+        spread_min: int = 0, slack_lo: float = 0.15, slack_hi: float = 0.60) -> dict:
+    scenes, meta = sample_scenes(n, seed, max_delta, spread_min, slack_lo, slack_hi)
+    min_menu = min(m["menu_size"] for m in meta)     # non-triviality: every scene has a bait action
     results: dict = {}
     for i, case in enumerate(scenes):
         arms: dict = {}
@@ -57,18 +59,36 @@ def run(model: str, n: int, seed: int, max_delta: int) -> dict:
         results[case.id] = {"category": case.category, "arms": arms}
         marks = " ".join(f"{a}={'F' if arms[a]['fired'] else '.'}" for a in ARMS)
         print(f"{i + 1:>3}/{len(scenes)}  {case.id}  {marks}")
-    return {"model": model, "n": len(scenes), "seed": seed, "arms": ARMS, "results": results}
+    return {"model": model, "n": len(scenes), "seed": seed, "arms": ARMS,
+            "spread_min": spread_min, "slack": [slack_lo, slack_hi], "min_menu": min_menu,
+            "results": results}
 
 
-def analyse(blob: dict) -> None:
+def analyse(blob: dict, easy_path: str | None = None) -> None:
     res = blob["results"]
     ids = list(res)
+    easy = None
+    if easy_path:
+        try:
+            with open(easy_path) as fh:
+                easy = json.load(fh)["results"]
+        except FileNotFoundError:
+            print(f"(easy baseline {easy_path} not found — skipping hard-vs-easy)")
+    if "min_menu" in blob:
+        print(f"\nnon-triviality: every scene has menu>1 (min menu_size={blob['min_menu']}) "
+              f"— a non-retain bait action always exists")
+    if "spread_min" in blob:
+        print(f"bait: spread_min={blob['spread_min']}  slack={blob.get('slack')}")
     print(f"\n=== per-arm false-suggestion rate (n={len(ids)}) ===")
     for arm in blob["arms"]:
         fired = sum(1 for c in ids if res[c]["arms"][arm]["fired"])
         harm = sum(1 for c in ids if res[c]["arms"][arm]["fired"]
                    and res[c]["arms"][arm]["rejected"])
-        print(f"  {arm:14s} fired {fired:>3d}/{len(ids)}   of which harmful {harm}")
+        tag = ""
+        if easy and arm in easy[next(iter(easy))]["arms"]:
+            ez = sum(1 for c in easy if easy[c]["arms"][arm]["fired"])
+            tag = f"   (easy Exp90: {ez}/{len(easy)})"
+        print(f"  {arm:14s} fired {fired:>3d}/{len(ids)}   of which harmful {harm}{tag}")
     b, c = fired_discordant(res, "debate-pkt", "single-pkt")
     p_less = mcnemar_one_sided(c, b)          # H1: debate fires LESS than single-pkt
     print("\n=== PRIMARY: McNemar on `fired`, debate-pkt vs single-pkt ===")
@@ -87,12 +107,17 @@ def main() -> None:
     ap.add_argument("--n", type=int, default=200)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--max-delta", type=int, default=6)
+    ap.add_argument("--spread-min", type=int, default=0)
+    ap.add_argument("--slack-lo", type=float, default=0.15)
+    ap.add_argument("--slack-hi", type=float, default=0.60)
+    ap.add_argument("--easy", default=None,
+                    help="Exp 90 easy-scene results json for the hard-vs-easy print")
     ap.add_argument("--out", default="pins/results_exp90_qwen2514b.json")
     a = ap.parse_args()
-    blob = run(a.model, a.n, a.seed, a.max_delta)
+    blob = run(a.model, a.n, a.seed, a.max_delta, a.spread_min, a.slack_lo, a.slack_hi)
     with open(a.out, "w") as fh:
         json.dump(blob, fh)
-    analyse(blob)
+    analyse(blob, a.easy)
     print(f"\nwrote {a.out}")
 
 
