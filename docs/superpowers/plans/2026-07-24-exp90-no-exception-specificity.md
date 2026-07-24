@@ -6,7 +6,7 @@
 
 **Architecture:** A seeded sampler turns real trace jobs into `HardCase`-shaped no-exception scenes (no text, idle headroom as the only meddling surface). The existing `exp88_budget_control.run_case` scores each arm's `fired` flag unchanged; a thin driver runs the ladder (market / single-no-pkt / single-pkt / debate-pkt), dumps a Exp-88-shaped JSON, and runs a paired McNemar on the `fired` indicator.
 
-**Tech Stack:** Python 3.10, `uv` venv at `.venv`, pytest, Ollama `qwen2.5:14b` (LLM arms only; all unit tests are offline).
+**Tech Stack:** Python 3.10, `uv` venv at `.venv`, Ollama `qwen2.5:14b` (LLM arms only; all unit tests are offline). **No pytest** — this repo runs tests as `pins/test_*.py` modules with a `__main__` runner, invoked `.venv/bin/python -m pins.test_<name>` (see `pins/test_mechanism.py`).
 
 ## Global Constraints
 
@@ -21,10 +21,10 @@
 
 ## File Structure
 
-- `pins/no_exception_scenes.py` (NEW) — sampler: real jobs → non-vacuous no-exception `HardCase`s + a `--stats` CLI.
+- `pins/no_exception_scenes.py` (NEW) — sampler: real jobs → non-vacuous no-exception `HardCase`s + a stats CLI.
 - `pins/exp90_specificity.py` (NEW) — driver + analysis: run the ladder, dump JSON, print false rates + McNemar.
-- `tests/test_exp90_scenes.py` (NEW) — offline tests for the sampler.
-- `tests/test_exp90_analysis.py` (NEW) — offline tests for the `fired` discordant + arm scoring on a stub result.
+- `pins/test_exp90_scenes.py` (NEW) — offline tests for the sampler (`__main__` runner).
+- `pins/test_exp90_analysis.py` (NEW) — offline tests for the `fired` discordant + arm scoring on a stub result (`__main__` runner).
 
 Reused unchanged: `pins/h2_eval.py`, `pins/packet.py`, `pins/exp88_budget_control.py`, `pins/exp88_analyse.py`, `pins/exp89_analyse.py`, `pins/correction.py`, `pins/trace_replay.py`.
 
@@ -34,16 +34,17 @@ Reused unchanged: `pins/h2_eval.py`, `pins/packet.py`, `pins/exp88_budget_contro
 
 **Files:**
 - Create: `pins/no_exception_scenes.py`
-- Test: `tests/test_exp90_scenes.py`
+- Test: `pins/test_exp90_scenes.py`
 
 **Interfaces:**
 - Consumes: `trace_replay.load_trace() -> list[tuple[arrival:int, dur:int, quanta:int, name:str]]`; `hardcases.HardCase`, `hardcases.d`, `hardcases.s`; `h2_eval.build_anchor(case) -> (floors, alloc, ranking, env)`; `packet.candidate_actions(alloc, free, ranking, floors, max_delta) -> list[dict]`.
-- Produces: `sample_scenes(n: int, seed: int, max_delta: int = 6) -> tuple[list[HardCase], list[dict]]` returning the kept scenes and a parallel list of `{"id","J","free","base_sum","menu_size","real_names"}` metadata dicts. Ids are `NE-0000…`. Also `CAP_CLIP = 8`.
+- Produces: `sample_scenes(n: int, seed: int, max_delta: int = 6) -> tuple[list[HardCase], list[dict]]` returning the kept scenes and a parallel list of `{"id","J","free","base_sum","menu_size"}` metadata dicts. Ids are `NE-0000…`. Also `CAP_CLIP = 8`.
 
 - [ ] **Step 1: Write the failing tests**
 
 ```python
-# tests/test_exp90_scenes.py
+# pins/test_exp90_scenes.py
+"""Offline tests for the Exp 90 scene sampler — run: python -m pins.test_exp90_scenes"""
 from pins.no_exception_scenes import sample_scenes, CAP_CLIP
 from pins.h2_eval import build_anchor
 from pins.hardcases import total
@@ -83,11 +84,20 @@ def test_non_vacuous_menu():
         menu = candidate_actions(alloc, c.free_gpus, ranking, floors, 6)
         assert len(menu) > 1                      # more than just retain_market (id 0)
         assert m["menu_size"] == len(menu)
+
+
+if __name__ == "__main__":
+    tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
+    print(f"running {len(tests)} scene tests\n")
+    for t in tests:
+        print(f"- {t.__name__}")
+        t()
+    print(f"\nall {len(tests)} tests passed.")
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `.venv/bin/python -m pytest tests/test_exp90_scenes.py -q`
+Run: `.venv/bin/python -m pins.test_exp90_scenes`
 Expected: FAIL with `ModuleNotFoundError: No module named 'pins.no_exception_scenes'`
 
 - [ ] **Step 3: Write the sampler**
@@ -172,8 +182,8 @@ if __name__ == "__main__":
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `.venv/bin/python -m pytest tests/test_exp90_scenes.py -q`
-Expected: PASS (4 passed)
+Run: `.venv/bin/python -m pins.test_exp90_scenes`
+Expected: `all 4 tests passed.`
 
 - [ ] **Step 5: Smoke the CLI**
 
@@ -183,7 +193,7 @@ Expected: prints `kept 200 scenes …` with mean menu_size > 1.
 - [ ] **Step 6: Commit**
 
 ```bash
-git add pins/no_exception_scenes.py tests/test_exp90_scenes.py
+git add pins/no_exception_scenes.py pins/test_exp90_scenes.py
 git commit -m "Exp 90: no-exception scene sampler + tests"
 ```
 
@@ -193,7 +203,7 @@ git commit -m "Exp 90: no-exception scene sampler + tests"
 
 **Files:**
 - Create: `pins/exp90_specificity.py`
-- Test: `tests/test_exp90_analysis.py`
+- Test: `pins/test_exp90_analysis.py`
 
 **Interfaces:**
 - Consumes: `no_exception_scenes.sample_scenes`; `exp88_budget_control.run_case(case, model, use_llm, arm, max_delta, temperature, no_text=False) -> (final, why, meta)` where `meta` has `fired: bool` and `rejected: bool`; `correction.gather_corrections(jobs, supply_note, free, alloc, use_llm, model, cache)` and `correction.referee_delta(alloc, props, free, use_llm, model, cache)`; `exp88_budget_control._jobs_of(case, no_text) -> (jobs, sup)`; `h2_eval.build_anchor`; `exp88_analyse.mcnemar_exact_two_sided(b, c)`; `exp89_analyse.mcnemar_one_sided(b, c)`.
@@ -202,7 +212,8 @@ git commit -m "Exp 90: no-exception scene sampler + tests"
 - [ ] **Step 1: Write the failing tests**
 
 ```python
-# tests/test_exp90_analysis.py
+# pins/test_exp90_analysis.py
+"""Offline tests for the Exp 90 driver — run: python -m pins.test_exp90_analysis"""
 from pins.exp90_specificity import single_no_packet_fired, fired_discordant
 from pins.no_exception_scenes import sample_scenes
 
@@ -222,11 +233,20 @@ def test_fired_discordant_counts():
         "s4": {"arms": {"A": {"fired": False}, "B": {"fired": False}}},  # neither
     }
     assert fired_discordant(res, "A", "B") == (1, 1)   # (A-only, B-only)
+
+
+if __name__ == "__main__":
+    tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
+    print(f"running {len(tests)} analysis tests\n")
+    for t in tests:
+        print(f"- {t.__name__}")
+        t()
+    print(f"\nall {len(tests)} tests passed.")
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
 
-Run: `.venv/bin/python -m pytest tests/test_exp90_analysis.py -q`
+Run: `.venv/bin/python -m pins.test_exp90_analysis`
 Expected: FAIL with `ModuleNotFoundError: No module named 'pins.exp90_specificity'`
 
 - [ ] **Step 3: Write the driver**
@@ -337,8 +357,8 @@ if __name__ == "__main__":
 
 - [ ] **Step 4: Run tests to verify they pass**
 
-Run: `.venv/bin/python -m pytest tests/test_exp90_analysis.py -q`
-Expected: PASS (2 passed). `test_single_no_packet_is_silent_on_no_text` makes no Ollama call because `gather_corrections` short-circuits on empty notes.
+Run: `.venv/bin/python -m pins.test_exp90_analysis`
+Expected: `all 2 tests passed.` `test_single_no_packet_is_silent_on_no_text` makes no Ollama call because `gather_corrections` short-circuits on empty notes.
 
 - [ ] **Step 5: Offline smoke of market/single-no-pkt path (no LLM arms)**
 
@@ -355,7 +375,7 @@ Expected: `[False, False, False]`
 - [ ] **Step 6: Commit**
 
 ```bash
-git add pins/exp90_specificity.py tests/test_exp90_analysis.py
+git add pins/exp90_specificity.py pins/test_exp90_analysis.py
 git commit -m "Exp 90: specificity driver + fired McNemar analysis"
 ```
 
