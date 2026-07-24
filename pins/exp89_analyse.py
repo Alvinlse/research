@@ -68,6 +68,26 @@ def _stratum(res, name, ids, arms, strict):
     _pair(res, sub, "single-pkt-boN", "single-pkt", strict, "boN vs single")
 
 
+def per_category(res, ids, arms, strict):
+    """EXPLORATORY, post-hoc: where does the debate edge live? n per category is 8-21, so this
+    is direction-only — never a significance claim. Not part of the pre-registered test."""
+    prim = [c for c in res if c in set(ids)]
+    cats: list[str] = []
+    for c in prim:
+        if res[c]["category"] not in cats:
+            cats.append(res[c]["category"])
+    print("\n=== EXPLORATORY — per-category (STRICT, POOLED primary) ===")
+    print("  post-hoc slice, small n per cell (underpowered) — read as DIRECTION, not significance")
+    print(f"  {'category':14s}{'n':>4s}{'market':>8s}{'single':>8s}{'boN':>8s}{'debate':>8s}"
+          f"{'dbt-v-boN':>13s}{'dbt-v-sgl':>12s}")
+    for cat in cats:
+        sub = [c for c in prim if res[c]["category"] == cat]
+        cells = "".join(f"{counts(res, sub, a, strict):>5d}/{len(sub):<2d}" for a in arms)
+        b1, c1 = discordant(res, sub, "debate-pkt", "single-pkt-boN", strict)
+        b2, c2 = discordant(res, sub, "debate-pkt", "single-pkt", strict)
+        print(f"  {cat:14s}{len(sub):>4d}{cells}{f'  b={b1} c={c1}':>13s}{f'  b={b2} c={c2}':>12s}")
+
+
 def main() -> None:
     path = sys.argv[1] if len(sys.argv) > 1 else "pins/results_exp89_qwen2514b_t0.8.json"
     with open(path) as f:
@@ -90,6 +110,8 @@ def main() -> None:
         print(f"\n=== {'STRICT (handled AND feasible)' if strict else 'bare handled'} ===")
         _stratum(res, "POOLED PRIMARY (r3 31 + r4 50)", POOLED, arms, strict)
         _stratum(res, "NEW-BATCH PRIMARY (r4 50, clean confirmatory)", NEWBATCH, arms, strict)
+
+    per_category(res, POOLED, arms, strict=True)
 
     print(f"\n=== CONTROLS n={len(ctrl)} (boundary: text effect must be ~0; never pooled) ===")
     for arm in arms:
