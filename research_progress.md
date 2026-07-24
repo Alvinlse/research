@@ -4334,3 +4334,76 @@ PINS_NUM_CTX=8192 .venv/bin/python -u -m pins.exp90_specificity \
 ```
 Built subagent-driven (sampler + driver, TDD, `pins/test_exp90_scenes.py` +
 `pins/test_exp90_analysis.py`); results at `pins/results_exp90_qwen2514b.json`.
+
+## Experiment 91 — HARD-SPECIFICITY: restraint survives efficiency bait, still 0/200 (2026-07-24)
+
+Pre-reg: `docs/superpowers/specs/2026-07-24-exp91-hard-specificity-design.md`;
+plan: `docs/superpowers/plans/2026-07-24-exp91-hard-specificity.md`.
+
+Direct upgrade of Exp 90, answering its own caveat ("0/200 is clean enough that 'the real
+scenes are not adversarial' is a live alternative to 'the machinery is restrained'"). Same
+retain-market invariant (inelastic jobs, no text, neutral supply — every override is a false
+suggestion by construction), same 4 arms, same one-sided McNemar primary. The **only** change is
+the sampler bait: an **imbalance gate** (`spread_min=4` — reject scenes unless base spread ≥ 4,
+forcing an ~8-GPU job beside 1–2-GPU jobs) and a **tight-slack** range (`slack=[0.05,0.30]` vs
+Exp 90's `[0.15,0.60]`) so headroom is scarce and the scene reads as contested. Both are
+default-off params on `sample_scenes`; with them unset Exp 90 reproduces byte-identically (guarded
+by `test_defaults_reproduce_exp90` + the untouched `test_exp90_scenes.py`).
+
+**Scenes (n=200, seed 0).** jobs/scene mean 4.08; free_gpus mean 21.7; **headroom mean 3.23**
+(vs Exp 90's 5.74 — bait bites); **spread mean 6.24**; **menu_size mean 80.3, min 28** — every
+scene offers ≥28 legal non-retain grant/transfer actions, so "change nothing" is a real choice
+being declined, not the only option.
+
+**Result.**
+```
+per-arm false-suggestion rate (n=200)          harmful     easy Exp90
+  market          0/200                          0           0/200
+  single-no-pkt   0/200                          0           0/200
+  single-pkt      0/200                          0           0/200
+  debate-pkt      0/200                          0           0/200
+PRIMARY McNemar debate-pkt vs single-pkt (H1 debate fires LESS):
+  b(debate-only)=0  c(single-only)=0   one-sided p=1.0000  two-sided 1.0000  -> tie at the floor
+sanity: market & single-no-pkt = 0/200 (floor arms correct; min_menu=28, harness not a no-op)
+```
+
+**Findings.**
+
+1. **Restraint is robust under bait — the Exp 90 caveat is answered.** With lopsided bases,
+   scarce headroom, and ≥28 tempting actions per scene, all four arms retained the market on all
+   200 real jobs. The 0/200 is no longer explainable by "unchallenging scenes": the scenes are
+   demonstrably adversarial (menu mean 80.3) and the arms decline every time. This is a *stronger*
+   zero than Exp 90's.
+
+2. **The primary is again a NULL, and again the correct outcome.** `debate-pkt ≡ single-pkt` at
+   the floor (b=c=0). Per §8 decision rule this is the `≈0/≈0` branch: the packet does not meddle
+   even under bait, so the debate rebuttal has nothing to talk down. Consistent with Exp 87/90.
+
+3. **Why the bait doesn't bite: inelasticity, not scene difficulty.** A 14b model reasoning over
+   jobs that each requested exactly their base, with no free text, will not hand out GPUs nobody
+   asked for — *visual* imbalance (a big job beside small ones) is not a signal it acts on. The
+   bait made silence tempting to a greedy heuristic, not to a model that reads the (inelastic)
+   declarations. So the harder test confirms restraint but still does not separate the arms;
+   separation would require scenes where acting is genuinely warranted (a mixed precision+recall
+   suite — explicitly out of scope here, it stops being the specificity mirror of Exp 89).
+
+4. **Specificity pair, now stress-tested.** Exp 89 = recall on authored exceptions (43/81,
+   p=0.0007); Exp 90 = precision on ordinary jobs (0/200); Exp 91 = precision on jobs **perturbed
+   toward tension** (0/200, adversarial). The machinery catches authored exceptions AND does no
+   harm on real jobs — including real jobs arranged to tempt it — using zero authored text.
+
+**Honest caveat.** 0/200 under bait is a robustness win for the *specificity* claim, but it also
+means this axis is now saturated for 14b: no bait short of an actual warranted action will move
+these arms off the floor. Further separation is a recall/mixed-suite question, not a
+harder-specificity one.
+
+**Reproduce.**
+```bash
+PINS_NUM_CTX=8192 .venv/bin/python -u -m pins.exp90_specificity \
+  --model qwen2.5:14b --n 200 --seed 0 --max-delta 6 \
+  --spread-min 4 --slack-lo 0.05 --slack-hi 0.30 \
+  --easy pins/results_exp90_qwen2514b.json \
+  --out pins/results_exp91_hard_qwen2514b.json
+```
+Built subagent-driven (sampler bait + driver flags, TDD, `pins/test_exp91_scenes.py`); results at
+`pins/results_exp91_hard_qwen2514b.json`, log `pins/exp91_hard_14b.log`.
