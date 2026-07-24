@@ -190,14 +190,23 @@ def main() -> None:
     ap.add_argument("--max-delta", type=int, default=6)
     ap.add_argument("--temp", type=float, default=0.8,
                     help="temperature for the boN control ONLY; every other arm stays at 0")
+    ap.add_argument("--suite", default="r3", choices=["r3", "r34"],
+                    help="r3 = Exp 88 (round-3 31/9). r34 = Exp 89 pooled round-3 + round-4 "
+                         "(81 primary / 17 control).")
     a = ap.parse_args()
 
-    from pins.hardcases_r3 import CASES_R3, CONTROLS, PRIMARY
-    cases = CASES_R3[:a.limit] if a.limit else CASES_R3
+    from pins.hardcases_r3 import CASES_R3, CONTROLS as CTRL3, PRIMARY as PRIM3
+    if a.suite == "r34":
+        from pins.hardcases_r4 import CASES_R4, CONTROLS_R4, PRIMARY_R4
+        all_cases, PRIMARY, CONTROLS = CASES_R3 + CASES_R4, PRIM3 + PRIMARY_R4, CTRL3 + CONTROLS_R4
+    else:
+        all_cases, PRIMARY, CONTROLS = CASES_R3, PRIM3, CTRL3
+    cases = all_cases[:a.limit] if a.limit else all_cases
+    exp = "exp89" if a.suite == "r34" else "exp88"
 
     out_path = os.environ.get(
         "PINS_RESULTS",
-        os.path.join(HERE, f"results_exp88_{a.model.replace(':', '')}_t{a.temp}.json"))
+        os.path.join(HERE, f"results_{exp}_{a.model.replace(':', '')}_t{a.temp}.json"))
     results: dict = {}
     for case in cases:
         arms = {}
@@ -212,7 +221,7 @@ def main() -> None:
             f"{'!' if v['meta']['rejected'] else ('*' if v['meta']['fired'] else '')}"
             for k, v in arms.items()), flush=True)
 
-    json.dump({"model": a.model, "suite": "r3", "arms": ARMS, "max_delta": a.max_delta,
+    json.dump({"model": a.model, "suite": a.suite, "arms": ARMS, "max_delta": a.max_delta,
                "temperature_boN": a.temp, "results": results}, open(out_path, "w"), indent=1)
 
     ids = [c.id for c in cases]
@@ -239,7 +248,8 @@ def main() -> None:
                      and not results[c]["arms"][x]["handled"])
             print(f"  head-to-head {x} vs {y}: b={b} c={cc}")
 
-    print(f"\nfull detail -> {out_path}\nnow run: .venv/bin/python -m pins.exp88_analyse {out_path}")
+    analyser = "exp89_analyse" if a.suite == "r34" else "exp88_analyse"
+    print(f"\nfull detail -> {out_path}\nnow run: .venv/bin/python -m pins.{analyser} {out_path}")
 
 
 if __name__ == "__main__":
