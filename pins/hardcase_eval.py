@@ -99,8 +99,9 @@ def main() -> None:
     ap.add_argument("--model", default="qwen2.5:14b")
     ap.add_argument("--no-think", action="store_true")
     ap.add_argument("--no-llm", action="store_true", help="rule referee only (smoke test)")
-    ap.add_argument("--suite", default="r12", choices=["r12", "r3", "all"],
-                    help="r12 = rounds 1-2 (Exp 54/66), r3 = the 40 round-3 cases")
+    ap.add_argument("--suite", default="r12", choices=["r12", "r3", "r4", "r34", "all"],
+                    help="r12 = rounds 1-2 (Exp 54/66), r3 = round-3, r4 = round-4 (Exp 89), "
+                         "r34 = pooled r3+r4")
     ap.add_argument("--arms", default="referee",
                     help="comma list from single,single-noarg,referee,referee-noarg. "
                          "The 2x2 perspective x text design is all four.")
@@ -115,8 +116,14 @@ def main() -> None:
     cases, categories = CASES, CATEGORIES
     if a.suite != "r12":
         from pins.hardcases_r3 import CASES_R3, CATEGORIES_R3
-        cases = CASES_R3 if a.suite == "r3" else CASES + CASES_R3
         categories = CATEGORIES_R3
+        if a.suite == "r3":
+            cases = CASES_R3
+        elif a.suite in ("r4", "r34"):
+            from pins.hardcases_r4 import CASES_R4
+            cases = CASES_R4 if a.suite == "r4" else CASES_R3 + CASES_R4
+        else:  # all
+            cases = CASES + CASES_R3
     if a.limit:
         cases = cases[:a.limit]
 
