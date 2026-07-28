@@ -25,6 +25,7 @@
 | 10 | Stage-1 prediction survives **only as an input**: `caps=predicted` (`pred_job_usage.csv`) feeds every headline run, and prediction error costs every policy while prod-SLA protection survives it | Exp 30, 35, 36 | solid (retained as infrastructure) |
 | 11 | The negotiation-era mechanism (bounded protocol, ILP guarantee, per-user tariff, small-model sufficiency) is **superseded as a contribution** but retained as the `negotiated` **baseline arm** the market is measured against | Exp 22–48 (compressed) | superseded; baseline only |
 
+| 14 | **A cheaper structure also survives its budget control** — an objection-only critic scores 34/81 against a best-of-N sampler at *identical* per-case spend (26/81, p=0.0193), while that sampler is one case *worse* than a single call at 3× the price. Third replication of "budget alone buys nothing" | Exp 93 → **Exp 95** | moderate (pooled n=81; blind r4 stratum ns, p=0.227) |
 | 13 | **Debate's win is the second pass, not the arguments** — stripping `evidence` from the packet changes the score by exactly zero cases (43/81 both ways, discordant 4-4). The transcript stays readable but is not load-bearing for the decision; `evidence` can be dropped at no measured cost | Exp 93 | solid (null, n=81; TOST at ±3 fails on m=8) |
 | 12 | The round-2 54-scene suite was **insensitive**, not merely negative: text-blind baselines (ILP 30/54, rule 31/54) scored within noise of every LLM arm, min p=0.238 across ~30 tests. Round 3's text-dependent design drops the rigid floor to 0/31 — the instrument was replaced, not the hypothesis re-shopped | Exp 65–67 → 79–83 | solid (methodology) |
 
@@ -38,7 +39,9 @@
    `selfcons` needed no re-run (`single-pkt-boN` already is it); the argumentation ablation is an
    **exact tie** with debate (43 = 43), so debate's win is the second pass, not the arguments; the
    critic reconstruction is 34/81 vs single 27/81, p=0.0461, which **fails Holm** and is therefore
-   suggestive only.)* Remaining work: a **budget-matched critic** arm to settle H2.
+   suggestive only.)* *(Closed 2026-07-28 — Exp 95: the budget-matched critic arm ran, critic 34/81
+   vs matched-budget boNc 26/81, p=0.0193, H1 supported; the blind r4 stratum is ns.)* Remaining
+   work: **critic vs debate at matched budget** — the last confounded pair.
 3. **Update §4.4 to lead with Exp 92, not Exp 84.** *(Done 2026-07-28: the boundary test ran — see
    Exp 92. `corrected` is byte-identical to `market`, 193 escalations, 0 LLM calls, 0 changes. The
    paper has not yet been rewritten to use it.)* Remaining work: extend Exp 92 from n=8 to n=32
@@ -2642,3 +2645,83 @@ PINS_RESULTS=pins/results_exp93_qwen2514b.json \
 ```
 `pins/exp89_analyse.py` does **not** work on this run — it tests against `single-pkt-boN`, which is
 not an arm here. `pins/exp93_analyse.py` carries the pre-registered axes.
+
+## Experiment 95 — THE BUDGET-MATCHED CRITIC: the objection channel survives its control (2026-07-28)
+
+**Pre-registration:** `docs/superpowers/specs/2026-07-28-exp95-budget-matched-critic-design.md`,
+committed at `ea2de32` **before the arm existed**; arm and analyser at `8876f99`, **before the run**.
+
+**Question.** Exp 93 left critic at 34/81 vs `single-pkt` 27/81, p=0.0461 — which **failed Holm** and
+was budget-confounded by construction (244 calls vs 81). Exp 93 §5 named this follow-up in advance.
+Exp 88/89 settled the budget question at **debate's** 7×; critic's 3× is a different point on the
+curve, and critic's whole interest is that it might be the cheap structure.
+
+**Method.** New arm **`single-pkt-boNc`**: the existing best-of-N control with `k = n_text_jobs + 1`
+— critic's per-case call count exactly, from the same predicate `_critic_signed` uses. Matched
+**per case**, not in total, and the matching is **verified rather than assumed**
+(`exp95_analyse.check_budget`). One pre-registered test, so no multiplicity correction; that
+asymmetry with Exp 93 was recorded in the spec before the run. qwen2.5:14b, suite r34, STRICT.
+
+**Findings.**
+
+| arm | STRICT | calls |
+|---|---|---|
+| market | 0/81 | 0 |
+| single-pkt | 27/81 | 81 |
+| **single-pkt-boNc** | **26/81** | **244** |
+| **critic-pkt** | **34/81** | **244** |
+
+```
+BUDGET MATCH: matched exactly on every one of the 98 cases; 292 calls each
+PRIMARY  critic > boNc          b=10 c=2  D=+8  1-sided p=0.0193   -> H1 SUPPORTED
+         equivalence: 90% CI [+1.49, +11.27], margin +/-3 -> FAIL (m=12)
+SECONDARY boNc > single         b=0  c=1  D=-1  p=1.0000
+         critic > single        b=10 c=3  D=+7  p=0.0461  (reproduces Exp 93 exactly)
+BLIND r4 critic > boNc          b=5  c=2  D=+3  p=0.2266  (ns, direction agrees)
+CONTROLS n=17: market 16/17, single 12/17, boNc 12/17, critic 12/17
+harness check: critic 34/81 MATCHES Exp 93, single 27/81 MATCHES, b=10 c=3 MATCHES
+```
+
+- **H1 supported.** Critic beats the sampler at identical spend, 34 vs 26, p=0.0193. Exp 93's
+  Holm-failing lead promotes to a result — and against a *stronger* comparator than the one that
+  failed, since a budget-matched control is the comparison that was actually in question.
+- **The secondary is the cleanest line in the experiment.** `boNc` spends 244 calls to score
+  **26/81 — one case WORSE than plain `single-pkt` at 81 calls**. Resampling at critic's budget buys
+  nothing. This is the **third independent replication** of "budget alone buys nothing" (Exp 88 at
+  debate's 7×, Exp 89 at n=81, Exp 95 at critic's 3×), and it is what makes the critic number mean
+  something rather than being a spend artefact.
+- **The blind stratum does not confirm it.** r4-only is 20 vs 17, D=+3, **p=0.227**. Direction
+  agrees and nothing contradicts, but the pooled win is carried disproportionately by r3 (which
+  contributes b=5 c=0). This is **weaker confirmatory support than Exp 89 had**, and the claim
+  should be stated at that strength.
+- **TOST fails as pre-declared** — 12 discordant pairs give a 90% CI of [+1.49, +11.27]. A real
+  effect, badly bounded. The lower bound excluding 0 is the useful part.
+- **Critic is the cheaper structure, not the better one.** Debate remains 43/81 at 569 calls, and
+  Exp 93's debate-vs-critic was 15-6. The ordering on this suite is
+  **debate (43, 7×) > critic (34, 3×) > single (27, 1×) ≈ boNc (26, 3×)**.
+- **Specificity cost is flat across every LLM arm** (12/17 vs market's 16/17) — critic buys its
+  recall without buying extra false positives, and without reducing them either.
+- Determinism confirmed: critic at temperature 0 reproduced Exp 93 digit for digit, including the
+  discordant pattern b=10 c=3.
+
+**What this changes.** A structure other than debate now survives a budget control on this suite —
+the first one. Read with Exp 93's H1 tie (stripping arguments from debate costs zero cases), the
+picture is: **extra passes help, extra samples do not, and argument content does not.** What the
+objection channel and the debate second pass share is that a *separate call looks at the allocation
+with a different instruction*, which is a cheaper thing to claim than "argumentation".
+
+**Open.** Critic vs debate is still budget-confounded in both directions (Exp 93 §5). The clean
+question left is a **debate arm cut down to critic's budget**, or equivalently a critic scaled up to
+debate's — that is what would separate "more passes" from "which structure".
+
+**Reproduce.**
+```
+PINS_RESULTS=pins/results_exp95_qwen2514b.json \
+  .venv/bin/python -m pins.exp88_budget_control --model qwen2.5:14b --suite r34 \
+    --arms market,single-pkt,single-pkt-boNc,critic-pkt
+.venv/bin/python -m pins.exp95_analyse pins/results_exp95_qwen2514b.json
+```
+**Trap.** The harness's default output path is `results_{exp88|exp89}_{model}_t{temp}.json`, which
+collides with committed Exp 88/89 artefacts — a `--no-llm` smoke test silently overwrote
+`results_exp89_qwen2.514b_t0.8.json` during this experiment (restored from git). Always set
+`PINS_RESULTS`.
