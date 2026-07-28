@@ -1,0 +1,11 @@
+
+======================================================================================
+TRACE REPLAY (v2020) — two-sided sim on real jobs; agents=deepseek-r1:32b+referee
+======================================================================================
+16 real jobs/window from 606,421 trace jobs, horizon 300, mean of 6 seeds (window per seed) | spike_max=0.6 scale=3 | truth=plan caps=real clip=8
+--------------------------------------------------------------------
+pool  policy           SLA  prodSLA   util  slowdown     fb     done
+--------------------------------------------------------------------
+      8gpu no-llm       1/6 seeds |     1s elapsed ~    3s left      8gpu no-llm       2/6 seeds |     1s elapsed ~    2s left      8gpu no-llm       3/6 seeds |     2s elapsed ~    2s left      8gpu no-llm       4/6 seeds |     2s elapsed ~    1s left      8gpu no-llm       5/6 seeds |     3s elapsed ~    1s left      8gpu no-llm       6/6 seeds |     3s elapsed ~    0s left
+      8gpu referee      1/6 seeds |     1s elapsed ~    3s left      8gpu referee      2/6 seeds |     1s elapsed ~    2s left      8gpu referee      3/6 seeds |     2s elapsed ~    2s left      8gpu referee      4/6 seeds |     2s elapsed ~    1s left      8gpu referee      5/6 seeds |     3s elapsed ~    1s left      8gpu referee      6/6 seeds |     4s elapsed ~    0s left
+      8gpu debate       1/6 seeds |  1429s elapsed ~ 7145s left

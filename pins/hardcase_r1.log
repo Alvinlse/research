@@ -1,0 +1,70 @@
+INFEAS-01    infeasible     ilp=H rule=H referee=H
+INFEAS-02    infeasible     ilp=H rule=H referee=H
+INFEAS-03    infeasible     ilp=f rule=f referee=H
+INFEAS-04    infeasible     ilp=H rule=H referee=H
+INFEAS-05    infeasible     ilp=H rule=H referee=f
+INFEAS-06    infeasible     ilp=H rule=H referee=H
+POLICY-01    nl_policy      ilp=H rule=H referee=H
+POLICY-02    nl_policy      ilp=f rule=f referee=H
+POLICY-03    nl_policy      ilp=H rule=H referee=H
+POLICY-04    nl_policy      ilp=H rule=H referee=H
+POLICY-05    nl_policy      ilp=f rule=f referee=f
+POLICY-06    nl_policy      ilp=f rule=f referee=f
+CONTRA-01    contradiction  ilp=H rule=H referee=H
+CONTRA-02    contradiction  ilp=H rule=H referee=H
+CONTRA-03    contradiction  ilp=H rule=f referee=H
+CONTRA-04    contradiction  ilp=f rule=H referee=H
+CONTRA-05    contradiction  ilp=H rule=H referee=f
+CONTRA-06    contradiction  ilp=f rule=f referee=f
+UNMOD-01     unmodeled      ilp=H rule=H referee=H
+UNMOD-02     unmodeled      ilp=H rule=H referee=H
+UNMOD-03     unmodeled      ilp=H rule=H referee=H
+UNMOD-04     unmodeled      ilp=f rule=f referee=f
+UNMOD-05     unmodeled      ilp=f rule=H referee=H
+UNMOD-06     unmodeled      ilp=f rule=f referee=f
+CORRUPT-01   corrupt        ilp=f rule=f referee=H
+CORRUPT-02   corrupt        ilp=H rule=f referee=f
+CORRUPT-03   corrupt        ilp=H rule=H referee=H
+CORRUPT-04   corrupt        ilp=H rule=H referee=H
+CORRUPT-05   corrupt        ilp=f rule=H referee=H
+CORRUPT-06   corrupt        ilp=H rule=H referee=H
+AMBIG-01     ambiguous      ilp=H rule=H referee=H
+AMBIG-02     ambiguous      ilp=f rule=f referee=f
+AMBIG-03     ambiguous      ilp=H rule=H referee=H
+AMBIG-04     ambiguous      ilp=H rule=H referee=H
+AMBIG-05     ambiguous      ilp=f rule=f referee=f
+AMBIG-06     ambiguous      ilp=H rule=H referee=H
+ROUTINE-01   routine        ilp=H rule=H referee=H
+ROUTINE-02   routine        ilp=H rule=H referee=H
+ROUTINE-03   routine        ilp=H rule=H referee=H
+ROUTINE-04   routine        ilp=H rule=H referee=H
+ROUTINE-05   routine        ilp=H rule=H referee=H
+ROUTINE-06   routine        ilp=H rule=H referee=H
+INFEAS-07    infeasible     ilp=f rule=f referee=f
+INFEAS-08    infeasible     ilp=f rule=f referee=f
+INFEAS-09    infeasible     ilp=f rule=f referee=H
+CONTRA-07    contradiction  ilp=f rule=f referee=f
+CONTRA-08    contradiction  ilp=f rule=f referee=f
+CONTRA-09    contradiction  ilp=f rule=f referee=H
+AMBIG-07     ambiguous      ilp=f rule=f referee=f
+AMBIG-08     ambiguous      ilp=f rule=f referee=f
+AMBIG-09     ambiguous      ilp=f rule=f referee=f
+CORRUPT-07   corrupt        ilp=f rule=f referee=H
+CORRUPT-08   corrupt        ilp=f rule=f referee=f
+CORRUPT-09   corrupt        ilp=H rule=H referee=H
+
+category                 ilp        rule     referee
+infeasible            5/9         5/9         6/9   
+nl_policy             3/6         3/6         4/6   
+contradiction         4/9         4/9         5/9   
+unmodeled             3/6         4/6         4/6   
+corrupt               5/9         5/9         7/9   
+ambiguous             4/9         4/9         4/9   
+routine               6/6         6/6         6/6   
+TOTAL                30/54       31/54       36/54  
+  ilp        over-awarded  0   unresolved  0   policy-flagged  5
+  rule       over-awarded  0   unresolved  0   policy-flagged  0
+  referee    over-awarded  0   unresolved  0   policy-flagged  4
+  referee cited the driving fact in 11/27 cases that name one
+
+full transcripts -> /import/gp-home.ciero/kimseng/Research/pins/results_hardcases.json

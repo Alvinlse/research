@@ -1,0 +1,38 @@
+[
+ {
+  "id": "P1",
+  "when": "incoming_prod != 'none' AND free_gpus >= 2",
+  "rule": "prioritize allocating GPUs to meet base requirements of all incoming prod jobs before considering margins for besteffort jobs",
+  "why": "Ensuring base needs met improved SLA by reducing deadline violations."
+ },
+ {
+  "id": "P2",
+  "when": "incoming_prod == 'many' AND free_gpus >= 2",
+  "rule": "if free_gpus > 4 then reserve exactly 3 GPUs, else if free_gpus > 2 then reserve exactly 2 GPUs, else reserve all available GPUs to protect incoming prod jobs while allowing margin allocation for besteffort jobs if possible",
+  "why": "Increasing reservation when free_gpus is high improved protection for critical prod jobs without over-reserving."
+ },
+ {
+  "id": "P3",
+  "when": "incoming_prod == 'many' AND free_gpus <= 2",
+  "rule": "reserve exactly 1 GPU to protect incoming prod jobs while allowing margin allocation for besteffort jobs if possible",
+  "why": "Reducing the reservation from 2 to 1 GPU when free_gpus is limited improves besteffort job utilization without compromising critical prod protection."
+ },
+ {
+  "id": "P4",
+  "when": "incoming_prod != 'none' AND free_gpus > 2",
+  "rule": "prioritize allocating margin GPUs to besteffort jobs after reserving exactly 2 GPUs for incoming prod jobs, ensuring their deadlines are met where possible",
+  "why": "This adjustment reduces besteffort deadline violations while maintaining adequate protection for critical prod jobs."
+ },
+ {
+  "id": "P5",
+  "when": "incoming_prod == 'few' AND free_gpus > 2",
+  "rule": "reserve exactly 1 GPU to protect incoming prod jobs while allowing margin allocation for besteffort jobs if possible",
+  "why": "Reducing the reservation when free_gpus is exactly 2 improved besteffort job utilization without compromising critical prod protection."
+ },
+ {
+  "id": "P6",
+  "when": "free_gpus >= 1 AND free_gpus <= 3",
+  "rule": "reserve exactly 1 GPU to protect incoming prod jobs while allowing margin allocation for besteffort jobs if possible",
+  "why": "Balancing protection and utilization reduced deadline violations across both tiers."
+ }
+]

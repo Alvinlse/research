@@ -1,0 +1,559 @@
+{
+ "model": "deepseek-r1:32b",
+ "partial": true,
+ "n_cases": 19,
+ "note": "checkpoint parsed from log; handled/resolved only, no allocs or transcripts",
+ "results": {
+  "INFEAS-01": {
+   "category": "infeasible",
+   "arms": {
+    "ilp": {
+     "handled": true,
+     "resolved": true
+    },
+    "rule": {
+     "handled": true,
+     "resolved": true
+    },
+    "single": {
+     "handled": true,
+     "resolved": true
+    },
+    "referee": {
+     "handled": true,
+     "resolved": true
+    },
+    "debate": {
+     "handled": false,
+     "resolved": true
+    },
+    "selfcons": {
+     "handled": true,
+     "resolved": true
+    }
+   }
+  },
+  "INFEAS-02": {
+   "category": "infeasible",
+   "arms": {
+    "ilp": {
+     "handled": true,
+     "resolved": true
+    },
+    "rule": {
+     "handled": true,
+     "resolved": true
+    },
+    "single": {
+     "handled": true,
+     "resolved": true
+    },
+    "referee": {
+     "handled": true,
+     "resolved": true
+    },
+    "debate": {
+     "handled": true,
+     "resolved": true
+    },
+    "selfcons": {
+     "handled": true,
+     "resolved": true
+    }
+   }
+  },
+  "INFEAS-03": {
+   "category": "infeasible",
+   "arms": {
+    "ilp": {
+     "handled": false,
+     "resolved": true
+    },
+    "rule": {
+     "handled": false,
+     "resolved": true
+    },
+    "single": {
+     "handled": true,
+     "resolved": true
+    },
+    "referee": {
+     "handled": true,
+     "resolved": true
+    },
+    "debate": {
+     "handled": true,
+     "resolved": true
+    },
+    "selfcons": {
+     "handled": true,
+     "resolved": true
+    }
+   }
+  },
+  "INFEAS-04": {
+   "category": "infeasible",
+   "arms": {
+    "ilp": {
+     "handled": true,
+     "resolved": true
+    },
+    "rule": {
+     "handled": true,
+     "resolved": true
+    },
+    "single": {
+     "handled": true,
+     "resolved": true
+    },
+    "referee": {
+     "handled": true,
+     "resolved": true
+    },
+    "debate": {
+     "handled": true,
+     "resolved": true
+    },
+    "selfcons": {
+     "handled": true,
+     "resolved": true
+    }
+   }
+  },
+  "INFEAS-05": {
+   "category": "infeasible",
+   "arms": {
+    "ilp": {
+     "handled": true,
+     "resolved": true
+    },
+    "rule": {
+     "handled": true,
+     "resolved": true
+    },
+    "single": {
+     "handled": true,
+     "resolved": true
+    },
+    "referee": {
+     "handled": true,
+     "resolved": true
+    },
+    "debate": {
+     "handled": true,
+     "resolved": true
+    },
+    "selfcons": {
+     "handled": true,
+     "resolved": true
+    }
+   }
+  },
+  "INFEAS-06": {
+   "category": "infeasible",
+   "arms": {
+    "ilp": {
+     "handled": true,
+     "resolved": true
+    },
+    "rule": {
+     "handled": true,
+     "resolved": true
+    },
+    "single": {
+     "handled": true,
+     "resolved": true
+    },
+    "referee": {
+     "handled": true,
+     "resolved": true
+    },
+    "debate": {
+     "handled": true,
+     "resolved": true
+    },
+    "selfcons": {
+     "handled": true,
+     "resolved": true
+    }
+   }
+  },
+  "POLICY-01": {
+   "category": "nl_policy",
+   "arms": {
+    "ilp": {
+     "handled": true,
+     "resolved": true
+    },
+    "rule": {
+     "handled": true,
+     "resolved": true
+    },
+    "single": {
+     "handled": true,
+     "resolved": true
+    },
+    "referee": {
+     "handled": true,
+     "resolved": true
+    },
+    "debate": {
+     "handled": false,
+     "resolved": true
+    },
+    "selfcons": {
+     "handled": false,
+     "resolved": true
+    }
+   }
+  },
+  "POLICY-02": {
+   "category": "nl_policy",
+   "arms": {
+    "ilp": {
+     "handled": false,
+     "resolved": true
+    },
+    "rule": {
+     "handled": false,
+     "resolved": true
+    },
+    "single": {
+     "handled": true,
+     "resolved": true
+    },
+    "referee": {
+     "handled": true,
+     "resolved": true
+    },
+    "debate": {
+     "handled": true,
+     "resolved": true
+    },
+    "selfcons": {
+     "handled": true,
+     "resolved": true
+    }
+   }
+  },
+  "POLICY-03": {
+   "category": "nl_policy",
+   "arms": {
+    "ilp": {
+     "handled": true,
+     "resolved": true
+    },
+    "rule": {
+     "handled": true,
+     "resolved": true
+    },
+    "single": {
+     "handled": true,
+     "resolved": true
+    },
+    "referee": {
+     "handled": true,
+     "resolved": true
+    },
+    "debate": {
+     "handled": true,
+     "resolved": true
+    },
+    "selfcons": {
+     "handled": true,
+     "resolved": true
+    }
+   }
+  },
+  "POLICY-04": {
+   "category": "nl_policy",
+   "arms": {
+    "ilp": {
+     "handled": true,
+     "resolved": true
+    },
+    "rule": {
+     "handled": true,
+     "resolved": true
+    },
+    "single": {
+     "handled": true,
+     "resolved": true
+    },
+    "referee": {
+     "handled": true,
+     "resolved": true
+    },
+    "debate": {
+     "handled": true,
+     "resolved": true
+    },
+    "selfcons": {
+     "handled": true,
+     "resolved": true
+    }
+   }
+  },
+  "POLICY-05": {
+   "category": "nl_policy",
+   "arms": {
+    "ilp": {
+     "handled": false,
+     "resolved": true
+    },
+    "rule": {
+     "handled": false,
+     "resolved": true
+    },
+    "single": {
+     "handled": false,
+     "resolved": true
+    },
+    "referee": {
+     "handled": false,
+     "resolved": true
+    },
+    "debate": {
+     "handled": false,
+     "resolved": true
+    },
+    "selfcons": {
+     "handled": false,
+     "resolved": true
+    }
+   }
+  },
+  "POLICY-06": {
+   "category": "nl_policy",
+   "arms": {
+    "ilp": {
+     "handled": false,
+     "resolved": true
+    },
+    "rule": {
+     "handled": false,
+     "resolved": true
+    },
+    "single": {
+     "handled": false,
+     "resolved": true
+    },
+    "referee": {
+     "handled": false,
+     "resolved": true
+    },
+    "debate": {
+     "handled": false,
+     "resolved": true
+    },
+    "selfcons": {
+     "handled": false,
+     "resolved": true
+    }
+   }
+  },
+  "CONTRA-01": {
+   "category": "contradiction",
+   "arms": {
+    "ilp": {
+     "handled": true,
+     "resolved": true
+    },
+    "rule": {
+     "handled": true,
+     "resolved": true
+    },
+    "single": {
+     "handled": true,
+     "resolved": true
+    },
+    "referee": {
+     "handled": true,
+     "resolved": true
+    },
+    "debate": {
+     "handled": true,
+     "resolved": true
+    },
+    "selfcons": {
+     "handled": true,
+     "resolved": true
+    }
+   }
+  },
+  "CONTRA-02": {
+   "category": "contradiction",
+   "arms": {
+    "ilp": {
+     "handled": true,
+     "resolved": true
+    },
+    "rule": {
+     "handled": true,
+     "resolved": true
+    },
+    "single": {
+     "handled": true,
+     "resolved": true
+    },
+    "referee": {
+     "handled": true,
+     "resolved": true
+    },
+    "debate": {
+     "handled": true,
+     "resolved": true
+    },
+    "selfcons": {
+     "handled": true,
+     "resolved": true
+    }
+   }
+  },
+  "CONTRA-03": {
+   "category": "contradiction",
+   "arms": {
+    "ilp": {
+     "handled": true,
+     "resolved": true
+    },
+    "rule": {
+     "handled": false,
+     "resolved": true
+    },
+    "single": {
+     "handled": true,
+     "resolved": true
+    },
+    "referee": {
+     "handled": false,
+     "resolved": true
+    },
+    "debate": {
+     "handled": false,
+     "resolved": true
+    },
+    "selfcons": {
+     "handled": false,
+     "resolved": true
+    }
+   }
+  },
+  "CONTRA-04": {
+   "category": "contradiction",
+   "arms": {
+    "ilp": {
+     "handled": false,
+     "resolved": true
+    },
+    "rule": {
+     "handled": true,
+     "resolved": true
+    },
+    "single": {
+     "handled": true,
+     "resolved": true
+    },
+    "referee": {
+     "handled": false,
+     "resolved": true
+    },
+    "debate": {
+     "handled": false,
+     "resolved": true
+    },
+    "selfcons": {
+     "handled": false,
+     "resolved": true
+    }
+   }
+  },
+  "CONTRA-05": {
+   "category": "contradiction",
+   "arms": {
+    "ilp": {
+     "handled": true,
+     "resolved": true
+    },
+    "rule": {
+     "handled": true,
+     "resolved": true
+    },
+    "single": {
+     "handled": false,
+     "resolved": true
+    },
+    "referee": {
+     "handled": false,
+     "resolved": true
+    },
+    "debate": {
+     "handled": true,
+     "resolved": true
+    },
+    "selfcons": {
+     "handled": false,
+     "resolved": true
+    }
+   }
+  },
+  "CONTRA-06": {
+   "category": "contradiction",
+   "arms": {
+    "ilp": {
+     "handled": false,
+     "resolved": true
+    },
+    "rule": {
+     "handled": false,
+     "resolved": true
+    },
+    "single": {
+     "handled": false,
+     "resolved": true
+    },
+    "referee": {
+     "handled": false,
+     "resolved": true
+    },
+    "debate": {
+     "handled": false,
+     "resolved": true
+    },
+    "selfcons": {
+     "handled": false,
+     "resolved": true
+    }
+   }
+  },
+  "UNMOD-01": {
+   "category": "unmodeled",
+   "arms": {
+    "ilp": {
+     "handled": true,
+     "resolved": true
+    },
+    "rule": {
+     "handled": true,
+     "resolved": true
+    },
+    "single": {
+     "handled": true,
+     "resolved": true
+    },
+    "referee": {
+     "handled": true,
+     "resolved": true
+    },
+    "debate": {
+     "handled": true,
+     "resolved": true
+    },
+    "selfcons": {
+     "handled": true,
+     "resolved": true
+    }
+   }
+  }
+ }
+}

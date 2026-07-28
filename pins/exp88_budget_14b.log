@@ -1,0 +1,63 @@
+P3-POLICY-01   nl_policy    market=. single-pkt=.* single-pkt-boN=.* debate-pkt=.*
+P3-POLICY-02   nl_policy    market=. single-pkt=.* single-pkt-boN=.* debate-pkt=.*
+P3-POLICY-03   nl_policy    market=. single-pkt=.* single-pkt-boN=.* debate-pkt=.*
+P3-POLICY-04   nl_policy    market=. single-pkt=H* single-pkt-boN=H* debate-pkt=H*
+P3-POLICY-05   nl_policy    market=. single-pkt=H* single-pkt-boN=H* debate-pkt=H*
+P3-POLICY-06   nl_policy    market=. single-pkt=.* single-pkt-boN=.* debate-pkt=.*
+P3-POLICY-07   nl_policy    market=. single-pkt=.* single-pkt-boN=.* debate-pkt=.
+P3-UNMOD-01    unmodeled    market=. single-pkt=.* single-pkt-boN=H* debate-pkt=H*
+P3-UNMOD-02    unmodeled    market=. single-pkt=.* single-pkt-boN=.* debate-pkt=.*
+P3-UNMOD-03    unmodeled    market=. single-pkt=.* single-pkt-boN=.* debate-pkt=.*
+P3-UNMOD-04    unmodeled    market=. single-pkt=H* single-pkt-boN=H* debate-pkt=H*
+P3-UNMOD-05    unmodeled    market=. single-pkt=. single-pkt-boN=. debate-pkt=.*
+P3-UNMOD-06    unmodeled    market=. single-pkt=.* single-pkt-boN=.* debate-pkt=H*
+P3-UNMOD-07    unmodeled    market=. single-pkt=.* single-pkt-boN=.* debate-pkt=H*
+P3-UNMOD-08    unmodeled    market=. single-pkt=.* single-pkt-boN=.* debate-pkt=H*
+P3-CORRUPT-01  corrupt      market=. single-pkt=.* single-pkt-boN=.* debate-pkt=H*
+P3-CORRUPT-02  corrupt      market=. single-pkt=H* single-pkt-boN=H* debate-pkt=H*
+P3-CORRUPT-03  corrupt      market=. single-pkt=.* single-pkt-boN=.* debate-pkt=.*
+P3-CORRUPT-04  corrupt      market=. single-pkt=.* single-pkt-boN=.* debate-pkt=H*
+P3-CORRUPT-05  corrupt      market=. single-pkt=.* single-pkt-boN=.* debate-pkt=.*
+P3-CONTRA-01   contradiction market=. single-pkt=.* single-pkt-boN=.* debate-pkt=.*
+P3-CONTRA-02   contradiction market=. single-pkt=H* single-pkt-boN=H* debate-pkt=H*
+P3-CONTRA-03   contradiction market=. single-pkt=H* single-pkt-boN=H* debate-pkt=.*
+P3-CONTRA-04   contradiction market=. single-pkt=H* single-pkt-boN=H* debate-pkt=H*
+P3-AMBIG-01    ambiguous    market=. single-pkt=.* single-pkt-boN=.* debate-pkt=.*
+P3-AMBIG-02    ambiguous    market=. single-pkt=. single-pkt-boN=. debate-pkt=.
+P3-AMBIG-03    ambiguous    market=. single-pkt=H* single-pkt-boN=H* debate-pkt=H*
+P3-INFEAS-01   infeasible   market=. single-pkt=.* single-pkt-boN=.* debate-pkt=.*
+P3-INFEAS-02   infeasible   market=. single-pkt=H* single-pkt-boN=H* debate-pkt=H*
+P3-INFEAS-03   infeasible   market=. single-pkt=.* single-pkt-boN=.* debate-pkt=.*
+P3-PLACEBO-01  placebo      market=H single-pkt=H single-pkt-boN=H debate-pkt=H
+P3-PLACEBO-02  placebo      market=H single-pkt=.* single-pkt-boN=.* debate-pkt=.*
+P3-PLACEBO-03  placebo      market=H single-pkt=H single-pkt-boN=H debate-pkt=H
+P3-PLACEBO-04  placebo      market=H single-pkt=H single-pkt-boN=H debate-pkt=H
+P3-PLACEBO-05  placebo      market=H single-pkt=H single-pkt-boN=.* debate-pkt=H
+P3-CONFIRM-01  confirm      market=H single-pkt=.* single-pkt-boN=.* debate-pkt=.*
+P3-CONFIRM-02  confirm      market=. single-pkt=.* single-pkt-boN=.* debate-pkt=.*
+P3-CONFIRM-03  confirm      market=H single-pkt=H single-pkt-boN=H debate-pkt=H
+P3-CONFIRM-04  confirm      market=H single-pkt=H single-pkt-boN=H debate-pkt=H
+P3-POLICY-08   nl_policy    market=. single-pkt=. single-pkt-boN=. debate-pkt=.
+
+=== PRIMARY  n=31 ===
+  arm               strict  handled  fired  invalid  calls
+  market              0/31      0/31       0        0      0
+  single-pkt          9/31      9/31      28        0     31
+  single-pkt-boN     10/31     10/31      28        0    217
+  debate-pkt         14/31     14/31      28        0    217
+  head-to-head debate-pkt vs single-pkt-boN: b=5 c=1
+  head-to-head debate-pkt vs single-pkt: b=6 c=1
+  head-to-head single-pkt-boN vs single-pkt: b=1 c=0
+
+=== CONTROLS  n=9 ===
+  arm               strict  handled  fired  invalid  calls
+  market              8/9       8/9        0        0      0
+  single-pkt          6/9       6/9        3        0      9
+  single-pkt-boN      5/9       5/9        4        0     59
+  debate-pkt          6/9       6/9        3        0     59
+  head-to-head debate-pkt vs single-pkt-boN: b=1 c=0
+  head-to-head debate-pkt vs single-pkt: b=0 c=0
+  head-to-head single-pkt-boN vs single-pkt: b=0 c=1
+
+full detail -> pins/results_exp88_qwen2514b_t0.8.json
+now run: .venv/bin/python -m pins.exp88_analyse pins/results_exp88_qwen2514b_t0.8.json

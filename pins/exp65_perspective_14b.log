@@ -1,0 +1,96 @@
+INFEAS-01    infeasible     ilp=H rule=H single=f referee=f debate=f selfcons=f
+INFEAS-02    infeasible     ilp=H rule=H single=f referee=f debate=H selfcons=f
+INFEAS-03    infeasible     ilp=f rule=f single=H referee=f debate=H selfcons=f
+INFEAS-04    infeasible     ilp=H rule=H single=H referee=H debate=H selfcons=H
+INFEAS-05    infeasible     ilp=H rule=H single=f referee=f debate=f selfcons=f
+INFEAS-06    infeasible     ilp=H rule=H single=H referee=H debate=H selfcons=H
+POLICY-01    nl_policy      ilp=H rule=H single=H referee=H debate=H selfcons=H
+POLICY-02    nl_policy      ilp=f rule=f single=H referee=H debate=H selfcons=H
+POLICY-03    nl_policy      ilp=H rule=H single=H referee=H debate=H selfcons=H
+POLICY-04    nl_policy      ilp=H rule=H single=H referee=H debate=H selfcons=H
+POLICY-05    nl_policy      ilp=f rule=f single=f referee=f debate=f selfcons=f
+POLICY-06    nl_policy      ilp=f rule=f single=H referee=H debate=f selfcons=H
+CONTRA-01    contradiction  ilp=H rule=H single=H referee=H debate=f selfcons=H
+CONTRA-02    contradiction  ilp=H rule=H single=H referee=H debate=H selfcons=H
+CONTRA-03    contradiction  ilp=H rule=f single=f referee=f debate=H selfcons=f
+CONTRA-04    contradiction  ilp=f rule=H single=H referee=H debate=H selfcons=H
+CONTRA-05    contradiction  ilp=H rule=H single=f referee=f debate=f selfcons=f
+CONTRA-06    contradiction  ilp=f rule=f single=f referee=H debate=H selfcons=H
+UNMOD-01     unmodeled      ilp=H rule=H single=H referee=H debate=H selfcons=H
+UNMOD-02     unmodeled      ilp=H rule=H single=H referee=H debate=H selfcons=H
+UNMOD-03     unmodeled      ilp=H rule=H single=H referee=H debate=H selfcons=H
+UNMOD-04     unmodeled      ilp=f rule=f single=f referee=f debate=f selfcons=f
+UNMOD-05     unmodeled      ilp=f rule=H single=H referee=H debate=f selfcons=H
+UNMOD-06     unmodeled      ilp=f rule=f single=f referee=f debate=f selfcons=f
+CORRUPT-01   corrupt        ilp=f rule=f single=H referee=H debate=H selfcons=H
+CORRUPT-02   corrupt        ilp=H rule=f single=H referee=H debate=H selfcons=H
+CORRUPT-03   corrupt        ilp=H rule=H single=H referee=H debate=H selfcons=H
+CORRUPT-04   corrupt        ilp=H rule=H single=H referee=H debate=H selfcons=H
+CORRUPT-05   corrupt        ilp=f rule=H single=H referee=H debate=H selfcons=H
+CORRUPT-06   corrupt        ilp=H rule=H single=f referee=f debate=f selfcons=f
+AMBIG-01     ambiguous      ilp=H rule=H single=H referee=H debate=f selfcons=H
+AMBIG-02     ambiguous      ilp=f rule=f single=H referee=H debate=H selfcons=H
+AMBIG-03     ambiguous      ilp=H rule=H single=H referee=H debate=f selfcons=H
+AMBIG-04     ambiguous      ilp=H rule=H single=H referee=H debate=H selfcons=H
+AMBIG-05     ambiguous      ilp=f rule=f single=f referee=f debate=H selfcons=f
+AMBIG-06     ambiguous      ilp=H rule=H single=f referee=H debate=H selfcons=H
+ROUTINE-01   routine        ilp=H rule=H single=H referee=H debate=H selfcons=H
+ROUTINE-02   routine        ilp=H rule=H single=f referee=f debate=f selfcons=f
+ROUTINE-03   routine        ilp=H rule=H single=H referee=H debate=H selfcons=H
+ROUTINE-04   routine        ilp=H rule=H single=H referee=H debate=H selfcons=H
+ROUTINE-05   routine        ilp=H rule=H single=H referee=H debate=f selfcons=H
+ROUTINE-06   routine        ilp=H rule=H single=f referee=H debate=H selfcons=H
+INFEAS-07    infeasible     ilp=f rule=f single=f referee=H debate=f selfcons=f
+INFEAS-08    infeasible     ilp=f rule=f single=f referee=f debate=f selfcons=f
+INFEAS-09    infeasible     ilp=f rule=f single=H referee=f debate=H selfcons=f
+CONTRA-07    contradiction  ilp=f rule=f single=f referee=f debate=f selfcons=f
+CONTRA-08    contradiction  ilp=f rule=f single=f referee=f debate=f selfcons=f
+CONTRA-09    contradiction  ilp=f rule=f single=H referee=H debate=H selfcons=f
+AMBIG-07     ambiguous      ilp=f rule=f single=f referee=f debate=f selfcons=f
+AMBIG-08     ambiguous      ilp=f rule=f single=f referee=f debate=f selfcons=f
+AMBIG-09     ambiguous      ilp=f rule=f single=f referee=f debate=f selfcons=f
+CORRUPT-07   corrupt        ilp=f rule=f single=H referee=H debate=H selfcons=H
+CORRUPT-08   corrupt        ilp=f rule=f single=H referee=H debate=f selfcons=H
+CORRUPT-09   corrupt        ilp=H rule=H single=H referee=H debate=f selfcons=H
+
+category                 ilp        rule      single     referee      debate    selfcons
+infeasible            5/9         5/9         4/9         3/9         5/9         2/9   
+nl_policy             3/6         3/6         5/6         5/6         4/6         5/6   
+contradiction         4/9         4/9         4/9         5/9         5/9         4/9   
+unmodeled             3/6         4/6         4/6         4/6         3/6         4/6   
+corrupt               5/9         5/9         8/9         8/9         6/9         8/9   
+ambiguous             4/9         4/9         4/9         5/9         4/9         5/9   
+routine               6/6         6/6         4/6         5/6         4/6         5/6   
+TOTAL                30/54       31/54       33/54       35/54       31/54       33/54  
+  ilp        over-awarded  0   unresolved  0   policy-flagged  5
+  rule       over-awarded  0   unresolved  0   policy-flagged  0
+  single     over-awarded  4   unresolved  0   policy-flagged 14
+  referee    over-awarded  3   unresolved  0   policy-flagged 12
+  debate     over-awarded  2   unresolved  0   policy-flagged 14
+  selfcons   over-awarded  2   unresolved  0   policy-flagged  9
+  ilp        cited the driving fact in 0/27 cases naming one
+  rule       cited the driving fact in 0/27 cases naming one
+  single     cited the driving fact in 5/27 cases naming one
+  referee    cited the driving fact in 4/27 cases naming one
+  debate     cited the driving fact in 6/27 cases naming one
+  selfcons   cited the driving fact in 2/27 cases naming one
+  selfcons   mean draw-to-draw agreement 85% (1.0 = the k samples never disagreed -> temperature bought nothing)
+
+paired McNemar (handled), exact two-sided:
+        ilp vs rule      ilp only  2 | rule only  3 | p=1.000 
+        ilp vs single    ilp only  9 | single only 12 | p=0.664 
+        ilp vs referee   ilp only  7 | referee only 12 | p=0.359 
+        ilp vs debate    ilp only 10 | debate only 11 | p=1.000 
+        ilp vs selfcons  ilp only  7 | selfcons only 10 | p=0.629 
+       rule vs single    rule only  8 | single only 10 | p=0.815 
+       rule vs referee   rule only  6 | referee only 10 | p=0.454 
+       rule vs debate    rule only 11 | debate only 11 | p=1.000 
+       rule vs selfcons  rule only  6 | selfcons only  8 | p=0.791 
+     single vs referee   single only  2 | referee only  4 | p=0.688 
+     single vs debate    single only  8 | debate only  6 | p=0.791 
+     single vs selfcons  single only  3 | selfcons only  3 | p=1.000 
+    referee vs debate    referee only  9 | debate only  5 | p=0.424 
+    referee vs selfcons  referee only  2 | selfcons only  0 | p=0.500 
+     debate vs selfcons  debate only  6 | selfcons only  8 | p=0.791 
+
+full transcripts -> pins/results_hardcases_perspective.json

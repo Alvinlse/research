@@ -1,0 +1,26 @@
+RUN ENDED WITHOUT WRITING pins/results_exp89_qwen2514b_t0.8.json at 2026年  7月 24日 金曜日 15:12:13 JST — last log lines:
+P4-CONFIRM-03  confirm      market=H single-pkt=H single-pkt-boN=H debate-pkt=H
+P4-CONFIRM-04  confirm      market=H single-pkt=H single-pkt-boN=H debate-pkt=H
+
+=== PRIMARY  n=81 ===
+  arm               strict  handled  fired  invalid  calls
+  market              0/81      0/81       0        0      0
+  single-pkt         27/81     27/81      73        0     81
+  single-pkt-boN     29/81     29/81      73        0    569
+  debate-pkt         43/81     43/81      75        0    569
+  head-to-head debate-pkt vs single-pkt-boN: b=16 c=2
+  head-to-head debate-pkt vs single-pkt: b=18 c=2
+  head-to-head single-pkt-boN vs single-pkt: b=2 c=0
+
+=== CONTROLS  n=17 ===
+  arm               strict  handled  fired  invalid  calls
+  market             16/17     16/17       0        0      0
+  single-pkt         12/17     12/17       5        0     17
+  single-pkt-boN     12/17     12/17       5        0    113
+  debate-pkt         12/17     12/17       5        0    113
+  head-to-head debate-pkt vs single-pkt-boN: b=0 c=0
+  head-to-head debate-pkt vs single-pkt: b=0 c=0
+  head-to-head single-pkt-boN vs single-pkt: b=0 c=0
+
+full detail -> /import/gp-home.ciero/kimseng/Research/pins/results_exp89_qwen2.514b_t0.8.json
+now run: .venv/bin/python -m pins.exp89_analyse /import/gp-home.ciero/kimseng/Research/pins/results_exp89_qwen2.514b_t0.8.json

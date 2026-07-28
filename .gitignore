@@ -34,3 +34,6 @@ pins/*.json.lock
 pins/cache_exp*.json
 pins/llm_agent_cache.bak*
 pins/*.done
+
+# graphify build artifacts (rebuilds in ~12s via `graphify update .`)
+graphify-out/

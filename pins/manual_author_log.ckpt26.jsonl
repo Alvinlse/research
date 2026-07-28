@@ -1,0 +1,38 @@
+{"seed": 100, "verdict": "add P1", "d_prod_sla": -0.2, "fallback_rate": 0.0, "n_entries": 1}
+{"seed": 101, "verdict": "edit P1", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 1}
+{"seed": 102, "verdict": "edit P1", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 1}
+{"seed": 103, "verdict": "skipped: uncontested"}
+{"seed": 104, "verdict": "skipped: uncontested"}
+{"seed": 105, "verdict": "add P2", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 2}
+{"seed": 106, "verdict": "edit P2", "d_prod_sla": 0.2, "fallback_rate": 0.0, "n_entries": 2}
+{"seed": 107, "verdict": "edit P2", "d_prod_sla": -0.6, "fallback_rate": 0.0, "n_entries": 2}
+{"seed": 108, "verdict": "skipped: uncontested"}
+{"seed": 109, "verdict": "add P3", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 3}
+{"seed": 110, "verdict": "add P4", "d_prod_sla": -0.2, "fallback_rate": 0.0, "n_entries": 4}
+{"seed": 111, "verdict": "edit P3", "d_prod_sla": -0.2, "fallback_rate": 0.0, "n_entries": 4}
+{"seed": 112, "verdict": "skipped: uncontested"}
+{"seed": 113, "verdict": "edit P2", "d_prod_sla": -0.2, "fallback_rate": 0.0, "n_entries": 4}
+{"seed": 114, "verdict": "skipped: uncontested"}
+{"seed": 115, "verdict": "skipped: uncontested"}
+{"seed": 116, "verdict": "skipped: uncontested"}
+{"seed": 117, "verdict": "edit P2", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 4}
+{"seed": 118, "verdict": "edit P2", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 4}
+{"seed": 119, "verdict": "skipped: uncontested"}
+{"seed": 120, "verdict": "edit P2", "d_prod_sla": -0.2, "fallback_rate": 0.0, "n_entries": 4}
+{"seed": 121, "verdict": "skipped: uncontested"}
+{"seed": 122, "verdict": "edit P3", "d_prod_sla": -0.2, "fallback_rate": 0.0, "n_entries": 4}
+{"seed": 123, "verdict": "edit P2", "d_prod_sla": -0.4, "fallback_rate": 0.0, "n_entries": 4}
+{"seed": 124, "verdict": "edit P3", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 4}
+{"seed": 125, "verdict": "add P5", "d_prod_sla": -0.2, "fallback_rate": 0.0, "n_entries": 5}
+{"seed": 126, "verdict": "edit P3", "d_prod_sla": 0.2, "fallback_rate": 0.0, "n_entries": 5}
+{"seed": 127, "verdict": "edit P3", "d_prod_sla": -0.2, "fallback_rate": 0.0, "n_entries": 5}
+{"seed": 128, "verdict": "skipped: uncontested"}
+{"seed": 129, "verdict": "skipped: uncontested"}
+{"seed": 130, "verdict": "edit P3", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 5}
+{"seed": 131, "verdict": "add P6", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 6}
+{"seed": 132, "verdict": "edit P4", "d_prod_sla": -0.2, "fallback_rate": 0.0, "n_entries": 6}
+{"seed": 133, "verdict": "skipped: uncontested"}
+{"seed": 134, "verdict": "edit P5", "d_prod_sla": -0.2, "fallback_rate": 0.0, "n_entries": 6}
+{"seed": 135, "verdict": "edit P5", "d_prod_sla": -0.4, "fallback_rate": 0.0, "n_entries": 6}
+{"seed": 136, "verdict": "edit P5", "d_prod_sla": 0.0, "fallback_rate": 0.0, "n_entries": 6}
+{"seed": 137, "verdict": "edit P2", "d_prod_sla": -0.2, "fallback_rate": 0.0, "n_entries": 6}

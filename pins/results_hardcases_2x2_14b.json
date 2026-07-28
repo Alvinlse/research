@@ -1,0 +1,4955 @@
+{
+ "model": "qwen2.5:14b",
+ "arms": [
+  "single",
+  "single-noarg",
+  "referee",
+  "referee-noarg"
+ ],
+ "k": 5,
+ "temp": 0.7,
+ "partial": false,
+ "results": {
+  "INFEAS-01": {
+   "category": "infeasible",
+   "expect": "INFEASIBLE, or an arbitrary split that half-serves both and saves neither",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 1,
+      "r01": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r01": 4,
+      "r00": 1
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 1
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy both jobs' base GPU needs without exceeding the free pool."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 1
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs while respecting feasibility and priority rules."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 1
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs as per INDIVIDUAL RATIONALITY and FEASIBILITY rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 1
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to both jobs, prioritizing the job behind its deadline."
+    }
+   }
+  },
+  "INFEAS-02": {
+   "category": "infeasible",
+   "expect": "a 2/1 or 1.5/1.5-style split that satisfies neither job",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 1,
+      "r01": 1
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00', 'r01'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base GPUs to both jobs while maintaining a reserve."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocate all available GPUs to the first prod job behind deadline, as per rules."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 1,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to both jobs while respecting the free pool limit."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 1,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to both jobs while respecting the free pool limit."
+    }
+   }
+  },
+  "INFEAS-03": {
+   "category": "infeasible",
+   "expect": "serves the best-effort base because the objective treats GPUs as fungible",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 6,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r01'] while margin/reserve was granted"
+     ],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": true,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r01'] while margin/reserve was granted"
+     ],
+     "justification": "Satisfy r00's base demand and reserve for incoming prod jobs."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": true,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r01'] while margin/reserve was granted"
+     ],
+     "justification": "Satisfy r00's base_gpus and reserve headroom as requested."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r01'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base GPUs to 'prod' job first due to priority rule; then allocated reserve as requested."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs first, then respected the free pool limit."
+    }
+   }
+  },
+  "INFEAS-04": {
+   "category": "infeasible",
+   "expect": "INFEASIBLE and no allocation returned at all",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Cannot meet base gpus for any job due to pool size limit."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Cannot satisfy base_gpus for r00 due to insufficient free GPUs; reserve is zero."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated the maximum feasible GPUs to the 'prod' tier job behind deadline, respecting feasibility and individual rationality rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all free GPUs to the prod job as per priority and feasibility rules."
+    }
+   }
+  },
+  "INFEAS-05": {
+   "category": "infeasible",
+   "expect": "an even spread across all three, saving one job instead of two",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 1,
+      "r02": 1
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "All jobs are 'prod' tier and behind deadline; allocate base_gpus to each without exceeding free pool."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 1,
+      "r02": 1
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs while respecting the free pool size."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 1,
+      "r01": 1,
+      "r02": 1
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00', 'r01', 'r02'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base GPUs to all jobs as per INDIVIDUAL RATIONALITY and ENVY-FREENESS rules, while maintaining a reserve as per FEASIBILITY."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 1,
+      "r01": 1,
+      "r02": 1
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00', 'r01', 'r02'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base GPUs to all prod jobs as they are behind deadline and have valid justification."
+    }
+   }
+  },
+  "INFEAS-06": {
+   "category": "infeasible",
+   "expect": "a partial award to r00 \u2014 the LP relaxation has no all-or-nothing concept",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 5,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 5,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 5
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Grant the 'prod' job its base requirement as it is behind deadline and cannot run partially."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 5
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy the 'prod' tier job's base requirement; no reserve needed."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 5
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to the 'prod' tier job behind deadline as per priority and feasibility rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 5
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all free GPUs to the 'prod' tier job behind deadline, as per priority and feasibility rules."
+    }
+   }
+  },
+  "POLICY-01": {
+   "category": "nl_policy",
+   "expect": "serves prod first \u2014 the objective encodes tier priority and cannot read the note",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r01": 4,
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r01": 2,
+      "r00": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy base GPU needs for all jobs and reserve some headroom as no incoming demand."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r01": 2,
+      "r00": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs and reserved some for headroom."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r01": 2,
+      "r00": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs and reserved some for future prod demands."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs first, then reserved remaining for potential incoming production."
+    }
+   }
+  },
+  "POLICY-02": {
+   "category": "nl_policy",
+   "expect": "hands out margin anyway \u2014 'power-capped' is not a variable in the formulation",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r01'] while margin/reserve was granted"
+     ],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 1
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 1
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs and reserved one GPU for headroom as per operator note."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 1
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs and reserved one GPU for headroom."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 1
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs and reserved one GPU as per feasibility."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 1
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs first, then reserved the remaining GPU."
+    }
+   }
+  },
+  "POLICY-03": {
+   "category": "nl_policy",
+   "expect": "may starve r01 to build the reserve; the note is invisible to the solver",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 5
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 5,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfied base GPU requirements for all jobs and reserved necessary headroom."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all prod jobs and reserved headroom."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs as per INDIVIDUAL RATIONALITY and PRIORITY rules, then set reserve as requested."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all prod jobs and reserved some for incoming demand."
+    }
+   }
+  },
+  "POLICY-04": {
+   "category": "nl_policy",
+   "expect": "treats both best-effort jobs as interchangeable \u2014 history is not in the model",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy base requirements for all jobs and reserve one GPU."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs and reserved one GPU for headroom."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs first, then reserved the remaining GPU."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to both jobs as per INDIVIDUAL RATIONALITY and ENVY-FREENESS rules; granted a reserve to ensure future flexibility."
+    }
+   }
+  },
+  "POLICY-05": {
+   "category": "nl_policy",
+   "expect": "serves the prod job by tier priority and burns the whole award on maintenance",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Award base gpus to prod job as it has operator note for maintenance."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to the 'prod' tier job as it has priority and meets its base requirement."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to the prod job as per priority rule."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to the prod job as per priority rule."
+    }
+   }
+  },
+  "POLICY-06": {
+   "category": "nl_policy",
+   "expect": "allocates the full pool \u2014 an unsubmitted job does not exist to the solver",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": true,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 2,
+     "hard_violations": [
+      "infeasible: awarded 8 > free 6"
+     ],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to both jobs, but operator note restricts reserve."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all prod jobs without exceeding free pool."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to both prod jobs as per INDIVIDUAL RATIONALITY and FEASIBILITY rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": true,
+     "alloc": {
+      "r00": 3,
+      "r01": 0
+     },
+     "reserve": 3,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r01'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base GPUs to r00 due to priority and feasibility constraints; reserved necessary GPUs for an urgent interactive session."
+    }
+   }
+  },
+  "CONTRA-01": {
+   "category": "contradiction",
+   "expect": "INFEASIBLE \u2014 contradictory hard constraints have no feasible region",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Award full base to the behind-deadline job r00; no GPUs left for others."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Only one prod job can be fully allocated its base_gpus without exceeding the free pool."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all available GPUs to the 'prod' tier job that is behind its deadline, adhering to priority and feasibility rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to the job behind its deadline first, respecting NON-PREEMPTABLE status and feasibility limits."
+    }
+   }
+  },
+  "CONTRA-02": {
+   "category": "contradiction",
+   "expect": "splits the pool to minimise a weighted penalty, satisfying neither hard claim",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 4,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00'] while margin/reserve was granted"
+     ],
+     "justification": "Meet the base requirement for r00 and reserve necessary GPUs for upcoming prod wave."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy the base gpus for r00 and allocate minimal reserve."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to the 'prod' tier job first, then reserved enough to meet feasibility without exceeding free pool."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to the 'prod' job first due to priority, then reserved minimal necessary GPUs for supply side's hard floor requirement."
+    }
+   }
+  },
+  "CONTRA-03": {
+   "category": "contradiction",
+   "expect": "ignores the dependency \u2014 it is stated in prose, not in the constraint matrix",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00', 'r01'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base GPUs to both jobs while maintaining minimal reserve."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00', 'r01'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base GPUs to both jobs and reserved one GPU for headroom."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs as per INDIVIDUAL RATIONALITY and FEASIBILITY rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00', 'r01'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base GPUs to both jobs as they are behind deadline and in prod tier."
+    }
+   }
+  },
+  "CONTRA-04": {
+   "category": "contradiction",
+   "expect": "honours the tag literally and prefers r01's margin over r00's base",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 0,
+      "r01": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00'] while margin/reserve was granted"
+     ],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 2,
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 2,
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy base requirements for all jobs without exceeding free pool."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs as free pool allows."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs as per INDIVIDUAL RATIONALITY and FEASIBILITY rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to both jobs as per INDIVIDUAL RATIONALITY and PRIORITY rules."
+    }
+   }
+  },
+  "CONTRA-05": {
+   "category": "contradiction",
+   "expect": "INFEASIBLE, or an infeasible over-award if the constraints are relaxed wrongly",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 1,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 1
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 1,
+      "r01": 1
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00', 'r01'] while margin/reserve was granted"
+     ],
+     "justification": "Allocate minimally to meet base requirements and reserve."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 1,
+      "r01": 1
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00', 'r01'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated minimum base GPUs to all prod jobs and reserved some for headroom."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 1,
+      "r01": 1
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00', 'r01'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base GPUs to both prod jobs as they are behind deadline and have the highest priority. Reserved one GPU for supply side."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 1,
+      "r01": 1
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00', 'r01'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base GPUs to both prod jobs as per INDIVIDUAL RATIONALITY and ENVY-FREENESS rules, then reserved necessary GPUs for supply side."
+    }
+   }
+  },
+  "CONTRA-06": {
+   "category": "contradiction",
+   "expect": "awards all 8 to r00 on claim size, or declares INFEASIBLE",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 8,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 8,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 8,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Award full base to r00 as it claims the entire pool. No margin for r01 since its base is unmet but not critical due to reserve availability."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 8,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy r00's base_gpus demand since it is behind deadline; no margin or reserve justified."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 8,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to the 'prod' tier job behind its deadline, adhering to priority and feasibility rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 7,
+      "r01": 1
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated the maximum feasible GPUs to each job based on priority and individual rationality without exceeding the free pool."
+    }
+   }
+  },
+  "UNMOD-01": {
+   "category": "unmodeled",
+   "expect": "treats them as interchangeable \u2014 'checkpoints in 3 ticks' is not a variable",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r01'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base GPUs to the job behind its deadline, and reserved for incoming production jobs."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "All base GPU requirements are met without exceeding the free pool."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs as per INDIVIDUAL RATIONALITY and FEASIBILITY rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r01'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base GPUs to jobs respecting feasibility and priority rules."
+    }
+   }
+  },
+  "UNMOD-02": {
+   "category": "unmodeled",
+   "expect": "awards a partial 2-3 GPUs \u2014 interconnect topology is outside the model",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to meet the base requirements of both jobs without exceeding free pool."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to meet base requirements without reserve."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to meet base requirements of both jobs without exceeding the free pool."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all free GPUs to meet the base requirements of both jobs without exceeding feasibility."
+    }
+   }
+  },
+  "UNMOD-03": {
+   "category": "unmodeled",
+   "expect": "serves the prod deadline and kills the licence server",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs without exceeding free pool."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "All jobs' base GPU requirements are met without reserve."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to meet the base requirements of both jobs without exceeding the free pool."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs as per INDIVIDUAL RATIONALITY and PRIORITY rules."
+    }
+   }
+  },
+  "UNMOD-04": {
+   "category": "unmodeled",
+   "expect": "protects the prod deadline it can no longer meet",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy the 'prod' tier job's base requirement, as it is behind its deadline and has no margin request."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy the 'prod' tier job's base requirement; no reserve needed."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to the 'prod' tier job behind deadline as per priority and feasibility rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to the 'prod' tier job behind deadline as per priority rule."
+    }
+   }
+  },
+  "UNMOD-05": {
+   "category": "unmodeled",
+   "expect": "grants the margin \u2014 the spike statistic looks identical to a legitimate one",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 6,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r01'] while margin/reserve was granted"
+     ],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy base requirements for all jobs without excess."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to both jobs without exceeding the free pool."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to both jobs as per INDIVIDUAL RATIONALITY and PRIORITY rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to both jobs as per INDIVIDUAL RATIONALITY and PRIORITY rules; no reserve needed due to free pool size."
+    }
+   }
+  },
+  "UNMOD-06": {
+   "category": "unmodeled",
+   "expect": "serves the larger, more-behind job \u2014 failure history is not a modelled feature",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 5,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 5,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 5,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to the behind-deadline job r00 as per envy-freeness and individual rationality rules."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 5,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to the behind-deadline besteffort job."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 5,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to the job behind its deadline as per priority and envy-freeness rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 5,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to r00 due to being behind deadline and no incoming production demand."
+    }
+   }
+  },
+  "CORRUPT-01": {
+   "category": "corrupt",
+   "expect": "either INFEASIBLE, or the whole pool poured into the impossible job",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 8,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 8,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 2
+     },
+     "reserve": 3,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base GPUs first, then reserved the rest."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 2
+     },
+     "reserve": 3,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base GPUs first, then reserved the rest."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 2
+     },
+     "reserve": 6,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base GPUs to prod jobs as per INDIVIDUAL RATIONALITY and PRIORITY rules; set reserve due to no convincing demand for margin or supply reserve."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 2
+     },
+     "reserve": 6,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base GPUs first due to priority and feasibility constraints."
+    }
+   }
+  },
+  "CORRUPT-02": {
+   "category": "corrupt",
+   "expect": "a negative coefficient flows into the objective and skews the solution",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": -2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy r01's base gpus and reserve the rest."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy r01's base gpus while reserving headroom."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base_gpus for r01 as it is the only feasible allocation under INDIVIDUAL RATIONALITY and FEASIBILITY rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r01": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfied r01's base_gpus requirement first due to INDIVIDUAL RATIONALITY and PRIORITY rules; then applied ENVY-FREENESS by holding reserve for potential future prod jobs."
+    }
+   }
+  },
+  "CORRUPT-03": {
+   "category": "corrupt",
+   "expect": "trusts the zero-runtime claim and schedules around a job that never ends",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs as they are behind their deadlines and plausible."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "All base GPU requirements are met for 'prod' tier jobs without exceeding free pool."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs as per INDIVIDUAL RATIONALITY and FEASIBILITY rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to both prod jobs as they are behind deadline and have plausible justifications."
+    }
+   }
+  },
+  "CORRUPT-04": {
+   "category": "corrupt",
+   "expect": "double-counts the id and over-awards",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00'] while margin/reserve was granted"
+     ],
+     "justification": "Satisfy the 'prod' tier job's base requirement and reserve some GPUs."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00'] while margin/reserve was granted"
+     ],
+     "justification": "Satisfy the 'prod' tier job's base requirement while reserving some headroom."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base_gpus for the 'prod' tier job first, then reserved remaining GPUs."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base GPUs to the 'prod' tier job first due to priority rule; then held back reserve as no incoming demand and justification was convincing."
+    }
+   }
+  },
+  "CORRUPT-05": {
+   "category": "corrupt",
+   "expect": "maximises against the 99 and gives r00 everything available",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 5,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r01'] while margin/reserve was granted"
+     ],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy base requirements for all jobs and reserve one GPU."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy base GPU needs for all jobs and reserve one GPU."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs first due to INDIVIDUAL RATIONALITY and PRIORITY rules; then held minimal reserve as supply side did not request any convincing reason for more."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs first, then reserved the remaining GPU."
+    }
+   }
+  },
+  "CORRUPT-06": {
+   "category": "corrupt",
+   "expect": "should handle this correctly \u2014 included as a sanity check on both arms",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": true,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [
+      "infeasible: awarded 2 > free 0"
+     ],
+     "policy_flags": [],
+     "justification": "Meet base requirement for prod job; no free GPUs left for reserve."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": true,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [
+      "infeasible: awarded 2 > free 0"
+     ],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to the behind-schedule production job; no free pool for reserve."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": true,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [
+      "infeasible: awarded 2 > free 0"
+     ],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to the 'prod' tier job as per INDIVIDUAL RATIONALITY and FEASIBILITY rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": true,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [
+      "infeasible: awarded 2 > free 0"
+     ],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to the prod job as per INDIVIDUAL RATIONALITY; no reserve due to FEASIBILITY."
+    }
+   }
+  },
+  "AMBIG-01": {
+   "category": "ambiguous",
+   "expect": "applies tier priority mechanically and funds the prod margin first",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy base requirements for both jobs without exceeding free pool."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy base GPU requirements for all jobs without exceeding free pool."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r01'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base GPUs to r00 as it's in prod tier and ahead of deadline; no margin or reserve granted due to insufficient free_gpus."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to both jobs as per INDIVIDUAL RATIONALITY and PRIORITY rules."
+    }
+   }
+  },
+  "AMBIG-02": {
+   "category": "ambiguous",
+   "expect": "serves the prod job and lets two deadlines slip to save one",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 5,
+      "r01": 1,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 5,
+      "r01": 1,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": true,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 5,
+      "r01": 2,
+      "r02": 2
+     },
+     "reserve": 1,
+     "hard_violations": [
+      "infeasible: awarded 10 > free 6"
+     ],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs and reserved one GPU for headroom."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": true,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 5,
+      "r01": 2,
+      "r02": 2
+     },
+     "reserve": 1,
+     "hard_violations": [
+      "infeasible: awarded 10 > free 6"
+     ],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to meet base requirements and reserved one for headroom."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": true,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 5,
+      "r01": 2,
+      "r02": 1
+     },
+     "reserve": 0,
+     "hard_violations": [
+      "infeasible: awarded 8 > free 6"
+     ],
+     "policy_flags": [],
+     "justification": "Allocated all free GPUs to meet base_gpus requirements for all jobs without exceeding the pool size."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": true,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 5,
+      "r01": 2,
+      "r02": 2
+     },
+     "reserve": 1,
+     "hard_violations": [
+      "infeasible: awarded 10 > free 6"
+     ],
+     "policy_flags": [],
+     "justification": "Allocated all free GPUs to meet base requirements and prioritized jobs behind their deadlines."
+    }
+   }
+  },
+  "AMBIG-03": {
+   "category": "ambiguous",
+   "expect": "a coin-flip or an even split \u2014 progress is not in the objective",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocate base GPUs to the job behind its deadline first."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Only one prod job can be fully allocated due to GPU shortage."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all available GPUs to the 'prod' tier job that is behind its deadline, adhering to priority and feasibility rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to the job behind its deadline while respecting feasibility and individual rationality rules."
+    }
+   }
+  },
+  "AMBIG-04": {
+   "category": "ambiguous",
+   "expect": "funds one job's full request and starves the other's base",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy base GPU needs for all prod jobs and hold minimal reserve."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all prod jobs and reserved one GPU for headroom."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs as per INDIVIDUAL RATIONALITY and PRIORITY rules; set minimal reserve due to lack of supply justification."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all prod jobs as per INDIVIDUAL RATIONALITY and ENVY-FREENESS rules; granted minimal reserve due to supply side's justification."
+    }
+   }
+  },
+  "AMBIG-05": {
+   "category": "ambiguous",
+   "expect": "awards the whole pool to the single largest claim",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 8,
+      "r01": 0,
+      "r02": 0,
+      "r03": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 8,
+      "r01": 0,
+      "r02": 0,
+      "r03": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 8
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 is the only 'besteffort' job that can feasibly use all available GPUs and has a note supporting its base claim."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 8,
+      "r01": 0,
+      "r02": 0,
+      "r03": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00's base_gpus claim exhausts the free pool; others' base_gpus are unmet due to lack of remaining GPUs."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": true,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 8,
+      "r01": 1,
+      "r02": 1,
+      "r03": 1
+     },
+     "reserve": 0,
+     "hard_violations": [
+      "infeasible: awarded 11 > free 8"
+     ],
+     "policy_flags": [],
+     "justification": "Adjusted allocations to fit within the free pool of 8 GPUs by prioritizing base GPU requirements and ignoring excess demand."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 8,
+      "r01": 0,
+      "r02": 0,
+      "r03": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated the entire pool to r00 as it is behind its deadline and requires all GPUs."
+    }
+   }
+  },
+  "AMBIG-06": {
+   "category": "ambiguous",
+   "expect": "prioritises the more-behind job because lateness dominates the objective",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r01'] while margin/reserve was granted"
+     ],
+     "justification": "Satisfy r00's base to avoid missing deadline, reserve for potential new prod job."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "All base GPU requirements met for 'prod' tier jobs; no reserve allocated as requested margin is unsupported."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs as per INDIVIDUAL RATIONALITY and FEASIBILITY rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "All prod jobs' base GPU needs are met first; no margin or reserve granted due to tight free pool."
+    }
+   }
+  },
+  "ROUTINE-01": {
+   "category": "routine",
+   "expect": "ILP solves this optimally; no advantage expected for the referee",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy base GPU needs for all jobs and reserve one GPU."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs and reserved headroom."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs first, then reserved some for incoming prod demand."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs and a reserve for potential incoming prod job."
+    }
+   }
+  },
+  "ROUTINE-02": {
+   "category": "routine",
+   "expect": "ILP optimal",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 0
+     },
+     "reserve": 3,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r01'] while margin/reserve was granted"
+     ],
+     "justification": "Satisfy 'prod' tier job's base first, then reserve remaining GPUs."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 0
+     },
+     "reserve": 3,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r01'] while margin/reserve was granted"
+     ],
+     "justification": "Satisfy 'prod' tier job's base first, then reserve remaining GPUs."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 0
+     },
+     "reserve": 3,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r01'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base GPUs to the behind-schedule prod job first, then reserved remaining GPUs."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 0
+     },
+     "reserve": 3,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r01'] while margin/reserve was granted"
+     ],
+     "justification": "Allocated base GPUs to 'prod' job first due to priority rule."
+    }
+   }
+  },
+  "ROUTINE-03": {
+   "category": "routine",
+   "expect": "ILP optimal",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2,
+      "r02": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2,
+      "r02": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 1,
+      "r01": 1,
+      "r02": 1
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs and reserved headroom as requested."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 1,
+      "r01": 1,
+      "r02": 1
+     },
+     "reserve": 3,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfied base GPU requirements for all jobs and reserved headroom."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 1,
+      "r01": 1,
+      "r02": 1
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs and reserved necessary GPUs for incoming prod demand."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 1,
+      "r01": 1,
+      "r02": 1
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs first, then reserved the requested amount for incoming prod demand."
+    }
+   }
+  },
+  "ROUTINE-04": {
+   "category": "routine",
+   "expect": "ILP optimal",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy the base GPU requirement of the 'prod' tier job; no reserve needed."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy the base GPU requirement for the 'prod' tier job as it is behind its deadline."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfied the base GPU requirement for the 'prod' tier job as per INDIVIDUAL RATIONALITY and FEASIBILITY rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfied the base GPU requirement for the 'prod' tier job as per INDIVIDUAL RATIONALITY and FEASIBILITY rules."
+    }
+   }
+  },
+  "ROUTINE-05": {
+   "category": "routine",
+   "expect": "ILP optimal",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2,
+      "r02": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2,
+      "r02": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2,
+      "r02": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "All jobs meet base requirements, and reserve is set for potential prod job."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2,
+      "r02": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "All jobs are on track and have equal base GPU requirements. Reserve is kept as requested."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2,
+      "r02": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs as per INDIVIDUAL RATIONALITY and reserved 1 GPU as requested by supply side without exceeding free pool."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2,
+      "r02": 2
+     },
+     "reserve": 1,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs and reserved one GPU for potential prod jobs."
+    }
+   }
+  },
+  "ROUTINE-06": {
+   "category": "routine",
+   "expect": "ILP optimal",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 6,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 6,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 3,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r01'] while margin/reserve was granted"
+     ],
+     "justification": "Satisfy r00's base gpus and keep some reserve."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4,
+      "r01": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs and reserved some for headroom."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4,
+      "r01": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs and reserved some for future prod demands."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 4,
+      "r01": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs first due to priority and individual rationality rules; reserved some for potential spikes."
+    }
+   }
+  },
+  "INFEAS-07": {
+   "category": "infeasible",
+   "expect": "ranks prod highest and pours the pool into a job that cannot finish",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 8,
+      "r01": 0,
+      "r02": 0,
+      "r03": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 8,
+      "r01": 0,
+      "r02": 0,
+      "r03": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 8
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Job r00 is the only 'prod' tier job and requires all GPUs to meet its base demand, aligning with feasibility."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 8,
+      "r01": 0,
+      "r02": 0,
+      "r03": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy the 'prod' tier job's base requirement first."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 8,
+      "r01": 0,
+      "r02": 0,
+      "r03": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to the 'prod' tier job as per priority rule."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": true,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 8,
+      "r01": 2,
+      "r02": 2,
+      "r03": 2
+     },
+     "reserve": 0,
+     "hard_violations": [
+      "infeasible: awarded 14 > free 8"
+     ],
+     "policy_flags": [],
+     "justification": "Adjusted r00's base to fit free_gpus while respecting INDIVIDUAL RATIONALITY and PRIORITY rules."
+    }
+   }
+  },
+  "INFEAS-08": {
+   "category": "infeasible",
+   "expect": "allocates to the present job \u2014 an unarrived job scores nothing in the objective",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Grant the base requirement of 4 GPUs to job r00, leaving no reserve as the next critical prod job will need all GPUs."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy the base GPU requirement of the 'prod' tier job first."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all free GPUs to the 'prod' tier job behind deadline as per priority and feasibility rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all free GPUs to the 'prod' tier job behind deadline as per priority and feasibility rules."
+    }
+   }
+  },
+  "INFEAS-09": {
+   "category": "infeasible",
+   "expect": "awards the 3 GPUs to prod on rank and strands them",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": true,
+     "alloc": {
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [
+      "prod base unmet while besteffort was served"
+     ],
+     "justification": "Allocate all free GPUs to r01 as it is besteffort and behind deadline, respecting feasibility constraint."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocate all free GPUs to the 'prod' tier job behind deadline, leaving none for besteffort."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all available GPUs to the 'prod' tier job behind its deadline, adhering to priority and feasibility rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 1,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [
+      "prod base unmet while besteffort was served"
+     ],
+     "justification": "Allocated feasible base GPUs to jobs while respecting the free pool limit."
+    }
+   }
+  },
+  "CONTRA-07": {
+   "category": "contradiction",
+   "expect": "serves the present jobs \u2014 reserve is ranked below any real job in the objective",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "All jobs' base GPU requirements are met, and no reserve is needed as future high-priority jobs have sufficient slack."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "All base GPU requirements are met for 'prod' tier jobs; no reserve is justified due to lack of supporting notes."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs as per INDIVIDUAL RATIONALITY and FEASIBILITY rules; no reserve due to lack of convincing justification."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs as per INDIVIDUAL RATIONALITY and PRIORITY rules; reserve is set to zero due to INCENTIVE SKEPTICISM."
+    }
+   }
+  },
+  "CONTRA-08": {
+   "category": "contradiction",
+   "expect": "honours the prod claim because tier outranks deadline pressure in the objective",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Award full base to the ahead-of-deadline prod job; no besteffort due to lack of headroom."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy the 'prod' tier job's base requirement; no headroom left for reserve."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to the 'prod' tier job as per priority rule."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to the 'prod' tier job as per priority rule."
+    }
+   }
+  },
+  "CONTRA-09": {
+   "category": "contradiction",
+   "expect": "awards 5 partial GPUs to prod, exactly what its owner said is useless",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 5,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 5,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": true,
+     "alloc": {
+      "r01": 5
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [
+      "prod base unmet while besteffort was served"
+     ],
+     "justification": "Cannot satisfy r00's base due to insufficient free GPUs; allocate all to r01 as per its elasticity."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 5,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocate all GPUs to the behind-deadline prod job."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 5,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to the 'prod' tier job behind deadline as per priority and feasibility rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": true,
+     "alloc": {
+      "r00": 0,
+      "r01": 5
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [
+      "prod base unmet while besteffort was served"
+     ],
+     "justification": "Priority rule applied to prod job r00 first but feasibility constraint prevented any allocation; thus besteffort job r01 received all available GPUs."
+    }
+   }
+  },
+  "AMBIG-07": {
+   "category": "ambiguous",
+   "expect": "follows the tier tag and takes the single result",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 5,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 5,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 5
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocate all GPUs to the behind-deadline prod job as it meets feasibility and priority rules."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 5
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy the 'prod' tier job's base requirement; no free GPUs left for others."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 5
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to the 'prod' tier job behind deadline, as per priority and feasibility rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 5
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to the 'prod' job behind deadline, as per priority and feasibility rules."
+    }
+   }
+  },
+  "AMBIG-08": {
+   "category": "ambiguous",
+   "expect": "serves the behind best-effort base, which outranks a reserve in the objective",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Award base gpus to the besteffort job since it is behind deadline. No reserve needed as free_gpus are fully utilized."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy the base GPU requirement for the behind-deadline besteffort job; no reserve possible."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated the full free pool to meet the base GPU requirement of the behind-deadline besteffort job, leaving no reserve due to lack of incoming prod demand."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated the full free pool to meet the base requirement of the 'besteffort' job behind its deadline, leaving no reserve due to lack of remaining GPUs."
+    }
+   }
+  },
+  "AMBIG-09": {
+   "category": "ambiguous",
+   "expect": "the larger claim wins on total value \u2014 4 GPUs at rank 4.0 beats 1",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": true,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 1
+     },
+     "reserve": 0,
+     "hard_violations": [
+      "infeasible: awarded 5 > free 4"
+     ],
+     "policy_flags": [],
+     "justification": "Cannot allocate due to feasibility constraint; r00's base is unmet."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to the job behind its deadline and requiring base_gpus."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all free GPUs to the 'prod' tier job behind its deadline, adhering to priority and feasibility rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to jobs based on feasibility and priority rules."
+    }
+   }
+  },
+  "CORRUPT-07": {
+   "category": "corrupt",
+   "expect": "no bids exist, so nothing is allocated and both prod jobs starve",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {},
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "no bids"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": null,
+     "alloc": {
+      "r00": 0,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated needed GPUs to 'prod' jobs behind deadline after fixing base claims per notes."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs and reserved some for headroom."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs since they are behind deadline and in prod tier."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs based on convincing justifications for pipeline bug and prioritized jobs behind deadline."
+    }
+   }
+  },
+  "CORRUPT-08": {
+   "category": "corrupt",
+   "expect": "reads the tag, not the sentence, and gives the pool to the load test",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": false,
+     "alloc": {
+      "r01": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00'] while margin/reserve was granted",
+      "prod base unmet while besteffort was served"
+     ],
+     "justification": "Allocate to real user work in besteffort tier before synthetic load test."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Satisfy the 'prod' tier job's base requirement; no free GPUs for besteffort."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated all GPUs to the 'prod' tier job behind its deadline, adhering to priority and feasibility rules."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": true,
+     "alloc": {
+      "r01": 2
+     },
+     "reserve": 2,
+     "hard_violations": [],
+     "policy_flags": [
+      "base unmet for ['r00'] while margin/reserve was granted",
+      "prod base unmet while besteffort was served"
+     ],
+     "justification": "Allocated base GPUs to r01 as it is behind deadline and there are no incoming prod jobs. Reserve matches remaining free_gpus."
+    }
+   }
+  },
+  "CORRUPT-09": {
+   "category": "corrupt",
+   "expect": "the huge reserve bid absorbs the pool and both prod deadlines are missed",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    },
+    "single": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "All base GPU requirements met for prod jobs; no reserve possible due to pool size."
+    },
+    "single-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "All base GPU requirements met for 'prod' tier jobs; no reserve due to lack of justification."
+    },
+    "referee-noarg": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs as per INDIVIDUAL RATIONALITY and FEASIBILITY rules; no reserve due to supply exceeding free_gpus."
+    },
+    "referee": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "Allocated base GPUs to all jobs as per INDIVIDUAL RATIONALITY and FEASIBILITY rules; reserve is zero due to supply request being unrealistic."
+    }
+   }
+  }
+ }
+}

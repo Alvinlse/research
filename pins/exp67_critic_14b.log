@@ -1,0 +1,83 @@
+INFEAS-01    infeasible     ilp=H rule=H referee=f critic=H
+INFEAS-02    infeasible     ilp=H rule=H referee=f critic=f
+INFEAS-03    infeasible     ilp=f rule=f referee=f critic=f
+INFEAS-04    infeasible     ilp=H rule=H referee=H critic=H
+INFEAS-05    infeasible     ilp=H rule=H referee=f critic=f
+INFEAS-06    infeasible     ilp=H rule=H referee=H critic=H
+POLICY-01    nl_policy      ilp=H rule=H referee=H critic=H
+POLICY-02    nl_policy      ilp=f rule=f referee=H critic=H
+POLICY-03    nl_policy      ilp=H rule=H referee=H critic=H
+POLICY-04    nl_policy      ilp=H rule=H referee=H critic=H
+POLICY-05    nl_policy      ilp=f rule=f referee=f critic=f
+POLICY-06    nl_policy      ilp=f rule=f referee=H critic=H
+CONTRA-01    contradiction  ilp=H rule=H referee=H critic=f
+CONTRA-02    contradiction  ilp=H rule=H referee=H critic=H
+CONTRA-03    contradiction  ilp=H rule=f referee=H critic=f
+CONTRA-04    contradiction  ilp=f rule=H referee=H critic=H
+CONTRA-05    contradiction  ilp=H rule=H referee=f critic=H
+CONTRA-06    contradiction  ilp=f rule=f referee=H critic=f
+UNMOD-01     unmodeled      ilp=H rule=H referee=H critic=f
+UNMOD-02     unmodeled      ilp=H rule=H referee=H critic=H
+UNMOD-03     unmodeled      ilp=H rule=H referee=H critic=H
+UNMOD-04     unmodeled      ilp=f rule=f referee=f critic=f
+UNMOD-05     unmodeled      ilp=f rule=H referee=H critic=H
+UNMOD-06     unmodeled      ilp=f rule=f referee=f critic=f
+CORRUPT-01   corrupt        ilp=f rule=f referee=H critic=H
+CORRUPT-02   corrupt        ilp=H rule=f referee=H critic=H
+CORRUPT-03   corrupt        ilp=H rule=H referee=H critic=H
+CORRUPT-04   corrupt        ilp=H rule=H referee=H critic=H
+CORRUPT-05   corrupt        ilp=f rule=H referee=H critic=f
+CORRUPT-06   corrupt        ilp=H rule=H referee=f critic=H
+AMBIG-01     ambiguous      ilp=H rule=H referee=H critic=H
+AMBIG-02     ambiguous      ilp=f rule=f referee=H critic=f
+AMBIG-03     ambiguous      ilp=H rule=H referee=H critic=f
+AMBIG-04     ambiguous      ilp=H rule=H referee=H critic=H
+AMBIG-05     ambiguous      ilp=f rule=f referee=f critic=f
+AMBIG-06     ambiguous      ilp=H rule=H referee=H critic=f
+ROUTINE-01   routine        ilp=H rule=H referee=H critic=H
+ROUTINE-02   routine        ilp=H rule=H referee=f critic=f
+ROUTINE-03   routine        ilp=H rule=H referee=H critic=H
+ROUTINE-04   routine        ilp=H rule=H referee=H critic=H
+ROUTINE-05   routine        ilp=H rule=H referee=H critic=H
+ROUTINE-06   routine        ilp=H rule=H referee=H critic=H
+INFEAS-07    infeasible     ilp=f rule=f referee=H critic=H
+INFEAS-08    infeasible     ilp=f rule=f referee=f critic=H
+INFEAS-09    infeasible     ilp=f rule=f referee=f critic=f
+CONTRA-07    contradiction  ilp=f rule=f referee=f critic=f
+CONTRA-08    contradiction  ilp=f rule=f referee=f critic=f
+CONTRA-09    contradiction  ilp=f rule=f referee=H critic=H
+AMBIG-07     ambiguous      ilp=f rule=f referee=f critic=f
+AMBIG-08     ambiguous      ilp=f rule=f referee=f critic=f
+AMBIG-09     ambiguous      ilp=f rule=f referee=f critic=f
+CORRUPT-07   corrupt        ilp=f rule=f referee=H critic=H
+CORRUPT-08   corrupt        ilp=f rule=f referee=H critic=f
+CORRUPT-09   corrupt        ilp=H rule=H referee=H critic=H
+
+category                 ilp        rule     referee      critic
+infeasible            5/9         5/9         3/9         5/9   
+nl_policy             3/6         3/6         5/6         5/6   
+contradiction         4/9         4/9         6/9         4/9   
+unmodeled             3/6         4/6         4/6         3/6   
+corrupt               5/9         5/9         8/9         7/9   
+ambiguous             4/9         4/9         5/9         2/9   
+routine               6/6         6/6         5/6         5/6   
+TOTAL                30/54       31/54       36/54       31/54  
+  ilp        over-awarded  0   unresolved  0   policy-flagged  5
+  rule       over-awarded  0   unresolved  0   policy-flagged  0
+  referee    over-awarded  3   unresolved  0   policy-flagged 10
+  critic     over-awarded  2   unresolved  0   policy-flagged 10
+  ilp        cited the driving fact in 0/27 cases naming one
+  rule       cited the driving fact in 0/27 cases naming one
+  referee    cited the driving fact in 4/27 cases naming one
+  critic     cited the driving fact in 2/27 cases naming one
+  critic     fired on 32/54 cases (fires too often = false alarms, never = rubber stamp)
+
+paired McNemar (handled), exact two-sided:
+        ilp vs rule      ilp only  2 | rule only  3 | p=1.000 
+        ilp vs referee   ilp only  6 | referee only 12 | p=0.238 
+        ilp vs critic    ilp only  8 | critic only  9 | p=1.000 
+       rule vs referee   rule only  6 | referee only 11 | p=0.332 
+       rule vs critic    rule only  8 | critic only  8 | p=1.000 
+    referee vs critic    referee only  9 | critic only  4 | p=0.267 
+
+full transcripts -> pins/results_hardcases_critic_14b.json

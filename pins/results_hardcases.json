@@ -1,17 +1,55 @@
 {
  "model": "qwen2.5:14b",
+ "suite": "r4",
+ "arms": [
+  "referee"
+ ],
  "results": {
-  "INFEAS-01": {
-   "category": "infeasible",
-   "expect": "INFEASIBLE, or an arbitrary split that half-serves both and saves neither",
+  "P4-POLICY-01": {
+   "category": "nl_policy",
+   "expect": "reads '2 each, two substations' as 4, serves both bases, and trips the live cap",
    "arms": {
     "ilp": {
      "resolved": true,
      "overcommitted": false,
-     "handled": true,
+     "handled": false,
      "cited": false,
      "alloc": {
-      "r00": 1,
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-POLICY-02": {
+   "category": "nl_policy",
+   "expect": "either fills all 8 (ignores the note) or halves everything to 4, cutting bases",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
       "r01": 4
      },
      "reserve": 0,
@@ -22,11 +60,11 @@
     "rule": {
      "resolved": true,
      "overcommitted": false,
-     "handled": true,
+     "handled": false,
      "cited": false,
      "alloc": {
-      "r01": 4,
-      "r00": 1
+      "r00": 4,
+      "r01": 4
      },
      "reserve": 0,
      "hard_violations": [],
@@ -35,15 +73,455 @@
     }
    }
   },
-  "INFEAS-02": {
-   "category": "infeasible",
-   "expect": "a 2/1 or 1.5/1.5-style split that satisfies neither job",
+  "P4-POLICY-03": {
+   "category": "nl_policy",
+   "expect": "serves the prod base 4 on tier and ignores a quota stated only in the banner",
    "arms": {
     "ilp": {
      "resolved": true,
      "overcommitted": false,
-     "handled": true,
-     "cited": null,
+     "handled": false,
+     "cited": true,
+     "alloc": {
+      "r00": 4,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-POLICY-04": {
+   "category": "nl_policy",
+   "expect": "serves the behind prod job into a drain that kills it two ticks later",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-POLICY-05": {
+   "category": "nl_policy",
+   "expect": "awards the base 4 to the highest-value job and strands the whole pool",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-POLICY-06": {
+   "category": "nl_policy",
+   "expect": "serves the prod-behind job \u2014 the tier tag is the only priority it can see",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-POLICY-07": {
+   "category": "nl_policy",
+   "expect": "ranks the prod tag above best-effort and serves r00, per the static tier order",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-POLICY-09": {
+   "category": "nl_policy",
+   "expect": "gives the base-4 prod job its full width \u2014 no per-job cap exists in the objective",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-POLICY-08": {
+   "category": "nl_policy",
+   "expect": "reads 'per phase' as one of several phases and serves the full base 6",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 6,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 6,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-POLICY-10": {
+   "category": "nl_policy",
+   "expect": "both bases fit in the pool, so it serves both and throttles both to a miss",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-POLICY-11": {
+   "category": "nl_policy",
+   "expect": "ranks prod over best-effort and gives the prod job all four",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 0,
+      "r01": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r01": 4,
+      "r00": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-POLICY-12": {
+   "category": "nl_policy",
+   "expect": "packs both bases onto the one node and corrupts both collectives",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-POLICY-13": {
+   "category": "nl_policy",
+   "expect": "serves the present job \u2014 an empty reserve ranks below any real bid",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3
+     },
+     "reserve": 3,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3
+     },
+     "reserve": 3,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-UNMOD-01": {
+   "category": "unmodeled",
+   "expect": "serves the prod job on tier and lets the demo fail",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-UNMOD-02": {
+   "category": "unmodeled",
+   "expect": "serves the higher tier and lets a funded allocation expire unused",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-UNMOD-03": {
+   "category": "unmodeled",
+   "expect": "serves the behind prod job and defers the run that was one tick from finishing",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
      "alloc": {
       "r00": 3,
       "r01": 0
@@ -56,8 +534,8 @@
     "rule": {
      "resolved": true,
      "overcommitted": false,
-     "handled": true,
-     "cited": null,
+     "handled": false,
+     "cited": false,
      "alloc": {
       "r00": 3,
       "r01": 0
@@ -69,9 +547,349 @@
     }
    }
   },
-  "INFEAS-03": {
-   "category": "infeasible",
-   "expect": "serves the best-effort base because the objective treats GPUs as fungible",
+  "P4-UNMOD-04": {
+   "category": "unmodeled",
+   "expect": "serves the prod job \u2014 downstream fan-out is not a term it optimises",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-UNMOD-05": {
+   "category": "unmodeled",
+   "expect": "a tie on every scored axis, broken by index rather than by makespan",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-UNMOD-06": {
+   "category": "unmodeled",
+   "expect": "serves the prod job and idles the GPUs through a six-hour stage-in",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-UNMOD-07": {
+   "category": "unmodeled",
+   "expect": "serves the behind prod deadline and strands the licence for the afternoon",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-UNMOD-08": {
+   "category": "unmodeled",
+   "expect": "serves the prod tier and misses a one-time competition window",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-UNMOD-09": {
+   "category": "unmodeled",
+   "expect": "serves the prod tier and pushes the other job onto a metered cloud bill",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-UNMOD-10": {
+   "category": "unmodeled",
+   "expect": "serves the behind prod job and misses the thesis figure overnight",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-UNMOD-11": {
+   "category": "unmodeled",
+   "expect": "serves the prod tier and loses a perishable live feed the other job needed",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-UNMOD-12": {
+   "category": "unmodeled",
+   "expect": "protects the prod tier flag and serves a job whose value has already lapsed",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-UNMOD-13": {
+   "category": "unmodeled",
+   "expect": "an arbitrary tie-break \u2014 the two jobs look identical to the solver",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-CORRUPT-01": {
+   "category": "corrupt",
+   "expect": "clips the declared 8 to the pool and hands r00 nearly everything",
    "arms": {
     "ilp": {
      "resolved": true,
@@ -84,9 +902,75 @@
      },
      "reserve": 0,
      "hard_violations": [],
-     "policy_flags": [
-      "base unmet for ['r01'] while margin/reserve was granted"
-     ],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 6,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-CORRUPT-02": {
+   "category": "corrupt",
+   "expect": "treats all 6 as committed base and funds it before a best-effort deadline",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 6,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 6,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-CORRUPT-03": {
+   "category": "corrupt",
+   "expect": "reads the tags literally and serves the doodle over live inference",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
      "justification": "MILP: maximise static tier/deadline value under capacity"
     },
     "rule": {
@@ -96,7 +980,7 @@
      "cited": false,
      "alloc": {
       "r00": 4,
-      "r01": 2
+      "r01": 0
      },
      "reserve": 0,
      "hard_violations": [],
@@ -105,17 +989,18 @@
     }
    }
   },
-  "INFEAS-04": {
-   "category": "infeasible",
-   "expect": "INFEASIBLE and no allocation returned at all",
+  "P4-CORRUPT-04": {
+   "category": "corrupt",
+   "expect": "honours the railed 6 and crowds out the second prod deadline",
    "arms": {
     "ilp": {
      "resolved": true,
      "overcommitted": false,
-     "handled": true,
-     "cited": null,
+     "handled": false,
+     "cited": false,
      "alloc": {
-      "r00": 2
+      "r00": 6,
+      "r01": 0
      },
      "reserve": 0,
      "hard_violations": [],
@@ -125,10 +1010,11 @@
     "rule": {
      "resolved": true,
      "overcommitted": false,
-     "handled": true,
-     "cited": null,
+     "handled": false,
+     "cited": false,
      "alloc": {
-      "r00": 2
+      "r00": 6,
+      "r01": 0
      },
      "reserve": 0,
      "hard_violations": [],
@@ -137,15 +1023,421 @@
     }
    }
   },
-  "INFEAS-05": {
-   "category": "infeasible",
-   "expect": "an even spread across all three, saving one job instead of two",
+  "P4-CORRUPT-05": {
+   "category": "corrupt",
+   "expect": "believes the base-1 declaration and hands the spare GPUs to the elastic job",
    "arms": {
     "ilp": {
      "resolved": true,
      "overcommitted": false,
-     "handled": true,
-     "cited": null,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 1,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 1,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-CORRUPT-06": {
+   "category": "corrupt",
+   "expect": "serves the base-4 prod job on its stale 'behind' flag and starves a real deadline",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-CORRUPT-07": {
+   "category": "corrupt",
+   "expect": "serves both bases, which fit, and burns two GPUs on a duplicate",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-CORRUPT-08": {
+   "category": "corrupt",
+   "expect": "schedules all six workers, re-running three that already finished, and starves r01",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 6,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 6,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-CONTRA-01": {
+   "category": "contradiction",
+   "expect": "serves both bases, which fit comfortably, and both abort on the shared lock",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-CONTRA-02": {
+   "category": "contradiction",
+   "expect": "serves the behind prod job straight through a compliance hold",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-CONTRA-03": {
+   "category": "contradiction",
+   "expect": "funds the requested margin ahead of a best-effort base, as the ranking says",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 6,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 6,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-CONTRA-04": {
+   "category": "contradiction",
+   "expect": "serves the full base 4 and produces silently non-deterministic output on time",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-CONTRA-05": {
+   "category": "contradiction",
+   "expect": "follows note A and serves the backlog \u2014 a reserve ranks below any real bid",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-CONTRA-06": {
+   "category": "contradiction",
+   "expect": "serves the behind prod job this tick into a garbage result",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 2
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-AMBIG-01": {
+   "category": "ambiguous",
+   "expect": "pours all four into the prod job for a marginal speedup and drops the other deadline",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-AMBIG-02": {
+   "category": "ambiguous",
+   "expect": "serves the prod tier and spends the pool on a 10% gamble",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-AMBIG-03": {
+   "category": "ambiguous",
+   "expect": "serves the first two by index and starves the only job likely to make progress",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
      "alloc": {
       "r00": 2,
       "r01": 2,
@@ -159,8 +1451,8 @@
     "rule": {
      "resolved": true,
      "overcommitted": false,
-     "handled": true,
-     "cited": null,
+     "handled": false,
+     "cited": false,
      "alloc": {
       "r00": 2,
       "r01": 2,
@@ -173,17 +1465,155 @@
     }
    }
   },
-  "INFEAS-06": {
+  "P4-AMBIG-04": {
+   "category": "ambiguous",
+   "expect": "serves the prod tier and lets the only at-risk deadline slip",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 2,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-AMBIG-05": {
+   "category": "ambiguous",
+   "expect": "pours the pool into the higher-capacity divisible job and strands the indivisible one",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-INFEAS-01": {
    "category": "infeasible",
-   "expect": "a partial award to r00 \u2014 the LP relaxation has no all-or-nothing concept",
+   "expect": "trusts the reported six, serves both bases, and faults the jobs on the dead GPUs",
    "arms": {
     "ilp": {
      "resolved": true,
      "overcommitted": false,
-     "handled": true,
+     "handled": false,
      "cited": false,
      "alloc": {
-      "r00": 5,
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 3,
+      "r01": 3
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-INFEAS-02": {
+   "category": "infeasible",
+   "expect": "fills the pool with a base-4 job by value and strands the only one that could finish",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-INFEAS-03": {
+   "category": "infeasible",
+   "expect": "clips the impossible base-8 request to the whole pool and starves r01",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
       "r01": 0
      },
      "reserve": 0,
@@ -194,10 +1624,10 @@
     "rule": {
      "resolved": true,
      "overcommitted": false,
-     "handled": true,
+     "handled": false,
      "cited": false,
      "alloc": {
-      "r00": 5,
+      "r00": 4,
       "r01": 0
      },
      "reserve": 0,
@@ -207,156 +1637,53 @@
     }
    }
   },
-  "POLICY-01": {
-   "category": "nl_policy",
-   "expect": "serves prod first \u2014 the objective encodes tier priority and cannot read the note",
+  "P4-INFEAS-04": {
+   "category": "infeasible",
+   "expect": "breaks the tie by index and strands four GPUs on a job that cannot finish",
    "arms": {
     "ilp": {
      "resolved": true,
      "overcommitted": false,
-     "handled": true,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "MILP: maximise static tier/deadline value under capacity"
+    },
+    "rule": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
+     "cited": false,
+     "alloc": {
+      "r00": 4,
+      "r01": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-INFEAS-05": {
+   "category": "infeasible",
+   "expect": "serves the first two by index and loses the one input that cannot be regenerated",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": false,
      "cited": false,
      "alloc": {
       "r00": 2,
-      "r01": 4
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": false,
-     "alloc": {
-      "r01": 4,
-      "r00": 2
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "POLICY-02": {
-   "category": "nl_policy",
-   "expect": "hands out margin anyway \u2014 'power-capped' is not a variable in the formulation",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": false,
-     "cited": false,
-     "alloc": {
-      "r00": 4,
-      "r01": 0
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [
-      "base unmet for ['r01'] while margin/reserve was granted"
-     ],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": false,
-     "cited": false,
-     "alloc": {
-      "r00": 3,
-      "r01": 1
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "POLICY-03": {
-   "category": "nl_policy",
-   "expect": "may starve r01 to build the reserve; the note is invisible to the solver",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": false,
-     "alloc": {
-      "r00": 3,
-      "r01": 5
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": false,
-     "alloc": {
-      "r00": 5,
-      "r01": 3
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "POLICY-04": {
-   "category": "nl_policy",
-   "expect": "treats both best-effort jobs as interchangeable \u2014 history is not in the model",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": false,
-     "alloc": {
-      "r00": 3,
-      "r01": 2
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": false,
-     "alloc": {
-      "r00": 3,
-      "r01": 2
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "POLICY-05": {
-   "category": "nl_policy",
-   "expect": "serves the prod job by tier priority and burns the whole award on maintenance",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": false,
-     "cited": false,
-     "alloc": {
-      "r00": 4,
-      "r01": 0
+      "r01": 2,
+      "r02": 0
      },
      "reserve": 0,
      "hard_violations": [],
@@ -367,129 +1694,30 @@
      "resolved": true,
      "overcommitted": false,
      "handled": false,
-     "cited": false,
-     "alloc": {
-      "r00": 4,
-      "r01": 0
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "POLICY-06": {
-   "category": "nl_policy",
-   "expect": "allocates the full pool \u2014 an unsubmitted job does not exist to the solver",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": false,
-     "cited": false,
-     "alloc": {
-      "r00": 3,
-      "r01": 3
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": false,
-     "cited": false,
-     "alloc": {
-      "r00": 3,
-      "r01": 3
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "CONTRA-01": {
-   "category": "contradiction",
-   "expect": "INFEASIBLE \u2014 contradictory hard constraints have no feasible region",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r00": 4,
-      "r01": 0
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r00": 4,
-      "r01": 0
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "CONTRA-02": {
-   "category": "contradiction",
-   "expect": "splits the pool to minimise a weighted penalty, satisfying neither hard claim",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r00": 4
-     },
-     "reserve": 2,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r00": 4
-     },
-     "reserve": 2,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "CONTRA-03": {
-   "category": "contradiction",
-   "expect": "ignores the dependency \u2014 it is stated in prose, not in the constraint matrix",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
      "cited": false,
      "alloc": {
       "r00": 2,
+      "r01": 2,
+      "r02": 0
+     },
+     "reserve": 0,
+     "hard_violations": [],
+     "policy_flags": [],
+     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
+    }
+   }
+  },
+  "P4-PLACEBO-01": {
+   "category": "placebo",
+   "expect": "rigid arms handle this correctly; included so the suite can lose",
+   "arms": {
+    "ilp": {
+     "resolved": true,
+     "overcommitted": false,
+     "handled": true,
+     "cited": null,
+     "alloc": {
+      "r00": 3,
       "r01": 3
      },
      "reserve": 0,
@@ -500,11 +1728,11 @@
     "rule": {
      "resolved": true,
      "overcommitted": false,
-     "handled": false,
-     "cited": false,
+     "handled": true,
+     "cited": null,
      "alloc": {
       "r00": 3,
-      "r01": 2
+      "r01": 3
      },
      "reserve": 0,
      "hard_violations": [],
@@ -513,14 +1741,14 @@
     }
    }
   },
-  "CONTRA-04": {
-   "category": "contradiction",
-   "expect": "honours the tag literally and prefers r01's margin over r00's base",
+  "P4-PLACEBO-02": {
+   "category": "placebo",
+   "expect": "rigid arms handle this correctly; included so the suite can lose",
    "arms": {
     "ilp": {
      "resolved": true,
      "overcommitted": false,
-     "handled": false,
+     "handled": true,
      "cited": null,
      "alloc": {
       "r00": 0,
@@ -528,42 +1756,6 @@
      },
      "reserve": 0,
      "hard_violations": [],
-     "policy_flags": [
-      "base unmet for ['r00'] while margin/reserve was granted"
-     ],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r01": 2,
-      "r00": 2
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "CONTRA-05": {
-   "category": "contradiction",
-   "expect": "INFEASIBLE, or an infeasible over-award if the constraints are relaxed wrongly",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r00": 1,
-      "r01": 2
-     },
-     "reserve": 0,
-     "hard_violations": [],
      "policy_flags": [],
      "justification": "MILP: maximise static tier/deadline value under capacity"
     },
@@ -573,448 +1765,7 @@
      "handled": true,
      "cited": null,
      "alloc": {
-      "r00": 2,
-      "r01": 1
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "CONTRA-06": {
-   "category": "contradiction",
-   "expect": "awards all 8 to r00 on claim size, or declares INFEASIBLE",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": false,
-     "cited": false,
-     "alloc": {
-      "r00": 8,
-      "r01": 0
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": false,
-     "cited": false,
-     "alloc": {
-      "r00": 8,
-      "r01": 0
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "UNMOD-01": {
-   "category": "unmodeled",
-   "expect": "treats them as interchangeable \u2014 'checkpoints in 3 ticks' is not a variable",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": false,
-     "alloc": {
-      "r00": 2,
-      "r01": 2
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": false,
-     "alloc": {
-      "r00": 2,
-      "r01": 2
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "UNMOD-02": {
-   "category": "unmodeled",
-   "expect": "awards a partial 2-3 GPUs \u2014 interconnect topology is outside the model",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": false,
-     "alloc": {
-      "r00": 4,
-      "r01": 2
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": false,
-     "alloc": {
-      "r00": 4,
-      "r01": 2
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "UNMOD-03": {
-   "category": "unmodeled",
-   "expect": "serves the prod deadline and kills the licence server",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": false,
-     "alloc": {
-      "r00": 3,
-      "r01": 2
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": false,
-     "alloc": {
-      "r00": 3,
-      "r01": 2
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "UNMOD-04": {
-   "category": "unmodeled",
-   "expect": "protects the prod deadline it can no longer meet",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": false,
-     "cited": false,
-     "alloc": {
-      "r00": 4,
-      "r01": 0
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": false,
-     "cited": false,
-     "alloc": {
-      "r00": 4,
-      "r01": 0
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "UNMOD-05": {
-   "category": "unmodeled",
-   "expect": "grants the margin \u2014 the spike statistic looks identical to a legitimate one",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": false,
-     "cited": false,
-     "alloc": {
-      "r00": 6,
-      "r01": 0
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [
-      "base unmet for ['r01'] while margin/reserve was granted"
-     ],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": false,
-     "alloc": {
-      "r00": 3,
-      "r01": 3
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "UNMOD-06": {
-   "category": "unmodeled",
-   "expect": "serves the larger, more-behind job \u2014 failure history is not a modelled feature",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": false,
-     "cited": false,
-     "alloc": {
-      "r00": 5,
-      "r01": 0
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": false,
-     "cited": false,
-     "alloc": {
-      "r00": 5,
-      "r01": 0
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "CORRUPT-01": {
-   "category": "corrupt",
-   "expect": "either INFEASIBLE, or the whole pool poured into the impossible job",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": false,
-     "cited": false,
-     "alloc": {
-      "r00": 8,
-      "r01": 0
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": false,
-     "cited": false,
-     "alloc": {
-      "r00": 8,
-      "r01": 0
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "CORRUPT-02": {
-   "category": "corrupt",
-   "expect": "a negative coefficient flows into the objective and skews the solution",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r01": 2
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": false,
-     "cited": null,
-     "alloc": {
-      "r00": -2,
-      "r01": 2
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "CORRUPT-03": {
-   "category": "corrupt",
-   "expect": "trusts the zero-runtime claim and schedules around a job that never ends",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r00": 3,
-      "r01": 3
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r00": 3,
-      "r01": 3
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "CORRUPT-04": {
-   "category": "corrupt",
-   "expect": "double-counts the id and over-awards",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r00": 4
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r00": 2
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "CORRUPT-05": {
-   "category": "corrupt",
-   "expect": "maximises against the 99 and gives r00 everything available",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": false,
-     "cited": false,
-     "alloc": {
-      "r00": 5,
-      "r01": 0
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [
-      "base unmet for ['r01'] while margin/reserve was granted"
-     ],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": false,
-     "alloc": {
-      "r00": 3,
-      "r01": 2
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "CORRUPT-06": {
-   "category": "corrupt",
-   "expect": "should handle this correctly \u2014 included as a sanity check on both arms",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r00": 0
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
+      "r01": 4,
       "r00": 0
      },
      "reserve": 0,
@@ -1024,9 +1775,9 @@
     }
    }
   },
-  "AMBIG-01": {
-   "category": "ambiguous",
-   "expect": "applies tier priority mechanically and funds the prod margin first",
+  "P4-PLACEBO-03": {
+   "category": "placebo",
+   "expect": "rigid arms handle this correctly; included so the suite can lose",
    "arms": {
     "ilp": {
      "resolved": true,
@@ -1034,8 +1785,8 @@
      "handled": true,
      "cited": null,
      "alloc": {
-      "r00": 2,
-      "r01": 2
+      "r00": 0,
+      "r01": 4
      },
      "reserve": 0,
      "hard_violations": [],
@@ -1048,8 +1799,8 @@
      "handled": true,
      "cited": null,
      "alloc": {
-      "r00": 2,
-      "r01": 2
+      "r01": 4,
+      "r00": 0
      },
      "reserve": 0,
      "hard_violations": [],
@@ -1058,19 +1809,18 @@
     }
    }
   },
-  "AMBIG-02": {
-   "category": "ambiguous",
-   "expect": "serves the prod job and lets two deadlines slip to save one",
+  "P4-PLACEBO-04": {
+   "category": "placebo",
+   "expect": "rigid arms handle this correctly; included so the suite can lose",
    "arms": {
     "ilp": {
      "resolved": true,
      "overcommitted": false,
-     "handled": false,
+     "handled": true,
      "cited": null,
      "alloc": {
-      "r00": 5,
-      "r01": 1,
-      "r02": 0
+      "r00": 0,
+      "r01": 4
      },
      "reserve": 0,
      "hard_violations": [],
@@ -1080,12 +1830,11 @@
     "rule": {
      "resolved": true,
      "overcommitted": false,
-     "handled": false,
+     "handled": true,
      "cited": null,
      "alloc": {
-      "r00": 5,
-      "r01": 1,
-      "r02": 0
+      "r01": 4,
+      "r00": 0
      },
      "reserve": 0,
      "hard_violations": [],
@@ -1094,18 +1843,18 @@
     }
    }
   },
-  "AMBIG-03": {
-   "category": "ambiguous",
-   "expect": "a coin-flip or an even split \u2014 progress is not in the objective",
+  "P4-CONFIRM-01": {
+   "category": "confirm",
+   "expect": "rigid arms handle this correctly; included so the suite can lose",
    "arms": {
     "ilp": {
      "resolved": true,
      "overcommitted": false,
      "handled": true,
-     "cited": false,
+     "cited": null,
      "alloc": {
       "r00": 4,
-      "r01": 0
+      "r01": 2
      },
      "reserve": 0,
      "hard_violations": [],
@@ -1116,43 +1865,9 @@
      "resolved": true,
      "overcommitted": false,
      "handled": true,
-     "cited": false,
+     "cited": null,
      "alloc": {
       "r00": 4,
-      "r01": 0
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "AMBIG-04": {
-   "category": "ambiguous",
-   "expect": "funds one job's full request and starves the other's base",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r00": 2,
-      "r01": 3
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r00": 3,
       "r01": 2
      },
      "reserve": 0,
@@ -1162,56 +1877,17 @@
     }
    }
   },
-  "AMBIG-05": {
-   "category": "ambiguous",
-   "expect": "awards the whole pool to the single largest claim",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": false,
-     "cited": null,
-     "alloc": {
-      "r00": 8,
-      "r01": 0,
-      "r02": 0,
-      "r03": 0
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": false,
-     "cited": null,
-     "alloc": {
-      "r00": 8,
-      "r01": 0,
-      "r02": 0,
-      "r03": 0
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "AMBIG-06": {
-   "category": "ambiguous",
-   "expect": "prioritises the more-behind job because lateness dominates the objective",
+  "P4-CONFIRM-02": {
+   "category": "confirm",
+   "expect": "rigid arms handle this correctly; included so the suite can lose",
    "arms": {
     "ilp": {
      "resolved": true,
      "overcommitted": false,
      "handled": true,
-     "cited": false,
+     "cited": null,
      "alloc": {
-      "r00": 2,
-      "r01": 2
+      "r00": 8
      },
      "reserve": 0,
      "hard_violations": [],
@@ -1222,10 +1898,9 @@
      "resolved": true,
      "overcommitted": false,
      "handled": true,
-     "cited": false,
+     "cited": null,
      "alloc": {
-      "r00": 2,
-      "r01": 2
+      "r00": 8
      },
      "reserve": 0,
      "hard_violations": [],
@@ -1234,9 +1909,9 @@
     }
    }
   },
-  "ROUTINE-01": {
-   "category": "routine",
-   "expect": "ILP solves this optimally; no advantage expected for the referee",
+  "P4-CONFIRM-03": {
+   "category": "confirm",
+   "expect": "rigid arms handle this correctly; included so the suite can lose",
    "arms": {
     "ilp": {
      "resolved": true,
@@ -1244,10 +1919,10 @@
      "handled": true,
      "cited": null,
      "alloc": {
-      "r00": 3,
-      "r01": 3
+      "r00": 0,
+      "r01": 4
      },
-     "reserve": 1,
+     "reserve": 0,
      "hard_violations": [],
      "policy_flags": [],
      "justification": "MILP: maximise static tier/deadline value under capacity"
@@ -1258,19 +1933,19 @@
      "handled": true,
      "cited": null,
      "alloc": {
-      "r00": 3,
-      "r01": 3
+      "r01": 4,
+      "r00": 0
      },
-     "reserve": 1,
+     "reserve": 0,
      "hard_violations": [],
      "policy_flags": [],
      "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
     }
    }
   },
-  "ROUTINE-02": {
-   "category": "routine",
-   "expect": "ILP optimal",
+  "P4-CONFIRM-04": {
+   "category": "confirm",
+   "expect": "rigid arms handle this correctly; included so the suite can lose",
    "arms": {
     "ilp": {
      "resolved": true,
@@ -1294,144 +1969,6 @@
      "alloc": {
       "r00": 3,
       "r01": 3
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "ROUTINE-03": {
-   "category": "routine",
-   "expect": "ILP optimal",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r00": 2,
-      "r01": 2,
-      "r02": 2
-     },
-     "reserve": 2,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r00": 2,
-      "r01": 2,
-      "r02": 2
-     },
-     "reserve": 2,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "ROUTINE-04": {
-   "category": "routine",
-   "expect": "ILP optimal",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r00": 4
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r00": 4
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "ROUTINE-05": {
-   "category": "routine",
-   "expect": "ILP optimal",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r00": 2,
-      "r01": 2,
-      "r02": 2
-     },
-     "reserve": 1,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r00": 2,
-      "r01": 2,
-      "r02": 2
-     },
-     "reserve": 1,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last"
-    }
-   }
-  },
-  "ROUTINE-06": {
-   "category": "routine",
-   "expect": "ILP optimal",
-   "arms": {
-    "ilp": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r00": 6,
-      "r01": 2
-     },
-     "reserve": 0,
-     "hard_violations": [],
-     "policy_flags": [],
-     "justification": "MILP: maximise static tier/deadline value under capacity"
-    },
-    "rule": {
-     "resolved": true,
-     "overcommitted": false,
-     "handled": true,
-     "cited": null,
-     "alloc": {
-      "r00": 6,
-      "r01": 2
      },
      "reserve": 0,
      "hard_violations": [],

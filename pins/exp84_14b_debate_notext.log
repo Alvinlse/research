@@ -1,0 +1,16 @@
+P3-POLICY-01   nl_policy    market=. single-pkt=. referee-pkt=. debate-pkt=.
+P3-POLICY-02   nl_policy    market=. single-pkt=. referee-pkt=. debate-pkt=.
+P3-POLICY-03   nl_policy    market=. single-pkt=. referee-pkt=. debate-pkt=.
+P3-POLICY-04   nl_policy    market=. single-pkt=.* referee-pkt=. debate-pkt=.
+P3-POLICY-05   nl_policy    market=. single-pkt=.* referee-pkt=. debate-pkt=.
+P3-POLICY-06   nl_policy    market=. single-pkt=. referee-pkt=. debate-pkt=.
+P3-POLICY-07   nl_policy    market=. single-pkt=. referee-pkt=. debate-pkt=.
+P3-UNMOD-01    unmodeled    market=. single-pkt=. referee-pkt=. debate-pkt=.
+P3-UNMOD-02    unmodeled    market=. single-pkt=. referee-pkt=. debate-pkt=.
+P3-UNMOD-03    unmodeled    market=. single-pkt=. referee-pkt=. debate-pkt=.
+P3-UNMOD-04    unmodeled    market=. single-pkt=. referee-pkt=. debate-pkt=.
+P3-UNMOD-05    unmodeled    market=. single-pkt=. referee-pkt=. debate-pkt=.
+P3-UNMOD-06    unmodeled    market=. single-pkt=. referee-pkt=. debate-pkt=.
+P3-UNMOD-07    unmodeled    market=. single-pkt=. referee-pkt=. debate-pkt=.
+P3-UNMOD-08    unmodeled    market=. single-pkt=. referee-pkt=. debate-pkt=.
+P3-CORRUPT-01  corrupt      market=. single-pkt=. referee-pkt=. debate-pkt=.
