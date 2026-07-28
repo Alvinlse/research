@@ -217,14 +217,8 @@ def take_gate_stats() -> dict:
     return out
 
 
-def make_policy_gated(use_llm=True, model="qwen2.5:14b", cache=None, trace=None, seen=None,
-                      bid_w=BID_W, ask_w=ASK_W, debate=True, statement_model=None):
-    """Validated auction as the default path; the debate arm only on a contextual trigger."""
-    from pins.referee import make_policy_referee
-    ref = make_policy_referee(use_llm, model, cache, trace, seen,
-                              statement_model=statement_model, debate=debate)
-    st = {"jids": None, "free": None, "behind": frozenset(), "fell": False}
-
+def _make_trigger(st):
+    """The contextual escalation trigger, shared by every gated arm so they fire identically."""
     def _trigger(demand, free) -> bool:
         jids = frozenset(j.jid for j in demand)
         behind = frozenset(j.jid for j in demand if j.ctx.get("deadline") == "behind")
@@ -237,6 +231,17 @@ def make_policy_gated(use_llm=True, model="qwen2.5:14b", cache=None, trace=None,
                        for j in demand))                 # prod arrival
         st["jids"], st["free"], st["behind"] = jids, free, behind
         return fire
+    return _trigger
+
+
+def make_policy_gated(use_llm=True, model="qwen2.5:14b", cache=None, trace=None, seen=None,
+                      bid_w=BID_W, ask_w=ASK_W, debate=True, statement_model=None):
+    """Validated auction as the default path; the debate arm only on a contextual trigger."""
+    from pins.referee import make_policy_referee
+    ref = make_policy_referee(use_llm, model, cache, trace, seen,
+                              statement_model=statement_model, debate=debate)
+    st = {"jids": None, "free": None, "behind": frozenset(), "fell": False}
+    _trigger = _make_trigger(st)
 
     def policy(demand, supply_ctx, free, waiting=None, env=None, **_):
         env = dict(env or {})
@@ -259,6 +264,92 @@ def make_policy_gated(use_llm=True, model="qwen2.5:14b", cache=None, trace=None,
                          "units_sold": sold, "free": free, "unsold": unsold,
                          "why": f"routine tick: cleared {sold}/{free} at {price:.3f}, "
                                 f"validated, no contextual trigger"}])
+    return policy
+
+
+# --------------------------------------------------------------------------- #
+#  The CORRECTED arm (Exp 92): the hard-case winner, run in-sim — boundary test  #
+# --------------------------------------------------------------------------- #
+
+CORR_STATS = {"escalated": 0, "llm_calls": 0, "proposals": 0, "changed": 0, "rejected": 0}
+
+
+def take_corr_stats() -> dict:
+    out = dict(CORR_STATS)
+    CORR_STATS.update(escalated=0, llm_calls=0, proposals=0, changed=0, rejected=0)
+    return out
+
+
+def make_policy_corrected(use_llm=True, model="qwen2.5:14b", cache=None, trace=None, seen=None,
+                          bid_w=BID_W, ask_w=ASK_W, debate=True):
+    """Exp 92 — run the arm that WINS on text exceptions (Exp 83/88/89) inside the simulator.
+
+    Exp 84 measured a *different* debate: `referee.py` re-decides every job from scratch, with no
+    text gate, and cost -12.0* prodSLA. The arm that actually wins the hard-case suite is
+    `correction_signed`: the market allocates, and reviewers may only propose *corrections*, and
+    only for jobs that carry a note (`if not (j.get("note") or "").strip(): continue`). The supply
+    call is gated on a supply note the same way.
+
+    The v2020 replay has no text channel at all — `Job` has no note field and no `ctx` key carries
+    one — so `supply_note` is mapped to "" honestly rather than synthesised from the numbers.
+    Doing otherwise would manufacture the very channel this experiment exists to show is absent.
+
+    PREDICTION (pre-registered): the trigger still fires at the Exp-87 rate, the escalation runs,
+    and it makes ZERO LLM calls and ZERO changes -- allocation identical to `market`, tick for
+    tick. That is a strictly stronger boundary claim than Exp 84's -12.0*.
+    """
+    from pins.correction_signed import (apply_signed, debate_signed, gather_signed,
+                                        referee_signed)
+    st = {"jids": None, "free": None, "behind": frozenset(), "fell": False}
+    _trigger = _make_trigger(st)
+
+    def _as_dicts(demand, margins):
+        return [{"jid": j.jid, "tier": j.ctx.get("tier", "besteffort"),
+                 "deadline": j.ctx.get("deadline", "ontrack"),
+                 "requested": margins.get(j.jid, 0),
+                 "note": j.ctx.get("note", "")}          # the trace never sets this
+                for j in demand]
+
+    def policy(demand, supply_ctx, free, waiting=None, env=None, **_):
+        env = dict(env or {})
+        env.setdefault("n_waiting", len(waiting or []))
+        env.setdefault("n_active", max(len(demand), 1))
+        margins, unsold, price, sold = clear_market(demand, free, env, bid_w, ask_w)
+        bad = validate_clearing(margins, 0, demand, free)
+        why = (f"routine tick: cleared {sold}/{free} at {price:.3f}, validated, no trigger")
+
+        if bad or _trigger(demand, free):
+            CORR_STATS["escalated"] += 1
+            jobs = _as_dicts(demand, margins)
+            note = str(supply_ctx.get("note", "")) if isinstance(supply_ctx, dict) else ""
+            n0 = len(cache) if isinstance(cache, dict) else 0
+            props = gather_signed(jobs, note, free, margins, use_llm=use_llm,
+                                  model=model, cache=cache)
+            if debate:
+                props = debate_signed(jobs, note, free, margins, props, use_llm=use_llm,
+                                      model=model, cache=cache)
+            n_props = len(props.get("demand") or []) + (1 if props.get("supply") else 0)
+            CORR_STATS["proposals"] += n_props
+            if n_props:
+                dec = referee_signed(margins, props, free, jobs, use_llm=use_llm,
+                                     model=model, cache=cache)
+                new, viol = apply_signed(margins, dec, free)
+                if viol:
+                    CORR_STATS["rejected"] += 1        # market's allocation stands, never repaired
+                elif new != margins:
+                    CORR_STATS["changed"] += 1
+                    margins = new
+                    why = f"escalated: {n_props} proposal(s) applied"
+            else:
+                why = "escalated: no job carries text -> no proposal, market stands"
+            if isinstance(cache, dict):
+                CORR_STATS["llm_calls"] += max(0, len(cache) - n0)
+
+        st["fell"] = False
+        return margins, 0, NegotiationOutcome(
+            margins=margins, reserve=0, rounds=0, agreed=True,
+            transcript=[{"round": 0, "actor": "corrected", "price": round(price, 4),
+                         "units_sold": sold, "free": free, "unsold": unsold, "why": why}])
     return policy
 
 

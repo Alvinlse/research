@@ -459,7 +459,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           law: str = "amdahl", kappa: float = 2.0, samples: int = 0,
           cooldown: int = 0, resize_c1: float = 0.0, gamma: float | None = None,
           phi: float = 0.0, qcache: float | None = None, market: bool = False,
-          gated: bool = False,
+          gated: bool = False, corrected: bool = False,
           composed: bool = False, bid_info: str = "exact") -> None:
     assert not (referee and single_ilp), "--referee and --single-ilp are separate arms"
     assert not debate or referee, "--debate is a referee-arm round"
@@ -543,6 +543,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         suffix += ("+manual-learned" if "learned" in os.path.basename(manual) else "+manual")
     if gated:
         suffix += "+gated"
+    if corrected:
+        suffix += "+corrected"   # Exp 92: the hard-case winner (signed correction) as the escalation
     if hard_trigger:
         assert debate, "--hard-trigger gates the debate round"
         suffix += "+hardtrig"             # E3: deliberation gated, ruling still per-tick
@@ -612,6 +614,10 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         from pins.market import make_policy_gated
         rows.append(("gated", lambda: make_policy_gated(use_llm, model, cache, decisions, seen,
                                                         debate=True)))
+    if corrected:                 # Exp 92 boundary test: signed-correction escalation in-sim
+        from pins.market import make_policy_corrected
+        rows.append(("corrected", lambda: make_policy_corrected(use_llm, model, cache,
+                                                                decisions, seen, debate=True)))
     if composed:                  # Exp 73: LLM sets the reserve, the market clears the rest
         from pins.market import make_policy_composed
         rows.append(("composed", lambda: make_policy_composed(use_llm, model, cache,
@@ -720,6 +726,11 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
     if use_llm:
         save_cache(cache)
     print(f"{len(decisions)} distinct decisions/transcripts -> {RESULTS} (tier '{tag}')")
+    if corrected:                 # Exp 92: did the escalation ever have text to act on?
+        from pins.market import take_corr_stats
+        c = take_corr_stats()
+        print(f"corrected: {c['escalated']} escalations, {c['llm_calls']} LLM calls, "
+              f"{c['proposals']} proposals, {c['changed']} ticks changed, {c['rejected']} rejected")
     if gated:                     # how often did the contextual trigger actually fire?
         from pins.market import take_gate_stats
         g = take_gate_stats()
@@ -783,6 +794,10 @@ def main() -> None:
                     help="Exp 57: diminishing-returns coefficient in P(g)=g/(1+A*(g-1)). "
                          "0.0 = the linear scaling Exp 22-56b assumed; try 0.1/0.3 as "
                          "sensitivity. Cannot be calibrated from v2020 (no counterfactuals).")
+    ap.add_argument("--corrected", action="store_true",
+                    help="Exp 92 boundary test: validated auction + the SIGNED-CORRECTION "
+                         "escalation that wins the hard-case suite (Exp 83/88/89). It only acts "
+                         "on jobs carrying text; the trace has none, so the prediction is a no-op.")
     ap.add_argument("--gated", action="store_true",
                     help="validated auction every tick; escalate to the debate arm only on a "
                          "contextual trigger (validator reject, prod arrival, job newly behind, "
@@ -945,7 +960,7 @@ def main() -> None:
           use_llm=a.llm, model=a.model, caps_mode=a.caps, quantile=a.quantile,
           truth_mode=a.truth, time_mode=a.time, ttf_mode=a.ttf, baseline=a.baseline,
           dyncap=a.dyncap, trace_name=a.trace, quantum={"quarter": 1, "whole": 4}[a.quantum],
-          gated=a.gated, referee=a.referee, manual=a.manual, single_ilp=a.single_ilp, debate=a.debate,
+          gated=a.gated, corrected=a.corrected, referee=a.referee, manual=a.manual, single_ilp=a.single_ilp, debate=a.debate,
           no_think=a.no_think, advocates=a.advocates, realloc_cost=a.realloc_cost,
           alpha=a.alpha, alpha_norm=a.alpha_norm, trigger=a.trigger, theta=a.theta,
           stale=a.stale, extend=a.extend, no_argue=a.no_argue, prev_input=a.prev_input,

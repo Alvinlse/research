@@ -38,12 +38,11 @@
    pre-packet interface (Exp 65–67, 2026-07-22; packet landed 2026-07-23). They are **untested,
    not refuted** — cf. Exp 79, whose null was overturned by the same fix. Cheap in the Exp 88/89
    harness.
-3. **Run `debate_signed` in-sim — the clean boundary test.** §4.4 currently rests on Exp 84, where
-   a *different, more invasive* in-sim debate costs −12.0\* prodSLA (see the caveat on that entry:
-   the packet never crossed into the in-sim path, and the two debates differ in scope and text
-   gating). Wire `correction_signed.debate_signed` into `trace_replay` instead. It skips jobs with
-   no note and the trace has none, so the prediction is a **no-op**: zero escalations, byte-identical
-   to `market`. Cheap, fast, and a strictly stronger claim than the current one.
+3. **Update §4.4 to lead with Exp 92, not Exp 84.** *(Done 2026-07-28: the boundary test ran — see
+   Exp 92. `corrected` is byte-identical to `market`, 193 escalations, 0 LLM calls, 0 changes. The
+   paper has not yet been rewritten to use it.)* Remaining work: extend Exp 92 from n=8 to n=32
+   (~8 min), then rewrite §4.4 to lead with the no-op and demote Exp 84 to an architecture
+   ablation.
 4. **Exp 58 — the change-cost lever** (`--prev-input`, rule 6) is likewise built and never
    isolated.
 5. Malleability ablation (elastic-job fraction sweep) remains unstarted.
@@ -2500,3 +2499,66 @@ PINS_NUM_CTX=8192 .venv/bin/python -u -m pins.exp90_specificity \
 ```
 Built subagent-driven (sampler bait + driver flags, TDD, `pins/test_exp91_scenes.py`); results at
 `pins/results_exp91_hard_qwen2514b.json`, log `pins/exp91_hard_14b.log`.
+
+---
+
+## Experiment 92 — THE BOUNDARY TEST: the winning escalation is a literal NO-OP in-sim (2026-07-28)
+
+**Date:** 2026-07-28
+
+**Question.** §4.4's boundary claim rested on Exp 84, where an in-sim debate cost −12.0\* prodSLA.
+But that arm is a *different mechanism* from the one that wins the hard-case suite (see the
+two-debates caveat on Exp 84): `referee.py` re-decides every job with no text gate, whereas
+`correction_signed.debate_signed` only corrects jobs that carry a note. So Exp 84 conflated two
+explanations — "no text to act on" and "a more invasive architecture". This experiment separates
+them by running the **winning** architecture in-sim, unchanged.
+
+**Method.** New arm `corrected` (`pins/market.py::make_policy_corrected`, `--corrected`):
+validated auction every tick, and on the **identical** contextual trigger as `gated` (the trigger
+was extracted to `_make_trigger()` so the two arms fire on exactly the same conditions) the
+escalation runs `gather_signed → debate_signed → referee_signed → apply_signed` on top of the
+market's allocation. `supply_note` is mapped to `""` **honestly** — the replay world has no text
+channel (`Job` has no note field; no `ctx` key carries one), and synthesising one from the numbers
+would manufacture the very channel this experiment exists to show is absent. `--llm` stays ON, so
+a null result is caused by absent text and not by `gather_signed`'s `if not use_llm` early return.
+
+qwen2.5:14b, caps=predicted, pool 8, n=8 paired seeds, v2020 replay.
+
+**Findings.**
+
+| pool | policy | SLA | prodSLA | util | useful | regret | slowdown | wait | fb |
+|---|---|---|---|---|---|---|---|---|---|
+| 8 | no-llm (floor) | 45.3% | 52.4% | 76% | 73% | 6% | 7.45 | 16.6 | 0% |
+| 8 | market | 42.2%\* | 50.3% | 77% | 73% | 6% | 7.37 | 16.6 | 0% |
+| 8 | **corrected** | **42.2%\*** | **50.3%** | **77%** | **73%** | **6%** | **7.37** | **16.6** | **0%** |
+
+```
+market       vs floor:  dSLA -3.1 ± 6.1  dprodSLA -2.1 ± 5.4  dutil +1.1 ± 1.0*  duseful +0.3 ± 0.4  dregret -0.5 ± 0.7
+corrected    vs floor:  dSLA -3.1 ± 6.1  dprodSLA -2.1 ± 5.4  dutil +1.1 ± 1.0*  duseful +0.3 ± 0.4  dregret -0.5 ± 0.7
+corrected: 193 escalations, 0 LLM calls, 0 proposals, 0 ticks changed, 0 rejected
+```
+
+- **`corrected` is identical to `market` on every metric, digit for digit, including the vs-floor
+  deltas and their confidence intervals.** This is not a statistical tie — it is the same
+  allocation, tick for tick.
+- **The gate genuinely ran.** 193 escalations fired across the 8 seeds (matching the Exp-87 trigger
+  rate); each one entered the correction pipeline, found no job carrying text, and returned.
+- **Zero LLM calls.** Both the per-job reviewer loop and the supply call are text-gated, so with no
+  text anywhere the escalation costs nothing at all — not even tokens.
+- Reproduced at n=2 in a smoke run: 48 escalations, same zeros.
+
+**What this buys.** The boundary claim no longer depends on Exp 84's −12.0\*. The correct statement
+is now: *the mechanism that wins on text exceptions (43/81, p=0.0007, Exp 89) does exactly nothing
+where there is no text — zero calls, zero changes, byte-identical allocation.* Exp 84's penalty is
+re-read as the cost of the **more invasive** in-sim architecture replacing the auction, not as
+evidence about text. §4.4 should lead with this and demote Exp 84 to an architecture ablation.
+
+**Caveat.** n=8, not the project standard of 32 — the effect is exact rather than statistical, so
+seeds buy robustness against seed-specific luck, not significance. The run costs ~2 min; extend to
+32 before the paper cites it.
+
+**Reproduce.**
+```
+.venv/bin/python -m pins.trace_replay --llm --model qwen2.5:14b --caps predicted \
+    --pools 8 --seeds 8 --market --corrected
+```
