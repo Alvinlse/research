@@ -1,0 +1,80 @@
+model=qwen2.5:14b  suite=r34  POOLED primary n=81  CONTROLS n=17
+
+=== STRICT (handled AND feasible) ===
+
+  POOLED PRIMARY (r3 31 + r4 50)  n=81
+    market               0/81  calls     0
+    single-pkt          27/81  calls    81
+    debate-pkt          43/81  calls   569
+    debate-noarg-pkt    43/81  calls   569
+    critic-pkt          34/81  calls   244
+    PRE-REGISTERED TESTS (one-sided, Holm over the two):
+    H1  debate > noarg (arg content)   b=4 c=4  D=+0  1-sided p=0.6367  (2-sided 1.0000)
+    H2  critic > single                b=10 c=3  D=+7  1-sided p=0.0461  (2-sided 0.0923)
+      Holm H2: p=0.0461 vs 0.0250 -> not significant
+      Holm H1: p=0.6367 vs 0.0500 -> not significant
+      H1 equivalence: D=+0 cases  90% CI [-4.91, +4.91]  margin +/-3 -> FAIL (CI too wide at this m)
+    EXPLORATORY (not claimable as structure comparisons):
+    debate > critic  [BUDGET-CONFOUNDED] b=15 c=6  D=+9  1-sided p=0.0392  (2-sided 0.0784)
+    debate > single  [harness check]   b=18 c=2  D=+16  1-sided p=0.0002  (2-sided 0.0004)
+
+  NEW-BATCH (r4 50, blind)  n=50
+    market               0/50  calls     0
+    single-pkt          18/50  calls    50
+    debate-pkt          29/50  calls   352
+    debate-noarg-pkt    27/50  calls   352
+    critic-pkt          20/50  calls   151
+    PRE-REGISTERED TESTS (one-sided, Holm over the two):
+    H1  debate > noarg (arg content)   b=4 c=2  D=+2  1-sided p=0.3438  (2-sided 0.6875)
+    H2  critic > single                b=5 c=3  D=+2  1-sided p=0.3633  (2-sided 0.7266)
+      Holm H1: p=0.3438 vs 0.0250 -> not significant
+      Holm H2: p=0.3633 vs 0.0500 -> not significant
+      H1 equivalence: D=+2 cases  90% CI [-2.74, +5.25]  margin +/-3 -> FAIL (CI too wide at this m)
+    EXPLORATORY (not claimable as structure comparisons):
+    debate > critic  [BUDGET-CONFOUNDED] b=13 c=4  D=+9  1-sided p=0.0245  (2-sided 0.0490)
+    debate > single  [harness check]   b=12 c=1  D=+11  1-sided p=0.0017  (2-sided 0.0034)
+
+=== bare handled ===
+
+  POOLED PRIMARY (r3 31 + r4 50)  n=81
+    market               0/81  calls     0
+    single-pkt          27/81  calls    81
+    debate-pkt          43/81  calls   569
+    debate-noarg-pkt    43/81  calls   569
+    critic-pkt          34/81  calls   244
+    PRE-REGISTERED TESTS (one-sided, Holm over the two):
+    H1  debate > noarg (arg content)   b=4 c=4  D=+0  1-sided p=0.6367  (2-sided 1.0000)
+    H2  critic > single                b=10 c=3  D=+7  1-sided p=0.0461  (2-sided 0.0923)
+      Holm H2: p=0.0461 vs 0.0250 -> not significant
+      Holm H1: p=0.6367 vs 0.0500 -> not significant
+      H1 equivalence: D=+0 cases  90% CI [-4.91, +4.91]  margin +/-3 -> FAIL (CI too wide at this m)
+    EXPLORATORY (not claimable as structure comparisons):
+    debate > critic  [BUDGET-CONFOUNDED] b=15 c=6  D=+9  1-sided p=0.0392  (2-sided 0.0784)
+    debate > single  [harness check]   b=18 c=2  D=+16  1-sided p=0.0002  (2-sided 0.0004)
+
+  NEW-BATCH (r4 50, blind)  n=50
+    market               0/50  calls     0
+    single-pkt          18/50  calls    50
+    debate-pkt          29/50  calls   352
+    debate-noarg-pkt    27/50  calls   352
+    critic-pkt          20/50  calls   151
+    PRE-REGISTERED TESTS (one-sided, Holm over the two):
+    H1  debate > noarg (arg content)   b=4 c=2  D=+2  1-sided p=0.3438  (2-sided 0.6875)
+    H2  critic > single                b=5 c=3  D=+2  1-sided p=0.3633  (2-sided 0.7266)
+      Holm H1: p=0.3438 vs 0.0250 -> not significant
+      Holm H2: p=0.3633 vs 0.0500 -> not significant
+      H1 equivalence: D=+2 cases  90% CI [-2.74, +5.25]  margin +/-3 -> FAIL (CI too wide at this m)
+    EXPLORATORY (not claimable as structure comparisons):
+    debate > critic  [BUDGET-CONFOUNDED] b=13 c=4  D=+9  1-sided p=0.0245  (2-sided 0.0490)
+    debate > single  [harness check]   b=12 c=1  D=+11  1-sided p=0.0017  (2-sided 0.0034)
+
+=== CONTROLS n=17 (specificity cost; never pooled) ===
+  market             handled 16/17   strict 16/17
+  single-pkt         handled 12/17   strict 12/17
+  debate-pkt         handled 12/17   strict 12/17
+  debate-noarg-pkt   handled 11/17   strict 11/17
+  critic-pkt         handled 12/17   strict 12/17
+
+=== harness reproduction check vs Exp 89 (STRICT, POOLED) ===
+  debate-pkt   43/81   Exp 89 reported 43/81   MATCHES
+  single-pkt   27/81   Exp 89 reported 27/81   MATCHES

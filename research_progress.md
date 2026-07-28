@@ -25,6 +25,7 @@
 | 10 | Stage-1 prediction survives **only as an input**: `caps=predicted` (`pred_job_usage.csv`) feeds every headline run, and prediction error costs every policy while prod-SLA protection survives it | Exp 30, 35, 36 | solid (retained as infrastructure) |
 | 11 | The negotiation-era mechanism (bounded protocol, ILP guarantee, per-user tariff, small-model sufficiency) is **superseded as a contribution** but retained as the `negotiated` **baseline arm** the market is measured against | Exp 22–48 (compressed) | superseded; baseline only |
 
+| 13 | **Debate's win is the second pass, not the arguments** — stripping `evidence` from the packet changes the score by exactly zero cases (43/81 both ways, discordant 4-4). The transcript stays readable but is not load-bearing for the decision; `evidence` can be dropped at no measured cost | Exp 93 | solid (null, n=81; TOST at ±3 fails on m=8) |
 | 12 | The round-2 54-scene suite was **insensitive**, not merely negative: text-blind baselines (ILP 30/54, rule 31/54) scored within noise of every LLM arm, min p=0.238 across ~30 tests. Round 3's text-dependent design drops the rigid floor to 0/31 — the instrument was replaced, not the hypothesis re-shopped | Exp 65–67 → 79–83 | solid (methodology) |
 
 **Open / next**, roughly by value:
@@ -33,11 +34,11 @@
    exist in the tree (commits `9c1d127`, `438df61`). §5 of the paper scopes exactly this as future
    work. It is the arm most likely to convert §4.3's efficiency-neutral result into an in-sim SLA
    gain.
-2. **Re-run the confounded structures on the strong packet.** `selfcons`, the argumentation
-   ablation (`single-noarg` / `referee-noarg`) and the **critic** arm were only ever tested on the
-   pre-packet interface (Exp 65–67, 2026-07-22; packet landed 2026-07-23). They are **untested,
-   not refuted** — cf. Exp 79, whose null was overturned by the same fix. Cheap in the Exp 88/89
-   harness.
+2. ~~**Re-run the confounded structures on the strong packet.**~~ *(Done 2026-07-28 — Exp 93.
+   `selfcons` needed no re-run (`single-pkt-boN` already is it); the argumentation ablation is an
+   **exact tie** with debate (43 = 43), so debate's win is the second pass, not the arguments; the
+   critic reconstruction is 34/81 vs single 27/81, p=0.0461, which **fails Holm** and is therefore
+   suggestive only.)* Remaining work: a **budget-matched critic** arm to settle H2.
 3. **Update §4.4 to lead with Exp 92, not Exp 84.** *(Done 2026-07-28: the boundary test ran — see
    Exp 92. `corrected` is byte-identical to `market`, 193 escalations, 0 LLM calls, 0 changes. The
    paper has not yet been rewritten to use it.)* Remaining work: extend Exp 92 from n=8 to n=32
@@ -2565,3 +2566,79 @@ design matches every other in-sim result, so the arm drops straight into the §4
 .venv/bin/python -m pins.trace_replay --llm --model qwen2.5:14b --caps predicted \
     --pools 8 --seeds 32 --market --corrected
 ```
+
+## Experiment 93 — THE UNTESTED STRUCTURES: debate's win is the SECOND PASS, not the arguments (2026-07-28)
+
+**Pre-registration:** `docs/superpowers/specs/2026-07-28-exp93-untested-structures-design.md`
+(written **mid-run** at 7/98 cases, before any result table — disclosed there, §7).
+
+**Question.** Open item 2. Exp 65–67 tested self-consistency, an argumentation ablation and a
+critic arm, and found everything null — but all three ran the day *before* the decision packet
+(`b77d3fa`), which took infeasible rulings from 11–16/31 to 0/31. Untested, not refuted. Two arms
+were new (`selfcons` was **not** re-run: `single-pkt-boN` already *is* majority-vote
+self-consistency, with an n=81 result in Exp 89):
+
+- **`debate-noarg-pkt`** — full gather+debate, then `evidence` is stripped from proposals before
+  `build_packet`. The referee sees WHO proposed WHAT but not WHY. Isolates argument *content* from
+  the second pass. Identical call count to `debate-pkt` — the one clean contrast here.
+- **`critic-pkt`** — a **reconstruction** of Exp 67's critic (the original was never committed).
+  One objection-only reviewer per text-bearing job; objections reach the referee via
+  `reviewer_proposals`. ~40% of debate's calls.
+
+qwen2.5:14b, suite r34, POOLED primary n=81, CONTROLS n=17, STRICT scoring, exact McNemar,
+one-sided per hypothesis, **Holm over the two pre-registered tests**.
+
+**Findings.**
+
+| arm | STRICT | calls |
+|---|---|---|
+| market | 0/81 | 0 |
+| single-pkt | 27/81 | 81 |
+| **debate-pkt** | **43/81** | 569 |
+| **debate-noarg-pkt** | **43/81** | 569 |
+| critic-pkt | 34/81 | 244 |
+
+```
+H1  debate > noarg   b=4  c=4   D=+0   1-sided p=0.6367   Holm vs 0.0500 -> ns
+H2  critic > single  b=10 c=3   D=+7   1-sided p=0.0461   Holm vs 0.0250 -> ns
+H1 equivalence (TOST, margin +/-3): D=+0, 90% CI [-4.91, +4.91] -> FAIL (m=8 too small)
+EXPLORATORY, budget-confounded:  debate > critic  b=15 c=6  1-sided p=0.0392
+harness check:                   debate > single  b=18 c=2  1-sided p=0.0002 (reproduces Exp 89)
+CONTROLS n=17: market 16/17, single 12/17, debate 12/17, noarg 11/17, critic 12/17
+```
+
+- **H1 rejected, and by the strongest available form of a null: an exact tie.** Stripping the
+  arguments out of the packet changes the score by **zero cases** (43 = 43, discordant 4-4).
+  Debate's Exp 89 win is the **second pass**, not argument content — the pre-registered
+  simplify-the-architecture branch (§6). The r4-only blind stratum agrees in direction and is also
+  ns (29 vs 27, p=0.34).
+- **Read the tie as evidence of a null, not as proven equivalence.** TOST at the project's ±3
+  margin FAILS: only 8 discordant pairs, so the 90% CI is [−4.91, +4.91]. The point estimate is
+  exactly 0 and the test is ns, but the data cannot *exclude* a ±3-case effect. Stated this way in
+  the paper or not at all.
+- **H2 does not survive multiplicity.** Critic 34/81 vs single 27/81 is p=0.0461 alone — and
+  **0.0461 > 0.05/2**, so under the pre-registered Holm correction it is **not significant**. The
+  honest statement is a suggestive, unconfirmed cost result: 34 vs 27 at 3× the calls, direction
+  consistent, not established. A budget-matched critic arm is the follow-up, and it is now a
+  cheaper question than it looked at 18:50.
+- **Debate still beats critic** (15-6) but at 2.3× the calls, so per §5 this may not be claimed as
+  a structure comparison in either direction.
+- **Specificity cost reproduces**: market 16/17 vs every LLM arm 11–12/17 (claim 9).
+- STRICT and bare-handled tables are identical — **zero infeasible rulings in every arm**, the
+  packet holding as in Exp 82.
+
+**What this changes.** Claim 5 stands untouched (this experiment can only add arms). What it
+removes is a *supporting* reading of it: the debate transcript is not what the referee is using,
+which weakens the interpretability framing in §5 for this mechanism specifically — the transcript
+remains readable, but its content is not load-bearing for the decision. The architectural payoff is
+that `evidence` can be dropped from the packet at no measured cost.
+
+**Reproduce.**
+```
+PINS_RESULTS=pins/results_exp93_qwen2514b.json \
+  .venv/bin/python -m pins.exp88_budget_control --model qwen2.5:14b --suite r34 \
+    --arms market,single-pkt,debate-pkt,debate-noarg-pkt,critic-pkt
+.venv/bin/python -m pins.exp93_analyse pins/results_exp93_qwen2514b.json
+```
+`pins/exp89_analyse.py` does **not** work on this run — it tests against `single-pkt-boN`, which is
+not an arm here. `pins/exp93_analyse.py` carries the pre-registered axes.
