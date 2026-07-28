@@ -2522,30 +2522,33 @@ channel (`Job` has no note field; no `ctx` key carries one), and synthesising on
 would manufacture the very channel this experiment exists to show is absent. `--llm` stays ON, so
 a null result is caused by absent text and not by `gather_signed`'s `if not use_llm` early return.
 
-qwen2.5:14b, caps=predicted, pool 8, n=8 paired seeds, v2020 replay.
+qwen2.5:14b, caps=predicted, pool 8, **n=32 paired seeds**, v2020 replay.
 
 **Findings.**
 
 | pool | policy | SLA | prodSLA | util | useful | regret | slowdown | wait | fb |
 |---|---|---|---|---|---|---|---|---|---|
-| 8 | no-llm (floor) | 45.3% | 52.4% | 76% | 73% | 6% | 7.45 | 16.6 | 0% |
-| 8 | market | 42.2%\* | 50.3% | 77% | 73% | 6% | 7.37 | 16.6 | 0% |
-| 8 | **corrected** | **42.2%\*** | **50.3%** | **77%** | **73%** | **6%** | **7.37** | **16.6** | **0%** |
+| 8 | no-llm (floor) | 53.9% | 59.1% | 80% | 75% | 10% | 8.73 | 22.7 | 0% |
+| 8 | market | 51.8%\* | 55.3% | 81% | 76% | 8% | 8.62 | 22.6 | 0% |
+| 8 | **corrected** | **51.8%\*** | **55.3%** | **81%** | **76%** | **8%** | **8.62** | **22.6** | **0%** |
 
 ```
-market       vs floor:  dSLA -3.1 ± 6.1  dprodSLA -2.1 ± 5.4  dutil +1.1 ± 1.0*  duseful +0.3 ± 0.4  dregret -0.5 ± 0.7
-corrected    vs floor:  dSLA -3.1 ± 6.1  dprodSLA -2.1 ± 5.4  dutil +1.1 ± 1.0*  duseful +0.3 ± 0.4  dregret -0.5 ± 0.7
-corrected: 193 escalations, 0 LLM calls, 0 proposals, 0 ticks changed, 0 rejected
+market       vs floor:  dSLA -2.1 ± 1.7*  dprodSLA -3.8 ± 3.1*  dutil +1.3 ± 0.5*  duseful +0.7 ± 0.4*  dregret -1.3 ± 0.8*
+corrected    vs floor:  dSLA -2.1 ± 1.7*  dprodSLA -3.8 ± 3.1*  dutil +1.3 ± 0.5*  duseful +0.7 ± 0.4*  dregret -1.3 ± 0.8*
+Holm (family of 30): market/util p=0.001, corrected/util p=0.001, market/regret p=0.003,
+                     corrected/regret p=0.003, market/useful p=0.016, corrected/useful p=0.016
+corrected: 843 escalations, 0 LLM calls, 0 proposals, 0 ticks changed, 0 rejected
 ```
 
 - **`corrected` is identical to `market` on every metric, digit for digit, including the vs-floor
-  deltas and their confidence intervals.** This is not a statistical tie — it is the same
-  allocation, tick for tick.
-- **The gate genuinely ran.** 193 escalations fired across the 8 seeds (matching the Exp-87 trigger
+  deltas, their confidence intervals, and every surviving Holm p-value.** This is not a
+  statistical tie — it is the same allocation, tick for tick. The `market` row also reproduces
+  §4.3 of the paper (Exp 87: market 51.8% / 55.3% / 81%) on the same seeds.
+- **The gate genuinely ran.** 843 escalations fired across the 32 seeds (matching the Exp-87 trigger
   rate); each one entered the correction pipeline, found no job carrying text, and returned.
 - **Zero LLM calls.** Both the per-job reviewer loop and the supply call are text-gated, so with no
   text anywhere the escalation costs nothing at all — not even tokens.
-- Reproduced at n=2 in a smoke run: 48 escalations, same zeros.
+- Reproduced at n=8 (193 escalations) and n=2 (48 escalations): same zeros throughout.
 
 **What this buys.** The boundary claim no longer depends on Exp 84's −12.0\*. The correct statement
 is now: *the mechanism that wins on text exceptions (43/81, p=0.0007, Exp 89) does exactly nothing
@@ -2553,12 +2556,12 @@ where there is no text — zero calls, zero changes, byte-identical allocation.*
 re-read as the cost of the **more invasive** in-sim architecture replacing the auction, not as
 evidence about text. §4.4 should lead with this and demote Exp 84 to an architecture ablation.
 
-**Caveat.** n=8, not the project standard of 32 — the effect is exact rather than statistical, so
-seeds buy robustness against seed-specific luck, not significance. The run costs ~2 min; extend to
-32 before the paper cites it.
+**Note on n.** Run at the project standard n=32 (4m36s). The effect is exact rather than
+statistical — seeds buy robustness against seed-specific luck, not significance — but the paired
+design matches every other in-sim result, so the arm drops straight into the §4.3 table.
 
 **Reproduce.**
 ```
 .venv/bin/python -m pins.trace_replay --llm --model qwen2.5:14b --caps predicted \
-    --pools 8 --seeds 8 --market --corrected
+    --pools 8 --seeds 32 --market --corrected
 ```

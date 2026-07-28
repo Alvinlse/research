@@ -29,9 +29,12 @@ exception-handling capability without costing efficiency. Finally we show *where
 layer genuinely earns its cost: on **text exceptions** the numbers cannot express, a debate of
 LLM reviewers corrects a single model's unreliable exception rulings — 43/81 against 29/81 for a
 single call given the **same** LLM budget (one-sided exact McNemar p=0.0007; Exp 89), while that
-budget spent on best-of-N sampling instead of debate buys nothing (p=0.250). We report the honest boundary — public GPU traces are
-structurally scrubbed of the operator free-text this capability needs, so the in-simulation SLA
-gain cannot be measured on them, and we say so rather than manufacture it.
+budget spent on best-of-N sampling instead of debate buys nothing (p=0.250). We report the
+boundary exactly rather than by inference: the same escalation, run unmodified inside the
+simulator, is a **literal no-op** — zero LLM calls, zero changes, an allocation identical to the
+bare market tick for tick (Exp 92) — because public GPU traces are structurally scrubbed of the
+operator free text this capability acts on. The capability costs nothing until it is needed, and
+we say so rather than manufacture a gain.
 
 ---
 
@@ -69,9 +72,10 @@ Our contributions:
 5. **Where reasoning earns its cost, and the honest boundary** (§4.4). Debate improves a single
    LLM's unreliable *text-exception* rulings at a matched call budget (43/81 vs 29/81,
    p=0.0007, Exp 89), and the budget alone explains none of it (best-of-N, p=0.250); but the
-   numeric trace has no text channel for this to act on in-sim, which we demonstrate and do not
-   paper over (Exp 84). Invoked where no exception exists, the same reasoning *costs* accuracy
-   (12/17 vs the market's 16/17) — which is why it is gated.
+   numeric trace has no text channel for this to act on, and we show the boundary exactly rather
+   than infer it: the *same* escalation run in-sim is a literal no-op — zero calls, zero changes,
+   allocation identical to the bare market (Exp 92). Invoked where no exception exists, the same
+   reasoning *costs* accuracy (12/17 vs the market's 16/17) — which is why it is gated.
 
 The governing design rule throughout is **the LLM reasons and explains; deterministic code
 decides** — and our central finding sharpens it: on numeric scenes the deterministic code should
@@ -194,7 +198,7 @@ production protection), not a winner the data selects:
 | `composed` | referee-equivalent protection      | efficiency, significantly | 1 call/tick |
 | `referee`  | nothing composed doesn't           | regret\*, useful\*        | 24,240 tok/seed |
 
-### 4.3 The gated architecture is efficiency-neutral (Exp 86, 87)
+### 4.3 The gated architecture is efficiency-neutral (Exp 86, 87, 92)
 
 **The validator is inert on correct clearings.** Re-running the market arm with the per-tick
 validator reproduces the Exp 72 numbers **byte-identically** across both laws × pools 4/6/8 × 32
@@ -210,13 +214,20 @@ escalation gated behind the contextual trigger (qwen2.5:14b, caps=predicted, poo
 | no-llm (floor) | 53.9% | 59.1% | 80% |
 | market (validated auction alone) | 51.8% | 55.3% | 81% |
 | gated (auction + debate escalation) | 51.6% | 54.7% | 81% |
+| **corrected** (auction + §4.4's escalation) | **51.8%** | **55.3%** | **81%** |
 
 gated − market (paired): **dSLA −0.20 ± 1.40 (ns)**, dprodSLA −0.63 (ns), dutil −0.21 (ns). The
 trigger fired on **15.7%** of ticks (1076 escalations, 9 infeasible) at 52,853 tokens/seed — the
 escalation genuinely ran and did not move the outcome. Layering reasoning onto the validated
 auction adds capability without costing efficiency.
 
-### 4.4 Where reasoning earns its cost: text exceptions (Exp 89, 84)
+The `corrected` row is the same architecture carrying the *exact* escalation §4.4 shows to win on
+text (Exp 92). It is identical to the bare market on every metric — not a statistical tie but the
+same allocation, tick for tick — while its trigger fired 843 times across the 32 seeds. We return
+to this in §4.4; it is what makes the efficiency-neutrality claim exact rather than merely
+insignificant.
+
+### 4.4 Where reasoning earns its cost: text exceptions (Exp 89, 92)
 
 A scalar reserve cannot express an exception whose content is *text* — an operator instruction, a
 declaration a note says is wrong, a crash-restart the numbers do not show. We test this on a
@@ -262,17 +273,44 @@ exception, the market scores 16/17 while every LLM arm scores 12/17. Reasoning i
 is actively harmful on routine cases. This is the empirical argument for the trigger in §3: the
 escalation earns its cost only where text is present, and must not run where it is not.
 
-**The honest boundary.** This gain cannot be shown as an in-simulation SLA improvement on the
-numeric trace, and we demonstrate why rather than assert otherwise. The plain debate arm *in the
-sim* is SLA-null and prod-costly (dSLA +0.8 ns, dprodSLA −12.0\* when it replaces the auction;
-Exp 84), because the trace carries no operator text for it to act on — the market already gets
-the numeric scenes right, and the 15.7% of gated ticks that escalated (§4.3) were numeric
-capacity crossings, not text exceptions. Public GPU traces are scrubbed of the user-authored free
-text this capability needs, by construction (it is PII). So the text-exception result stands on
-the authored hard-case suite, and the in-sim claim is precisely: gated reasoning is
-efficiency-neutral where there is no text (§4.3) and correct where there is (§4.4) — an
-efficiency-neutral capability-add, which is a stronger and more defensible pairing than a
-manufactured SLA gain.
+**The honest boundary: the same mechanism, run where there is no text, does nothing at all.** The
+natural objection to §4.4 is that an authored suite proves little about a real workload. We
+therefore ran *this exact escalation* — unmodified, `--llm` enabled — inside the simulator on the
+v2020 replay, gated by the §3 trigger (Exp 92, pool 8, n=32 paired seeds):
+
+| arm | SLA | prodSLA | util | useful | regret |
+|---|---|---|---|---|---|
+| market | 51.8%\* | 55.3% | 81% | 76% | 8% |
+| **corrected** (market + this escalation) | **51.8%\*** | **55.3%** | **81%** | **76%** | **8%** |
+
+The two arms are **identical on every metric, every confidence interval, and every surviving Holm
+p-value** — the same allocation tick for tick. The trigger fired **843 times**, the escalation ran
+each time, and it made **zero LLM calls and zero changes**: the reviewer loop and the supply call
+are both text-gated, and the replay world has no text channel (`Job` carries no note field; the
+trace records none, because operator free text is PII and is scrubbed by construction).
+
+This is the boundary stated exactly rather than inferred: the mechanism that corrects a single
+model's rulings on 43/81 text exceptions is a **literal no-op** where no text exists. It cannot
+help, and — the part that matters for deployment — it cannot hurt or cost anything either.
+
+**An architecture ablation, not a text result (Exp 84).** A *different* and more invasive
+escalation — one that re-decides every job from scratch with no text gate, rather than correcting
+the market's allocation — is SLA-null and production-costly in the same world (dSLA +0.8 ns,
+dprodSLA −12.0\*). We report it as what it is: evidence that replacing the auction is harmful,
+which is an argument for the gated architecture of §3, and not evidence about text. Conflating the
+two mechanisms would have let us attribute an architectural cost to a missing channel.
+
+**Why the in-sim SLA gain is still out of reach.** No public GPU trace can settle this either way.
+The 15.7% of gated ticks that escalated (§4.3) were numeric capacity crossings, not text
+exceptions, and the market already rules those correctly — so there is nothing on this workload
+for a text-reading capability to improve. We therefore do not claim an in-simulation service-quality
+gain, and we decline to manufacture one by synthesising operator notes into a trace that has none.
+
+The claim we do make is precise and fully measured: gated reasoning is **exactly** efficiency-neutral
+where there is no text (§4.3, Exp 92: zero calls, zero changes, identical allocation) and
+**correct** where there is (§4.4, Exp 89: 43/81 vs 29/81 at matched budget, p=0.0007). That pairing
+— a capability that costs nothing until it is needed — is a stronger and more defensible result
+than a manufactured SLA gain, and it is what the gated architecture was designed to deliver.
 
 ## 5. Discussion and limitations
 
