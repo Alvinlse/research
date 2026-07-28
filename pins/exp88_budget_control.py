@@ -93,13 +93,61 @@ import json
 import os
 from collections import Counter
 
-from pins.correction_signed import _ask, apply_signed, debate_signed, disruption, gather_signed
+from pins.correction_signed import (_ask, _job_lines, apply_signed, debate_signed,
+                                    disruption, gather_signed)
 from pins.h2_eval import build_anchor
 from pins.hardcase_eval import score
 from pins.packet import SYSTEM_PACKET_SINGLE, build_packet, decision_from_ids
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ARMS = ["market", "single-pkt", "single-pkt-boN", "debate-pkt"]
+
+# Exp 93 structures: the three arms Exp 65-67 tested on the WEAK pre-packet interface and that
+# were therefore untested, not refuted. `selfcons` is NOT here -- `single-pkt-boN` already is
+# self-consistency (it samples k times at temperature and takes the MODAL action set, see _vote).
+STRUCTURE_ARMS = ["debate-noarg-pkt", "critic-pkt"]
+
+SYSTEM_CRITIC = (
+    "You are a CRITIC reviewing one job's share of a GPU allocation the market has already made.\n"
+    "State only what is WRONG. Do NOT propose a number, a delta, or a new allocation -- objections\n"
+    "only. If the allocation is defensible for this job, say so and raise nothing.\n"
+    'Reply as JSON: {"problems": ["...", "..."], "ok": true|false}')
+
+
+def _strip_evidence(props: dict) -> dict:
+    """The Exp 66 --no-argue ablation, on the packet: keep WHO proposed WHAT, drop the WHY.
+
+    Isolates whether debate's win is the CONTENT of the arguments or merely the second pass.
+    """
+    out = dict(props)
+    out["demand"] = [{k: v for k, v in d.items() if k != "evidence"}
+                     for d in (props.get("demand") or [])]
+    if props.get("supply"):
+        out["supply"] = {k: v for k, v in props["supply"].items() if k != "evidence"}
+    return out
+
+
+def _critic_signed(jobs, supply_note, free, alloc, model, cache, use_llm=True):
+    """Exp 67's critic, rebuilt on the packet: one objection-only reviewer per text-bearing job.
+
+    The original implementation was never committed (only its result JSON survives), so this is a
+    faithful reconstruction from those transcripts, which carry a `problems` list and no deltas.
+    """
+    objections, calls = [], 0
+    if not use_llm:
+        return {"objections": objections}, calls
+    for j in jobs:
+        if not (j.get("note") or "").strip():
+            continue
+        user = "\n".join([f"free_gpus: {free}", f"market_gave_this_job: {alloc.get(j['jid'], 0)}",
+                           f"market_allocation: {dict(sorted(alloc.items()))}",
+                           "this job:", *_job_lines([j])])
+        o = _ask(SYSTEM_CRITIC, user, model, None, cache, tag="critic") or {}
+        calls += 1
+        probs = [str(x)[:200] for x in (o.get("problems") or [])][:4]
+        if probs and not o.get("ok"):
+            objections.append({"jid": j["jid"], "problems": probs})
+    return {"objections": objections}, calls
 
 
 def _jobs_of(case, no_text: bool = False):
@@ -144,12 +192,18 @@ def run_case(case, model, use_llm, arm, max_delta, temperature, no_text=False):
             "n_calls": 0, "k": 0, "votes": {}}
 
     props = None
-    if arm == "debate-pkt":
+    critic_calls = 0
+    if arm in ("debate-pkt", "debate-noarg-pkt"):
         p = gather_signed(jobs, sup, case.free_gpus, alloc, use_llm=use_llm,
                           model=model, cache=cache)
         p = debate_signed(jobs, sup, case.free_gpus, alloc, p, use_llm=use_llm,
                           model=model, cache=cache)
         props = {kk: v for kk, v in p.items() if kk in ("demand", "supply", "opening", "debated")}
+        if arm == "debate-noarg-pkt":
+            props = _strip_evidence(props)
+    elif arm == "critic-pkt":
+        props, critic_calls = _critic_signed(jobs, sup, case.free_gpus, alloc, model, cache,
+                                             use_llm=use_llm)
 
     packet = build_packet(jobs, sup, case.free_gpus, alloc, ranking, floors,
                           max_delta=max_delta, reviewer_proposals=props, history=None)
@@ -166,11 +220,12 @@ def run_case(case, model, use_llm, arm, max_delta, temperature, no_text=False):
         n_calls = k
     else:                                   # single-pkt (1 call) and debate-pkt (referee call)
         from pins.packet import SYSTEM_PACKET_REFEREE
-        sysmsg = SYSTEM_PACKET_REFEREE if arm == "debate-pkt" else SYSTEM_PACKET_SINGLE
+        sysmsg = SYSTEM_PACKET_SINGLE if arm == "single-pkt" else SYSTEM_PACKET_REFEREE
         obj = _ask(sysmsg, json.dumps(packet, indent=1), model, None, cache, arm) or {}
         d = decision_from_ids(packet, obj.get("action_ids"))
         why = str(obj.get("justification", ""))[:300]
-        n_calls = (2 * n_jobs + 3) if arm == "debate-pkt" else 1
+        n_calls = (2 * n_jobs + 3) if arm in ("debate-pkt", "debate-noarg-pkt") else (
+            critic_calls + 1 if arm == "critic-pkt" else 1)
 
     fired = bool(d["changes"]) or bool(d["hold_free"])
     final, viol = apply_signed(alloc, d, case.free_gpus, ranking=ranking, floors=floors,
@@ -193,7 +248,14 @@ def main() -> None:
     ap.add_argument("--suite", default="r3", choices=["r3", "r34"],
                     help="r3 = Exp 88 (round-3 31/9). r34 = Exp 89 pooled round-3 + round-4 "
                          "(81 primary / 17 control).")
+    ap.add_argument("--arms", default="",
+                    help="comma-separated arm list. Default reproduces Exp 88/89 exactly. "
+                         f"Exp 93 structures: {','.join(STRUCTURE_ARMS)} "
+                         "(selfcons is NOT one -- single-pkt-boN already is self-consistency).")
     a = ap.parse_args()
+    arm_list = [s.strip() for s in a.arms.split(",") if s.strip()] or ARMS
+    bad = [x for x in arm_list if x not in ARMS + STRUCTURE_ARMS]
+    assert not bad, f"unknown arm(s): {bad}"
 
     from pins.hardcases_r3 import CASES_R3, CONTROLS as CTRL3, PRIMARY as PRIM3
     if a.suite == "r34":
@@ -210,7 +272,7 @@ def main() -> None:
     results: dict = {}
     for case in cases:
         arms = {}
-        for arm in ARMS:
+        for arm in arm_list:
             temp = a.temp if arm == "single-pkt-boN" else 0
             final, why, meta = run_case(case, a.model, not a.no_llm and arm != "market",
                                         arm, a.max_delta, temp)
@@ -221,7 +283,7 @@ def main() -> None:
             f"{'!' if v['meta']['rejected'] else ('*' if v['meta']['fired'] else '')}"
             for k, v in arms.items()), flush=True)
 
-    json.dump({"model": a.model, "suite": a.suite, "arms": ARMS, "max_delta": a.max_delta,
+    json.dump({"model": a.model, "suite": a.suite, "arms": arm_list, "max_delta": a.max_delta,
                "temperature_boN": a.temp, "results": results}, open(out_path, "w"), indent=1)
 
     ids = [c.id for c in cases]
@@ -231,7 +293,7 @@ def main() -> None:
             continue
         print(f"\n=== {label}  n={len(sub)} ===")
         print(f"  {'arm':15s}{'strict':>9s}{'handled':>9s}{'fired':>7s}{'invalid':>9s}{'calls':>7s}")
-        for arm in ARMS:
+        for arm in arm_list:
             st = sum(1 for c in sub if results[c]["arms"][arm]["handled"]
                      and not results[c]["arms"][arm]["meta"]["rejected"])
             h = sum(1 for c in sub if results[c]["arms"][arm]["handled"])
@@ -240,8 +302,15 @@ def main() -> None:
             nc = sum(results[c]["arms"][arm]["meta"]["n_calls"] for c in sub)
             print(f"  {arm:15s}{st:>6d}/{len(sub):<3d}{h:>6d}/{len(sub):<3d}"
                   f"{f:>7d}{r:>9d}{nc:>7d}")
-        for x, y in (("debate-pkt", "single-pkt-boN"), ("debate-pkt", "single-pkt"),
-                     ("single-pkt-boN", "single-pkt")):
+        pairs = [(x, y) for x, y in (("debate-pkt", "single-pkt-boN"),
+                                     ("debate-pkt", "single-pkt"),
+                                     ("single-pkt-boN", "single-pkt"),
+                                     ("debate-noarg-pkt", "debate-pkt"),
+                                     ("debate-noarg-pkt", "single-pkt"),
+                                     ("critic-pkt", "debate-pkt"),
+                                     ("critic-pkt", "single-pkt"))
+                 if x in arm_list and y in arm_list]
+        for x, y in pairs:
             b = sum(1 for c in sub if results[c]["arms"][x]["handled"]
                     and not results[c]["arms"][y]["handled"])
             cc = sum(1 for c in sub if results[c]["arms"][y]["handled"]
