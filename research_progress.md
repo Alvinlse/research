@@ -2569,7 +2569,7 @@ design matches every other in-sim result, so the arm drops straight into the §4
 
 ## Experiment 93 — THE UNTESTED STRUCTURES: debate's win is the SECOND PASS, not the arguments (2026-07-28)
 
-**Pre-registration:** `docs/superpowers/specs/2026-07-28-exp93-untested-structures-design.md`
+**Pre-registration:** `docs/superpowers/specs/2026-07-28-exp93-structures-on-packet-design.md`
 (written **mid-run** at 7/98 cases, before any result table — disclosed there, §7).
 
 **Question.** Open item 2. Exp 65–67 tested self-consistency, an argumentation ablation and a
