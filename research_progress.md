@@ -25,8 +25,26 @@
 | 10 | Stage-1 prediction survives **only as an input**: `caps=predicted` (`pred_job_usage.csv`) feeds every headline run, and prediction error costs every policy while prod-SLA protection survives it | Exp 30, 35, 36 | solid (retained as infrastructure) |
 | 11 | The negotiation-era mechanism (bounded protocol, ILP guarantee, per-user tariff, small-model sufficiency) is **superseded as a contribution** but retained as the `negotiated` **baseline arm** the market is measured against | Exp 22–48 (compressed) | superseded; baseline only |
 
-**Open / next.** Update `paper/pins_gated_draft.md` §4.4 to lead with Exp 89 (it still cites Exp 83
-at p=0.0625). Malleability ablation (elastic-job fraction sweep) remains unstarted.
+| 12 | The round-2 54-scene suite was **insensitive**, not merely negative: text-blind baselines (ILP 30/54, rule 31/54) scored within noise of every LLM arm, min p=0.238 across ~30 tests. Round 3's text-dependent design drops the rigid floor to 0/31 — the instrument was replaced, not the hypothesis re-shopped | Exp 65–67 → 79–83 | solid (methodology) |
+
+**Open / next**, roughly by value:
+
+1. **Exp 63 — the admission lever is built and never run.** `admission_plan` / rule 7 / `wait_full`
+   exist in the tree (commits `9c1d127`, `438df61`). §5 of the paper scopes exactly this as future
+   work. It is the arm most likely to convert §4.3's efficiency-neutral result into an in-sim SLA
+   gain.
+2. **Re-run the confounded structures on the strong packet.** `selfcons`, the argumentation
+   ablation (`single-noarg` / `referee-noarg`) and the **critic** arm were only ever tested on the
+   pre-packet interface (Exp 65–67, 2026-07-22; packet landed 2026-07-23). They are **untested,
+   not refuted** — cf. Exp 79, whose null was overturned by the same fix. Cheap in the Exp 88/89
+   harness.
+3. **Exp 58 — the change-cost lever** (`--prev-input`, rule 6) is likewise built and never
+   isolated.
+4. Malleability ablation (elastic-job fraction sweep) remains unstarted.
+5. Exp 64's pool-32 rebaseline needs a batch node; the reaper killed it twice.
+
+*Done 2026-07-28: `paper/pins_gated_draft.md` §4.4, abstract and contribution 5 now lead with
+Exp 89 (commit `1472e21`).*
 
 <details>
 <summary>Superseded claims table (2026-07-06) — kept for provenance</summary>
@@ -1147,6 +1165,20 @@ PINS_NUM_CTX=8192 .venv/bin/python -m pins.trace_replay --referee --debate --llm
 bash pins/run_debate.sh                                              # Exp 55 (r1, caps real)
 ```
 
+## Experiment 54 — FEW-SHOT vs VANILLA REFEREE at 14b: half-run, no contrast exists (2026-07-18)
+
+**Date:** 2026-07-18
+
+**Status.** **Incomplete.** The few-shot arm completed (qwen2.5:14b, `nothink`, caps=real, pool 8,
+32 seeds): referee vs floor `dSLA +0.2 ± 2.0`, `dprodSLA −6.7 ± 5.0*`, `dutil +2.0 ± 1.7*`. The
+paired vanilla run (`pins/exp54_vanilla_14b.log`) stopped at **20/32 seeds**, so the
+few-shot-vs-vanilla contrast this experiment existed to measure was never computed.
+
+Superseded in practice by Exp 52/53, which established vanilla 14b as the best arm and found the
+manual's content worth ~0. **Do not cite a few-shot result** — there isn't one.
+
+---
+
 ## Experiment 55 — THE PRE-REGISTERED DEBATE ROUND AT r1:32b (caps=real): both signs at last, and the round itself is EQUIVALENT to no round (2026-07-20)
 
 Pre-registered before the 57c–g ladder was run (`pins/run_debate.sh`), finally landed:
@@ -1204,6 +1236,20 @@ bash pins/run_debate.sh                                   # ~12 h, debate row on
 .venv/bin/python -m pins.trace_replay \
   --compare 'deepseek-r1:32b+referee/debate,deepseek-r1:32b+referee/referee'
 ```
+
+## Experiment 58 (E1) — `--prev-input` + change-cost rule 6: BUILT, NEVER RUN (2026-07-20)
+
+**Date:** 2026-07-20
+
+**Status.** **Build only — no run log, no results JSON, no measurement.** Commit `ea6dc16`:
+the referee receives the last **executed** allocation plus a change-cost rule (rule 6), so it can
+price its own churn instead of re-deciding from scratch each tick.
+
+The gating and stability work that followed (Exp 59 fast path, Exp 61 hard trigger) may have
+exercised this path indirectly, but the change-cost lever was never isolated or measured under
+this number. Open lead — cheap to test in the current harness.
+
+---
 
 ## Experiment 59 — THE FAST PATH TRADES ITS DETERMINISTIC REPLAY FOR THE CHEAP AUCTION: util cost flips to a gain (2026-07-21)
 
@@ -1304,6 +1350,142 @@ PINS_NUM_CTX=8192 .venv/bin/python -u -m pins.trace_replay --referee --debate --
 .venv/bin/python -m pins.trace_replay --compare \
   'qwen2.5:14b+pred+referee+hardtrig/debate,qwen2.5:14b+pred+referee+hardtrig/referee'
 ```
+
+## Experiment 62 — CONTENTION/SLACK CALIBRATION: negotiation does not pay anywhere in the sweep (2026-07-22)
+
+**Date:** 2026-07-22
+
+**Method.** Calibration sweep, not a hypothesis test: pools {8, 16, 32, 64} × slack {1, 2, 4, 8}×,
+22–179 jobs per window, `negotiated` against the no-LLM floor. Run to choose the operating point
+the headline experiments would report.
+
+**Findings (SLA / prodSLA, * = 95% CI excludes 0).**
+
+| slack | pool | no-llm | negotiated |
+|---|---|---|---|
+| 1× | 8 | 68.2% / 73.3% | 66.2%* / 68.7% |
+| 1× | 32 | 62.5% / 54.8% | 62.0% / 53.8% |
+| 1× | 64 | 58.5% / 44.2% | 57.9% / 42.6% |
+| 2× | 8 | 45.7%* / 44.0% | 45.7%* / 41.2%* |
+| 4× | 8 | 34.1% / 29.1% | 32.1%* / 23.0%* |
+| 4× | 16 | 34.4% / 20.4% | 33.2%* / 17.3%* |
+| 8× | 8 | 27.7% / 20.8% | 26.8%* / 16.7%* |
+| 8× | 16 | 27.3% / 11.8% | 27.0%* / 11.4%* |
+
+- `negotiated` is at or below the floor on overall SLA in **every** cell, and the production-tier
+  gap **widens as slack grows** (−2.8 at 4× pool 8, −4.1 at 8× pool 8, both significant).
+- Utilisation is flat (87–89%) throughout, so the loss is rationing, not throughput.
+
+**Reading.** A calibration input, not a headline: it says the negotiation-era mechanism has no
+regime in this sweep where it pays, which is consistent in direction with Exp 70–73 where the
+deterministic market beats it outright. It is also one input to reporting pools {4, 6, 8} rather
+than 32/64 — the large-pool cells are slack-dominated and separate nothing.
+
+**Reproduce.** `pins/exp62_calib.log`, `pins/exp62_calib_slack.log`.
+
+---
+
+## Experiment 63 — THE ADMISSION LEVER: BUILT, NEVER RUN (2026-07-22)
+
+**Date:** 2026-07-22
+
+**Status.** **Build only — no run log, no results JSON, no measurement.** Commits `9c1d127`
+("the admission lever — policy decides WHO STARTS, not just who gets margin") and `438df61`
+("referee decides ADMISSION (rule 7), reserve-aware admission_plan, wait_full").
+
+**Why this is the most valuable open item in the backlog.** §5 of `paper/pins_gated_draft.md`
+argues:
+
+> *"In this contended sim, overall SLA is governed by which jobs start, not which go faster... A
+> reasoning gain on overall SLA therefore requires a text exception that moves admission or
+> priority, not margin — a direction we scope for future work."*
+
+That lever is **already implemented**. The paper scopes as future work a mechanism that exists in
+the tree and has never been measured. If a text exception can move admission, this is the arm that
+would show an in-sim SLA gain rather than the efficiency-neutral result of Exp 87.
+
+---
+
+## Experiment 64 — REBASELINE AT pool 32 / slack 4 / 89 jobs: killed mid-run, twice (2026-07-22)
+
+**Date:** 2026-07-22
+
+**Status.** **No results.** Both variants — plain and `--fastneg` (θ=0.15) — show the identical
+failure: the floor arm completes and the referee arm dies at its first seed.
+
+```
+32gpu no-llm      32/32 seeds |    37s elapsed ~    0s left
+32gpu referee      1/32 seeds |     1s elapsed ~   35s left
+```
+
+Consistent with the login-node CPU reaper: 89 jobs/window with per-tick LLM calls exceeds the
+background budget within minutes. A re-run needs a batch node or a smaller window; the scale
+question it was meant to answer is still open, though Exp 48 covers 30 GPUs / 500 jobs by another
+route.
+
+---
+
+## Experiments 65–67 — THE ROUND-2 STRUCTURE LADDER: everything is null, and the instrument is why (2026-07-22)
+
+**Date:** 2026-07-22
+
+**Question.** Does any reasoning *structure* beat any other on exception scenes? Three passes over
+the round-2 hard-case suite (54 scenes: infeasible, contradiction, unmodeled, corrupt, ambiguous,
+and 6 routine controls), qwen2.5:14b.
+
+**Findings — Exp 65, perspective ladder.**
+
+| category | ilp | rule | single | referee | debate | selfcons |
+|---|---|---|---|---|---|---|
+| infeasible | 5/9 | 5/9 | 4/9 | 3/9 | 5/9 | 2/9 |
+| contradiction | 4/9 | 4/9 | 4/9 | 5/9 | 5/9 | 4/9 |
+| unmodeled | 3/6 | 4/6 | 4/6 | 4/6 | 3/6 | 4/6 |
+| corrupt | 5/9 | 5/9 | 8/9 | 8/9 | 6/9 | 8/9 |
+| ambiguous | 4/9 | 4/9 | 4/9 | 5/9 | 4/9 | 5/9 |
+| routine (control) | 6/6 | 6/6 | 4/6 | 5/6 | 4/6 | 5/6 |
+| **TOTAL** | **30/54** | **31/54** | **33/54** | **35/54** | **31/54** | **33/54** |
+
+**Exp 66, argumentation 2×2** (does letting agents argue matter?): ilp 30/54, rule 31/54,
+single 33/54, single-noarg 32/54, referee-noarg 30/54, referee 35/54.
+
+**Exp 67, critic arm** (a reviewer that only objects): ilp 30/54, rule 31/54, referee 36/54,
+critic 31/54.
+
+**Every pairwise McNemar across all three passes is null.** The smallest p in ~30 tests is
+**0.238** (ilp vs referee, Exp 67); referee vs critic p=0.267, referee vs debate p=0.424,
+single vs referee p=0.688.
+
+**Why this matters more than the nulls do.** The suite is not measuring exception handling. The
+deterministic baselines — a plain ILP and a rule referee, neither of which can read text at all —
+score 30/54 and 31/54, within noise of every LLM arm. A suite a text-blind baseline half-passes
+cannot detect a text-reading capability. Round 3 was built in response: 31 primary
+**text-dependent** scenes on which the rigid floor is **0/31**. That drop, 31/54 → 0/31, is the
+evidence the instrument was replaced rather than the hypothesis re-shopped.
+
+The `routine` control row already shows the specificity cost that Exp 88/89 later measured at
+scale: ilp and rule score 6/6, the LLM arms 4–5/6. Reasoning invoked where nothing is wrong makes
+things worse, and it was visible here first.
+
+> **⚠ CONFOUND — these three predate the decision packet and must not be read as verdicts on the
+> structures they test.** All of Exp 65–67 ran on **2026-07-22**. The structured decision packet
+> was introduced the following day in Exp 82 (`b77d3fa`, 2026-07-23), and it is what took
+> infeasible rulings from 11–16/31 to **0/31**. These runs therefore carry *two* confounds at
+> once: an insensitive suite **and** the weak pre-packet interface. This is the same trap as Exp
+> 79, whose "parallel multi-agent is dead" reading was overturned once the interface was repaired
+> and a sequential debate on the packet reached 43/81 (Exp 89).
+>
+> **Consequently the following are UNTESTED, not refuted:** self-consistency (`selfcons`), the
+> argumentation ablation (`single-noarg` / `referee-noarg`), and the **critic** arm. None has ever
+> been run on the strong packet, against the round-3/4 suite, or under a matched budget. Exp 67's
+> critic is the most interesting of the three — it scored 31/54 on the weak interface, while the
+> structurally similar debate went on to win decisively once the packet existed. Re-running these
+> three arms in the Exp 88/89 harness is a cheap, well-posed experiment.
+
+**Reproduce.** `pins/exp65_perspective_14b.log`, `pins/exp66_2x2_14b.log`,
+`pins/exp67_critic_14b.log`; transcripts in `pins/results_hardcases_perspective.json`,
+`results_hardcases_2x2_14b.json`, `results_hardcases_critic_14b.json`.
+
+---
 
 ## Experiment 68 — THE ELEVATED PLAN'S MEASUREMENT LAYER: occupancy is not productive work, and every margin arm buys waste (2026-07-22)
 
