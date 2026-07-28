@@ -38,10 +38,16 @@
    pre-packet interface (Exp 65–67, 2026-07-22; packet landed 2026-07-23). They are **untested,
    not refuted** — cf. Exp 79, whose null was overturned by the same fix. Cheap in the Exp 88/89
    harness.
-3. **Exp 58 — the change-cost lever** (`--prev-input`, rule 6) is likewise built and never
+3. **Run `debate_signed` in-sim — the clean boundary test.** §4.4 currently rests on Exp 84, where
+   a *different, more invasive* in-sim debate costs −12.0\* prodSLA (see the caveat on that entry:
+   the packet never crossed into the in-sim path, and the two debates differ in scope and text
+   gating). Wire `correction_signed.debate_signed` into `trace_replay` instead. It skips jobs with
+   no note and the trace has none, so the prediction is a **no-op**: zero escalations, byte-identical
+   to `market`. Cheap, fast, and a strictly stronger claim than the current one.
+4. **Exp 58 — the change-cost lever** (`--prev-input`, rule 6) is likewise built and never
    isolated.
-4. Malleability ablation (elastic-job fraction sweep) remains unstarted.
-5. Exp 64's pool-32 rebaseline needs a batch node; the reaper killed it twice.
+5. Malleability ablation (elastic-job fraction sweep) remains unstarted.
+6. Exp 64's pool-32 rebaseline needs a batch node; the reaper killed it twice.
 
 *Done 2026-07-28: `paper/pins_gated_draft.md` §4.4, abstract and contribution 5 now lead with
 Exp 89 (commit `1472e21`).*
@@ -1098,6 +1104,17 @@ Outcome numbers from the probe runs are n<=2 — vehicles for call generation, n
 
 ## Experiment 57c–g — THE STRUCTURE LADDER: what each layer of the multi-LLM architecture buys (2026-07-20)
 
+> **⚠ COMPARABILITY CAVEAT (audit 2026-07-28).** The ladder's base kept moving. `pins/referee.py`
+> was modified in the same commit that reports Exp 57 (`479286e`, +152/−18) and again before each
+> of the arms that follow: `8beb001` (57c–g, +11/−4), `ea6dc16` (58 build, +29/−5), `7d1cd6b`
+> (59, +37/−21), `a06e739` (60/61, +39/−7). Each rung is validly paired **within its own run**, so
+> no individual arm is retracted — but rungs measured on different dates are not guaranteed to sit
+> on the same referee, and cross-experiment increments (e.g. 57c–g vs 59 vs 61) should not be
+> subtracted from one another without re-running on a fixed base.
+>
+> Not affected by the decision-packet confound: the packet never entered the in-sim path (see the
+> caveat on Exp 84).
+
 **Thesis reframing (this session).** The question is now: *can debate-like structured
 multi-LLM interaction improve resource-utilisation safety (low SLA)?* That turns the
 referee-vs-negotiated comparisons into a LADDER — no arguments → one-shot statements →
@@ -2093,6 +2110,31 @@ gain when it *replaces* the auction on the numeric v2020 trace?
   only do harm.
 - This is the honest boundary the paper reports rather than papers over: debate belongs behind a
   trigger (Exp 87), not in the default path.
+
+> **⚠ TWO DIFFERENT DEBATES (audit 2026-07-28) — do not read this as "Exp 89's debate, minus the
+> text".** The arm measured here and the arm that wins in Exp 83/88/89 are different mechanisms,
+> and the packet never crossed between them (`pins/referee.py`, `trace_replay.py`,
+> `two_sided_sim.py`, `llm_agent.py` all contain **zero** references to `packet`; `debate_signed`
+> is imported only by `exp82_packet_2x2.py` and `exp88_budget_control.py`).
+>
+> | | in-sim debate (this experiment, Exp 87) | hard-case debate (Exp 83, 88, 89) |
+> |---|---|---|
+> | code | `referee.py`: `gather_statements → rebut → referee_decide` | `correction_signed.debate_signed()` |
+> | scope | **full re-decision of every job** | **corrections only**, on top of the market's allocation |
+> | text gate | none | skips any job with no note: `if not (j.get("note") or "").strip(): continue` |
+> | interface | free-form ruling | packet + code-generated action menu |
+>
+> So the −12.0\* prodSLA here is *partly* the cost of replacing the auction wholesale, not purely
+> evidence about the absence of text. The text-stripped control (every arm 0) supports the no-text
+> reading but does not isolate it from the architectural difference. The clean test is the open
+> item below.
+>
+> **Open experiment (cheap, decisive).** Run `debate_signed` — the *winning* architecture — in-sim
+> on v2020. Because it skips note-less jobs and the trace has no notes, it should be a **literal
+> no-op**: zero escalations, allocation byte-identical to `market`. "The mechanism that wins on
+> text does exactly nothing where there is no text" is a strictly stronger boundary claim than
+> "a different, more invasive debate hurt production SLA", and it would let §4.4 drop its reliance
+> on this arm.
 
 **Reproduce.**
 ```
