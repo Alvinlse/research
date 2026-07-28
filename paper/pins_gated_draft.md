@@ -1,9 +1,11 @@
 # Does the LLM Earn Its Cost in GPU Scheduling? A Gated Architecture That Separates Efficiency from Protection
 
-*Working draft — 2026-07-23. English; port to the jlreq template in `main.tex` and translate for
-submission. Supersedes the negotiation-era framing of the current `main.tex` (Exp 22–48); that
-material becomes the baseline arm here. Every number is a 32-seed paired result from
-`research_progress.md`; significance (\*) = 95% CI excludes 0.*
+*Working draft — 2026-07-23, §4.4 revised 2026-07-28. English; port to the jlreq template in
+`main.tex` and translate for submission. Supersedes the negotiation-era framing of the current
+`main.tex` (Exp 22–48); that material becomes the baseline arm here. All numbers come from
+`research_progress.md`. In-simulation results (§4.1–§4.3) are 32-seed paired comparisons and
+significance (\*) = 95% CI excludes 0; the hard-case results (§4.4) are per-case paired
+comparisons on a pre-registered suite, tested by one-sided exact McNemar.*
 
 ---
 
@@ -25,8 +27,9 @@ escalation fires only on a contextual trigger. Layering a debate-based escalatio
 documentation onto the validated auction is **SLA-neutral** (−0.2 pt, ns; Exp 87) — it adds
 exception-handling capability without costing efficiency. Finally we show *where* the reasoning
 layer genuinely earns its cost: on **text exceptions** the numbers cannot express, a debate of
-LLM reviewers corrects a single model's unreliable exception rulings (15/31 vs 9/31 on a
-pre-registered hard-case suite; Exp 83). We report the honest boundary — public GPU traces are
+LLM reviewers corrects a single model's unreliable exception rulings — 43/81 against 29/81 for a
+single call given the **same** LLM budget (one-sided exact McNemar p=0.0007; Exp 89), while that
+budget spent on best-of-N sampling instead of debate buys nothing (p=0.250). We report the honest boundary — public GPU traces are
 structurally scrubbed of the operator free-text this capability needs, so the in-simulation SLA
 gain cannot be measured on them, and we say so rather than manufacture it.
 
@@ -64,9 +67,11 @@ Our contributions:
    (byte-identical to the un-validated market, Exp 86); the debate escalation with operator docs
    is SLA-neutral on the auction (−0.2 pt ns, Exp 87).
 5. **Where reasoning earns its cost, and the honest boundary** (§4.4). Debate improves a single
-   LLM's unreliable *text-exception* rulings (15/31 vs 9/31, Exp 83); but the numeric trace has
-   no text channel for this to act on in-sim, which we demonstrate and do not paper over
-   (Exp 84).
+   LLM's unreliable *text-exception* rulings at a matched call budget (43/81 vs 29/81,
+   p=0.0007, Exp 89), and the budget alone explains none of it (best-of-N, p=0.250); but the
+   numeric trace has no text channel for this to act on in-sim, which we demonstrate and do not
+   paper over (Exp 84). Invoked where no exception exists, the same reasoning *costs* accuracy
+   (12/17 vs the market's 16/17) — which is why it is gated.
 
 The governing design rule throughout is **the LLM reasons and explains; deterministic code
 decides** — and our central finding sharpens it: on numeric scenes the deterministic code should
@@ -211,27 +216,51 @@ trigger fired on **15.7%** of ticks (1076 escalations, 9 infeasible) at 52,853 t
 escalation genuinely ran and did not move the outcome. Layering reasoning onto the validated
 auction adds capability without costing efficiency.
 
-### 4.4 Where reasoning earns its cost: text exceptions (Exp 83, 84)
+### 4.4 Where reasoning earns its cost: text exceptions (Exp 89, 84)
 
 A scalar reserve cannot express an exception whose content is *text* — an operator instruction, a
-declaration a note says is wrong, a crash-restart the numbers do not show. On a pre-registered
-hard-case suite of 31 such text-dependent exceptions, all arms reading an identical structured
-decision packet, we compare a single LLM, a parallel referee, and a debate (each ± an operator
-precedent manual):
+declaration a note says is wrong, a crash-restart the numbers do not show. We test this on a
+pre-registered suite of 81 such text-dependent exceptions, all arms reading an identical
+structured decision packet. The comparison is **budget-matched by construction**: alongside a
+single LLM call we run a best-of-N single call given the *same* call budget as the debate, so the
+only difference between the two expensive arms is how the budget is spent, not how much of it
+there is.
 
-| arm | handled (no docs) | handled (+docs) |
+| arm | handled | LLM calls |
 |---|---|---|
-| market (numbers only) | 0/31 | 0/31 |
-| single LLM | 9/31 | 11/31 |
-| referee | 11/31 | 13/31 |
-| **debate** | **14/31** | **15/31** |
+| market (numbers only) | 0/81 | 0 |
+| single LLM | 27/81 | 81 |
+| single LLM, best-of-N (budget-matched) | 29/81 | 569 |
+| **debate** | **43/81** | 569 |
 
-Debate strictly dominates the single call (head-to-head 6 vs 1 without docs, one-sided exact
-p=0.0625) with zero harm on the primary set. Debate and the operator docs are **substitutes, not
-complements** — both push attention onto the operator instruction, so the docs add +2 to the
-single call but only +1 to debate; the best absolute configuration is debate+docs at 15/31, and
-the cleanest mechanism evidence is the 14-vs-9 no-docs comparison. This is the decision a scalar
-cannot make and where the reasoning layer earns its tokens.
+The pre-registered primary contrast, debate vs budget-matched best-of-N, is **b=16, c=2,
+one-sided exact McNemar p=0.0007** (Exp 89). Two controls make the result hard to explain away:
+
+- **Budget alone buys nothing.** Best-of-N spends 7× the calls of the single arm and gains two
+  cases (29 vs 27, p=0.250, ns). Debate spends the identical budget and gains sixteen. The effect
+  is attributable to the structure, not the spend.
+- **A blind confirmatory batch reproduces it.** Of the 81 cases, 50 were authored after the
+  earlier under-powered run and blind to its per-case outcomes. On that batch alone: debate 29/50
+  vs best-of-N 19/50, b=11 c=1, **p=0.0032**.
+
+The mechanism is visible in an exploratory per-category split (post-hoc, small cells, read as
+direction): debate's gain is concentrated where the exception is something the model of the world
+does not represent at all — *unmodeled* 13/21 vs 4/21 (b=9, c=0) and *corrupt* 8/13 vs 5/13 — and
+is flat where the exception is a stated policy the single call already reads (*nl_policy* 8/21 in
+every LLM arm). Debate helps when the reviewers must notice that a fact is missing, not when they
+must follow an instruction that is present.
+
+An earlier 31-case round (Exp 83) additionally varied an operator precedent manual and found
+debate and the docs to be **substitutes, not complements**: both push attention onto the operator
+instruction, so the docs added +2 to a single call but only +1 to debate (best absolute
+configuration debate+docs, 15/31). The present suite reproduces that round's head-to-head exactly
+(b=6, c=1 on the same 31 cases), so the powered result is an extension of it, not a different
+harness.
+
+**The cost of reasoning where there is nothing to reason about.** On 17 control scenes carrying no
+exception, the market scores 16/17 while every LLM arm scores 12/17. Reasoning invoked by default
+is actively harmful on routine cases. This is the empirical argument for the trigger in §3: the
+escalation earns its cost only where text is present, and must not run where it is not.
 
 **The honest boundary.** This gain cannot be shown as an in-simulation SLA improvement on the
 numeric trace, and we demonstrate why rather than assert otherwise. The plain debate arm *in the
