@@ -107,6 +107,13 @@ ARMS = ["market", "single-pkt", "single-pkt-boN", "debate-pkt"]
 # self-consistency (it samples k times at temperature and takes the MODAL action set, see _vote).
 STRUCTURE_ARMS = ["debate-noarg-pkt", "critic-pkt"]
 
+# Exp 95: the same best-of-N control, matched to CRITIC's budget instead of debate's. Exp 88/89
+# settled the budget question at debate's 7x; critic's 3x is a different point on the curve, and
+# critic's whole interest is that it might be the cheap structure. See
+# docs/superpowers/specs/2026-07-28-exp95-budget-matched-critic-design.md
+BUDGET_ARMS = ["single-pkt-boNc"]
+BON_ARMS = ["single-pkt-boN", "single-pkt-boNc"]
+
 SYSTEM_CRITIC = (
     "You are a CRITIC reviewing one job's share of a GPU allocation the market has already made.\n"
     "State only what is WRONG. Do NOT propose a number, a delta, or a new allocation -- objections\n"
@@ -185,6 +192,9 @@ def run_case(case, model, use_llm, arm, max_delta, temperature, no_text=False):
     cache: dict = {}
     n_jobs = len(jobs)
     k = 2 * n_jobs + 3                     # debate's per-case call count, matched exactly
+    # critic's per-case call count, matched exactly: _critic_signed issues one _ask per job with a
+    # non-empty note, and the referee call adds one. Computed from the same predicate critic uses.
+    k_c = sum(1 for j in jobs if (j.get("note") or "").strip()) + 1
 
     if arm == "market":
         return alloc, "market: bases then §6 margin clearing", {
@@ -212,12 +222,14 @@ def run_case(case, model, use_llm, arm, max_delta, temperature, no_text=False):
     if not use_llm:
         d, why, n_calls = {"changes": {}, "hold_free": 0, "picked": [], "unknown_ids": []}, \
             "rule: market stands", 0
-    elif arm == "single-pkt-boN":
-        samples = [_decide_once(packet, model, cache, f"sgl-pkt-bon-s{i}", temperature)
-                   for i in range(k)]
+    elif arm in BON_ARMS:
+        n_draws = k if arm == "single-pkt-boN" else k_c
+        tag = "sgl-pkt-bon" if arm == "single-pkt-boN" else "sgl-pkt-bonc"
+        samples = [_decide_once(packet, model, cache, f"{tag}-s{i}", temperature)
+                   for i in range(n_draws)]
         ids, why, votes = _vote(samples)
         d = decision_from_ids(packet, list(ids))
-        n_calls = k
+        n_calls = n_draws
     else:                                   # single-pkt (1 call) and debate-pkt (referee call)
         from pins.packet import SYSTEM_PACKET_REFEREE
         sysmsg = SYSTEM_PACKET_SINGLE if arm == "single-pkt" else SYSTEM_PACKET_REFEREE
@@ -232,7 +244,7 @@ def run_case(case, model, use_llm, arm, max_delta, temperature, no_text=False):
                                budget=max_delta)
     meta = {"changes": d["changes"], "hold_free": d["hold_free"],
             "moved": disruption(alloc, final), "rejected": bool(viol), "fired": fired,
-            "n_calls": n_calls, "k": k if arm == "single-pkt-boN" else 0, "votes": votes,
+            "n_calls": n_calls, "k": n_calls if arm in BON_ARMS else 0, "votes": votes,
             "unknown_ids": d.get("unknown_ids", []), "n_jobs": n_jobs}
     return final, why, meta
 
@@ -250,11 +262,12 @@ def main() -> None:
                          "(81 primary / 17 control).")
     ap.add_argument("--arms", default="",
                     help="comma-separated arm list. Default reproduces Exp 88/89 exactly. "
-                         f"Exp 93 structures: {','.join(STRUCTURE_ARMS)} "
+                         f"Exp 93 structures: {','.join(STRUCTURE_ARMS)}. "
+                         f"Exp 95 critic-matched budget control: {','.join(BUDGET_ARMS)} "
                          "(selfcons is NOT one -- single-pkt-boN already is self-consistency).")
     a = ap.parse_args()
     arm_list = [s.strip() for s in a.arms.split(",") if s.strip()] or ARMS
-    bad = [x for x in arm_list if x not in ARMS + STRUCTURE_ARMS]
+    bad = [x for x in arm_list if x not in ARMS + STRUCTURE_ARMS + BUDGET_ARMS]
     assert not bad, f"unknown arm(s): {bad}"
 
     from pins.hardcases_r3 import CASES_R3, CONTROLS as CTRL3, PRIMARY as PRIM3
@@ -273,7 +286,7 @@ def main() -> None:
     for case in cases:
         arms = {}
         for arm in arm_list:
-            temp = a.temp if arm == "single-pkt-boN" else 0
+            temp = a.temp if arm in BON_ARMS else 0
             final, why, meta = run_case(case, a.model, not a.no_llm and arm != "market",
                                         arm, a.max_delta, temp)
             arms[arm] = score(case, final, 0, why, True) | {"meta": meta}
