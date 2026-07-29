@@ -27,6 +27,7 @@
 
 | 14 | **A cheaper structure also survives its budget control** — an objection-only critic scores 34/81 against a best-of-N sampler at *identical* per-case spend (26/81, p=0.0193), while that sampler is one case *worse* than a single call at 3× the price. Third replication of "budget alone buys nothing" | Exp 93 → **Exp 95** | moderate (pooled n=81; blind r4 stratum ns, p=0.227) |
 | 13 | **Debate's win is the second pass, not the arguments** — stripping `evidence` from the packet changes the score by exactly zero cases (43/81 both ways, discordant 4-4). The transcript stays readable but is not load-bearing for the decision; `evidence` can be dropped at no measured cost | Exp 93 | solid (null, n=81; TOST at ±3 fails on m=8) |
+| 15 | **The text channel cannot be generated from the simulator's own state.** Agent-authored causal notes (`attributed`) vs a what-only placebo (`narrated`) give SLA identical *seed for seed at full precision*, and both equal the 0-token market exactly; the notes moved the allocation on 4 of ~842 escalated ticks and flipped no outcome. The cross-tick history the market lacks bought nothing, so §4.1 is untouched | Exp 92 → **Exp 94** | solid (negative, n=32, exact identity) |
 | 12 | The round-2 54-scene suite was **insensitive**, not merely negative: text-blind baselines (ILP 30/54, rule 31/54) scored within noise of every LLM arm, min p=0.238 across ~30 tests. Round 3's text-dependent design drops the rigid floor to 0/31 — the instrument was replaced, not the hypothesis re-shopped | Exp 65–67 → 79–83 | solid (methodology) |
 
 **Open / next**, roughly by value:
@@ -54,6 +55,15 @@
 
 *Done 2026-07-28: `paper/pins_gated_draft.md` §4.4, abstract and contribution 5 now lead with
 Exp 89 (commit `1472e21`).*
+
+*Done 2026-07-29 — Exp 94: the agent-authored text channel is **inert in-sim**, as pre-registered.
+The generated-channel route out of the authoring bottleneck is closed, and §5's limitation gets
+sharper: the case for text now rests entirely on facts the state does not contain. Two follow-ups
+this opens, neither started: (a) attributed's proposals are ~96% rejected by `apply_signed` and the
+violation reason is counted but never logged — one line of instrumentation would say whether the
+causal channel over-reaches or is merely unfundable; (b) output-length symmetry was never controlled
+(10.9 vs 28.2 words), which must be fixed before any positive text result could be read as causality
+rather than verbosity.*
 
 <details>
 <summary>Superseded claims table (2026-07-06) — kept for provenance</summary>
@@ -2645,6 +2655,127 @@ PINS_RESULTS=pins/results_exp93_qwen2514b.json \
 ```
 `pins/exp89_analyse.py` does **not** work on this run — it tests against `single-pkt-boN`, which is
 not an arm here. `pins/exp93_analyse.py` carries the pre-registered axes.
+
+## Experiment 94 — THE AGENT-AUTHORED TEXT CHANNEL: generated text is inert in-sim (2026-07-29)
+
+**Pre-registration:** `docs/superpowers/specs/2026-07-28-exp94-agent-authored-text-channel-design.md`,
+written before any code (commit `e0a2b0b`); arm + harness test committed before the run (`01910ea`).
+**Predicted outcome: EQUIVALENCE (TOST ±2.0 SLA pts).** Confirmed, and more strongly than stated.
+
+**Question.** Exp 92 showed the winning escalation is a literal no-op in-sim because the v2020
+replay carries no operator text, so §4.4 rests on an authored suite and §5 concedes the limitation.
+Can the text channel be **generated rather than fabricated**? When state changes materially between
+t−1 and t, the demand and supply agents report in plain text *why their situation changed*, and the
+referee rules on the packet as it already does. This is not code synthesising operator notes from
+public numbers — §4.4 declines that, and it would measure a translation, not a channel.
+
+**The gap it exploits.** The market has one-step *allocation* memory (`C_resize` prices change from
+current holdings) and no *causal* memory: a margin lost to a prod arrival and one lost to a downward
+usage revision are the same number to it.
+
+**Method.** New arm `make_policy_authored` (`pins/market.py`, `--authored narrated,attributed`),
+implemented as an `authored=` parameter on `make_policy_corrected` so the Exp 92 arm stays
+byte-identical. Notes land in the same `demand_claims[].note` / `supply_claim.note` fields the
+authored suite uses, so the mechanism validated in Exp 82–89 is untouched — only the *source* of the
+text changes. Three arms, paired within seed, pool 8, `caps=predicted`, qwen2.5:14b, v2020 replay,
+n=32.
+
+| arm | note content | authoring budget |
+|---|---|---|
+| `market` | none | 0 |
+| `narrated` (**placebo**) | states **what** changed; forbidden by prompt from stating why | matched |
+| `attributed` | states **why** it changed | matched |
+
+**The placebo is the design.** Both notes are authored by the same model on the same trigger and the
+same per-job authoring condition (held margin moved, deadline bucket moved, or arrived this tick;
+supply always speaks on a fired tick). Without it, a win could not be separated from *"the LLM was
+handed cross-tick history the market lacks"* — a finding about `BID_W`, not about text. What the
+agents may see is pinned in code: previous allocation, previous free GPUs, previous deadline bucket,
+own previous request. Nothing else.
+
+**Findings.**
+
+| pool | policy | SLA | prodSLA | util | useful | regret | slowdown | wait | calls/seed | tokens/seed |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 8 | no-llm (floor) | 53.9% | 59.1% | 80% | 75% | 10% | 8.73 | 22.7 | 0 | 0 |
+| 8 | market | 51.8%\* | 55.3% | 81% | 76% | 8% | 8.62 | 22.6 | 0 | 0 |
+| 8 | **narrated** | **51.8%\*** | **55.3%** | 81% | 76% | 8% | 8.62 | 22.6 | 51.9 | 11,679 |
+| 8 | **attributed** | **51.8%\*** | **55.3%** | 81% | 76% | 8% | 8.62 | 22.6 | 69.8 | 17,774 |
+
+```
+H1  attributed - narrated, SLA:  +0.0000, 0/32 seeds differ   -> EQ±2 passes DEGENERATELY (sd=0)
+H2a attributed - market,   SLA:  +0.0000, 0/32 seeds differ
+H2b narrated   - market,   SLA:  +0.0000, 0/32 seeds differ
+secondary family (4 metrics x 3 contrasts, Holm): every adjusted p = 1.000; min raw p = 0.285
+narrated:   835 escalations, 1360 notes, 1662 calls,   9 proposals, 2 ticks changed,   1 rejected
+attributed: 842 escalations, 1385 notes, 2232 calls, 156 proposals, 4 ticks changed, 108 rejected
+```
+
+- **Decision rule branch 1: the channel is inert in-sim.** `sla`, `prod_sla` and `finished` are
+  identical *seed for seed at full float precision* across market/narrated/attributed. This is
+  stronger than the pre-registered equivalence: not "within ±2 points" but **exact identity of every
+  SLA outcome on every seed**.
+- **The channel is not inert at the allocation level — only at the outcome level.** Rounding in the
+  run log hid this. `util` differs from `market` on seed 13 (both arms); `u_useful` and `regret`
+  differ on seeds 13/22/27 for `attributed`, seed 13 for `narrated`. The text moved the allocation
+  on 4 of ~842 escalated ticks and flipped no job's outcome anywhere.
+- **The manipulation landed.** Read off the persisted cache: causal markers in 0/371 narrated demand
+  notes vs **353/378 (93.4%)** attributed; 34/632 vs 437/635 (68.8%) on the supply side. On identical
+  state payloads the two modes produced the same sentence **0/368** and **0/628** times. The placebo
+  held its prohibition essentially perfectly.
+- **Branch 3 ("the gain is history, not text") is excluded conclusively**, not by failure-to-reject.
+  Branch 3 requires *both arms > market\**; both arms equal market exactly. The agents were handed
+  precisely the cross-tick state `BID_W`/`C_resize` lack, and it bought nothing. **§4.1 does not
+  change.**
+- **The cost of the causal channel is interventionism the guard absorbs.** Attributed's reviewers
+  raised **156 proposals against narrated's 9** — a 17× increase — and ~96% of its proposal-bearing
+  ticks produced a judgement `apply_signed` rejected outright (108 rejected). Causal text makes the
+  referee far more willing to act; the feasibility guard catches nearly all of it. Which of the four
+  rejection rules fired is **not recorded** (`market.py` counts, never logs, the violation strings).
+- The `dSLA −2.1 ± 1.7*` vs floor is inherited identically from `market` — a pre-existing market
+  property, not a cost of the channel. Not branch 4.
+
+**Budget divergence — the design-level match held; the rest is downstream of the treatment.** Notes
+per escalation matched to **1.0%** (1.629 vs 1.645), which is what §3 promises. Total calls diverged
+34% and tokens 52%, from three verified causes: `llm_calls` counts *cache misses* and attributed's
+notes are 2.6× longer and more varied (§7's own "cache dilution" prediction), `referee_signed` fired
+on ~112 ticks vs ~3, and the 7-escalation gap is itself an outcome — once 2/4 ticks changed the
+allocation, `_make_trigger`'s carried state diverged for the rest of those seeds. **This cannot
+manufacture the null: the extra budget went to the treatment arm** (+17.8 ± 3.0 calls/seed on 31/32
+seeds), which still produced an SLA vector identical to the cheaper arm and to the zero-token market.
+
+**Threat that was NOT met.** §7 pinned *prompt* symmetry, and that held (same role sentence, same
+one-sentence instruction, same prohibition clause, same JSON contract). *Output* symmetry was never
+controlled and did not hold: demand notes average 10.9 words narrated vs 28.2 attributed. So H1 is
+"causal-and-longer vs factual-and-shorter", not a pure causality contrast. Immaterial to a
+zero-variance null; **would have to be controlled before any positive result could be read as
+causality per se.**
+
+**What this buys.** The honest limitation in §5 gets sharper rather than smaller. Exp 92 showed the
+mechanism does nothing when there is *no* text; Exp 94 shows it does nothing when text is *generated
+from the simulator's own state* — because, as §7 predicted, in a simulator the causes of a change
+are largely recoverable from the numbers already logged. The remaining case for the text channel
+therefore rests entirely on text carrying facts the state does **not** contain (operator
+instructions, contractual limits, suspensions), which is exactly what the authored suite tests and
+what no public GPU trace ships. The generated-channel route is closed; the authoring bottleneck
+stands.
+
+**Caveats.** Degenerate TOST (sd = 0) — report as exact identity, not as a powered null; the
+`p = 1.000` values are the harness's `"degenerate"` sentinel, not computed tests. Single pool, single
+model, same model authors and rules. Secondary-family Holm composition was the analyst's choice, not
+pinned by the pre-reg (non-determining: min raw p = 0.285). Transcripts for the two arms were not
+written to the `decisions` block; note texts survive only in the cumulative `llm_agent_cache.json`.
+
+**Reproduce.**
+```
+.venv/bin/python -m pins.test_exp94_authoring        # budget match + cache-tag disjointness
+.venv/bin/python -m pins.trace_replay --llm --model qwen2.5:14b --caps predicted \
+    --pools 8 --seeds 32 --market --authored narrated,attributed
+```
+Both modes belong in ONE tier (`+authored-narrated-attributed`) so the placebo contrast is paired
+within seed. Trap: `correction._ask` keys the cache on `(tag, user, model)` and **not** on the system
+prompt — the tags are `note-{mode}-{dem,sup}` for that reason, and the harness test asserts they stay
+disjoint while the payloads stay identical.
 
 ## Experiment 95 — THE BUDGET-MATCHED CRITIC: the objection channel survives its control (2026-07-28)
 
