@@ -33,6 +33,8 @@ an incoming prod job. `hold_unsold=True` restores the idle-block semantics for c
 """
 from __future__ import annotations
 
+import json
+
 from pins.negotiation_protocol import NegotiationOutcome
 from pins.two_sided_sim import STARVE_TICKS, _rate, _useful_units
 
@@ -281,7 +283,7 @@ def take_corr_stats() -> dict:
 
 
 def make_policy_corrected(use_llm=True, model="qwen2.5:14b", cache=None, trace=None, seen=None,
-                          bid_w=BID_W, ask_w=ASK_W, debate=True):
+                          bid_w=BID_W, ask_w=ASK_W, debate=True, authored=None):
     """Exp 92 — run the arm that WINS on text exceptions (Exp 83/88/89) inside the simulator.
 
     Exp 84 measured a *different* debate: `referee.py` re-decides every job from scratch, with no
@@ -297,17 +299,23 @@ def make_policy_corrected(use_llm=True, model="qwen2.5:14b", cache=None, trace=N
     PREDICTION (pre-registered): the trigger still fires at the Exp-87 rate, the escalation runs,
     and it makes ZERO LLM calls and ZERO changes -- allocation identical to `market`, tick for
     tick. That is a strictly stronger boundary claim than Exp 84's -12.0*.
+
+    `authored` (Exp 94) switches the note source from the trace (which has none) to the demand and
+    supply AGENTS, which write one sentence each on a fired tick. None keeps this arm byte-identical
+    to Exp 92.
     """
     from pins.correction_signed import (apply_signed, debate_signed, gather_signed,
                                         referee_signed)
     st = {"jids": None, "free": None, "behind": frozenset(), "fell": False}
     _trigger = _make_trigger(st)
+    stats = CORR_STATS if authored is None else auth_stats(authored)
+    prev: dict = {"jobs": {}, "free": None}       # Exp 94: the only cross-tick state, see §3
 
-    def _as_dicts(demand, margins):
+    def _as_dicts(demand, margins, notes):
         return [{"jid": j.jid, "tier": j.ctx.get("tier", "besteffort"),
                  "deadline": j.ctx.get("deadline", "ontrack"),
                  "requested": margins.get(j.jid, 0),
-                 "note": j.ctx.get("note", "")}          # the trace never sets this
+                 "note": notes.get(j.jid, j.ctx.get("note", ""))}   # the trace never sets ctx.note
                 for j in demand]
 
     def policy(demand, supply_ctx, free, waiting=None, env=None, **_):
@@ -319,38 +327,173 @@ def make_policy_corrected(use_llm=True, model="qwen2.5:14b", cache=None, trace=N
         why = (f"routine tick: cleared {sold}/{free} at {price:.3f}, validated, no trigger")
 
         if bad or _trigger(demand, free):
-            CORR_STATS["escalated"] += 1
-            jobs = _as_dicts(demand, margins)
-            note = str(supply_ctx.get("note", "")) if isinstance(supply_ctx, dict) else ""
+            stats["escalated"] += 1
             n0 = len(cache) if isinstance(cache, dict) else 0
+            notes, note = {}, ""
+            if authored:
+                notes, note = author_notes(demand, margins, free, prev, authored,
+                                           use_llm=use_llm, model=model, cache=cache)
+                stats["notes"] += len(notes) + (1 if note else 0)
+            elif isinstance(supply_ctx, dict):
+                note = str(supply_ctx.get("note", ""))
+            jobs = _as_dicts(demand, margins, notes)
             props = gather_signed(jobs, note, free, margins, use_llm=use_llm,
                                   model=model, cache=cache)
             if debate:
                 props = debate_signed(jobs, note, free, margins, props, use_llm=use_llm,
                                       model=model, cache=cache)
             n_props = len(props.get("demand") or []) + (1 if props.get("supply") else 0)
-            CORR_STATS["proposals"] += n_props
+            stats["proposals"] += n_props
             if n_props:
                 dec = referee_signed(margins, props, free, jobs, use_llm=use_llm,
                                      model=model, cache=cache)
                 new, viol = apply_signed(margins, dec, free)
                 if viol:
-                    CORR_STATS["rejected"] += 1        # market's allocation stands, never repaired
+                    stats["rejected"] += 1            # market's allocation stands, never repaired
                 elif new != margins:
-                    CORR_STATS["changed"] += 1
+                    stats["changed"] += 1
                     margins = new
                     why = f"escalated: {n_props} proposal(s) applied"
             else:
                 why = "escalated: no job carries text -> no proposal, market stands"
             if isinstance(cache, dict):
-                CORR_STATS["llm_calls"] += max(0, len(cache) - n0)
+                stats["llm_calls"] += max(0, len(cache) - n0)
 
+        prev["jobs"] = {j.jid: _job_state(j, margins) for j in demand}
+        prev["free"] = free
         st["fell"] = False
         return margins, 0, NegotiationOutcome(
             margins=margins, reserve=0, rounds=0, agreed=True,
-            transcript=[{"round": 0, "actor": "corrected", "price": round(price, 4),
+            transcript=[{"round": 0, "actor": authored or "corrected", "price": round(price, 4),
                          "units_sold": sold, "free": free, "unsold": unsold, "why": why}])
     return policy
+
+
+# --------------------------------------------------------------------------- #
+#  The AUTHORED text channel (Exp 94): the agents write the notes themselves     #
+# --------------------------------------------------------------------------- #
+# Exp 92 showed the escalation is a literal no-op in-sim because the v2020 replay carries no
+# operator text. This arm GENERATES the channel rather than fabricating one: when a job's
+# situation changes between t-1 and t, its demand agent writes one sentence alongside the
+# numeric request, and the supply agent writes one about the pool. The sentences land in the
+# same `note` fields the authored hard-case suite uses, so the mechanism validated in Exp 82-89
+# is untouched -- only the source of the text changes.
+#
+# THE PLACEBO IS THE DESIGN. `narrated` says WHAT changed and is forbidden to say why;
+# `attributed` says WHY. Same model, same authoring condition, therefore the same call count on
+# the same ticks. Without it a win could not be separated from "the LLM was handed cross-tick
+# history the market lacks", which would be a finding about BID_W, not about text (decision-rule
+# branch 3 of the pre-registration).
+#
+# WHAT THE AGENTS MAY SEE is pinned here so it cannot be argued after the fact: the previous
+# allocation, the previous free-GPU count, the previous deadline bucket and the agent's own
+# previous request. Nothing else.
+#
+# The two prompts are deliberately parallel in structure and length (threat-to-validity 3): same
+# role sentence, same "in one sentence, state ..." instruction, same prohibition clause, same
+# output contract. Only the WHAT/WHY axis differs.
+AUTH_STATS: dict[str, dict] = {}
+
+
+def auth_stats(mode: str) -> dict:
+    return AUTH_STATS.setdefault(mode, {"escalated": 0, "notes": 0, "llm_calls": 0,
+                                        "proposals": 0, "changed": 0, "rejected": 0})
+
+
+def take_auth_stats() -> dict[str, dict]:
+    """Read-and-reset, per mode, so `narrated` and `attributed` never pool their counters."""
+    out = {k: dict(v) for k, v in AUTH_STATS.items()}
+    AUTH_STATS.clear()
+    return out
+
+
+_AUTH_TAIL = ('Do not request GPUs and do not argue for an outcome.\n'
+              'Respond with ONLY this JSON object:\n{"note": "<one sentence>"}')
+
+SYSTEM_DEMAND_NOTE = {
+    "narrated": (
+        "You are the DEMAND-side agent for one job in a GPU scheduler. Your job's situation "
+        "changed since the previous tick. In one sentence, state WHAT changed: which of your "
+        "quantities moved, and in which direction. Do NOT state, imply or guess any cause, "
+        "reason or explanation for the change — report the change itself only. " + _AUTH_TAIL),
+    "attributed": (
+        "You are the DEMAND-side agent for one job in a GPU scheduler. Your job's situation "
+        "changed since the previous tick. In one sentence, state WHY it changed: which "
+        "circumstance produced the change, and what it means for the job. DO state the cause, "
+        "reason or explanation behind the change — not the change alone. " + _AUTH_TAIL),
+}
+
+SYSTEM_SUPPLY_NOTE = {
+    "narrated": (
+        "You are the SUPPLY-side agent for a GPU cluster. The pool's situation changed since the "
+        "previous tick. In one sentence, state WHAT changed: which of the pool's quantities "
+        "moved, and in which direction. Do NOT state, imply or guess any cause, reason or "
+        "explanation for the change — report the change itself only. " + _AUTH_TAIL),
+    "attributed": (
+        "You are the SUPPLY-side agent for a GPU cluster. The pool's situation changed since the "
+        "previous tick. In one sentence, state WHY it changed: which circumstance produced the "
+        "change, and what it means for the pool. DO state the cause, reason or explanation "
+        "behind the change — not the change alone. " + _AUTH_TAIL),
+}
+
+
+def _job_state(j, margins: dict) -> dict:
+    """The pinned per-job state carried across one tick."""
+    facts = getattr(j, "facts", None) or {}
+    base = facts.get("base", 0)
+    return {"held_margin": max(0, facts.get("held", base) - base),
+            "deadline": j.ctx.get("deadline", "ontrack"),
+            "requested": margins.get(j.jid, 0)}
+
+
+def _speaks(now: dict, was: dict | None) -> bool:
+    """Exp 94 §3 authoring condition: held margin moved, deadline bucket moved, or it is new."""
+    return (was is None
+            or now["held_margin"] != was["held_margin"]
+            or now["deadline"] != was["deadline"])
+
+
+def author_notes(demand, margins: dict, free: int, prev: dict, mode: str,
+                 use_llm: bool = True, model: str = "qwen2.5:14b", cache=None):
+    """One note per job whose situation changed, plus one supply note. -> (job_notes, supply_note).
+
+    Identical across modes in WHO speaks and HOW MANY calls are made; only the system prompt
+    differs. `mode` is part of the cache tag because correction._ask keys on (tag, user, model)
+    and NOT on the system prompt — without it the two arms would share one another's notes.
+    """
+    from pins.correction import HOST
+    from pins.correction_signed import _ask
+    if not use_llm or mode not in SYSTEM_DEMAND_NOTE:
+        return {}, ""
+    cache = {} if cache is None else cache
+    notes: dict[str, str] = {}
+    for j in demand:
+        now, was = _job_state(j, margins), prev["jobs"].get(j.jid)
+        if not _speaks(now, was):
+            continue
+        user = json.dumps({"my_job": j.jid, "now": now,
+                           "previously": was or "(this job is new this tick)",
+                           "free_gpus_now": free, "free_gpus_previously": prev["free"]}, indent=1)
+        o = _ask(SYSTEM_DEMAND_NOTE[mode], user, model, HOST, cache, tag=f"note-{mode}-dem")
+        text = str((o or {}).get("note", "")).strip()[:300]
+        if text:
+            notes[j.jid] = text
+    user = json.dumps({"free_gpus_now": free, "free_gpus_previously": prev["free"],
+                       "allocated_now": sum(margins.values()),
+                       "allocated_previously": sum(s["requested"]
+                                                   for s in prev["jobs"].values()) or None,
+                       "jobs_now": sorted(margins), "jobs_previously": sorted(prev["jobs"])},
+                      indent=1)
+    o = _ask(SYSTEM_SUPPLY_NOTE[mode], user, model, HOST, cache, tag=f"note-{mode}-sup")
+    return notes, str((o or {}).get("note", "")).strip()[:300]
+
+
+def make_policy_authored(mode: str, use_llm=True, model="qwen2.5:14b", cache=None, trace=None,
+                         seen=None, bid_w=BID_W, ask_w=ASK_W, debate=True):
+    """Exp 94 — the Exp-92 escalation, run on notes the agents wrote (`narrated`/`attributed`)."""
+    assert mode in SYSTEM_DEMAND_NOTE, f"unknown authoring mode {mode!r}"
+    return make_policy_corrected(use_llm, model, cache, trace, seen, bid_w, ask_w,
+                                 debate=debate, authored=mode)
 
 
 # --------------------------------------------------------------------------- #

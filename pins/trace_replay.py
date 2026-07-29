@@ -459,9 +459,11 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           law: str = "amdahl", kappa: float = 2.0, samples: int = 0,
           cooldown: int = 0, resize_c1: float = 0.0, gamma: float | None = None,
           phi: float = 0.0, qcache: float | None = None, market: bool = False,
-          gated: bool = False, corrected: bool = False,
+          gated: bool = False, corrected: bool = False, authored: str = "",
           composed: bool = False, bid_info: str = "exact") -> None:
     assert not (referee and single_ilp), "--referee and --single-ilp are separate arms"
+    assert all(m in ("narrated", "attributed") for m in authored.split(",") if m), \
+        "--authored takes narrated and/or attributed"
     assert not debate or referee, "--debate is a referee-arm round"
     assert not (fast_negotiate and extend), "--fast-negotiate replaces the --extend replay path"
     assert not (time_mode and ttf_mode), "--time and --ttf are separate experiments"
@@ -545,6 +547,9 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         suffix += "+gated"
     if corrected:
         suffix += "+corrected"   # Exp 92: the hard-case winner (signed correction) as the escalation
+    if authored:
+        # Exp 94: both modes belong in ONE tier — the placebo contrast is paired within seed
+        suffix += "+authored-" + authored.replace(",", "-")
     if hard_trigger:
         assert debate, "--hard-trigger gates the debate round"
         suffix += "+hardtrig"             # E3: deliberation gated, ruling still per-tick
@@ -618,6 +623,11 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         from pins.market import make_policy_corrected
         rows.append(("corrected", lambda: make_policy_corrected(use_llm, model, cache,
                                                                 decisions, seen, debate=True)))
+    if authored:                  # Exp 94: same escalation, notes written by the agents
+        from pins.market import make_policy_authored
+        for mode in authored.split(","):
+            rows.append((mode, lambda m=mode: make_policy_authored(m, use_llm, model, cache,
+                                                                   decisions, seen, debate=True)))
     if composed:                  # Exp 73: LLM sets the reserve, the market clears the rest
         from pins.market import make_policy_composed
         rows.append(("composed", lambda: make_policy_composed(use_llm, model, cache,
@@ -731,6 +741,12 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         c = take_corr_stats()
         print(f"corrected: {c['escalated']} escalations, {c['llm_calls']} LLM calls, "
               f"{c['proposals']} proposals, {c['changed']} ticks changed, {c['rejected']} rejected")
+    if authored:                  # Exp 94: notes/calls per arm — the budget match is the control
+        from pins.market import take_auth_stats
+        for mode, c in take_auth_stats().items():
+            print(f"{mode}: {c['escalated']} escalations, {c['notes']} notes authored, "
+                  f"{c['llm_calls']} LLM calls, {c['proposals']} proposals, "
+                  f"{c['changed']} ticks changed, {c['rejected']} rejected")
     if gated:                     # how often did the contextual trigger actually fire?
         from pins.market import take_gate_stats
         g = take_gate_stats()
@@ -798,6 +814,12 @@ def main() -> None:
                     help="Exp 92 boundary test: validated auction + the SIGNED-CORRECTION "
                          "escalation that wins the hard-case suite (Exp 83/88/89). It only acts "
                          "on jobs carrying text; the trace has none, so the prediction is a no-op.")
+    ap.add_argument("--authored", default="", metavar="MODES",
+                    help="Exp 94: add the agent-authored text channel — the Exp-92 escalation "
+                         "run on notes the demand/supply agents write when their situation "
+                         "changes. 'narrated' (placebo) states WHAT changed and may not say "
+                         "why; 'attributed' states WHY. Pass both comma-separated so the "
+                         "placebo contrast is paired within seed. Needs --llm.")
     ap.add_argument("--gated", action="store_true",
                     help="validated auction every tick; escalate to the debate arm only on a "
                          "contextual trigger (validator reject, prod arrival, job newly behind, "
@@ -960,7 +982,7 @@ def main() -> None:
           use_llm=a.llm, model=a.model, caps_mode=a.caps, quantile=a.quantile,
           truth_mode=a.truth, time_mode=a.time, ttf_mode=a.ttf, baseline=a.baseline,
           dyncap=a.dyncap, trace_name=a.trace, quantum={"quarter": 1, "whole": 4}[a.quantum],
-          gated=a.gated, corrected=a.corrected, referee=a.referee, manual=a.manual, single_ilp=a.single_ilp, debate=a.debate,
+          gated=a.gated, corrected=a.corrected, authored=a.authored, referee=a.referee, manual=a.manual, single_ilp=a.single_ilp, debate=a.debate,
           no_think=a.no_think, advocates=a.advocates, realloc_cost=a.realloc_cost,
           alpha=a.alpha, alpha_norm=a.alpha_norm, trigger=a.trigger, theta=a.theta,
           stale=a.stale, extend=a.extend, no_argue=a.no_argue, prev_input=a.prev_input,
