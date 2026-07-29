@@ -58,6 +58,7 @@ TRACES = {"v2020": (REPLAY_CSV, TICK_S),
 WORK_CLAMP = (1, 60)
 CAP_CLIP = 8         # quanta (= 2 GPUs); ~80% of trace jobs are below; keeps pools sane
 ARRIVAL_FRAC = 0.6   # sample arrivals from the first 60% of the horizon (make_workload conv.)
+PROD_RATE = (2.2 - 1.667) / (2.2 - 0.6)   # Exp 96: the correlated rule's own prod marginal (1/3)
 
 
 def load_trace(path: str = REPLAY_CSV) -> list[tuple[int, int, int, str]]:
@@ -118,7 +119,8 @@ def load_runtime_pred(path: str = RUNTIME_CSV) -> dict[str, float]:
 def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, oracle=False,
                         true_map=None, declared=False, time_pred=None, time_mode=None,
                         tick: int = TICK_S, quantum: int = 1, stratify: bool = False,
-                        burst_s: int | None = None, slack_mult: float = 1.0
+                        burst_s: int | None = None, slack_mult: float = 1.0,
+                        decorrelate: bool = False
                         ) -> tuple[list[Job], dict[str, int], dict[str, int],
                                    dict[str, float] | str | None]:
     """n_jobs real jobs thinned from a random 10-hour trace window, on ONE clock.
@@ -170,7 +172,7 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
         # 5/32 seeds in the Exp 36/37 sweeps. Forward EVERYTHING.
         return make_trace_workload(trace, n_jobs, seed + 7919, horizon, pred, oracle,
                                    true_map, declared, time_pred, time_mode, tick, quantum,
-                                   stratify, burst_s, slack_mult)
+                                   stratify, burst_s, slack_mult, decorrelate)
     if stratify:
         # Phase A diversity (opt-in; eval path keeps rng.sample so its seeds stay byte-paired):
         # systematic draw over the trace's GPU-quanta distribution so each window spans
@@ -198,6 +200,7 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
                for k in range(n_jobs - prod_n)]
         rng.shuffle(urg)
 
+    trng = random.Random(f"tier-{seed}")   # Exp 96: own stream -> other tiers stay byte-paired
     jobs: list[Job] = []
     cap_map: dict[str, int] = {}
     true_cap_map: dict[str, int] = {}
@@ -211,7 +214,13 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
         urgency = round(urg[i] if stratify else rng.uniform(0.6, 2.2), 3)  # make_workload recipe
         slack = max(1.15, min(2.4, 2.5 - 0.65 * urgency)) * slack_mult
         deadline = arrival + int(round(work * slack))
-        tier = "prod" if urgency >= 1.667 else "besteffort"
+        # Exp 96: the default rule makes tier and deadline tightness ONE variable — prod <=>
+        # urgency >= 1.667 <=> slack in [1.15, 1.42] — so "prod protection" and "tight-deadline
+        # protection" are inseparable. `decorrelate` draws the label independently at the SAME
+        # marginal, P(prod) = (2.2-1.667)/(2.2-0.6) = 1/3, from its own stream so every window
+        # stays byte-identical to the correlated world and the two are exactly paired.
+        tier = (("prod" if trng.random() < PROD_RATE else "besteffort") if decorrelate
+                else ("prod" if urgency >= 1.667 else "besteffort"))
         j = Job(f"r{i:02d}", arrival, ["train"], [work], urgency, deadline, tier)
         jobs.append(j)
         true_cap_map[j.jid] = min(quanta, CAP_CLIP) if true_map is None else \
@@ -231,7 +240,7 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
     return jobs, cap_map, true_cap_map, belief
 
 
-METRICS = ("sla", "prod_sla", "util", "slowdown", "finished", "fallback_rate",
+METRICS = ("sla", "prod_sla", "tight_sla", "util", "slowdown", "finished", "fallback_rate",
            "churn_gpu", "churn_jobs", "wait", "wait_p95", "wait_full",
            # elevated plan §4/§14: occupancy is NOT productive work, so report useful
            # utilisation and waste separately, plus regret vs the per-tick oracle.
@@ -460,6 +469,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
           cooldown: int = 0, resize_c1: float = 0.0, gamma: float | None = None,
           phi: float = 0.0, qcache: float | None = None, market: bool = False,
           gated: bool = False, corrected: bool = False, authored: str = "",
+          decorrelate: bool = False,
           composed: bool = False, bid_info: str = "exact") -> None:
     assert not (referee and single_ilp), "--referee and --single-ilp are separate arms"
     assert all(m in ("narrated", "attributed") for m in authored.split(",") if m), \
@@ -547,6 +557,10 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         suffix += "+gated"
     if corrected:
         suffix += "+corrected"   # Exp 92: the hard-case winner (signed correction) as the escalation
+    if decorrelate:
+        # Exp 96: same jobs, same deadlines, only the prod LABEL is redrawn — must never merge
+        # with the correlated rows, which are a different world under the same arm names
+        suffix += "+decorr"
     if authored:
         # Exp 94: both modes belong in ONE tier — the placebo contrast is paired within seed
         suffix += "+authored-" + authored.replace(",", "-")
@@ -639,7 +653,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
     print(f"{n_jobs} real jobs/window from {len(trace):,} trace jobs, horizon {horizon}, "
           f"mean of {len(seeds)} seeds (window per seed) | spike_max={spike_max} scale={scale} "
           f"| truth={truth_mode} caps={caps_mode} clip={CAP_CLIP}")
-    header = (f"{'pool':>4}  {'policy':<12} {'SLA':>7} {'prodSLA':>8} {'util':>6} "
+    header = (f"{'pool':>4}  {'policy':<12} {'SLA':>7} {'prodSLA':>8} {'tight':>6} {'util':>6} "
               f"{'useful':>7} {'regret':>7} {'slowdown':>9} {'wait':>6} {'fb':>6} {'done':>8}")
     all_per_seed: dict[str, dict[str, list[dict]]] = {}
     for gpus in pools:
@@ -657,7 +671,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                                                                   oracle, true_map, declared,
                                                                   time_pred, mk_mode, tick,
                                                                   quantum, burst_s=burst_s,
-                                                                  slack_mult=slack_mult)
+                                                                  slack_mult=slack_mult,
+                                                                  decorrelate=decorrelate)
                 cap_map = {k: min(v, gpus) for k, v in cap_map.items()}  # feasible at this pool
                 tcap = {k: min(v, gpus) for k, v in tcap.items()}
                 dyn_map = None
@@ -709,6 +724,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
             s1 = "*" if abs(r["sla"] - best_sla) < 1e-9 else " "
             p1 = "*" if abs(r["prod_sla"] - best_prod) < 1e-9 else " "
             print(f"{gpus:>4}  {name:<12} {r['sla']:>6.1%}{s1}{r['prod_sla']:>7.1%}{p1}"
+                  f"{r['tight_sla']:>6.1%}"        # Exp 96: the laxity stratum, prod's de-confound
                   f"{r['util']:>6.0%} {r['u_useful']:>7.0%} {r['regret']:>7.0%}"
                   f" {r['slowdown']:>9.2f} {r['wait']:>6.1f} "
                   f"{r['fallback_rate']:>5.0%} "
@@ -814,6 +830,13 @@ def main() -> None:
                     help="Exp 92 boundary test: validated auction + the SIGNED-CORRECTION "
                          "escalation that wins the hard-case suite (Exp 83/88/89). It only acts "
                          "on jobs carrying text; the trace has none, so the prediction is a no-op.")
+    ap.add_argument("--decorrelate", action="store_true",
+                    help="Exp 96: draw the prod/besteffort label INDEPENDENTLY of urgency at the "
+                         "same marginal (1/3), instead of prod <=> urgency >= 1.667. Breaks the "
+                         "tie between tier and deadline tightness that makes 'prod-tier "
+                         "protection' and 'tight-deadline protection' the same claim. Own RNG "
+                         "stream, so windows stay byte-identical to the correlated world and the "
+                         "two are exactly paired. Tier suffix +decorr.")
     ap.add_argument("--authored", default="", metavar="MODES",
                     help="Exp 94: add the agent-authored text channel — the Exp-92 escalation "
                          "run on notes the demand/supply agents write when their situation "
@@ -982,7 +1005,8 @@ def main() -> None:
           use_llm=a.llm, model=a.model, caps_mode=a.caps, quantile=a.quantile,
           truth_mode=a.truth, time_mode=a.time, ttf_mode=a.ttf, baseline=a.baseline,
           dyncap=a.dyncap, trace_name=a.trace, quantum={"quarter": 1, "whole": 4}[a.quantum],
-          gated=a.gated, corrected=a.corrected, authored=a.authored, referee=a.referee, manual=a.manual, single_ilp=a.single_ilp, debate=a.debate,
+          gated=a.gated, corrected=a.corrected, authored=a.authored,
+          decorrelate=a.decorrelate, referee=a.referee, manual=a.manual, single_ilp=a.single_ilp, debate=a.debate,
           no_think=a.no_think, advocates=a.advocates, realloc_cost=a.realloc_cost,
           alpha=a.alpha, alpha_norm=a.alpha_norm, trigger=a.trigger, theta=a.theta,
           stale=a.stale, extend=a.extend, no_argue=a.no_argue, prev_input=a.prev_input,

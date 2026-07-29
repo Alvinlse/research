@@ -148,6 +148,18 @@ def job_facts(job: Job, u: float, spike_max: float, req_gpu: int) -> bridge.Stag
 # --------------------------------------------------------------------------- #
 #  The four policies: (demand_jobs, supply_ctx, free, ...) -> (margins, reserve) #
 # --------------------------------------------------------------------------- #
+def tight_third(jobs) -> list:
+    """Exp 96: the tightest-LAXITY tercile of a window — (deadline - arrival) / work, ascending.
+
+    The tier label and the deadline slack come from one uniform draw in `make_trace_workload`, so
+    `prod_sla` has never been separable from "the tightest deadlines got served". This stratum is
+    defined on laxity alone: under `--decorrelate` it and `prod` become independent, and in the
+    correlated world it should nearly duplicate `prod` (the manipulation check).
+    """
+    lax = sorted(jobs, key=lambda j: ((j.deadline - j.arrival) / max(sum(j.need), 1e-9), j.jid))
+    return lax[:max(1, len(jobs) // 3)]
+
+
 def policy_none(demand, supply_ctx, free, **_):
     return {j.jid: 0 for j in demand}, 0, None
 
@@ -529,6 +541,7 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
         return done_at[j.jid] is None or done_at[j.jid] > j.deadline
 
     prod = [j for j in jobs if j.tier == "prod"]
+    tight = tight_third(jobs)
     fin = [j for j in jobs if done_at[j.jid] is not None]
     # Exp 63: queueing delay, the quantity admission control moves directly and the one SLA
     # compresses away. A job that never started is censored at the horizon, not dropped -- else
@@ -550,6 +563,7 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
     return {
         "sla": sum(1 for j in jobs if violated(j)) / len(jobs),
         "prod_sla": sum(1 for j in prod if violated(j)) / max(len(prod), 1),
+        "tight_sla": sum(1 for j in tight if violated(j)) / max(len(tight), 1),
         "lateness": sum(late) / max(len(late), 1),
         "starved": sum(1 for w in waits if w >= STARVE_TICKS) / max(len(waits), 1),
         "wait_max": float(waits[-1]) if waits else 0.0,
@@ -689,6 +703,7 @@ def simulate_backfill(jobs_proto: list[Job], total_gpus: int, horizon: int,
         return done_at[j.jid] is None or done_at[j.jid] > j.deadline
 
     prod = [j for j in jobs if j.tier == "prod"]
+    tight = tight_third(jobs)
     fin = [j for j in jobs if done_at[j.jid] is not None]
     # Exp 63: queueing delay, the quantity admission control moves directly and the one SLA
     # compresses away. A job that never started is censored at the horizon, not dropped -- else
@@ -704,6 +719,7 @@ def simulate_backfill(jobs_proto: list[Job], total_gpus: int, horizon: int,
     return {
         "sla": sum(1 for j in jobs if violated(j)) / len(jobs),
         "prod_sla": sum(1 for j in prod if violated(j)) / max(len(prod), 1),
+        "tight_sla": sum(1 for j in tight if violated(j)) / max(len(tight), 1),
         "lateness": sum(late) / max(len(late), 1),
         "starved": sum(1 for w in waits if w >= STARVE_TICKS) / max(len(waits), 1),
         "wait_max": float(waits[-1]) if waits else 0.0,
