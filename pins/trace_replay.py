@@ -56,6 +56,15 @@ TICK_S = 120         # one sim tick = 2 real minutes -> median trace job ≈ 9 t
 TRACES = {"v2020": (REPLAY_CSV, TICK_S),
           "supercloud": (os.path.join(HERE, "..", "data", "supercloud", "replay_jobs.csv"), 900)}
 WORK_CLAMP = (1, 60)
+# ---- the Exp 97 STANDARD operating point (2026-07-30) --------------------------------------
+# Defaults describe a cluster someone would actually run. The pre-Exp-97 defaults (pool 4/6/8 =
+# 1-2 GPUs, horizon 300, slack x1) put the floor at 40-54% missed deadlines before any policy
+# ran, and are reachable with explicit flags -- every such tier keeps its old name.
+STD_POOL = 32          # quarter-GPU quanta = 8 GPUs, one node
+LOAD_PER_QUANTUM = 3   # jobs per pool quantum: the last ratio where every job still finishes
+HORIZON = 400          # ticks; arrivals stay in the first 180, the rest is drain (600 == 400)
+SLACK_MULT = 10.0      # deadline slack multiplier; below ~8 the floor is deadline-bound, not
+#                        policy-bound, and above ~10 the floor stops moving (starvation-bound)
 CAP_CLIP = 8         # quanta (= 2 GPUs); ~80% of trace jobs are below; keeps pools sane
 ARRIVAL_FRAC = 0.6   # sample arrivals from the first 60% of the horizon (make_workload conv.)
 PROD_RATE = (2.2 - 1.667) / (2.2 - 0.6)   # Exp 96: the correlated rule's own prod marginal (1/3)
@@ -580,8 +589,10 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         suffix += f"+slack{slack_mult:g}"   # deadline-tightness calibration knob
     if burst_s:
         suffix += f"+burst{burst_s}"      # arrival surge: separate windows, separate tier
-    if n_jobs != 16:
-        suffix += f"+n{n_jobs}"           # Exp 48: scale-up tiers must not collide
+    if n_jobs != 16:                      # Exp 48: scale-up tiers must not collide
+        # Exp 97: 0 = AUTO (LOAD_PER_QUANTUM x pool). The count then differs per pool, so the tier
+        # records the RATIO; the pool itself is already a key in the per_seed block.
+        suffix += f"+n{LOAD_PER_QUANTUM}x" if not n_jobs else f"+n{n_jobs}"
     tag = (baseline or ("rule" if not use_llm else model)) + suffix
 
     if baseline == "easy":        # Exp 40: rows are allocation DISCIPLINES, not policies
@@ -657,13 +668,17 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
     print(f"\n{'='*86}")
     print(f"TRACE REPLAY ({trace_name}) — two-sided sim on real jobs; agents={tag}")
     print(f"{'='*86}")
-    print(f"{n_jobs} real jobs/window from {len(trace):,} trace jobs, horizon {horizon}, "
+    jobs_of = (lambda q: n_jobs) if n_jobs else (lambda q: LOAD_PER_QUANTUM * q)
+    print(f"{n_jobs or f'{LOAD_PER_QUANTUM}x pool'} real jobs/window from {len(trace):,} trace "
+          f"jobs, horizon {horizon} ({int(300 * ARRIVAL_FRAC)} arrival + drain), slack x{slack_mult:g}, "
           f"mean of {len(seeds)} seeds (window per seed) | spike_max={spike_max} scale={scale} "
           f"| truth={truth_mode} caps={caps_mode} clip={CAP_CLIP}")
+    print(f"pool is in QUARTER-GPU QUANTA: {', '.join(f'{q}q = {q/4:g} GPU' for q in pools)}")
     header = (f"{'pool':>4}  {'policy':<12} {'SLA':>7} {'prodSLA':>8} {'tight':>6} {'util':>6} "
               f"{'useful':>7} {'regret':>7} {'slowdown':>9} {'wait':>6} {'fb':>6} {'done':>8}")
     all_per_seed: dict[str, dict[str, list[dict]]] = {}
     for gpus in pools:
+        n_jobs = jobs_of(gpus)          # AUTO: load scales with the pool, or the explicit override
         print("-" * len(header)); print(header); print("-" * len(header))
         results = []
         per_seed_pool: dict[str, list[dict]] = {}
@@ -718,7 +733,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
                     save_cache(cache)   # per-seed: a reaped run loses at most one seed
                 el, done = time.time() - _t0, i + 1
                 eta = el / done * (len(seeds) - done)
-                print(f"\r      {gpus}gpu {name:<11} {done:>2}/{len(seeds)} seeds "
+                print(f"\r      {gpus}q/{gpus//4}gpu {name:<11} {done:>2}/{len(seeds)} seeds "
                       f"| {el:5.0f}s elapsed ~{eta:5.0f}s left", end="", flush=True)
             print()
             per_seed_pool[name] = per_seed
@@ -799,9 +814,14 @@ def main() -> None:
     ap.add_argument("--seed-start", type=int, default=0,
                     help="first seed (exclusive end stays --seeds); lets parallel "
                          "cache-warmers split one sweep into disjoint seed blocks")
-    ap.add_argument("--pools", default="4,6,8", help="real caps are heavier (median 4 quanta)")
-    ap.add_argument("--n-jobs", type=int, default=16,
-                    help="jobs thinned per window (scale-up knob; tier gets a +nN suffix)")
+    ap.add_argument("--pools", default="32",
+                    help="pool sizes in QUARTER-GPU QUANTA (4 quanta = 1 GPU). Default 32 = 8 "
+                         "GPUs, one node — the Exp 97 standard. The old 4,6,8 default was 1-2 "
+                         "physical GPUs, which no operator runs.")
+    ap.add_argument("--n-jobs", type=int, default=0,
+                    help="jobs thinned per window; 0 (default) = AUTO at LOAD_PER_QUANTUM x pool, "
+                         "the last ratio at which every job still finishes (Exp 97 ladder). Set a "
+                         "number to override; the tier then gets a +nN suffix.")
     ap.add_argument("--quantum", default="quarter", choices=("quarter", "whole"),
                     help="Exp 48: smallest negotiable element — 'quarter' = the trace's native "
                          "quarter-GPU quanta (pool units = quanta, unchanged); 'whole' = whole "
@@ -944,16 +964,17 @@ def main() -> None:
                          "jobs start this tick and which keep waiting — on top of the "
                          "margin/reserve split. Only never-started jobs can be deferred, so the "
                          "rigid no-preemption invariant holds. Tier suffix +admit.")
-    ap.add_argument("--horizon", type=int, default=300, metavar="T",
-                    help="simulated ticks (default 300, every prior tier). The ARRIVAL span is "
-                         "pinned at ARRIVAL_FRAC*300 ticks regardless, so raising this adds DRAIN "
-                         "time without thinning arrivals — the knob for the ~2.5%% of jobs that "
-                         "are counted as SLA violations only because the horizon censored them.")
-    ap.add_argument("--slack-mult", type=float, default=1.0, metavar="M",
-                    help="scale every job's deadline slack by M. The stock recipe gives median "
-                         "1.55x the job's OWN work (p10 = 1.00x -- unmeetable in a shared "
-                         "queue), which floors SLA violations near 55% regardless of policy. "
-                         "M>1 buys the scheduler room to matter. Tier suffix +slackM.")
+    ap.add_argument("--horizon", type=int, default=HORIZON, metavar="T",
+                    help=f"simulated ticks (default {HORIZON}). The ARRIVAL span is pinned at "
+                         "ARRIVAL_FRAC*300 = 180 ticks regardless, so this adds DRAIN time without "
+                         "thinning arrivals. At 300 (the pre-Exp-97 value) ~2.5%% of jobs never "
+                         "finish and count as SLA violations by censoring alone. Tier suffix +hT.")
+    ap.add_argument("--slack-mult", type=float, default=SLACK_MULT, metavar="M",
+                    help=f"scale every job's deadline slack by M (default {SLACK_MULT:g}). The raw "
+                         "recipe gives median 1.55x the job's OWN work (p10 = 1.00x -- unmeetable "
+                         "in a shared queue at 76%% utilisation), which floors SLA violations near "
+                         "55%% regardless of policy. Pass 1 to reproduce pre-Exp-97 tiers. Tier "
+                         "suffix +slackM.")
     ap.add_argument("--burst", type=int, default=None, metavar="S",
                     help="arrival SURGE: half the window's jobs are re-stamped into one "
                          "random S-second interval, the rest keep the trace's own arrival "

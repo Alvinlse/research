@@ -3114,3 +3114,44 @@ referee arm runs cold.
 and 96 was measured at the infeasible point and must be re-read as such. The **efficiency** results
 (util, useful util, regret) never depended on the deadline recipe and are unaffected. The
 **hard-case suite** results (Exp 79–83, 88, 89, 93, 95) are not in-sim at all and are untouched.
+
+**The standard operating point is now the DEFAULT** (2026-07-30, after the ladder below). Running
+`trace_replay` with no scale flags gives **pool 32 quanta = 8 GPUs, 96 jobs (auto at 3× pool),
+horizon 400, slack ×10** — floor 80% utilisation, 11.7% violations, 96/96 finished. Pools were
+always in quarter-GPU quanta and the old `4,6,8` default was **1–2 physical GPUs**; the progress
+line now prints `32q/8gpu` instead of the misleading `8gpu`. Pre-Exp-97 tiers reproduce exactly with
+`--pools 8 --n-jobs 16 --horizon 300 --slack-mult 1` and keep their old names (verified byte-identical:
+45.3/52.4/52.5/76/73/16.6/15.6 at n=8, tier `rule+pred`); every other run is tagged
+`+h400+slack10+n3x` so old and new can never merge.
+
+**The scale ladder that chose it** (floor arm, 4 seeds, slack ×10, horizon 400):
+
+| pool | GPUs | jobs | ratio | util | SLA | prodSLA | wait | done |
+|---|---|---|---|---|---|---|---|---|
+| 8 | 2 | 16 | ×2 | 78% | 12.9% | 12.9% | 23.0 | 16/16 |
+| 32 | 8 | 64 | ×2 | 64% | 4.3% | 2.1% | 9.4 | 64/64 |
+| 32 | 8 | **96** | **×3** | **80%** | **11.7%** | **2.1%** | **42.0** | **96/96** |
+| 32 | 8 | 128 | ×4 | 91% | 18.9% | 3.6% | 63.7 | 121.8/128 |
+| 64 | 16 | 128 | ×2 | 63% | 2.5% | 0.5% | 7.3 | 128/128 |
+| 120 | 30 | 240 | ×2 | 62% | 1.1% | 0.3% | 4.8 | 240/240 |
+| 120 | 30 | 360 | ×3 | 71% | 10.1% | 0.0% | 34.1 | 359.8/360 |
+| 120 | 30 | 480 | ×4 | 86% | 20.5% | 1.4% | 65.2 | 469.2/480 |
+| 120 | 30 | 600 | ×5 | 93% | 36.5% | 2.2% | 110.7 | 488.2/600 |
+
+- **Load must scale with the pool or contention evaporates** — at a fixed ×2 ratio, utilisation
+  falls 78% → 64% → 62% as the cluster grows and violations collapse to 1%, which is statistical
+  smoothing, not a scheduler doing well. **×3 is the recipe**: the last ratio at which every job
+  still finishes at every scale.
+- **Compute is not the constraint for the deterministic arms**: 4 seeds × 5 policies costs 10.9 s
+  at 8 GPUs and 15.1 s at 30 GPUs.
+- **Prod protection has less and less headroom as the cluster grows** — floor prod violations are
+  12.9% at 2 GPUs, 2.1% at 8, and 0.0% at 30. Claim 2 is about exactly this quantity, so the scale
+  at which it is measured is part of the claim. Recorded now, before the arms are re-measured.
+- **The per-job referee is the arm that does not scale**: its token cost is ∝ jobs × ticks (Exp 64
+  died at 89 jobs), while `composed` is one call per tick **regardless of job count** and
+  market/negotiated are zero. At 8 GPUs the standard point has 96 jobs, i.e. 6× the pool-8 prompt.
+- No batch scheduler is reachable from this node (`sbatch`/`qsub`/`pjsub`/`bsub` all absent), so
+  long runs must be sharded with `--seed-start` to survive the reaper.
+
+**Stage 2 was killed** mid-run at the old pool-8 point rather than finishing a measurement of a
+superseded configuration; the frontier re-runs at the standard point instead.
