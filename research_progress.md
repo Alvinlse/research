@@ -3336,3 +3336,44 @@ trap: a job pinned to a full card it does not need shows as occupancy. `u_useful
 exactly here because with `caps real` the rounded-up cap becomes the job's base, so the waste is
 invisible to the useful-utilisation accounting — the whole-GPU rows must not be read as more
 efficient.
+
+### Exp 99d — the market on both quanta: it helps more where the quantum is coarse, and still cannot recover it
+
+Same config as 99c (8 GPUs, 96 jobs, `--caps real`, real tiers, stratified classes, n=32), with the
+0-token bid/ask market added to both.
+
+| quantum | arm | SLA | prodSLA | tight | util | regret | slowdown | wait | done |
+|---|---|---|---|---|---|---|---|---|---|
+| quarter | no-llm | 19.9% | 5.2% | 22.9% | 85% | 2% | 14.20 | 171.8 | 95.7/96 |
+| quarter | **market** | **19.7%\*** | 5.0% | 22.9% | 86% | **0%** | 13.97 | 169.5 | 95.7/96 |
+| whole | no-llm | 28.2% | 4.5% | 31.8% | 91% | 3% | 21.59 | 288.4 | 93.8/96 |
+| whole | **market** | **27.3%\*** | 5.3% | 30.7% | 93% | **0%** | 21.04 | 283.5 | 94.1/96 |
+
+```
+market vs floor, paired, n=32:
+  quarter:  dSLA -0.2 ± 0.3    dutil +0.9 ± 0.5*  duseful +0.9 ± 0.5*  dregret -1.6 ± 0.5*  dslow -0.2 ± 0.2*
+  whole:    dSLA -0.9 ± 0.4*   dutil +1.9 ± 0.9*  duseful +1.9 ± 0.9*  dregret -2.1 ± 0.6*  dslow -0.5 ± 0.3*
+```
+
+- **The market's SLA effect is significant only under the coarse quantum** (−0.9 ± 0.4\* whole vs
+  −0.2 ± 0.3 ns quarter), and its efficiency gains roughly double (dutil +1.9\* vs +0.9\*, dregret
+  −2.1\* vs −1.6\*). A coarser allocation unit leaves more for a clearing rule to fix. This is the
+  first in-sim cell where the market moves SLA at all — every previous one was exactly 0.0 (Exp 97).
+- **It does not come close to recovering the quantum penalty**, which is the result that matters:
+
+```
+floor@quarter MINUS market@whole, paired, n=32  (the recovery test)
+  dSLA -7.4 ± 1.9*   dtight -7.8 ± 2.5*   dslow -6.8 ± 1.8*   dwait -111.7 ± 25.4*
+```
+
+  The market on whole cards is still **7.4 SLA points and 112 ticks of queueing worse than doing
+  nothing on quarter cards**. It buys back 0.9 of the 8.3-point penalty. Exp 48 found the same for
+  the negotiation-era mechanism ("the world costs ~10 SLA pts that negotiation can't recover"); it
+  now holds for the market too, on a different operating point with real tiers.
+- Every reasoning-shaped arm (`isolated`/`negotiated`/`single-llm`, rule mode) is *worse* than the
+  floor on SLA in both quanta (+0.3 to +0.4, ns) and pays regret (+0.2 to +0.9\*).
+
+**The standing lesson.** The allocation *unit* dominates every policy effect measured here: 8.3
+points from the quantum against 0.9 from the best mechanism and 16.4 from the ordering rule (99).
+Two of the three largest in-sim effects in this project are properties of the world, not of the
+scheduler — which is the case for reporting them in that order.
