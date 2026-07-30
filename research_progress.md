@@ -3186,3 +3186,55 @@ often, so the cache absorbs an unknown fraction of the 4×. That fraction is unm
 with the 8-GPU standard scale (96 jobs, 6× the pool-8 prompt), the per-job referee is the arm most
 likely to be priced out; `composed` (one call per tick, job-count-independent) and the 0-token arms
 are not.
+
+## Experiment 98 — REAL LABELS: tier comes from the trace, and prod protection has no headroom left (2026-07-30)
+
+**Type: instrumentation + calibration.** Motivated by Exp 96 (tier and deadline tightness were one
+synthetic variable, r = −0.78) and by the observation that the floor was clearing work too easily
+after Exp 97 loosened the deadlines.
+
+**Method — Google's label approach, on the GPU trace.** Google cluster-data 2011 was evaluated as a
+replacement and integrated (`data/build_google2011_replay.py`, trace `google2011`, 73,272 jobs over
+105.8 h, real priority 0–11 and scheduling class 0–3). It is **not** adopted as the primary trace: it
+is CPU/memory only, and the project is GPU scheduling. What it supplied was the *method* — take the
+labels from the data, and take tier and tightness from **different** fields:
+
+| | Google 2011 | v2020 with `--real-tiers` |
+|---|---|---|
+| tier | real: `priority ≥ 9` (7.8%) | real: instance carries a registered workload tag (**13.8%** of replay jobs) |
+| tightness | real: `sched_class` | **synthetic, own rng stream** — no real field exists |
+| corr(tier, tightness) | −0.113 | **−0.000** (was **−0.778**) |
+
+v2020's own role field (`task_name`) was tested as the tightness signal and **rejected as degenerate**:
+691,792 jobs in one class against 23,412 and 57. v2020 also records **no queueing delay** —
+`pai_job_table.start_time` ≡ `pai_task_table.start_time`, p99 wait = 0 s — so "deadline = what the
+real scheduler delivered" is available in Google's trace and not in this one. Both facts are limits
+of the data, recorded rather than papered over.
+
+Labels are a **side-car** (`data/build_v2020_labels.py` → `job_labels.csv`, keyed by job name):
+`replay_jobs.csv` is not rebuilt, so every committed v2020 window stays byte-identical.
+
+**Finding (pool 32 = 8 GPUs, 96 jobs, tick 30 s, slack ×10, n=4).**
+
+| world | SLA | prodSLA | tight | util | wait |
+|---|---|---|---|---|---|
+| synthetic tier | 12.0% | 2.8% | 2.3% | 80% | 162.4 |
+| **real tier** | 10.9%\* | **0.0%\*** | 11.7% | 79% | 161.3 |
+
+**The floor already achieves 100% production attainment.** With a real tier the sim's structural
+prod-precedence is sufficient on its own, and the tight-laxity stratum separates cleanly from the
+prod stratum (11.7% vs 0.0%) — the separation `tight_sla` was added to detect.
+
+**What this does to claim 2.** Prod-tier protection is the reasoning layer's one reproducible
+contribution (Exp 70/71/73). Three results now converge on the same place: Exp 96 (the effect was
+entangled with a synthetic confound and its strongest cell did not survive de-confounding), the
+Exp 97 scale ladder (floor prod violations 12.9% at 2 GPUs → 2.1% at 8 → 0.0% at 30), and Exp 98
+(0.0% at the floor with real labels). **On a realistic GPU cluster with trace-derived tiers there is
+no prod-protection problem for the LLM to solve.** Claim 2 should be read as an artefact of the
+synthetic tier recipe until shown otherwise on a workload where the floor actually misses prod
+deadlines.
+
+**Not yet done.** The LLM arms have not been re-measured in this world; the deterministic rows above
+are n=4 and need n=32. Whether any arm can beat a 0.0% floor is not a question worth much compute —
+the useful next question is which metric *does* have headroom here (overall SLA 10.9%, the tight
+tercile 11.7%, and utilisation).

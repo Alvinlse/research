@@ -56,7 +56,21 @@ STD_TICK_S = 30      # Exp 97 standard: 30 s slices -> median trace job ~36 tick
 # Second trace (Exp 43/44 external-validity caveat): MIT Supercloud slurm log — university
 # HPC batch vs v2020's cloud PAI. Jobs are ~14x longer, so its tick is 900 s to keep median
 # work ≈ 9 ticks: SAME sim regime, different world. Built by data/build_supercloud_replay.py.
+# Exp 98: Google cluster-data 2011 ships the two labels the Alibaba recipe had to invent.
+# Google's priority bands: 0-1 free, 2-8 normal, 9-10 production, 11 monitoring.
+GOOGLE_CSV = os.path.join(HERE, "..", "data", "google-cluster-2011", "replay_jobs.csv")
+# Exp 98: the same idea on the GPU trace we actually need. v2020's REAL tier signal is whether
+# the job's instance carries a registered workload tag (bert/ctr/nmt/...) -- a named recurring
+# pipeline vs an ad-hoc job, 12.2% of terminated GPU jobs. Built by data/build_v2020_labels.py
+# into a SIDE-CAR so replay_jobs.csv (and every committed window) is untouched.
+V2020_LABELS = os.path.join(HERE, "..", "data", "alibaba-gpu-v2020", "job_labels.csv")
+GOOGLE_PROD_PRIORITY = 9
+# Deadline tightness from the SCHEDULING CLASS (0 = batch .. 3 = latency-sensitive), which is a
+# different trace field from priority -- measured corr(prod, class) = -0.11 against the synthetic
+# recipe's -0.78, so tier and tightness are independent here BY DATA, not by a decorrelate flag.
+SLACK_BY_CLASS = {0: 3.0, 1: 2.0, 2: 1.5, 3: 1.25}
 TRACES = {"v2020": (REPLAY_CSV, STD_TICK_S),
+          "google2011": (GOOGLE_CSV, 10),   # median job 162 s -> ~16 ticks, like v2020's ~9
           "supercloud": (os.path.join(HERE, "..", "data", "supercloud", "replay_jobs.csv"), 900)}
 WORK_CLAMP = (1, 60)   # ticks, at the reference TICK_S=120 — derive with work_clamp(tick)
 # ---- the tick is a RESOLUTION knob, not a workload change --------------------------------------
@@ -86,14 +100,33 @@ ARRIVAL_FRAC = 0.6   # sample arrivals from the first 60% of the horizon (make_w
 PROD_RATE = (2.2 - 1.667) / (2.2 - 0.6)   # Exp 96: the correlated rule's own prod marginal (1/3)
 
 
-def load_trace(path: str = REPLAY_CSV) -> list[tuple[int, int, int, str]]:
-    """(arrival_s, dur_s, quanta, job_name) per job, sorted by real arrival.
+def load_trace(path: str = REPLAY_CSV, real_tiers: bool = False) -> list[tuple]:
+    """(arrival_s, dur_s, quanta, job_name[, labels]) per job, sorted by real arrival.
 
     Sort key excludes job_name so tie order (stable = CSV order) is byte-identical to the
-    Exp-28 3-tuple version — same seeds keep sampling the same windows/jobs."""
+    Exp-28 3-tuple version — same seeds keep sampling the same windows/jobs.
+
+    Exp 98: a trace that ships REAL scheduling labels (Google 2011: priority 0-11 and
+    scheduling class 0-3) appends them as a 5th element. Alibaba rows stay 4-tuples, so every
+    v2020 tier is untouched and `make_trace_workload` falls back to the synthetic recipe."""
     with open(path) as f:
-        rows = [(int(float(r["arrival"])), int(float(r["dur"])), int(r["quanta"]), r["job_name"])
-                for r in csv.DictReader(f)]
+        rows = []
+        for r in csv.DictReader(f):
+            base = (int(float(r["arrival"])), int(float(r["dur"])), int(r["quanta"]), r["job_name"])
+            if "priority" in r:      # Google 2011: BOTH labels are real and independent
+                rows.append(base + (("prod" if int(r["priority"]) >= GOOGLE_PROD_PRIORITY
+                                     else "besteffort",
+                                     SLACK_BY_CLASS.get(int(r["sched_class"]), 2.0)),))
+            else:
+                rows.append(base)
+    if real_tiers:
+        # Exp 98: attach the REAL tier. Unlabelled jobs stay best-effort, which is the honest
+        # reading of an absent tag, not a missing value to be imputed.
+        with open(V2020_LABELS) as f:
+            lab = {r["job_name"]: r["tier"] for r in csv.DictReader(f)}
+        # (tier, slack): v2020 has no real tightness field, so slack stays None and is
+        # drawn per job from the independent `srng` stream in make_trace_workload.
+        rows = [r + ((lab.get(r[3], "besteffort"), None),) for r in rows]
     rows.sort(key=lambda r: r[:3])
     return rows
 
@@ -228,26 +261,38 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
         rng.shuffle(urg)
 
     trng = random.Random(f"tier-{seed}")   # Exp 96: own stream -> other tiers stay byte-paired
+    srng = random.Random(f"slack-{seed}")  # Exp 98: tightness, independent of tier and of the bid
     jobs: list[Job] = []
     cap_map: dict[str, int] = {}
     true_cap_map: dict[str, int] = {}
     belief: dict[str, float] | str | None = "blind" if time_mode == "blind" else \
         {} if time_mode == "predicted" else None           # "oracle"/None -> true remaining
     clip = max(1, round(CAP_CLIP / quantum))               # same physical clip in pool units
-    for i, (arr_s, dur_s, quanta, name) in enumerate(window):
+    for i, row in enumerate(window):
+        arr_s, dur_s, quanta, name = row[:4]
+        labels = row[4] if len(row) > 4 else None      # Exp 98: (priority, sched_class, wait)
         quanta = min(max(1, round(quanta / quantum)), clip)  # trace quanta -> pool units
         arrival = (arr_s - t0) // tick
         wc_lo, wc_hi = work_clamp(tick)
         work = float(min(wc_hi, max(wc_lo, round(dur_s / tick))))
+        # urgency stays synthetic in BOTH worlds: it is a private valuation for the bid, and no
+        # trace records what a job was worth to its owner. What the labels replace is tier and
+        # deadline tightness, which the Alibaba recipe had to derive from this same draw.
         urgency = round(urg[i] if stratify else rng.uniform(0.6, 2.2), 3)  # make_workload recipe
-        slack = max(1.15, min(2.4, 2.5 - 0.65 * urgency)) * slack_mult
+        # With a REAL tier, tightness must not come off the same draw again (the Exp 96
+        # confound). Either the trace supplies it (Google: scheduling class) or it is drawn
+        # from its OWN stream, independent of tier and of the bid, keeping windows paired.
+        slack = ((labels[1] if labels[1] is not None else
+                  max(1.15, min(2.4, 2.5 - 0.65 * srng.uniform(0.6, 2.2)))) if labels
+                 else max(1.15, min(2.4, 2.5 - 0.65 * urgency))) * slack_mult
         deadline = arrival + int(round(work * slack))
         # Exp 96: the default rule makes tier and deadline tightness ONE variable — prod <=>
         # urgency >= 1.667 <=> slack in [1.15, 1.42] — so "prod protection" and "tight-deadline
         # protection" are inseparable. `decorrelate` draws the label independently at the SAME
         # marginal, P(prod) = (2.2-1.667)/(2.2-0.6) = 1/3, from its own stream so every window
         # stays byte-identical to the correlated world and the two are exactly paired.
-        tier = (("prod" if trng.random() < PROD_RATE else "besteffort") if decorrelate
+        tier = labels[0] if labels else \
+               (("prod" if trng.random() < PROD_RATE else "besteffort") if decorrelate
                 else ("prod" if urgency >= 1.667 else "besteffort"))
         j = Job(f"r{i:02d}", arrival, ["train"], [work], urgency, deadline, tier)
         jobs.append(j)
@@ -496,7 +541,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model, tick_
           cooldown: int = 0, resize_c1: float = 0.0, gamma: float | None = None,
           phi: float = 0.0, qcache: float | None = None, market: bool = False,
           gated: bool = False, corrected: bool = False, authored: str = "",
-          decorrelate: bool = False,
+          decorrelate: bool = False, real_tiers: bool = False,
           composed: bool = False, bid_info: str = "exact") -> None:
     assert not (referee and single_ilp), "--referee and --single-ilp are separate arms"
     assert all(m in ("narrated", "attributed") for m in authored.split(",") if m), \
@@ -514,14 +559,15 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model, tick_
     # the BASE world only (request == truth, oracle time), the Exp 28/29 recipe.
     assert trace_name == "v2020" or (caps_mode == "real" and truth_mode == "plan" and
                                      not (time_mode or ttf_mode or baseline or dyncap)), \
-        "--trace supercloud supports only the base world (no pred/time/ttf/baseline/dyncap)"
+        f"--trace {trace_name} supports only the base world (no pred/time/ttf/baseline/dyncap): " \
+        "the Stage-1 CSVs are keyed by v2020 job names"
     assert baseline is None or time_mode == "predicted", \
         "--baseline needs --time predicted (EASY's runtime estimate + window pairing)"
     trace_path, tick = TRACES[trace_name]
     tick = tick_s or tick                      # --tick overrides the trace's native resolution
     set_tick(tick)                             # keep the wall-clock thresholds wall-clock
     horizon = horizon or max(1, HORIZON_S // tick)   # 0 = the standard span at this resolution
-    trace = load_trace(trace_path)
+    trace = load_trace(trace_path, real_tiers=real_tiers)
     true_map = None
     declared = False
     if truth_mode != "plan":                  # Exp 36 usage / Exp 37 mem: true need measured
@@ -596,6 +642,10 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model, tick_
         # (below). Without this a rebase at a longer drain lands on the same key and silently
         # overwrites rows it is not comparable with -- the Exp 59 trap with a new face.
         suffix += f"+h{horizon}"
+    if real_tiers:
+        # Exp 98: tier comes from the trace, not from the urgency draw -- a different world
+        # under the same arm names, so it must never merge with the synthetic rows
+        suffix += "+realtier"
     if decorrelate:
         # Exp 96: same jobs, same deadlines, only the prod LABEL is redrawn — must never merge
         # with the correlated rows, which are a different world under the same arm names
@@ -892,6 +942,13 @@ def main() -> None:
                     help="Exp 92 boundary test: validated auction + the SIGNED-CORRECTION "
                          "escalation that wins the hard-case suite (Exp 83/88/89). It only acts "
                          "on jobs carrying text; the trace has none, so the prediction is a no-op.")
+    ap.add_argument("--real-tiers", action="store_true",
+                    help="Exp 98: take `tier` from the TRACE instead of the synthetic urgency "
+                         "draw. v2020: prod = the job's instance carries a registered workload "
+                         "tag (bert/ctr/nmt/...), 13.8%% of replay jobs. Deadline tightness then "
+                         "comes off its OWN rng stream, so tier and tightness are independent "
+                         "(measured corr -0.000 vs the synthetic recipe's -0.778) without needing "
+                         "--decorrelate. Needs data/build_v2020_labels.py. Tier suffix +realtier.")
     ap.add_argument("--decorrelate", action="store_true",
                     help="Exp 96: draw the prod/besteffort label INDEPENDENTLY of urgency at the "
                          "same marginal (1/3), instead of prod <=> urgency >= 1.667. Breaks the "
@@ -1082,7 +1139,7 @@ def main() -> None:
           truth_mode=a.truth, time_mode=a.time, ttf_mode=a.ttf, baseline=a.baseline,
           dyncap=a.dyncap, trace_name=a.trace, quantum={"quarter": 1, "whole": 4}[a.quantum],
           gated=a.gated, corrected=a.corrected, authored=a.authored,
-          decorrelate=a.decorrelate, referee=a.referee, manual=a.manual, single_ilp=a.single_ilp, debate=a.debate,
+          decorrelate=a.decorrelate, real_tiers=a.real_tiers, referee=a.referee, manual=a.manual, single_ilp=a.single_ilp, debate=a.debate,
           no_think=a.no_think, advocates=a.advocates, realloc_cost=a.realloc_cost,
           alpha=a.alpha, alpha_norm=a.alpha_norm, trigger=a.trigger, theta=a.theta,
           stale=a.stale, extend=a.extend, no_argue=a.no_argue, prev_input=a.prev_input,
