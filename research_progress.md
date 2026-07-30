@@ -11,6 +11,18 @@
 
 ## State of the claims (2026-07-28)
 
+> **⚠ Operating-point warning (2026-07-30, Exp 97).** Every in-sim **SLA / prodSLA** number in the
+> table below was measured where the deadline was set against a job's *solo* runtime (slack
+> 1.15–2.4× work) at 76–89% utilisation — a regime in which the floor misses **54% (amdahl) / 40%
+> (sat)** of deadlines and ~2.5% of jobs are counted late purely because the horizon censored them.
+> That is not a cluster anyone would run. The practical operating point is `--horizon 400
+> --slack-mult 10` (floor violations 11–13%, every job finishes, util 76–78%); the rebase is
+> **in progress**. Efficiency results (util, useful util, regret) do not depend on the deadline
+> recipe and are unaffected; the hard-case suite (Exp 79–83, 88, 89, 93, 95) is not in-sim and is
+> untouched. Landed so far: claim 1 **survives and sharpens** (the market's deadline effect is
+> exactly 0.0 ± 0.0 under amdahl while every efficiency gain holds), and claim 3 is **open** — at
+> the practical point protection and efficiency look complementary, not like one dial.
+
 | # | Claim | Evidence | Status |
 |---|---|---|---|
 | 1 | The **deterministic bid/ask market wins every efficiency metric** — utilisation, useful utilisation, oracle regret — against every LLM arm, in all six pool×law cells, at **zero tokens** | Exp 72, 86 | solid (n=32, both laws) |
@@ -3016,3 +3028,89 @@ Both worlds must live in ONE results file (the analyser pairs the `+decorr` tier
 tier); `--law sat` needs its own file because the tier name does **not** encode the law — running
 sat into the amdahl file would silently overwrite the amdahl rows under the same tier key, which is
 the Exp 59 unpaired-comparison trap in a new costume.
+
+## Experiment 97 — THE PRACTICAL OPERATING POINT: the deadline recipe was infeasible, and the rebase (2026-07-30)
+
+**Type: calibration + rebase, not a hypothesis test** (Exp 62 precedent). No pre-registration; the
+choice of operating point is an input to the headline experiments, not a claim, and it is recorded
+here in full so the choice can be argued with.
+
+**The problem.** `trace_replay.py:215-216` sets a deadline against the job's **solo** runtime —
+`slack ∈ [1.15, 2.4] × work` — while the sim runs at 76–89% utilisation, where queue delay routinely
+exceeds a job's own runtime. Missing half the deadlines is therefore forced by the recipe before any
+policy runs: the amdahl floor violates **53.9%** of deadlines and the sat floor **39.5%**. This was
+diagnosed inside the Exp 63 build note on 2026-07-22 (*"slack 1.55× a job's own work (p10 = 1.00×) is
+unmeetable in a shared queue… ~8 points of dynamic range on a ~55-point floor"*) and never acted on.
+A second, smaller defect sat under it: at horizon 300 about **2.5% of jobs never finish** and count
+as violations by censoring alone — a constant floor no policy can move.
+
+**Calibration sweep (floor arm, pool 8, n=8 seeds).**
+
+| n_jobs | slack | horizon | SLA | prodSLA | util | done |
+|---|---|---|---|---|---|---|
+| 16 | 1× | 300 | 45.3% | 52.4% | 76% | 15.6/16 |
+| 16 | 2× | 300 | 21.1% | 21.6% | 76% | 15.6/16 |
+| 16 | 4× | 300 | 16.4% | 14.0% | 76% | 15.6/16 |
+| 16 | 8× | 300 | 12.5% | 8.8% | 76% | 15.6/16 |
+| 16 | 16× | 300 | 9.4% | 8.8% | 76% | 15.6/16 |
+| 10 | 4× | 300 | 11.2% | 2.5% | 67% | 10/10 |
+| 16 | 4× | **400** | 15.6% | 14.0% | 76% | **16/16** |
+| 16 | 8× | **400** | 11.7% | 8.8% | 76% | **16/16** |
+| 16 | **10×** | **400** | **9.4%** | **8.8%** | **76%** | **16/16** |
+| 16 | 12× | 400 | 9.4% | 8.8% | 76% | 16/16 |
+| 20 | 8× | 400 | 20.0% | 17.2% | 88% | 20/20 |
+
+Three readings. **(a)** slack 1× is a cliff, not a setting — one step to 2× takes violations 45% →
+21%, and the headline config sat on the worst point of the curve. **(b)** horizon 400 drains the
+censored jobs (16/16 done) and 600 is identical to 400, so 400 is sufficient. **(c)** past slack 8–10×
+the floor's prod violations **stop falling at 8.8%**: those jobs are not late, they are **starved**,
+and no amount of deadline slack reaches them — which is exactly the failure a mechanism can fix
+(`negotiated` at slack 10× takes prod to 2.1%\* in the n=8 probe).
+
+**Chosen operating point.** `--pools 8 --n-jobs 16 --horizon 400 --slack-mult 10 --caps predicted`:
+utilisation 76–78%, **every job finishes**, floor prod attainment ~87–90%, and the queue still binds
+(wait 19–23 ticks). It keeps the contention that makes scheduling matter instead of buying a pretty
+SLA by unloading the cluster (n=10 reaches 2.5% prod violations but only at 67% util).
+
+**Infrastructure** (`47e0007`, all no-ops at the defaults): `--horizon T`; the **arrival span pinned**
+to 180 ticks so the horizon adds drain without thinning arrivals; the horizon added to the tier name
+so a rebase cannot land on the 300-tick rows. Default runs verified byte-identical.
+
+**Stage 1 — the zero-token arms rebased (n=32, both laws).**
+
+| law | policy | SLA | prodSLA | tight | util | useful | regret | wait |
+|---|---|---|---|---|---|---|---|---|
+| amdahl | no-llm | 12.9% | 12.9% | 11.3% | 78% | 74% | 10% | 23.0 |
+| amdahl | negotiated (rule) | 10.5%\* | 7.9%\* | 8.1% | 77% | 73% | 12% | 21.2 |
+| amdahl | market | 12.9% | 12.9% | 11.3% | 80% | 75% | 9% | 23.0 |
+| sat | no-llm | 10.9% | 10.4% | 9.4% | 77% | 71% | 10% | 19.5 |
+| sat | negotiated (rule) | 9.2%\* | 6.1%\* | 5.6% | 75% | 70% | 12% | 16.7 |
+| sat | market | 10.7% | 9.9% | 8.8% | 79% | 72% | 9% | 19.4 |
+
+```
+amdahl  negotiated vs floor:  dSLA -2.3 ± 2.1*  dprodSLA -5.0 ± 3.6*  dutil -1.0 ± 0.8*  dregret +1.5 ± 0.7*
+amdahl  market     vs floor:  dSLA +0.0 ± 0.0   dprodSLA +0.0 ± 0.0   dutil +1.6 ± 0.8*  duseful +1.1 ± 0.7*  dregret -1.5 ± 0.9*
+sat     negotiated vs floor:  dSLA -1.8 ± 1.7*  dprodSLA -4.3 ± 3.7*  dutil -1.5 ± 1.2*  dregret +1.9 ± 0.8*
+sat     market     vs floor:  dSLA -0.2 ± 0.4   dprodSLA -0.4 ± 0.9   dutil +2.6 ± 1.1*  duseful +1.2 ± 1.1*  dregret -0.8 ± 0.5*
+```
+
+- **The market's deadline effect is exactly zero under amdahl** (`+0.0 ± 0.0`, not a small ns
+  estimate) and ns under sat, while its efficiency gains hold at every metric. Claim 1 survives the
+  rebase and gets **sharper**: the market buys throughput and moves no job across a deadline.
+- **The margin arms gain a real SLA effect that they did not have before** — overall −2.3\*/−1.8\*
+  where the old operating point gave ns, and prod −5.0\*/−4.3\* — for a −1.0/−1.5 utilisation cost.
+  Mechanically this follows from (c): with generous deadlines the only violators are starved jobs,
+  and margin/reserve is what un-starves them. Under sat the prodSLA stars do **not** survive Holm
+  (only util/useful/regret do); under amdahl they are reported nominal pending the same check.
+- Efficiency and protection therefore look **complementary at this operating point** — the market
+  and the reserve move disjoint sets of jobs — where claim 3 read them as one dial. That claim is
+  now explicitly open and is the first thing the LLM arms will test.
+
+**Stage 2 (running).** `--referee --market --composed --llm --model qwen2.5:14b`, both laws, n=32 —
+the Exp 72/73 frontier at the practical point. Nothing is cached at a new operating point, so the
+referee arm runs cold.
+
+**What this invalidates.** Every in-sim **SLA / prodSLA** number in Exp 63, 70–73, 84, 86, 87, 92, 94
+and 96 was measured at the infeasible point and must be re-read as such. The **efficiency** results
+(util, useful util, regret) never depended on the deadline recipe and are unaffected. The
+**hard-case suite** results (Exp 79–83, 88, 89, 93, 95) are not in-sim at all and are untouched.
