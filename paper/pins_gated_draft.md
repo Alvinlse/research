@@ -198,6 +198,29 @@ production protection), not a winner the data selects:
 | `composed` | referee-equivalent protection      | efficiency, significantly | 1 call/tick |
 | `referee`  | nothing composed doesn't           | regret\*, useful\*        | 24,240 tok/seed |
 
+**A confound in the workload, and what it costs this claim (Exp 96).** In the generator above, a
+job's tier and its deadline slack were drawn from one uniform — `prod` ⟺ `urgency ≥ 1.667` ⟺
+`slack ∈ [1.15, 1.42]` — so every production job also carried one of the tightest deadlines in its
+window (measured point-biserial r = −0.78). "Tier protection" and "tight-deadline protection" were
+therefore not separable in the numbers above. We re-drew the tier label independently at the same
+marginal, from its own random stream so the two worlds share byte-identical jobs (r = −0.02), and
+re-ran both laws at n=32 paired seeds. The result is split: under amdahl the protection is
+undiminished (`composed` −5.6\* → −3.4\*, difference-in-differences +2.2 ± 4.3, ns), while under sat
+the one cell that survived multiplicity correction does not survive the de-confound (−8.0\*,
+Holm-adjusted 0.017 → −2.7 ns, Holm 0.584; difference-in-differences +5.3 ± 5.8, p=0.053). The
+difference-in-differences — the correct test, and exact here because the jobs are shared — is not
+significant in either law, so we neither withdraw the protection claim nor restate it as clean tier
+protection: **we report both worlds and note that ~175 paired seeds would settle it.**
+
+The same experiment gives a clean negative. Defining a laxity stratum (`tight_sla`, the
+tightest-tercile violation rate) and de-correlating it from tier, **no reasoning arm protects the
+tightest deadlines in either law**, and under sat the referee makes them significantly worse
+(+6.9 ± 5.1\*), while the market's effect on that stratum is identical seed-for-seed in both worlds —
+it never ran through the label. Nothing in the mechanism keys on laxity: grants are ordered by
+frozen bid value. This is the same shape as the specificity cost of §4.4 — reasoning applied to a
+stratum it cannot perceive is worse than no reasoning — and it names least-laxity ordering as the
+cheap deterministic lever we have not yet pulled.
+
 ### 4.3 The gated architecture is efficiency-neutral (Exp 86, 87, 92)
 
 **The validator is inert on correct clearings.** Re-running the market arm with the per-tick

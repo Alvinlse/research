@@ -14,7 +14,7 @@
 | # | Claim | Evidence | Status |
 |---|---|---|---|
 | 1 | The **deterministic bid/ask market wins every efficiency metric** — utilisation, useful utilisation, oracle regret — against every LLM arm, in all six pool×law cells, at **zero tokens** | Exp 72, 86 | solid (n=32, both laws) |
-| 2 | The reasoning layer's **entire reproducible contribution is production-tier protection**, and it is captured by a **single reserve scalar**; a full per-job referee is dominated at 1/24000 of the tokens | Exp 70, 71, 73 | solid (n=32) |
+| 2 | The reasoning layer's **entire reproducible contribution is production-tier protection**, and it is captured by a **single reserve scalar**; a full per-job referee is dominated at 1/24000 of the tokens | Exp 70, 71, 73 → **Exp 96** | **qualified** — the workload made tier ≡ tight deadline; de-confounded, amdahl protection holds (DiD +2.2 ± 4.3 ns) but sat's Holm-surviving cell does not (−8.0\* → −2.7 ns, DiD +5.3 ± 5.8, p=0.053). Report both worlds; n≈175 would settle it |
 | 3 | **Protection and efficiency are one dial, not two layers** — the reserve protects by holding GPUs idle, which is exactly the market's utilisation gain | Exp 73 | solid |
 | 4 | The **gated architecture is efficiency-neutral**: the per-tick validator is byte-identical on correct clearings (0% fallback), and debate-on-trigger costs −0.20 ± 1.40 SLA (ns) against the bare auction | Exp 86, 87 | solid (n=32) |
 | 5 | **Debate beats a budget-matched single call on text exceptions** — 43/81 vs 29/81 at equal calls, one-sided McNemar **p=0.00066**; best-of-N at the same budget is flat (p=0.250), so the gain is structure, not spend | Exp 83 → 88 → **Exp 89** | **solid (powered, n=81)** |
@@ -28,6 +28,7 @@
 | 14 | **A cheaper structure also survives its budget control** — an objection-only critic scores 34/81 against a best-of-N sampler at *identical* per-case spend (26/81, p=0.0193), while that sampler is one case *worse* than a single call at 3× the price. Third replication of "budget alone buys nothing" | Exp 93 → **Exp 95** | moderate (pooled n=81; blind r4 stratum ns, p=0.227) |
 | 13 | **Debate's win is the second pass, not the arguments** — stripping `evidence` from the packet changes the score by exactly zero cases (43/81 both ways, discordant 4-4). The transcript stays readable but is not load-bearing for the decision; `evidence` can be dropped at no measured cost | Exp 93 | solid (null, n=81; TOST at ±3 fails on m=8) |
 | 15 | **The text channel cannot be generated from the simulator's own state.** Agent-authored causal notes (`attributed`) vs a what-only placebo (`narrated`) give SLA identical *seed for seed at full precision*, and both equal the 0-token market exactly; the notes moved the allocation on 4 of ~842 escalated ticks and flipped no outcome. The cross-tick history the market lacks bought nothing, so §4.1 is untouched | Exp 92 → **Exp 94** | solid (negative, n=32, exact identity) |
+| 16 | **Nothing in the system serves deadline laxity.** Once tier and tightness are drawn independently, no reasoning arm protects the tightest-laxity tercile in either law, and under sat the referee makes it significantly *worse* (+6.9 ± 5.1\*); the market's tight-tercile effect is identical seed-for-seed across both worlds, i.e. label-independent. Motivates least-laxity grant ordering (`two_sided_sim.py:454` still orders by frozen bid) | **Exp 96** | solid (negative, n=32, both laws) |
 | 12 | The round-2 54-scene suite was **insensitive**, not merely negative: text-blind baselines (ILP 30/54, rule 31/54) scored within noise of every LLM arm, min p=0.238 across ~30 tests. Round 3's text-dependent design drops the rigid floor to 0/31 — the instrument was replaced, not the hypothesis re-shopped | Exp 65–67 → 79–83 | solid (methodology) |
 
 **Open / next**, roughly by value:
@@ -43,13 +44,18 @@
    suggestive only.)* *(Closed 2026-07-28 — Exp 95: the budget-matched critic arm ran, critic 34/81
    vs matched-budget boNc 26/81, p=0.0193, H1 supported; the blind r4 stratum is ns.)* Remaining
    work: **critic vs debate at matched budget** — the last confounded pair.
-3. **Update §4.4 to lead with Exp 92, not Exp 84.** *(Done 2026-07-28: the boundary test ran — see
-   Exp 92. `corrected` is byte-identical to `market`, 193 escalations, 0 LLM calls, 0 changes. The
-   paper has not yet been rewritten to use it.)* Remaining work: extend Exp 92 from n=8 to n=32
-   (~8 min), then rewrite §4.4 to lead with the no-op and demote Exp 84 to an architecture
-   ablation.
+3. ~~**Update §4.4 to lead with Exp 92, not Exp 84.**~~ *(CLOSED — this entry was stale when
+   re-read on 2026-07-30. Exp 92 already ran at n=32 (843 escalations, 0 calls, 0 changes) and
+   commit `a8f6886` rewrote §4.4 to lead with the no-op boundary and demoted Exp 84 to an
+   architecture ablation. Nothing left here.)*
 4. **Exp 58 — the change-cost lever** (`--prev-input`, rule 6) is likewise built and never
    isolated.
+4b. **Settle claim 2's wording (Exp 96 follow-up).** The de-confound DiD is inconclusive at n=32 and
+   the two laws disagree; ~95 seeds (amdahl) / ~175 (sat) would give a ±2.5-pt DiD CI. Same command,
+   more seeds, overnight. Until then claim 2 must be reported with both worlds' numbers.
+4c. **Least-laxity grant ordering (Exp 96 branch 4).** Nothing in the system keys on laxity —
+   `two_sided_sim.py:454` orders grants by frozen bid value. Ordering by laxity is a one-line
+   deterministic lever with a pre-registered motivation now.
 5. Malleability ablation (elastic-job fraction sweep) remains unstarted.
 6. Exp 64's pool-32 rebaseline needs a batch node; the reaper killed it twice.
 
@@ -63,7 +69,10 @@ this opens, neither started: (a) attributed's proposals are ~96% rejected by `ap
 violation reason is counted but never logged — one line of instrumentation would say whether the
 causal channel over-reaches or is merely unfundable; (b) output-length symmetry was never controlled
 (10.9 vs 28.2 words), which must be fixed before any positive text result could be read as causality
-rather than verbosity.*
+rather than verbosity.* *(Follow-up (a) is now instrumented — commit `d36f09a`: the corrected and
+authored arms tally which constraint the rejected ruling tripped (`unknown job(s)` / `cannot fund` /
+`change budget` / `infeasible`) and print it beside the count. The authored re-run that populates
+the counters has not been done.)*
 
 <details>
 <summary>Superseded claims table (2026-07-06) — kept for provenance</summary>
@@ -2856,3 +2865,154 @@ PINS_RESULTS=pins/results_exp95_qwen2514b.json \
 collides with committed Exp 88/89 artefacts — a `--no-llm` smoke test silently overwrote
 `results_exp89_qwen2.514b_t0.8.json` during this experiment (restored from git). Always set
 `PINS_RESULTS`.
+
+## Experiment 96 — THE TIER/LAXITY DE-CONFOUND: the confound was real, and the two laws disagree (2026-07-29/30)
+
+**Pre-registration:** `docs/superpowers/specs/2026-07-29-exp96-tier-laxity-deconfound-design.md`,
+committed at `0ba20ee` **before any code existed**; the `--decorrelate` flag and the `tight_sla`
+metric at `a4acb11`, **before the run**. The analyser (`225d256`) was written **after** the amdahl
+runs finished — disclosed; it implements spec §5–6 verbatim, with no test added or dropped after
+seeing data.
+
+**Question.** Claim 2 says the reasoning layer's reproducible contribution is *production-tier
+protection*. `trace_replay.py:211-214` drew tier and deadline slack from **one** uniform: `prod` ⟺
+`urgency ≥ 1.667` ⟺ `slack ∈ [1.15, 1.42]`. So no experiment to date could separate "the prod tier
+was protected" from "the tightest deadlines were served". This separates them.
+
+**Method.** `--decorrelate` redraws the tier label independently at the same marginal
+(`P(prod) = 1/3`) from **its own RNG stream**, so the two worlds share byte-identical jobs and differ
+only in which ones are labelled prod — the diff-in-diff is exact, not statistical. New metric
+`tight_sla` = violation rate over the tightest-laxity tercile, `(deadline − arrival) / work`. Exp
+73's configuration exactly: `--referee --market --composed --llm --model qwen2.5:14b --caps
+predicted --pools 8 --seeds 32`, both laws, n=32 paired seeds.
+
+**H3 — the confound, measured rather than asserted (amdahl).** Regenerating both worlds' windows
+through `make_trace_workload`:
+
+| world | mean laxity, prod | mean laxity, besteffort | point-biserial r | prod/window |
+|---|---|---|---|---|
+| correlated | 1.198 | 1.770 | **−0.778** | 5.53 (3–10) |
+| decorrelated | 1.564 | 1.576 | **−0.017** | 5.91 (3–12) |
+
+Jobs are **byte-identical across worlds** (arrival/work/deadline), so the pairing the DiD needs
+holds. At the floor, `tight_sla` tracks `prod_sla` seed-wise at r = +0.889 correlated and +0.442
+decorrelated. The confound was real and the manipulation removed it.
+
+**H1 — protection survives de-confounding (amdahl, 8 GPUs, violation rates, lower is better).**
+
+| arm | dprodSLA correlated | dprodSLA decorrelated | DiD (decorr − corr) |
+|---|---|---|---|
+| referee | −7.6 ± 5.0\* | −5.5 ± 3.9\* | +2.1 ± 5.7 (p=0.530) |
+| negotiated | −6.6 ± 4.6\* | −4.7 ± 3.5\* | +1.9 ± 4.9 (p=0.378) |
+| market | −3.8 ± 3.1\* | −3.3 ± 2.8\* | +0.5 ± 3.3 (p=0.575) |
+| **composed** (primary) | −5.6 ± 4.1\* | **−3.4 ± 3.2\*** | **+2.2 ± 4.3 (p=0.235)** |
+
+Read alone, amdahl is **branch 1**: every arm still protects the prod tier when the label no longer
+implies a tight deadline, and no diff-in-diff is distinguishable from zero. The point estimates all
+drift the predicted way (~1–2 pts smaller), so this is "no measurable shrinkage", not "provably
+none" — the DiD CIs are ±3 to ±6 pts wide. **The sat law does not agree, and it is the law where
+the correlated effect was strongest.**
+
+**H1 — the sat law: the strongest cell does not survive de-confounding.**
+
+| arm | dprodSLA correlated | dprodSLA decorrelated | DiD (decorr − corr) |
+|---|---|---|---|
+| referee | −4.6 ± 3.4\* | −7.8 ± 6.7\* | −3.2 ± 7.0 (p=0.500) |
+| negotiated | −7.9 ± 4.4\* | −3.3 ± 4.5 | +4.6 ± 6.2 (p=0.196) |
+| market | −0.7 ± 2.1 | −0.6 ± 1.6 | +0.1 ± 2.8 (p=1.000) |
+| **composed** (primary) | **−8.0 ± 4.5\*** (Holm 0.017) | **−2.7 ± 4.1 (ns)** (Holm 0.584) | **+5.3 ± 5.8 (p=0.053)** |
+
+Under sat, `composed` is the one cell in this whole experiment whose protection **survived Holm**
+in the correlated world (adj p=0.017, and `trace_replay`'s own 24-test family agreed at p=0.041).
+De-correlating the label removes it: −2.7 ± 4.1, Holm adj p=0.584.
+
+**Verdict: between branch 2 and branch 3, and n=32 cannot separate them.** Stating "significant in
+the correlated world, null in the decorrelated one" as if that were a finding would be the
+difference-of-significance fallacy; the DiD is the correct test and it lands at **+5.3 ± 5.8
+(p=0.053)** — the right sign and size for branch 2 (protection shrinks) but not significant, in the
+law that shows it, while amdahl's DiD sits at +2.2 ± 4.3. So the experiment establishes that the
+confound was real and removable, and **fails to resolve how much of claim 2 it was carrying**.
+Claim 2 is not refuted and is no longer clean: its strongest cell does not survive the de-confound.
+
+**Power, concretely.** The DiD standard deviations are ~12 pts (amdahl) and ~16 pts (sat), so a
+±2.5-pt DiD CI needs roughly **n≈95 (amdahl) and n≈175 (sat)** paired seeds. At ~45 min per 32
+seeds for the referee arm that is an overnight run per world per law — the cheapest available way
+to close this, and the one thing that would settle claim 2's wording.
+
+**The pre-registration did not say how to combine the two laws.** Spec §4 asked for both and §6
+wrote the branches as if one verdict would come back. It did not. Reporting both, with neither
+promoted, is the disclosure; no law was dropped and no combination rule was invented after the
+fact.
+
+**H2 — nothing protects the deadline, in either law.**
+
+amdahl:
+
+| arm | d tight_sla correlated | d tight_sla decorrelated |
+|---|---|---|
+| referee | −5.6 ± 3.3\* | **+2.5 ± 4.0** (worse, ns) |
+| negotiated | −5.6 ± 3.8\* | −1.3 ± 4.1 |
+| market | −3.1 ± 2.7\* | −3.1 ± 2.7\* |
+| composed | −5.0 ± 3.7\* | −2.5 ± 4.0 |
+
+sat:
+
+| arm | d tight_sla correlated | d tight_sla decorrelated |
+|---|---|---|
+| referee | −3.8 ± 3.9 | **+6.9 ± 5.1\*** (significantly **worse**) |
+| negotiated | −6.9 ± 4.3\* | +0.0 ± 2.6 |
+| market | +0.0 ± 1.8 | +0.0 ± 1.8 |
+| composed | −7.5 ± 4.4\* | +0.0 ± 3.2 |
+
+In the correlated world every arm "protects the tight tercile" — but that stratum *is* the prod
+stratum there (H3), so it says nothing. Once laxity is independent, **no reasoning arm protects it
+in either law**, every deterministic arm goes exactly flat under sat, and the referee's sign flips —
+to significantly worse under sat (+6.9 ± 5.1\*), i.e. giving the tightest-deadline jobs to a
+reasoning layer that cannot see laxity actively costs them. Stronger, and true in **both** laws: the
+market's tight-tercile effect is **identical seed-for-seed across the two worlds** (vector equality,
+not equal means), i.e. it does not run through the tier label at all, while every LLM arm's is
+label-dependent. Branch 4 therefore holds
+for the reasoning arms: nothing they do serves laxity, which is what motivates least-laxity grant
+ordering (`two_sided_sim.py:454` still orders by frozen bid value) as the next lever.
+
+**Multiplicity, stated plainly.** Under amdahl, Holm across the 8-test prodSLA family leaves only
+`correlated/referee` (adj p=0.026) and puts the primary arm at adj p=0.093 in **both** worlds;
+`trace_replay`'s own 24-test family kills every amdahl prodSLA star in both worlds. Under sat the
+correlated world keeps `composed` (0.017) and `negotiated` (0.017) and the decorrelated world keeps
+nothing. So amdahl's stars are nominal throughout — which is why its DiD null is weak evidence —
+while sat's are the real ones, and they are the ones the de-confound removes.
+
+**What this changes.** Claim 2 goes from *solid* to **qualified**: prod-tier protection is real in
+the correlated world (that has not changed), but the workload that produced it made tier and
+deadline tightness the same variable, and in the law where the effect was strongest it does not
+survive their separation. The DiD cannot yet say whether the loss is real, so the claim should be
+stated with both worlds' numbers, not restated as a clean tier result. Claims 1, 3, 4, 5 and 9 are
+untouched, as pre-registered. The new negative — **laxity is unserved by every reasoning arm, and
+under sat the referee actively harms the tightest tercile** — is a fresh, pre-registered result
+rather than a caveat, and it is the same shape as claim 9's specificity cost: reasoning applied to a
+stratum it cannot perceive is worse than not reasoning.
+
+**Caveats.** Single pool (8 GPU), single model (qwen2.5:14b), the two laws disagreeing and n=32 too
+small to adjudicate between them (see the power note). Tier still drives
+grant precedence structurally (`two_sided_sim.py:456-457`) — deliberately, so this de-confounds the
+*deadline*, not the *precedence*. `urgency` still drives the bid, so a decorrelated prod job also
+loses its implicit bid advantage: two things change for it, not one (spec §7 pinned this in
+advance). Prod count per window is binomial in both worlds (3–12 of 16), so `prod_sla` denominators
+are small and noisy.
+
+**Reproduce.**
+```
+PINS_RESULTS=pins/results_exp96_amdahl.json .venv/bin/python -m pins.trace_replay \
+  --referee --market --composed --llm --model qwen2.5:14b --caps predicted --pools 8 --seeds 32
+PINS_RESULTS=pins/results_exp96_amdahl.json .venv/bin/python -m pins.trace_replay \
+  --referee --market --composed --llm --model qwen2.5:14b --caps predicted --pools 8 --seeds 32 \
+  --decorrelate
+.venv/bin/python -m pins.exp96_analyse pins/results_exp96_amdahl.json
+```
+Add `--law sat` to both runs with `PINS_RESULTS=pins/results_exp96_sat.json` for the second law, then
+`.venv/bin/python -m pins.exp96_analyse pins/results_exp96_sat.json`.
+
+Both worlds must live in ONE results file (the analyser pairs the `+decorr` tier against its base
+tier); `--law sat` needs its own file because the tier name does **not** encode the law — running
+sat into the amdahl file would silently overwrite the amdahl rows under the same tier key, which is
+the Exp 59 unpaired-comparison trap in a new costume.
