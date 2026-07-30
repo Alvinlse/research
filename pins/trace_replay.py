@@ -770,7 +770,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model, tick_
           f"({ARRIVAL_SPAN_S//tick} arrival + drain), slack x{slack_mult:g}, "
           f"mean of {len(seeds)} seeds (window per seed) | spike_max={spike_max} scale={scale} "
           f"| truth={truth_mode} caps={caps_mode} clip={CAP_CLIP}")
-    print(f"pool is in QUARTER-GPU QUANTA: {', '.join(f'{q}q = {q/4:g} GPU' for q in pools)}")
+    print("pool unit: WHOLE GPUs" if quantum != 1 else
+          f"pool is in QUARTER-GPU QUANTA: {', '.join(f'{q}q = {q/4:g} GPU' for q in pools)}")
     header = (f"{'pool':>4}  {'policy':<12} {'SLA':>7} {'prodSLA':>8} {'tight':>6} {'util':>6} "
               f"{'useful':>7} {'regret':>7} {'slowdown':>9} {'wait':>6} {'fb':>6} {'done':>8}")
     all_per_seed: dict[str, dict[str, list[dict]]] = {}
@@ -831,7 +832,10 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model, tick_
                     save_cache(cache)   # per-seed: a reaped run loses at most one seed
                 el, done = time.time() - _t0, i + 1
                 eta = el / done * (len(seeds) - done)
-                print(f"\r      {gpus}q/{gpus//4}gpu {name:<11} {done:>2}/{len(seeds)} seeds "
+                # with --quantum whole the pool unit IS a whole GPU; only the quarter-quantum
+                # world needs the /4 conversion, and printing it unconditionally lied about scale
+                unit = f"{gpus}gpu" if quantum != 1 else f"{gpus}q/{gpus//4}gpu"
+                print(f"\r      {unit} {name:<11} {done:>2}/{len(seeds)} seeds "
                       f"| {el:5.0f}s elapsed ~{eta:5.0f}s left", end="", flush=True)
             print()
             per_seed_pool[name] = per_seed
