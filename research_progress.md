@@ -3288,3 +3288,51 @@ per-round value re-auctioning, and churn/thrash metrics were not examined here. 
 law, floor arm only for the headline contrast; the LLM arms were run but are inert. The stratified
 classes and the dynamic bid were introduced together, so the +16.4 is the pair's joint effect
 measured against the stratified frozen baseline — the classes alone move SLA by ~0.3 pts (n=4).
+
+### Exp 99b — the ρ ladder: the dynamic-urgency win is invariant to the deadline calibration
+
+ρ (`--slack-mult`) is the one number in the deadline recipe with no empirical referent — it was
+chosen so the floor lands at a plausible violation rate. A single calibrated value makes any SLA
+*level* a statement about that choice, so the contrast is reported across the regime instead.
+
+| ρ | dSLA | dprodSLA | dslow | dutil |
+|---|---|---|---|---|
+| 2 | +3.8 ± 3.1\* | +7.2 ± 4.0\* | +9.7 ± 2.5\* | +1.3 ± 1.9 |
+| 4 | +14.6 ± 3.4\* | +5.1 ± 3.0\* | +12.1 ± 2.8\* | +1.5 ± 2.0 |
+| 10 | +16.4 ± 3.1\* | +1.7 ± 1.9 | +12.5 ± 2.9\* | +1.7 ± 1.9 |
+| 16 | +14.4 ± 2.9\* | +0.5 ± 1.5 | +12.5 ± 2.9\* | +1.6 ± 1.9 |
+
+(frozen MINUS dynamic, n=32 paired per cell; positive = dynamic better)
+
+- **Dynamic urgency wins at every ρ**, so the result is an invariance claim, not an artefact of the
+  operating point. The SLA *magnitude* traces the predicted hump — small at ρ=2 (everything misses,
+  policies compress), peaking near ρ=10, easing at 16 — which is exactly why a single ρ must never
+  be quoted as a level.
+- **`dslow` is ~ρ-independent (+9.7 to +12.5\*)**: slowdown carries no deadline, so it is the same
+  result stated without any invented quantity. Lead with it.
+- **prod protection headroom shrinks as deadlines loosen** (+7.2\* at ρ=2 → +0.5 ns at ρ=16),
+  consistent with Exp 98's 0.0% floor: the tighter the world, the more there is to protect.
+
+### Exp 99c — whole-GPU quantum at the floor: Exp 48's penalty reproduces on the new world
+
+Same physical cluster (8 GPUs), same 96 jobs, `--caps real`, real tiers, stratified classes, n=32
+paired (window sampling is quantum-independent, so the tiers stay seed-paired).
+
+| quantum | SLA | prodSLA | tight | util | slowdown | wait | done |
+|---|---|---|---|---|---|---|---|
+| quarter-GPU (32 q) | 19.9% | 5.2% | 22.9% | 85% | 14.20 | 171.8 | 95.7/96 |
+| **whole-GPU (8 GPUs)** | **28.2%** | 4.5% | **31.8%** | 91% | **21.59** | **288.4** | **93.8/96** |
+
+```
+quarter MINUS whole (negative = quarter better), n=32:
+  dSLA -8.3 ± 1.9*   dtight -9.0 ± 2.4*   dslow -7.4 ± 1.8*   dwait -116.5 ± 25.4*
+  dutil -5.5 ± 1.5*  dfinished +2.0 ± 1.4*   dprodSLA +0.6 ± 1.0 (ns)
+```
+
+Forcing whole-card allocation costs **8.3 SLA points and 116 ticks of queueing** at the floor and
+pushes 2 more jobs per window past the horizon — an independent replication of Exp 48 (~10 pts) on a
+different operating point, different tick, and real tiers. Utilisation *rises* 5.5 pts, which is the
+trap: a job pinned to a full card it does not need shows as occupancy. `u_useful` tracks `util`
+exactly here because with `caps real` the rounded-up cap becomes the job's base, so the waste is
+invisible to the useful-utilisation accounting — the whole-GPU rows must not be read as more
+efficient.
