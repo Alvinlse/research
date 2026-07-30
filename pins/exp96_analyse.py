@@ -71,6 +71,9 @@ def manipulation_check(n_seeds: int, n_jobs: int = 16, horizon: int = 300) -> No
     """
     from pins.trace_replay import (TICK_S, TRACES, load_predicted_quanta, load_trace,
                                    make_trace_workload)
+    # tick=TICK_S (120 s) is PINNED, not inherited: Exp 96 ran before the Exp 97 standard
+    # moved the default to 30 s, and these windows must be regenerated at the tick they were
+    # measured at. A future de-confound at the new default needs its own tick here.
     trace = load_trace(TRACES["v2020"][0])
     pred = load_predicted_quanta()
     print("\n=== H3 manipulation check (regenerated windows) ===")

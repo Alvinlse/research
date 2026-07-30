@@ -28,6 +28,10 @@ Run:  .venv/bin/python -m pins.referee            # smoke: contested scene, LLM 
 """
 from __future__ import annotations
 
+# Exp 97: 20 minutes of waiting, at the reference 120 s tick. two_sided_sim.set_tick
+# rewrites it for any other tick so the threshold stays wall-clock.
+STARVE_WAIT_TICKS = 10
+
 import hashlib
 import json
 import math
@@ -646,7 +650,8 @@ def make_policy_referee(use_llm, model, cache, trace, seen, statement_model=None
         # so |free - n| is the clearing slack. A scene that clears by one GPU is exactly where
         # a prediction error flips the award.
         ambiguity = math.exp(-abs(free - n) / 2.0)
-        starv = ((sum(1 for w in (waiting or []) if w.get("waited_ticks", 0) >= 10)
+        starv = ((sum(1 for w in (waiting or [])
+                      if w.get("waited_ticks", 0) >= STARVE_WAIT_TICKS)
                   / max(len(waiting), 1)) if waiting else 0.0)
         prev = st.get("executed") or {}
         churn = (sum(1 for j in demand if j.jid not in prev) / n) if prev else 0.0

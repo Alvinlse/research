@@ -51,6 +51,26 @@ DORDER = {"ahead": 0, "ontrack": 1, "behind": 2}
 BUCKET_USABLE = {"low": 0, "medium": 1, "high": 2}
 STARVE_TICKS = 30    # plan §16: a job waiting this long for its first GPU counts as starved
 TTF_HORIZON = 2      # Exp 39: "imminent" release = believed remaining work <= this many ticks
+DYN_AFTER = 3        # Exp 45: ticks a job must RUN before its cap switches to telemetry
+
+# Exp 97: the four constants above (plus referee's starvation-share threshold) are WALL-CLOCK
+# intentions written in ticks -- 60 min starved, 4 min imminent, 6 min of telemetry warm-up,
+# 20 min waiting. At the reference 120 s tick they mean exactly that; at any other tick they
+# would silently change meaning, so `set_tick` restates them in the new units instead.
+TICK_REF_S = 120
+
+
+def set_tick(tick_s: int) -> None:
+    """Re-express the tick-denominated thresholds for a `tick_s`-second tick. No-op at 120 s."""
+    global STARVE_TICKS, TTF_HORIZON, DYN_AFTER
+    if tick_s == TICK_REF_S:
+        return
+    r = TICK_REF_S / tick_s
+    STARVE_TICKS = max(1, round(30 * r))
+    TTF_HORIZON = max(1, round(2 * r))
+    DYN_AFTER = max(1, round(3 * r))
+    from pins import referee
+    referee.STARVE_WAIT_TICKS = max(1, round(10 * r))
 
 
 # --------------------------------------------------------------------------- #
@@ -260,7 +280,7 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
              cap_map: dict[str, int], true_cap_map: dict[str, int] | None = None,
              belief_work: dict[str, float] | str | None = None,
              ttf_work: dict[str, float] | str | None = None,
-             dyn_cap_map: dict[str, int] | None = None, dyn_after: int = 3,
+             dyn_cap_map: dict[str, int] | None = None, dyn_after: int = 0,
              realloc_cost: float = 0.0, alpha: float = 0.0,
              alpha_norm: str = "c0", law: str = "amdahl", kappa: float = 2.0,
              cooldown: int = 0, resize_c1: float = 0.0, phi: float = 0.0,
@@ -363,7 +383,7 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
         # predicted requested GPU enters the negotiation as the non-negotiable base.
         if ph != "train":
             return PHASE_PROFILES[ph][0]
-        if dyn_cap_map is not None and ran[j.jid] >= dyn_after:
+        if dyn_cap_map is not None and ran[j.jid] >= (dyn_after or DYN_AFTER):
             return dyn_cap_map[j.jid]                      # telemetry-corrected base (Exp 45)
         return cap_map[j.jid]
 

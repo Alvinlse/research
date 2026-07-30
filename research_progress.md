@@ -3155,3 +3155,34 @@ line now prints `32q/8gpu` instead of the misleading `8gpu`. Pre-Exp-97 tiers re
 
 **Stage 2 was killed** mid-run at the old pool-8 point rather than finishing a measurement of a
 superseded configuration; the frontier re-runs at the standard point instead.
+
+**Tick shortened 120 s → 30 s (2026-07-30), as a pure resolution change.** A job's median lifetime
+is now ~36 decision points instead of ~9. Three workload constants were denominated in *ticks*, so a
+naive change would have quartered the arrival window, the simulated span and the longest
+representable job all at once; they are now in **seconds** (`ARRIVAL_SPAN_S` 6 h, `HORIZON_S` 13.3 h,
+`WORK_CLAMP_S` 2 min–2 h) and `--horizon 0` derives the tick count. Four *thresholds* were also
+wall-clock intentions written in ticks — `STARVE_TICKS` (60 min), `TTF_HORIZON` (4 min), `DYN_AFTER`
+(6 min) and referee's `STARVE_WAIT_TICKS` (20 min) — and `two_sided_sim.set_tick()` restates them,
+a no-op at 120 s.
+
+| | tick 120 s | tick 30 s |
+|---|---|---|
+| floor SLA | 11.7% | 12.0% |
+| floor prodSLA | 2.1% | 2.8% |
+| util | 80% | 80% |
+| slowdown | 11.62 | 11.10 |
+| wait | 42.0 ticks = **84 min** | 162.4 ticks = **81 min** |
+| finished | 96/96 | 96/96 |
+
+The same physical workload, sliced finer — which is the check that the refactor is a resolution
+change and not a new world. Verified byte-identical at the reference tick, and pre-Exp-97 tiers
+still reproduce exactly (`--tick 120 --pools 8 --n-jobs 16 --horizon 300 --slack-mult 1` →
+45.3/52.4/52.5/76/73/16.6/15.6, tier `rule+pred`). `test_mechanism` 5/5.
+
+**Cost, stated before anything is measured on it.** 4× the ticks means 4× the policy invocations per
+seed; the deterministic arms go from ~11 s to ~23 s per 4 seeds, which is nothing. For the LLM arms
+the bill is set by *distinct scenes*, not raw ticks — adjacent 30 s ticks repeat scene keys more
+often, so the cache absorbs an unknown fraction of the 4×. That fraction is unmeasured. Combined
+with the 8-GPU standard scale (96 jobs, 6× the pool-8 prompt), the per-job referee is the arm most
+likely to be priced out; `composed` (one call per tick, job-count-independent) and the 0-token arms
+are not.

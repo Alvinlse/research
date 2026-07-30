@@ -216,12 +216,16 @@ here so no future session re-derives it.
 
 - **The standard operating point (Exp 97, 2026-07-30) is now the DEFAULT** of
   `trace_replay.py`: pool **32 quanta = 8 GPUs**, jobs **auto at 3× pool** (`--n-jobs 0`),
-  `--horizon 400`, `--slack-mult 10`. Floor: 80% utilisation, 11.7% deadline violations,
-  every job finishes. Pools are in **quarter-GPU quanta** (4q = 1 GPU) — the old `4,6,8`
+  `--tick 30`, `--horizon 0` (= 1600 ticks = the same 13.3 h), `--slack-mult 10`. Floor: 80%
+  utilisation, 12.0% deadline violations, every job finishes. The **tick is a resolution knob
+  only** — arrival span (6 h), simulated span (13.3 h) and the work clamp (2 min..2 h) are
+  denominated in SECONDS, and `two_sided_sim.set_tick()` restates the wall-clock thresholds
+  (`STARVE_TICKS`, `TTF_HORIZON`, `DYN_AFTER`, referee's `STARVE_WAIT_TICKS`) in the new units.
+  Shortening the tick costs per-tick work proportionally: 4x the policy invocations. Pools are in **quarter-GPU quanta** (4q = 1 GPU) — the old `4,6,8`
   default was 1–2 physical GPUs, and its deadline recipe (slack vs a job's *solo* runtime at
   76% util) floored violations at 40–54% before any policy ran. Pre-Exp-97 tiers are
-  reproducible with `--pools 8 --n-jobs 16 --horizon 300 --slack-mult 1` and keep their old
-  tier names; anything else gets `+h400+slack10+n3x` so the two can never merge.
+  reproducible with `--tick 120 --pools 8 --n-jobs 16 --horizon 300 --slack-mult 1` and keep
+  their old tier names; anything else gets `+t30+h1600+slack10+n3x` so the two can never merge.
 - **Login-node reaper** kills background shells after ~12–15 CPU-minutes. Run one
   sweep/pool per background task; don't chain them in one shell. (Cost: a dead
   mid-deepseek run, 2026-07-15.)

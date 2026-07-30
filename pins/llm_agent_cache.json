@@ -146342,6 +146342,15 @@
     "justification": "No GPUs are available to allocate due to free_gpus being zero.",
     "reserve": 0
   },
+  "v2|referee|free0|r00:besteffort:ahead:b0+m1|r01:besteffort:ahead:b0+m1|r03:besteffort:ahead:b0+m1|r04:prod:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r04": 1
+    },
+    "claimed_total": 1,
+    "justification": "Priority rule grants base GPUs to 'prod' tier job r04; no free pool for margins or reserve.",
+    "reserve": 0
+  },
   "v2|referee|free0|r00:besteffort:ahead:b0+m1|r01:besteffort:ahead:b0+m1|r03:besteffort:ahead:b0+m1|r04:prod:behind:b0+m2|supply:r1:many|dbtd550a9c8c450|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -148453,6 +148462,13 @@
     "justification": "With zero free GPUs available, no base allocations, margins, or reserves can be granted without violating the feasibility constraint.",
     "reserve": 0
   },
+  "v2|referee|free0|r00:prod:ahead:b0+m1|r01:besteffort:ahead:b0+m2|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {},
+    "claimed_total": 0,
+    "justification": "No GPUs are available in the free pool to allocate or reserve.",
+    "reserve": 0
+  },
   "v2|referee|free0|r00:prod:ahead:b0+m1|r01:besteffort:ontrack:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {},
@@ -148612,6 +148628,16 @@
     },
     "claimed_total": 0,
     "justification": "No GPUs can be allocated as the free pool is empty and no base GPU requirements are met.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r00:prod:ahead:b0+m1|r05:besteffort:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r00": 0,
+      "r05": 0
+    },
+    "claimed_total": 0,
+    "justification": "No GPUs can be allocated as the free pool is empty and no job's base requirement is met.",
     "reserve": 0
   },
   "v2|referee|free0|r00:prod:ahead:b0+m1|r05:besteffort:behind:b0+m2|supply:r1:few|dbtc7bac6b3b202|llm:qwen2.5:14b": {
@@ -151841,6 +151867,28 @@
     "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying the base_gpus for all jobs and then granting requested margins. Applied PRIORITY to allocate more GPUs to 'prod' tier job r07.",
     "reserve": 1
   },
+  "v2|referee|free0|r02:besteffort:ahead:b0+m0|r03:prod:ahead:b0+m1|r05:besteffort:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r02": 0,
+      "r03": 1,
+      "r05": 0
+    },
+    "claimed_total": 1,
+    "justification": "The prod job r03's base requirement is met and its justification for margin is compelling given incoming prod jobs; no free GPUs allow for reserve.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r02:besteffort:ahead:b0+m0|r03:prod:ahead:b0+m1|r05:besteffort:ahead:b0+m0|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r02": 0,
+      "r03": 1,
+      "r05": 0
+    },
+    "claimed_total": 1,
+    "justification": "The free pool is zero, so only the 'prod' tier job r03 can be allocated its base_gpus of 1 GPU while respecting feasibility and priority rules.",
+    "reserve": 0
+  },
   "v2|referee|free0|r02:besteffort:ahead:b0+m0|r03:prod:ahead:b0+m1|r05:besteffort:ontrack:b0+m0|r06:prod:behind:b0+m2|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {},
@@ -151999,6 +152047,17 @@
     "claimed_total": 0,
     "justification": "No GPUs can be allocated as the free pool is empty and no job has a base GPU requirement met.",
     "reserve": 0
+  },
+  "v2|referee|free0|r02:besteffort:ahead:b0+m0|r05:besteffort:ahead:b0+m0|r06:prod:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r02": 0,
+      "r05": 0,
+      "r06": 0
+    },
+    "claimed_total": 1,
+    "justification": "The free pool is zero, so no GPUs can be allocated to jobs or reserved; all statements are strategic claims but do not justify taking from the non-existent free pool.",
+    "reserve": 1
   },
   "v2|referee|free0|r02:besteffort:ahead:b0+m0|r05:besteffort:ahead:b0+m0|r10:prod:behind:b0+m2|supply:r0:none|dbtcb2999ff8e61|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -153711,6 +153770,16 @@
     "justification": "No GPUs can be allocated as the free pool is empty and no base GPU requirements are met.",
     "reserve": 0
   },
+  "v2|referee|free0|r02:prod:ahead:b0+m1|r04:besteffort:ahead:b0+m0|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r02": 0,
+      "r04": 0
+    },
+    "claimed_total": 0,
+    "justification": "No GPUs can be allocated or reserved as the free pool is empty.",
+    "reserve": 0
+  },
   "v2|referee|free0|r02:prod:ahead:b0+m1|r04:besteffort:ahead:b0+m1|r07:prod:ontrack:b0+m1|r08:besteffort:ahead:b0+m2|supply:r1:few|dbt6020a940d61c|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -153770,6 +153839,16 @@
     },
     "claimed_total": 0,
     "justification": "No GPUs can be allocated as the free pool is zero and no base GPU requirements are met.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r02:prod:ahead:b0+m1|r05:besteffort:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r02": 0,
+      "r05": 0
+    },
+    "claimed_total": 0,
+    "justification": "No GPUs can be allocated as the free pool is empty and no job has a base GPU requirement met.",
     "reserve": 0
   },
   "v2|referee|free0|r02:prod:ahead:b0+m1|r05:prod:ontrack:b0+m1|r06:besteffort:ontrack:b0+m0|supply:r2:many|llm:qwen2.5:14b": {
@@ -154816,6 +154895,25 @@
     "justification": "Allocated base_gpus to the prod job as per priority rule, no free GPUs left for reserve or other besteffort margins.",
     "reserve": 0
   },
+  "v2|referee|free0|r03:besteffort:ahead:b0+m1|r04:prod:ahead:b0+m1|r05:besteffort:ahead:b0+m0|r06:besteffort:ahead:b0+m0|r08:prod:ahead:b0+m0|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r04": 1,
+      "r08": 0
+    },
+    "claimed_total": 1,
+    "justification": "Priority rule grants base GPUs to 'prod' tier jobs first; no free_gpus left for margins or reserve.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r03:besteffort:ahead:b0+m1|r04:prod:ahead:b0+m1|r05:besteffort:ahead:b0+m0|r06:besteffort:ahead:b0+m0|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r04": 1
+    },
+    "claimed_total": 1,
+    "justification": "Priority rule grants base GPUs to 'prod' tier job r04; no free_gpus available for others.",
+    "reserve": 0
+  },
   "v2|referee|free0|r03:besteffort:ahead:b0+m1|r04:prod:ahead:b0+m1|r05:besteffort:behind:b0+m1|r06:besteffort:behind:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {},
@@ -154970,6 +155068,15 @@
     "justification": "Allocated base_gpus for the prod job first due to priority rule, then respected feasibility by not exceeding free pool.",
     "reserve": 0
   },
+  "v2|referee|free0|r03:besteffort:ahead:b0+m1|r06:besteffort:ahead:b0+m0|r07:besteffort:ahead:b0+m0|r08:prod:ahead:b0+m0|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r08": 0
+    },
+    "claimed_total": 1,
+    "justification": "No free GPUs available to allocate while respecting supply side reserve request.",
+    "reserve": 1
+  },
   "v2|referee|free0|r03:besteffort:ahead:b0+m1|r06:besteffort:ahead:b0+m1|supply:r1:few|dbt8e80bbab51ae|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -155042,6 +155149,16 @@
     },
     "claimed_total": 1,
     "justification": "Allocated base_gpus for the prod job first due to priority rule, then respected feasibility by not exceeding free pool.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r03:besteffort:ahead:b0+m1|r07:besteffort:ahead:b0+m0|r08:prod:ahead:b0+m0|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 0,
+      "r08": 0
+    },
+    "claimed_total": 0,
+    "justification": "No free GPUs available to allocate while maintaining reserve; all requests are for besteffort tier with no base or margin needs met.",
     "reserve": 0
   },
   "v2|referee|free0|r03:besteffort:ahead:b0+m1|r07:besteffort:behind:b0+m1|r08:prod:ontrack:b0+m0|supply:r1:many|llm:deepseek-r1:32b": {
@@ -156307,6 +156424,13 @@
     "justification": "Free GPUs are zero; no allocation or reserve possible.",
     "reserve": 0
   },
+  "v2|referee|free0|r03:prod:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {},
+    "claimed_total": 0,
+    "justification": "No GPUs can be allocated or reserved as the free pool is empty.",
+    "reserve": 0
+  },
   "v2|referee|free0|r03:prod:ahead:b0+m1|supply:r1:many|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
     "alloc": {
@@ -156702,6 +156826,113 @@
     "justification": "No GPUs are available in the free pool to allocate or reserve.",
     "reserve": 0
   },
+  "v2|referee|free0|r03:prod:ahead:b0+m2|supply:r2:many|llm:qwen2.5:14b|adm:2ef26cf718": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {},
+    "claimed_total": 0,
+    "defer": [
+      "r04",
+      "r05",
+      "r06"
+    ],
+    "justification": "There are no free GPUs available to allocate, so neither margins nor reserves can be granted.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r03:prod:ahead:b0+m2|supply:r2:many|llm:qwen2.5:14b|adm:8853b84885": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r07"
+    ],
+    "alloc": {
+      "r03": 0,
+      "r07": 2
+    },
+    "claimed_total": 2,
+    "defer": [
+      "r04",
+      "r05",
+      "r06"
+    ],
+    "justification": "There are no free GPUs to allocate margins or reserves; only base_gpus for prod jobs can be considered.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r03:prod:ahead:b0+m2|supply:r2:many|llm:qwen2.5:14b|adm:a70509e8bb": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r07"
+    ],
+    "alloc": {
+      "r03": 0,
+      "r07": 2
+    },
+    "claimed_total": 2,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r08"
+    ],
+    "justification": "There are no free GPUs to allocate beyond the base requirements and reserve.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r03:prod:ahead:b0+m2|supply:r2:many|llm:qwen2.5:14b|adm:aeb699252e": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r07",
+      "r09"
+    ],
+    "alloc": {
+      "r07": 2,
+      "r09": 2
+    },
+    "claimed_total": 4,
+    "defer": [
+      "r03",
+      "r04",
+      "r05",
+      "r06",
+      "r08"
+    ],
+    "justification": "No free GPUs available to allocate margins or reserves; prioritized prod jobs that are behind their deadlines.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r03:prod:ahead:b0+m2|supply:r2:many|llm:qwen2.5:14b|adm:be31b2355a": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {},
+    "claimed_total": 0,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r07",
+      "r08",
+      "r09",
+      "r10"
+    ],
+    "justification": "There are no free GPUs available to allocate, so neither margin nor reserve can be granted.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r03:prod:ahead:b0+m2|supply:r2:many|llm:qwen2.5:14b|adm:efd6d8fa49": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r03": 0,
+      "r04": 0,
+      "r05": 0,
+      "r06": 0,
+      "r07": 0
+    },
+    "claimed_total": 0,
+    "defer": [
+      "r04",
+      "r05",
+      "r06"
+    ],
+    "justification": "No GPUs are available in the free pool to allocate.",
+    "reserve": 0
+  },
   "v2|referee|free0|r03:prod:ahead:b0+m2|supply:r2:many|llm:qwen2.5:14b|noarg": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {},
@@ -157053,6 +157284,66 @@
     "justification": "No GPUs can be allocated as the free pool is empty and neither base nor margin requirements are met due to feasibility constraints.",
     "reserve": 0
   },
+  "v2|referee|free0|r03:prod:ontrack:b0+m1|supply:r1:many|llm:qwen2.5:14b|adm:43c94ea80e": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r03": 0
+    },
+    "claimed_total": 0,
+    "defer": [
+      "r04",
+      "r05"
+    ],
+    "justification": "There are no free GPUs available to allocate either for the job margin or the reserve.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r03:prod:ontrack:b0+m1|supply:r1:many|llm:qwen2.5:14b|adm:aa6e326201": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {},
+    "claimed_total": 0,
+    "defer": [
+      "r04"
+    ],
+    "justification": "There are no free GPUs available to allocate.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r03:prod:ontrack:b0+m1|supply:r1:many|llm:qwen2.5:14b|adm:ac3ff1ce17": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {},
+    "claimed_total": 0,
+    "defer": [
+      "r04",
+      "r05"
+    ],
+    "justification": "There are no free GPUs available to allocate, so neither margin nor reserve can be granted.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r03:prod:ontrack:b0+m1|supply:r1:many|llm:qwen2.5:14b|adm:da39a3ee5e": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {},
+    "claimed_total": 0,
+    "defer": [
+      "r03"
+    ],
+    "justification": "There are no free GPUs available to allocate either as base or margin for any jobs, and the supply side's reserve request cannot be met.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r03:prod:ontrack:b0+m1|supply:r1:many|llm:qwen2.5:14b|adm:e80c18de15": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {},
+    "claimed_total": 0,
+    "defer": [
+      "r03",
+      "r04"
+    ],
+    "justification": "There are no free GPUs available to allocate either for jobs or reserve.",
+    "reserve": 0
+  },
   "v2|referee|free0|r03:prod:ontrack:b0+m1|supply:r1:many|llm:qwen2.5:14b|noarg": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {},
@@ -157144,6 +157435,19 @@
     "alloc": {},
     "claimed_total": 0,
     "justification": "There are no free GPUs to allocate due to the zero available pool.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r03:prod:ontrack:b0+m1|supply:r2:many|llm:qwen2.5:14b|adm:2ef26cf718": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {},
+    "claimed_total": 0,
+    "defer": [
+      "r04",
+      "r05",
+      "r06"
+    ],
+    "justification": "There are no free GPUs available to allocate, so neither margin nor reserve can be granted.",
     "reserve": 0
   },
   "v2|referee|free0|r03:prod:ontrack:b0+m1|supply:r2:many|llm:qwen2.5:14b|noarg": {
@@ -160700,6 +161004,40 @@
     "justification": "No free GPUs available to allocate while respecting the rule of not exceeding the free pool.",
     "reserve": 0
   },
+  "v2|referee|free0|r05:besteffort:ahead:b0+m0|r06:prod:ahead:b0+m0|r07:besteffort:ahead:b0+m0|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {},
+    "claimed_total": 0,
+    "justification": "No free GPUs available to allocate and no compelling reason to reserve any.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r05:besteffort:ahead:b0+m0|r06:prod:ahead:b0+m0|r07:besteffort:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {},
+    "claimed_total": 0,
+    "justification": "No free GPUs available to allocate while maintaining reserve.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r05:besteffort:ahead:b0+m0|r06:prod:ahead:b0+m0|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r05": 0,
+      "r06": 0
+    },
+    "claimed_total": 0,
+    "justification": "No free GPUs available to allocate and no compelling reason to reserve any.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r05:besteffort:ahead:b0+m0|r06:prod:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r05": 0,
+      "r06": 0
+    },
+    "claimed_total": 0,
+    "justification": "No free GPUs available to allocate while respecting the supply side's request for a reserve.",
+    "reserve": 0
+  },
   "v2|referee|free0|r05:besteffort:ahead:b0+m0|r06:prod:ahead:b0+m2|supply:r2:many|dbt039c09ae4d53|llm:deepseek-r1:32b": {
     "_source": "llm:deepseek-r1:32b",
     "alloc": {},
@@ -161001,6 +161339,15 @@
     "justification": "Free GPU pool is exhausted (0), so no allocation or reserve can be granted.",
     "reserve": 0
   },
+  "v2|referee|free0|r05:besteffort:ahead:b0+m1|r06:besteffort:ahead:b0+m1|r09:prod:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r09": 0
+    },
+    "claimed_total": 0,
+    "justification": "No GPUs can be allocated as the free pool is empty and no base GPU requirements are met; reserve also cannot exceed zero.",
+    "reserve": 0
+  },
   "v2|referee|free0|r05:besteffort:ahead:b0+m1|r06:besteffort:ahead:b0+m1|r09:prod:behind:b0+m2|supply:r1:few|dbt7a12559a34dd|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -161223,6 +161570,24 @@
     },
     "claimed_total": 0,
     "justification": "No GPUs can be allocated as the free pool is empty and no base GPU requirements are met; reserve is also set to zero due to lack of incoming high-priority jobs.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r05:besteffort:ahead:b0+m1|r09:prod:ahead:b0+m0|r10:prod:ahead:b0+m2|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r09": 0
+    },
+    "claimed_total": 0,
+    "justification": "No GPUs can be allocated as the free pool is zero and no job's base requirement is met; reserve also cannot exceed this limit.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r05:besteffort:ahead:b0+m1|r09:prod:ahead:b0+m0|r12:besteffort:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r09": 0
+    },
+    "claimed_total": 0,
+    "justification": "No GPUs can be allocated as the free pool is zero and no base GPU requirements are met; reserve also cannot exceed this.",
     "reserve": 0
   },
   "v2|referee|free0|r05:besteffort:ahead:b0+m1|r09:prod:ahead:b0+m0|r12:besteffort:behind:b0+m2|supply:r1:few|llm:qwen2.5:14b": {
@@ -165003,6 +165368,16 @@
     "justification": "No free GPUs available to allocate and no compelling reason to reserve any.",
     "reserve": 0
   },
+  "v2|referee|free0|r06:besteffort:ahead:b0+m1|r07:besteffort:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r06": 0,
+      "r07": 0
+    },
+    "claimed_total": 0,
+    "justification": "No GPUs can be allocated as the free pool is empty and no base GPU requirements are met.",
+    "reserve": 0
+  },
   "v2|referee|free0|r06:besteffort:ahead:b0+m1|r07:besteffort:ontrack:b0+m1|r08:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -165525,6 +165900,20 @@
     "alloc": {},
     "claimed_total": 0,
     "justification": "There are no free GPUs to allocate and no compelling reason to reserve any.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r06:besteffort:ahead:b0+m2|supply:r0:none|llm:qwen2.5:14b|adm:60d56e1fe9": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {},
+    "claimed_total": 0,
+    "defer": [
+      "r08",
+      "r10",
+      "r11",
+      "r15"
+    ],
+    "justification": "There are no free GPUs available to allocate, and the supply side does not request a reserve.",
     "reserve": 0
   },
   "v2|referee|free0|r06:besteffort:ahead:b0+m2|supply:r0:none|llm:qwen2.5:14b|nothink": {
@@ -166121,6 +166510,21 @@
     "justification": "There are no free GPUs to allocate and the supply side does not request a reserve.",
     "reserve": 0
   },
+  "v2|referee|free0|r06:besteffort:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b|adm:60d56e1fe9": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {},
+    "claimed_total": 0,
+    "defer": [
+      "r06",
+      "r08",
+      "r10",
+      "r11",
+      "r15"
+    ],
+    "justification": "There are no free GPUs available to allocate, and the supply side does not request a reserve.",
+    "reserve": 0
+  },
   "v2|referee|free0|r06:besteffort:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b|nothink": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {},
@@ -166251,6 +166655,16 @@
     "justification": "No GPUs were allocated as the free pool is exhausted, adhering to feasibility.",
     "reserve": 0
   },
+  "v2|referee|free0|r06:besteffort:ontrack:b0+m1|r07:besteffort:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r06": 0,
+      "r07": 0
+    },
+    "claimed_total": 0,
+    "justification": "No GPUs can be allocated as the free pool is empty and no base or margin requests are feasible.",
+    "reserve": 0
+  },
   "v2|referee|free0|r06:besteffort:ontrack:b0+m1|r08:besteffort:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -166344,6 +166758,22 @@
     "alloc": {},
     "claimed_total": 0,
     "justification": "There are no free GPUs to allocate and no compelling reason to reserve any.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r06:besteffort:ontrack:b0+m1|supply:r0:none|llm:qwen2.5:14b|adm:60d56e1fe9": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r06": 0
+    },
+    "claimed_total": 0,
+    "defer": [
+      "r08",
+      "r10",
+      "r11",
+      "r15"
+    ],
+    "justification": "There are no free GPUs available to allocate either as base or margin for any job, and the supply side does not request a reserve.",
     "reserve": 0
   },
   "v2|referee|free0|r06:besteffort:ontrack:b0+m1|supply:r0:none|llm:qwen2.5:14b|nothink": {
@@ -167936,6 +168366,16 @@
     "justification": "No GPUs can be allocated as the free pool is empty and no jobs have base GPU requirements met.",
     "reserve": 0
   },
+  "v2|referee|free0|r07:besteffort:ahead:b0+m0|r10:prod:ahead:b0+m1|r11:besteffort:ahead:b0+m1|r12:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r12": 0
+    },
+    "claimed_total": 0,
+    "justification": "No GPUs can be allocated as the free pool is zero and no jobs have base GPU requirements met.",
+    "reserve": 0
+  },
   "v2|referee|free0|r07:besteffort:ahead:b0+m0|r10:prod:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -168201,6 +168641,15 @@
     },
     "claimed_total": 0,
     "justification": "Free GPUs are zero, so no allocation or reserve is possible.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r07:besteffort:ahead:b0+m0|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 0
+    },
+    "claimed_total": 0,
+    "justification": "No free GPUs available to allocate and no justification for reserving any.",
     "reserve": 0
   },
   "v2|referee|free0|r07:besteffort:ahead:b0+m0|supply:r0:none|llm:qwen2.5:3b": {
@@ -170035,6 +170484,16 @@
     "justification": "No GPUs can be allocated as the free pool is empty and no base GPU requirements are met.",
     "reserve": 0
   },
+  "v2|referee|free0|r07:prod:ahead:b0+m1|r08:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 0,
+      "r08": 0
+    },
+    "claimed_total": 0,
+    "justification": "No GPUs can be allocated as the free pool is empty and requests exceed available resources.",
+    "reserve": 0
+  },
   "v2|referee|free0|r07:prod:ahead:b0+m1|r08:prod:behind:b0+m2|r09:besteffort:ontrack:b0+m0|r10:besteffort:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -171550,6 +172009,16 @@
     "justification": "No free GPUs available to allocate, and the supply side's reserve request is not granted due to lack of free resources.",
     "reserve": 0
   },
+  "v2|referee|free0|r08:besteffort:ahead:b0+m0|r09:besteffort:ahead:b0+m1|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r08": 0,
+      "r09": 0
+    },
+    "claimed_total": 1,
+    "justification": "No free GPUs available to allocate while maintaining reserve as per feasibility rule.",
+    "reserve": 1
+  },
   "v2|referee|free0|r08:besteffort:ahead:b0+m0|r09:besteffort:behind:b0+m1|r10:besteffort:behind:b0+m1|supply:r0:none|llm:qwen2.5:14b|noarg": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -171559,6 +172028,26 @@
     "claimed_total": 0,
     "justification": "No free GPUs available to allocate.",
     "reserve": 0
+  },
+  "v2|referee|free0|r08:besteffort:ahead:b0+m0|r09:besteffort:behind:b0+m2|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r08": 0,
+      "r09": 0
+    },
+    "claimed_total": 0,
+    "justification": "No free GPUs available to allocate due to rule FEASIBILITY.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r08:besteffort:ahead:b0+m0|r09:besteffort:ontrack:b0+m1|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r08": 0,
+      "r09": 0
+    },
+    "claimed_total": 1,
+    "justification": "No free GPUs available to allocate while maintaining reserve as per feasibility rule.",
+    "reserve": 1
   },
   "v2|referee|free0|r08:besteffort:ahead:b0+m0|r10:besteffort:ahead:b0+m0|r11:prod:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -175462,6 +175951,17 @@
     "justification": "No GPUs are available in the free pool to allocate or reserve.",
     "reserve": 0
   },
+  "v2|referee|free0|r09:prod:ahead:b0+m1|r10:besteffort:ahead:b0+m0|r12:prod:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r09": 0,
+      "r10": 0,
+      "r12": 0
+    },
+    "claimed_total": 0,
+    "justification": "No free GPUs available to allocate and no convincing justification for reserve.",
+    "reserve": 0
+  },
   "v2|referee|free0|r09:prod:ahead:b0+m1|r10:besteffort:ahead:b0+m0|r15:besteffort:behind:b0+m2|supply:r1:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -175471,6 +175971,16 @@
     },
     "claimed_total": 0,
     "justification": "No GPUs can be allocated as the free pool is empty and no base GPU requirements are met.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r09:prod:ahead:b0+m1|r10:besteffort:ahead:b0+m0|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r09": 0,
+      "r10": 0
+    },
+    "claimed_total": 0,
+    "justification": "No free GPUs available to allocate and no convincing justification for reserve.",
     "reserve": 0
   },
   "v2|referee|free0|r09:prod:ahead:b0+m1|r10:besteffort:ahead:b0+m0|supply:r1:none|llm:qwen2.5:14b": {
@@ -175599,6 +176109,16 @@
     "alloc": {
       "r09": 0,
       "r11": 0
+    },
+    "claimed_total": 0,
+    "justification": "No GPUs can be allocated as the free pool is empty and no base GPU requirements are met.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r09:prod:ahead:b0+m1|r12:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r09": 0,
+      "r12": 0
     },
     "claimed_total": 0,
     "justification": "No GPUs can be allocated as the free pool is empty and no base GPU requirements are met.",
@@ -176782,6 +177302,23 @@
     "justification": "No GPUs can be allocated as the free pool is empty and no base GPU requirements are met.",
     "reserve": 0
   },
+  "v2|referee|free0|r09:prod:behind:b0+m2|r12:prod:ontrack:b0+m1|supply:r0:none|llm:qwen2.5:14b|adm:53ca018e7d": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {},
+    "claimed_total": 0,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r08",
+      "r10",
+      "r11",
+      "r15"
+    ],
+    "justification": "No free GPUs available to allocate, and no incoming high-priority jobs necessitating a reserve.",
+    "reserve": 0
+  },
   "v2|referee|free0|r09:prod:behind:b0+m2|r12:prod:ontrack:b0+m1|supply:r0:none|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
     "alloc": {
@@ -177489,6 +178026,16 @@
     "justification": "No GPUs can be allocated as the free pool is empty and no job has a base GPU requirement met.",
     "reserve": 0
   },
+  "v2|referee|free0|r10:besteffort:ahead:b0+m1|r13:besteffort:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r13": 0
+    },
+    "claimed_total": 0,
+    "justification": "No free GPUs available to allocate and no convincing justification for reserve.",
+    "reserve": 0
+  },
   "v2|referee|free0|r10:besteffort:ahead:b0+m1|r13:besteffort:behind:b0+m2|supply:r0:none|dbt4800b6eb0621|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -177497,6 +178044,26 @@
     },
     "claimed_total": 0,
     "justification": "No GPUs can be allocated as the free pool is empty and no base GPU requirements are met.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r10:besteffort:ahead:b0+m1|r13:besteffort:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r13": 0
+    },
+    "claimed_total": 0,
+    "justification": "No GPUs can be allocated as the free pool is empty and no base GPU requirements are met; reserve is also zero due to lack of incoming high-priority jobs.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r10:besteffort:ahead:b0+m1|r13:besteffort:ontrack:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r13": 0
+    },
+    "claimed_total": 0,
+    "justification": "No free GPUs available to allocate and no convincing justification for reserve.",
     "reserve": 0
   },
   "v2|referee|free0|r10:besteffort:ahead:b0+m1|r14:besteffort:ahead:b0+m1|supply:r1:none|llm:qwen2.5:14b": {
@@ -177748,6 +178315,16 @@
     },
     "claimed_total": 0,
     "justification": "No GPUs can be allocated as the free pool is empty and no base GPU requirements are met.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r10:besteffort:ahead:b0+m2|r15:besteffort:ahead:b0+m0|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r15": 0
+    },
+    "claimed_total": 0,
+    "justification": "No free GPUs available to allocate and no convincing justification for reserve.",
     "reserve": 0
   },
   "v2|referee|free0|r10:besteffort:ahead:b0+m2|r15:besteffort:behind:b0+m2|supply:r0:none|dbte4f383419305|llm:qwen2.5:14b": {
@@ -178258,6 +178835,19 @@
     "justification": "No free GPUs available to allocate and no convincing justification for reserve.",
     "reserve": 0
   },
+  "v2|referee|free0|r10:besteffort:behind:b0+m2|r15:besteffort:ahead:b0+m0|supply:r1:none|llm:qwen2.5:14b|adm:bffd3c2bd8": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {},
+    "claimed_total": 0,
+    "defer": [
+      "r10",
+      "r15",
+      "r11"
+    ],
+    "justification": "No free GPUs available to allocate, and the requested reserve is not granted due to lack of available resources.",
+    "reserve": 0
+  },
   "v2|referee|free0|r10:besteffort:behind:b0+m2|r15:besteffort:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -178723,6 +179313,16 @@
     "justification": "No GPUs can be allocated as the free pool is empty and no base GPU requirements are met.",
     "reserve": 0
   },
+  "v2|referee|free0|r10:besteffort:ontrack:b0+m1|r15:besteffort:ahead:b0+m0|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r15": 0
+    },
+    "claimed_total": 0,
+    "justification": "No free GPUs available to allocate and no convincing justification for reserve.",
+    "reserve": 0
+  },
   "v2|referee|free0|r10:besteffort:ontrack:b0+m1|r15:besteffort:behind:b0+m2|supply:r0:none|llm:deepseek-r1:32b": {
     "_source": "llm:deepseek-r1:32b",
     "alloc": {
@@ -179079,6 +179679,31 @@
     },
     "claimed_total": 0,
     "justification": "With zero free GPUs available, no allocations or reserves can be granted without violating the feasibility constraint. All base requirements are met (0 GPUs), and no margin or reserve is awarded due to lack of capacity.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r10:prod:ahead:b0+m1|r11:besteffort:ahead:b0+m1|r12:prod:ahead:b0+m1|r14:besteffort:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {},
+    "claimed_total": 0,
+    "justification": "No GPUs can be allocated or reserved as the free pool is zero.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r10:prod:ahead:b0+m1|r11:besteffort:ahead:b0+m1|r12:prod:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r11": 0,
+      "r12": 0
+    },
+    "claimed_total": 0,
+    "justification": "There are no free GPUs to allocate and the supply side does not request a reserve; thus, all jobs must wait.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r10:prod:ahead:b0+m1|r11:besteffort:ahead:b0+m1|r12:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {},
+    "claimed_total": 0,
+    "justification": "No GPUs can be allocated as the free pool is empty and all demands are for margins without base requirements.",
     "reserve": 0
   },
   "v2|referee|free0|r10:prod:ahead:b0+m1|r11:besteffort:ahead:b0+m1|supply:r1:none|llm:qwen2.5:14b": {
@@ -180900,6 +181525,16 @@
     "justification": "No free GPUs available to allocate due to rule FEASIBILITY.",
     "reserve": 0
   },
+  "v2|referee|free0|r11:besteffort:ahead:b0+m0|r15:besteffort:ahead:b0+m2|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r11": 0,
+      "r15": 0
+    },
+    "claimed_total": 0,
+    "justification": "No free GPUs available to allocate and no compelling reason to reserve any.",
+    "reserve": 0
+  },
   "v2|referee|free0|r11:besteffort:ahead:b0+m0|r15:besteffort:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b|noarg": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -180984,6 +181619,18 @@
     "alloc": {},
     "claimed_total": 0,
     "justification": "No GPUs can be allocated as the free pool is empty and no base GPU requirements are met.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r11:besteffort:ahead:b0+m1|r12:prod:ahead:b0+m0|r14:besteffort:ahead:b0+m0|r15:prod:ahead:b0+m0|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r11": 0,
+      "r12": 0,
+      "r14": 0,
+      "r15": 0
+    },
+    "claimed_total": 0,
+    "justification": "No free GPUs available to allocate and no convincing justification for reserve.",
     "reserve": 0
   },
   "v2|referee|free0|r11:besteffort:ahead:b0+m1|r12:prod:ontrack:b0+m1|supply:r1:few|llm:deepseek-r1:32b": {
@@ -183107,6 +183754,15 @@
     "justification": "No free GPUs available to allocate and no compelling reason to reserve any.",
     "reserve": 0
   },
+  "v2|referee|free0|r12:besteffort:ahead:b0+m1|r14:prod:ahead:b0+m1|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r14": 0
+    },
+    "claimed_total": 0,
+    "justification": "No GPUs can be allocated as the free pool is empty and no base GPU requirements are met.",
+    "reserve": 0
+  },
   "v2|referee|free0|r12:besteffort:ahead:b0+m1|r14:prod:ontrack:b0+m1|supply:r1:none|dbt28261ef8537c|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -184040,6 +184696,16 @@
     },
     "claimed_total": 0,
     "justification": "No free GPUs available to allocate and no convincing justification for reserve.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r12:prod:ahead:b0+m1|r14:prod:ahead:b0+m2|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r12": 0,
+      "r14": 0
+    },
+    "claimed_total": 0,
+    "justification": "No GPUs can be allocated as the free pool is empty and no base GPU requirements are met.",
     "reserve": 0
   },
   "v2|referee|free0|r12:prod:ahead:b0+m1|r15:besteffort:ahead:b0+m0|supply:r1:none|llm:deepseek-r1:32b": {
@@ -185864,6 +186530,13 @@
     "justification": "No GPUs can be allocated as the free pool is empty and no base GPU requirements are met.",
     "reserve": 0
   },
+  "v2|referee|free0|r13:prod:ahead:b0+m1|r15:prod:ahead:b0+m2|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {},
+    "claimed_total": 0,
+    "justification": "No GPUs are available in the free pool to allocate or reserve.",
+    "reserve": 0
+  },
   "v2|referee|free0|r13:prod:ahead:b0+m1|supply:r0:none|dbt5dacb0066151|llm:deepseek-r1:32b": {
     "_source": "llm:deepseek-r1:32b",
     "alloc": {
@@ -187319,6 +187992,13 @@
     "alloc": {},
     "claimed_total": 0,
     "justification": "No GPUs are available in the free pool (free_gpus=0), so no allocations or reserves can be granted despite the strategic claims.",
+    "reserve": 0
+  },
+  "v2|referee|free0|r14:prod:ahead:b0+m2|r15:prod:ahead:b0+m2|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {},
+    "claimed_total": 0,
+    "justification": "No GPUs are available in the free pool to allocate or reserve.",
     "reserve": 0
   },
   "v2|referee|free0|r14:prod:ahead:b0+m2|r15:prod:behind:b0+m2|supply:r1:none|dbt632f969ebfe5|llm:qwen2.5:14b": {
@@ -189503,6 +190183,15 @@
     "justification": "Allocated all free GPUs as reserve due to potential incoming production jobs, prioritizing future critical tasks.",
     "reserve": 1
   },
+  "v2|referee|free1|r00:besteffort:ahead:b0+m1|r01:besteffort:ahead:b0+m1|r02:prod:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r02": 1
+    },
+    "claimed_total": 1,
+    "justification": "Allocated all GPUs to the highest priority job (prod tier) as per PRIORITY rule, while respecting FEASIBILITY.",
+    "reserve": 0
+  },
   "v2|referee|free1|r00:besteffort:ahead:b0+m1|r01:besteffort:ahead:b0+m1|r02:prod:behind:b0+m1|supply:r1:many|dbt39f7194f1628|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -190001,6 +190690,24 @@
     },
     "claimed_total": 1,
     "justification": "Allocated all GPUs to the prod job as per priority rule, with no margin or reserve due to feasibility constraints.",
+    "reserve": 0
+  },
+  "v2|referee|free1|r00:besteffort:ahead:b0+m1|r03:prod:ahead:b0+m0|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r03": 1
+    },
+    "claimed_total": 1,
+    "justification": "Priority rule grants all available GPUs to the prod tier job r03 while maintaining feasibility by not allocating any reserve.",
+    "reserve": 0
+  },
+  "v2|referee|free1|r00:besteffort:ahead:b0+m1|r03:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r03": 1
+    },
+    "claimed_total": 1,
+    "justification": "Priority rule grants the 'prod' tier job its requested margin, while feasibility prevents any allocation to besteffort jobs or reserve.",
     "reserve": 0
   },
   "v2|referee|free1|r00:besteffort:ahead:b0+m1|r03:prod:ontrack:b0+m1|supply:r1:few|dbtcb8cfcc468dc|llm:qwen2.5:14b": {
@@ -190932,6 +191639,15 @@
     "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying the base_gpus of all jobs before granting any margin. Prod tier jobs 'r00' and 'r03' were served first, followed by job 'r01'. The reserve was granted to prevent contention issues without impacting current workload.",
     "reserve": 0
   },
+  "v2|referee|free1|r00:prod:ahead:b0+m0|r01:besteffort:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r00": 1
+    },
+    "claimed_total": 1,
+    "justification": "Allocated all GPUs to the prod job as per priority rule, with no margin for besteffort due to feasibility constraints.",
+    "reserve": 0
+  },
   "v2|referee|free1|r00:prod:ahead:b0+m0|r03:besteffort:ahead:b0+m0|r04:besteffort:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -190949,6 +191665,16 @@
     "claimed_total": 1,
     "justification": "Allocated the single GPU to the 'prod' job behind schedule as per priority and individual rationality rules.",
     "reserve": 0
+  },
+  "v2|referee|free1|r00:prod:ahead:b0+m0|r05:besteffort:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r00": 0,
+      "r05": 0
+    },
+    "claimed_total": 1,
+    "justification": "The supply side's justification for reserve is convincing given low contention and incoming prod jobs; all free GPUs are reserved to protect future workload.",
+    "reserve": 1
   },
   "v2|referee|free1|r00:prod:ahead:b0+m0|r05:besteffort:behind:b0+m1|supply:r1:few|llm:deepseek-r1:32b": {
     "_source": "llm:deepseek-r1:32b",
@@ -191002,6 +191728,15 @@
     "claimed_total": 1,
     "justification": "The free GPU is reserved to protect against incoming high-priority jobs as per supply side's convincing justification.",
     "reserve": 1
+  },
+  "v2|referee|free1|r00:prod:ahead:b0+m1|r01:besteffort:ahead:b0+m2|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r00": 1
+    },
+    "claimed_total": 1,
+    "justification": "Allocated the single free GPU to the prod job as per priority rule, with no margin due to feasibility constraints.",
+    "reserve": 0
   },
   "v2|referee|free1|r00:prod:ahead:b0+m1|r02:besteffort:ahead:b0+m2|supply:r1:many|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -191084,6 +191819,15 @@
     "claimed_total": 1,
     "justification": "Reserve is granted to protect future incoming prod jobs as contention is low and no base or margin can be feasibly awarded without exceeding the free pool.",
     "reserve": 1
+  },
+  "v2|referee|free1|r00:prod:ahead:b0+m1|r05:besteffort:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r00": 1
+    },
+    "claimed_total": 1,
+    "justification": "Allocated all free GPUs to the prod job's requested margin due to its high priority and justification of potential cluster contention issues.",
+    "reserve": 0
   },
   "v2|referee|free1|r00:prod:ahead:b0+m1|r05:besteffort:behind:b0+m2|supply:r1:few|dbtdcd05aa11784|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -193127,6 +193871,15 @@
     "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying the base_gpus for all jobs. Applied PRIORITY to serve prod tier jobs before besteffort jobs. The reserve was granted based on ENVY-FREENESS criteria, ensuring no job is disadvantaged while future prod jobs are protected.",
     "reserve": 0
   },
+  "v2|referee|free1|r02:besteffort:ahead:b0+m0|r03:prod:ahead:b0+m1|r05:besteffort:ahead:b0+m0|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r03": 1
+    },
+    "claimed_total": 1,
+    "justification": "Allocated all GPUs to the 'prod' tier job r03 as per priority rule, with no reserve due to free_gpus constraint.",
+    "reserve": 0
+  },
   "v2|referee|free1|r02:besteffort:ahead:b0+m0|r03:prod:ontrack:b0+m1|r05:besteffort:ontrack:b0+m0|supply:r1:many|dbt76cd54bda0b7|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -193270,6 +194023,15 @@
     "claimed_total": 1,
     "justification": "The supply side's request for reserve is granted due to the incoming prod jobs, while demand sides' requests are denied as they do not meet base_gpus requirements and exceed free pool.",
     "reserve": 1
+  },
+  "v2|referee|free1|r02:besteffort:ahead:b0+m1|r03:prod:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r03": 1
+    },
+    "claimed_total": 1,
+    "justification": "Priority rule grants the 'prod' tier job its requested margin, while feasibility prevents exceeding free pool.",
+    "reserve": 0
   },
   "v2|referee|free1|r02:besteffort:ahead:b0+m1|r03:prod:ontrack:b0+m1|r04:prod:ontrack:b0+m0|supply:r1:many|dbt5a3c17d8a52b|llm:deepseek-r1:32b": {
     "_source": "llm:deepseek-r1:32b",
@@ -194231,6 +194993,15 @@
     "justification": "Reserve is granted to protect future incoming prod jobs due to low contention and high incoming job prediction.",
     "reserve": 1
   },
+  "v2|referee|free1|r02:prod:ahead:b0+m1|r04:besteffort:ahead:b0+m0|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r02": 1
+    },
+    "claimed_total": 1,
+    "justification": "Allocated all free GPUs to the prod job as per priority rule, leaving no reserve due to feasibility constraint.",
+    "reserve": 0
+  },
   "v2|referee|free1|r02:prod:ahead:b0+m1|r04:besteffort:ahead:b0+m1|r07:prod:ontrack:b0+m1|supply:r1:many|dbt63115566c5bb|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -194368,6 +195139,15 @@
     "claimed_total": 1,
     "justification": "Allocated the entire free GPU to the reserve to protect against future high-demand scenarios, prioritizing rule 3 and rule 5.",
     "reserve": 1
+  },
+  "v2|referee|free1|r02:prod:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r02": 1
+    },
+    "claimed_total": 1,
+    "justification": "Allocated all free GPUs to job r02's base need as per INDIVIDUAL RATIONALITY and FEASIBILITY rules; no reserve due to lack of remaining GPUs.",
+    "reserve": 0
   },
   "v2|referee|free1|r02:prod:ahead:b0+m2|supply:r1:few|dbt25ecbd730ed3|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -194884,6 +195664,15 @@
     "justification": "Reserve is granted to protect incoming prod jobs as per supply side request; no margin awarded due to low feasibility and priority of besteffort tier.",
     "reserve": 1
   },
+  "v2|referee|free1|r03:besteffort:ahead:b0+m1|r04:prod:ahead:b0+m1|r05:besteffort:ahead:b0+m0|r06:besteffort:ahead:b0+m0|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r04": 1
+    },
+    "claimed_total": 1,
+    "justification": "Priority rule grants the only 'prod' tier job its requested margin, while feasibility prevents any allocations beyond the single free GPU.",
+    "reserve": 0
+  },
   "v2|referee|free1|r03:besteffort:ahead:b0+m1|r04:prod:ontrack:b0+m0|r05:besteffort:ahead:b0+m0|r06:besteffort:ontrack:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -194958,6 +195747,15 @@
     "justification": "The free GPU is reserved to protect incoming high-priority jobs as per supply side request, adhering to rule 2 and 4.",
     "reserve": 1
   },
+  "v2|referee|free1|r03:besteffort:ahead:b0+m1|r06:besteffort:ahead:b0+m0|r07:besteffort:ahead:b0+m0|r08:prod:ahead:b0+m0|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r08": 1
+    },
+    "claimed_total": 1,
+    "justification": "Priority rule grants the only 'prod' tier job its base GPU since it's ahead of schedule and no contention exists; feasibility limits reserve to zero.",
+    "reserve": 0
+  },
   "v2|referee|free1|r03:besteffort:ahead:b0+m1|r06:besteffort:ahead:b0+m1|supply:r1:few|dbtb8ffd44a4789|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -194976,6 +195774,15 @@
     "claimed_total": 1,
     "justification": "Allocated the sole available GPU to the supply side reserve to protect incoming prod jobs, adhering to priority rules.",
     "reserve": 1
+  },
+  "v2|referee|free1|r03:besteffort:ahead:b0+m1|r06:besteffort:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r06": 1
+    },
+    "claimed_total": 1,
+    "justification": "Allocated the single GPU to r06 as it is ahead of its deadline and justified a need, respecting supply's reserve request by not allocating it.",
+    "reserve": 0
   },
   "v2|referee|free1|r03:besteffort:ahead:b0+m1|r06:besteffort:ahead:b0+m2|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -195011,6 +195818,16 @@
     "claimed_total": 1,
     "justification": "Allocated the single GPU to r06 as it is ontrack and its justification for a margin was slightly more compelling than r03's; no reserve granted due to free_gpus constraint.",
     "reserve": 0
+  },
+  "v2|referee|free1|r03:besteffort:ahead:b0+m1|r07:besteffort:ahead:b0+m0|r08:prod:ahead:b0+m0|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 0,
+      "r08": 0
+    },
+    "claimed_total": 1,
+    "justification": "Reserve is granted to protect future incoming prod jobs as contention is low and no base or margin needs are unmet.",
+    "reserve": 1
   },
   "v2|referee|free1|r03:besteffort:ahead:b0+m1|r07:besteffort:ahead:b0+m0|supply:r1:few|llm:deepseek-r1:32b": {
     "_source": "llm:deepseek-r1:32b",
@@ -198241,6 +199058,15 @@
     "justification": "Priority rule grants the only 'prod' tier job its base_gpus, while feasibility prevents any reserve or margin awards.",
     "reserve": 0
   },
+  "v2|referee|free1|r05:besteffort:ahead:b0+m0|r06:prod:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r06": 1
+    },
+    "claimed_total": 1,
+    "justification": "Allocated all available GPUs to the prod job as per priority rule.",
+    "reserve": 0
+  },
   "v2|referee|free1|r05:besteffort:ahead:b0+m0|r07:besteffort:ontrack:b0+m1|supply:r1:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -198575,6 +199401,16 @@
     },
     "claimed_total": 1,
     "justification": "The supply side's request for reserve is granted due to moderate contention, while demand sides' requests are denied as they do not meet the criteria for base allocation or convincing margin justification.",
+    "reserve": 1
+  },
+  "v2|referee|free1|r05:besteffort:ahead:b0+m1|r14:besteffort:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r05": 0,
+      "r14": 0
+    },
+    "claimed_total": 1,
+    "justification": "The supply side's request for reserve is compelling given low contention and incoming prod jobs; no margin can be feasibly awarded to besteffort jobs.",
     "reserve": 1
   },
   "v2|referee|free1|r05:besteffort:ahead:b0+m1|r14:prod:ahead:b0+m2|supply:r0:none|llm:qwen2.5:14b": {
@@ -200688,6 +201524,27 @@
     "justification": "Allocated the single available GPU to the 'prod' tier job r10 due to its behind schedule status, adhering to priority rules.",
     "reserve": 0
   },
+  "v2|referee|free1|r06:besteffort:ahead:b0+m2|r11:besteffort:ahead:b0+m1|r14:besteffort:ahead:b0+m1|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r06": 0,
+      "r11": 0,
+      "r14": 0
+    },
+    "claimed_total": 1,
+    "justification": "The free pool only allows for a reserve of 1 GPU to ensure future availability without allocating any margin GPUs as no base requirements are met and the risk justifications are not compelling enough.",
+    "reserve": 1
+  },
+  "v2|referee|free1|r06:besteffort:ahead:b0+m2|r11:besteffort:ahead:b0+m1|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r06": 0,
+      "r11": 0
+    },
+    "claimed_total": 1,
+    "justification": "The free pool only allows for a reserve of 1 GPU to ensure future availability without harming current job performance.",
+    "reserve": 1
+  },
   "v2|referee|free1|r06:besteffort:ahead:b0+m2|r11:besteffort:behind:b0+m2|r14:besteffort:ahead:b0+m1|supply:r1:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -201979,6 +202836,15 @@
     "justification": "The supply side's request for reserve is granted due to the low current contention and incoming prod jobs, while demand sides' requests are not feasible under FEASIBILITY.",
     "reserve": 1
   },
+  "v2|referee|free1|r07:besteffort:ahead:b0+m0|r10:prod:ahead:b0+m1|r11:besteffort:ahead:b0+m1|r12:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 1
+    },
+    "claimed_total": 1,
+    "justification": "Allocated all GPUs to the highest-priority job (prod tier) that does not request more than available, adhering to feasibility and priority rules.",
+    "reserve": 0
+  },
   "v2|referee|free1|r07:besteffort:ahead:b0+m0|r10:prod:behind:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -202033,6 +202899,15 @@
     "justification": "Allocated all available GPUs to the 'prod' tier job as per priority rule.",
     "reserve": 0
   },
+  "v2|referee|free1|r07:besteffort:ahead:b0+m0|r12:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r12": 0
+    },
+    "claimed_total": 1,
+    "justification": "The prod tier job r12 is prioritized but its base_gpus are unmet due to free pool constraints; the supply side's request for reserve is granted as it aligns with managing future contention.",
+    "reserve": 1
+  },
   "v2|referee|free1|r07:besteffort:ahead:b0+m0|r12:prod:behind:b0+m2|supply:r1:few|llm:deepseek-r1:32b": {
     "_source": "llm:deepseek-r1:32b",
     "alloc": {
@@ -202049,6 +202924,26 @@
     },
     "claimed_total": 1,
     "justification": "The free GPU is reserved to protect against incoming prod jobs, as per the supply side's convincing justification and rule of reserve allocation.",
+    "reserve": 1
+  },
+  "v2|referee|free1|r07:besteffort:ahead:b0+m0|r14:besteffort:ahead:b0+m0|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 1,
+      "r14": 0
+    },
+    "claimed_total": 1,
+    "justification": "Allocated the single available GPU to r07 based on INDIVIDUAL RATIONALITY and ENVY-FREENESS rules.",
+    "reserve": 0
+  },
+  "v2|referee|free1|r07:besteffort:ahead:b0+m0|r14:besteffort:ahead:b0+m0|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 0,
+      "r14": 0
+    },
+    "claimed_total": 1,
+    "justification": "The supply side requested a reserve that aligns with the current low demand and moderate contention, adhering to feasibility without compromising ongoing jobs.",
     "reserve": 1
   },
   "v2|referee|free1|r07:besteffort:ahead:b0+m0|r14:besteffort:ontrack:b0+m0|supply:r1:none|llm:qwen2.5:14b": {
@@ -202089,6 +202984,15 @@
     "claimed_total": 1,
     "justification": "The free GPU is reserved to prevent future shortages as no prod jobs are incoming and contention is moderate.",
     "reserve": 1
+  },
+  "v2|referee|free1|r07:besteffort:ahead:b0+m0|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 1
+    },
+    "claimed_total": 1,
+    "justification": "Allocated all free GPUs to the besteffort job as it has no base requirement and is ahead of its deadline.",
+    "reserve": 0
   },
   "v2|referee|free1|r07:besteffort:ahead:b0+m0|supply:r1:few|llm:deepseek-r1:32b": {
     "_source": "llm:deepseek-r1:32b",
@@ -202485,6 +203389,16 @@
     },
     "claimed_total": 1,
     "justification": "The supply side's request for reserve is granted due to low contention and incoming prod jobs, while demand sides' base_gpus are not met, so no margin can be awarded.",
+    "reserve": 1
+  },
+  "v2|referee|free1|r07:besteffort:ahead:b0+m1|r12:besteffort:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 0,
+      "r12": 0
+    },
+    "claimed_total": 1,
+    "justification": "The supply side's request for reserve is compelling given low contention and incoming prod jobs; no besteffort margins are awarded due to feasibility constraints.",
     "reserve": 1
   },
   "v2|referee|free1|r07:besteffort:ahead:b0+m1|r12:besteffort:ontrack:b0+m1|supply:r1:few|llm:deepseek-r1:32b": {
@@ -203378,6 +204292,16 @@
     "justification": "Allocated all free GPUs to the prod job as per priority rule, leaving none for reserve or besteffort margin due to feasibility constraints.",
     "reserve": 0
   },
+  "v2|referee|free1|r07:prod:ahead:b0+m1|r08:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 0,
+      "r08": 0
+    },
+    "claimed_total": 1,
+    "justification": "Reserve is granted to protect against future high-demand scenarios as contention is low and prod jobs are incoming.",
+    "reserve": 1
+  },
   "v2|referee|free1|r07:prod:ahead:b0+m1|r08:prod:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -203407,6 +204331,26 @@
     "claimed_total": 1,
     "justification": "Only one job can be allocated GPUs due to the free pool constraint; prioritized r08 as it is behind schedule.",
     "reserve": 0
+  },
+  "v2|referee|free1|r07:prod:ahead:b0+m1|r09:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 0,
+      "r09": 0
+    },
+    "claimed_total": 1,
+    "justification": "The free pool only has one GPU, which is reserved to protect against incoming prod jobs with low contention.",
+    "reserve": 1
+  },
+  "v2|referee|free1|r07:prod:ahead:b0+m1|r09:prod:ahead:b0+m1|supply:r2:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 0,
+      "r09": 0
+    },
+    "claimed_total": 1,
+    "justification": "Only one job can receive base GPUs due to limited free pool; reserve is set to protect incoming jobs as contention is high.",
+    "reserve": 1
   },
   "v2|referee|free1|r07:prod:ahead:b0+m1|r09:prod:behind:b0+m2|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -203913,6 +204857,16 @@
     "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying the base_gpus for both 'besteffort' jobs before granting any margin. Applied ENVY-FREENESS to avoid giving one job more than another within the same tier, and applied FEASIBILITY to ensure no allocation exceeds the free pool of 1 GPU.",
     "reserve": 1
   },
+  "v2|referee|free1|r08:besteffort:ahead:b0+m0|r10:besteffort:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r08": 0,
+      "r10": 0
+    },
+    "claimed_total": 1,
+    "justification": "The free GPU is reserved to protect incoming high-priority jobs due to moderate cluster contention.",
+    "reserve": 1
+  },
   "v2|referee|free1|r08:besteffort:ahead:b0+m0|r10:besteffort:ontrack:b0+m1|supply:r1:few|dbt59d99fc541bb|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -204055,6 +205009,16 @@
     },
     "claimed_total": 1,
     "justification": "Allocated 0 GPUs to both jobs and reserved 1 GPU due to convincing justification for future prod job preparation, adhering to feasibility and incentive skepticism rules.",
+    "reserve": 1
+  },
+  "v2|referee|free1|r08:besteffort:ahead:b0+m1|r09:besteffort:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r08": 0,
+      "r09": 0
+    },
+    "claimed_total": 1,
+    "justification": "Reserve is granted to protect incoming prod jobs as per rule 4 and 5.",
     "reserve": 1
   },
   "v2|referee|free1|r08:besteffort:ahead:b0+m1|r09:besteffort:behind:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
@@ -204843,6 +205807,15 @@
     "justification": "The supply side requested a reserve of 1 GPU to accommodate incoming prod jobs, which is feasible and aligns with priority rules.",
     "reserve": 1
   },
+  "v2|referee|free1|r08:prod:ahead:b0+m1|r09:besteffort:ahead:b0+m1|r10:besteffort:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r08": 1
+    },
+    "claimed_total": 1,
+    "justification": "Allocated all GPUs to the 'prod' tier job as per priority rule, with no reserve due to free_gpus limit.",
+    "reserve": 0
+  },
   "v2|referee|free1|r08:prod:ahead:b0+m1|r09:besteffort:ahead:b0+m1|r10:besteffort:behind:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -204850,6 +205823,15 @@
     },
     "claimed_total": 1,
     "justification": "Allocated all GPUs to the 'prod' tier job r08 as per priority rule, leaving none for reserve or other besteffort jobs.",
+    "reserve": 0
+  },
+  "v2|referee|free1|r08:prod:ahead:b0+m1|r09:besteffort:behind:b0+m2|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r08": 1
+    },
+    "claimed_total": 1,
+    "justification": "Allocated all free GPUs to the 'prod' tier job as per priority rule, leaving no reserve due to feasibility constraints.",
     "reserve": 0
   },
   "v2|referee|free1|r08:prod:ahead:b0+m1|r10:besteffort:behind:b0+m1|r13:besteffort:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b|noarg": {
@@ -206216,6 +207198,37 @@
     "justification": "The supply side's request for reserve is strong but the free pool only allows for one GPU which must be allocated to satisfy the prod tier job's base need as per INDIVIDUAL RATIONALITY and FEASIBILITY rules.",
     "reserve": 0
   },
+  "v2|referee|free1|r09:prod:ahead:b0+m1|r10:besteffort:ahead:b0+m0|r12:prod:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r09": 0,
+      "r10": 0,
+      "r12": 1
+    },
+    "claimed_total": 1,
+    "justification": "Allocated the single GPU to the prod job r12 as it is ahead of its deadline and has a modest justification for margin, while respecting feasibility constraints.",
+    "reserve": 0
+  },
+  "v2|referee|free1|r09:prod:ahead:b0+m1|r10:besteffort:ahead:b0+m0|r12:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r09": 0,
+      "r10": 0,
+      "r12": 0
+    },
+    "claimed_total": 1,
+    "justification": "Reserving all GPUs for potential future prod jobs as contention is low and incoming prod jobs are few.",
+    "reserve": 1
+  },
+  "v2|referee|free1|r09:prod:ahead:b0+m1|r10:besteffort:ahead:b0+m0|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r09": 1
+    },
+    "claimed_total": 1,
+    "justification": "Allocated all free GPUs to the prod job as per priority rule, with no reserve since supply side does not request and has weak justification.",
+    "reserve": 0
+  },
   "v2|referee|free1|r09:prod:ahead:b0+m1|r10:besteffort:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -206294,6 +207307,16 @@
     },
     "claimed_total": 1,
     "justification": "All jobs have base_gpus of 0 and no convincing justification for requested margin; reserve is set to free pool size per supply side request.",
+    "reserve": 1
+  },
+  "v2|referee|free1|r09:prod:ahead:b0+m1|r12:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r09": 0,
+      "r12": 0
+    },
+    "claimed_total": 1,
+    "justification": "The free pool only has one GPU, which is reserved to protect against incoming prod jobs as per supply side request.",
     "reserve": 1
   },
   "v2|referee|free1|r09:prod:ahead:b0+m1|r12:prod:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b": {
@@ -207081,6 +208104,16 @@
     "justification": "Applied INDIVIDUAL RATIONALITY by satisfying each job's base_gpus first and then granting requested margins. Applied PRIORITY to serve prod tier jobs before besteffort jobs.",
     "reserve": 0
   },
+  "v2|referee|free1|r10:besteffort:ahead:b0+m1|r11:prod:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r11": 0
+    },
+    "claimed_total": 1,
+    "justification": "The supply side's request for reserve is compelling given the low contention and incoming prod jobs; no demand side requests are sufficiently justified to allocate GPUs.",
+    "reserve": 1
+  },
   "v2|referee|free1|r10:besteffort:ahead:b0+m1|r11:prod:ontrack:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -207119,6 +208152,36 @@
     "claimed_total": 1,
     "justification": "Priority rule grants base and margin to 'prod' tier job r12; feasibility prevents overallocation.",
     "reserve": 0
+  },
+  "v2|referee|free1|r10:besteffort:ahead:b0+m1|r12:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r12": 0
+    },
+    "claimed_total": 1,
+    "justification": "The free GPU is reserved to protect future incoming prod jobs as per supply side request and low contention.",
+    "reserve": 1
+  },
+  "v2|referee|free1|r10:besteffort:ahead:b0+m1|r12:prod:ahead:b0+m2|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r12": 0
+    },
+    "claimed_total": 1,
+    "justification": "The free GPU is reserved to protect incoming high-priority jobs as per supply side request and rules of FEASIBILITY and INCENTIVE SKEPTICISM.",
+    "reserve": 1
+  },
+  "v2|referee|free1|r10:besteffort:ahead:b0+m1|r12:prod:ahead:b0+m2|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r12": 0
+    },
+    "claimed_total": 1,
+    "justification": "The free GPU is reserved to prevent future shortages as no prod jobs are incoming and current demand does not justify allocation.",
+    "reserve": 1
   },
   "v2|referee|free1|r10:besteffort:ahead:b0+m1|r12:prod:ontrack:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -207232,6 +208295,26 @@
     },
     "claimed_total": 1,
     "justification": "The free pool only has 1 GPU, which is reserved to satisfy the supply side's request for a reserve; no margin can be awarded as it would exceed the free pool.",
+    "reserve": 1
+  },
+  "v2|referee|free1|r10:besteffort:ahead:b0+m2|r11:prod:ahead:b0+m0|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r11": 1
+    },
+    "claimed_total": 1,
+    "justification": "Allocated all available GPUs to the prod job r11 as per priority rule.",
+    "reserve": 0
+  },
+  "v2|referee|free1|r10:besteffort:ahead:b0+m2|r11:prod:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r11": 0
+    },
+    "claimed_total": 1,
+    "justification": "The free GPU is reserved to protect incoming high-priority jobs as per the supply side's convincing justification.",
     "reserve": 1
   },
   "v2|referee|free1|r10:besteffort:ahead:b0+m2|r11:prod:ontrack:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
@@ -207698,6 +208781,19 @@
     },
     "claimed_total": 1,
     "justification": "The free GPU is reserved to prevent future shortages as no prod jobs are incoming and moderate contention exists.",
+    "reserve": 1
+  },
+  "v2|referee|free1|r10:besteffort:behind:b0+m2|supply:r1:none|llm:qwen2.5:14b|adm:bffd3c2bd8": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r10": 0
+    },
+    "claimed_total": 1,
+    "defer": [
+      "r11"
+    ],
+    "justification": "The supply side's justification for reserve is convincing, and there are no free GPUs left to allocate after reserving.",
     "reserve": 1
   },
   "v2|referee|free1|r10:besteffort:behind:b0+m2|supply:r1:none|llm:qwen2.5:14b|noarg": {
@@ -208260,6 +209356,38 @@
     "justification": "Allocated all GPUs to the 'prod' tier job as per priority rule, leaving none for reserve or other besteffort jobs due to feasibility constraints.",
     "reserve": 0
   },
+  "v2|referee|free1|r10:prod:ahead:b0+m1|r11:besteffort:ahead:b0+m1|r12:prod:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r11": 0,
+      "r12": 0
+    },
+    "claimed_total": 1,
+    "justification": "No base_gpus are requested and the supply side does not need a reserve; all GPUs are held idle.",
+    "reserve": 1
+  },
+  "v2|referee|free1|r10:prod:ahead:b0+m1|r11:besteffort:ahead:b0+m1|r12:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r11": 0,
+      "r12": 0
+    },
+    "claimed_total": 1,
+    "justification": "The supply side's request for reserve is compelling given the moderate contention and incoming prod jobs; all demand sides' base_gpus are zero.",
+    "reserve": 1
+  },
+  "v2|referee|free1|r10:prod:ahead:b0+m1|r11:besteffort:ahead:b0+m1|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r11": 0
+    },
+    "claimed_total": 1,
+    "justification": "The free GPU is reserved to prevent future shortages as no prod jobs are incoming and contention is moderate.",
+    "reserve": 1
+  },
   "v2|referee|free1|r10:prod:ahead:b0+m1|r12:besteffort:ontrack:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -208331,6 +209459,16 @@
     },
     "claimed_total": 1,
     "justification": "The free GPU is reserved to prevent future shortages as no prod jobs are incoming and current contention is moderate.",
+    "reserve": 1
+  },
+  "v2|referee|free1|r10:prod:ahead:b0+m2|r12:prod:ahead:b0+m2|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r12": 0
+    },
+    "claimed_total": 1,
+    "justification": "The free pool only has 1 GPU, which is reserved to protect incoming high-priority jobs as per supply side request.",
     "reserve": 1
   },
   "v2|referee|free1|r10:prod:ahead:b0+m2|r12:prod:ontrack:b0+m1|supply:r1:few|dbt4b25cb76aecf|llm:qwen2.5:14b": {
@@ -208405,6 +209543,15 @@
     },
     "claimed_total": 1,
     "justification": "The free pool only has 1 GPU, which is reserved to protect against incoming prod jobs as contention is low.",
+    "reserve": 1
+  },
+  "v2|referee|free1|r10:prod:ahead:b0+m2|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0
+    },
+    "claimed_total": 1,
+    "justification": "The free pool only has 1 GPU, which is reserved to protect incoming prod jobs as per supply side request.",
     "reserve": 1
   },
   "v2|referee|free1|r10:prod:behind:b0+m2|r11:besteffort:ahead:b0+m1|supply:r1:none|llm:qwen2.5:14b": {
@@ -209059,6 +210206,15 @@
     },
     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
     "reserve": 0
+  },
+  "v2|referee|free1|r11:besteffort:ahead:b0+m1|r13:besteffort:ahead:b0+m1|r14:besteffort:ahead:b0+m0|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r14": 0
+    },
+    "claimed_total": 1,
+    "justification": "The supply side's request for reserve is granted due to moderate contention, while no base_gpus are awarded as there are none requested; the free GPU is reserved to prevent future shortages.",
+    "reserve": 1
   },
   "v2|referee|free1|r11:besteffort:ahead:b0+m1|r14:besteffort:behind:b0+m2|supply:r1:none|dbta73b3d56fbb3|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -210430,6 +211586,15 @@
     "justification": "Allocated base GPUs to the job behind schedule, respecting feasibility and envy-freeness.",
     "reserve": 0
   },
+  "v2|referee|free1|r12:besteffort:ahead:b0+m1|r13:besteffort:ahead:b0+m1|r14:prod:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r14": 1
+    },
+    "claimed_total": 1,
+    "justification": "Allocated base GPUs to the highest priority job (prod tier) as per PRIORITY rule; no reserve needed since contention is low and incoming prod jobs are none.",
+    "reserve": 0
+  },
   "v2|referee|free1|r12:besteffort:ahead:b0+m1|r13:besteffort:behind:b0+m1|r14:prod:behind:b0+m1|r15:besteffort:behind:b0+m2|supply:r1:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -210546,6 +211711,15 @@
     },
     "claimed_total": 1,
     "justification": "Reserving the GPU for potential incoming prod jobs as per supply side request while ensuring feasibility.",
+    "reserve": 1
+  },
+  "v2|referee|free1|r12:besteffort:ahead:b0+m2|r15:prod:ahead:b0+m2|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r15": 0
+    },
+    "claimed_total": 1,
+    "justification": "The prod tier job r15 is prioritized but its base_gpus are unmet due to lack of available GPUs; supply side reserve is granted as requested.",
     "reserve": 1
   },
   "v2|referee|free1|r12:besteffort:ahead:b0+m2|r15:prod:ahead:b0+m2|supply:r1:none|llm:qwen2.5:14b|noarg": {
@@ -211789,6 +212963,33 @@
     },
     "claimed_total": 1,
     "justification": "Reserving the entire pool for potential future needs while ensuring no base_gpus are unmet.",
+    "reserve": 1
+  },
+  "v2|referee|free1|r13:besteffort:ahead:b0+m2|r14:prod:ahead:b0+m2|r15:besteffort:ahead:b0+m2|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r14": 0
+    },
+    "claimed_total": 1,
+    "justification": "The supply side requested a reserve that is feasible and justified, while prod jobs take priority over besteffort for base allocation.",
+    "reserve": 1
+  },
+  "v2|referee|free1|r13:besteffort:ahead:b0+m2|r14:prod:ahead:b0+m2|r15:besteffort:behind:b0+m2|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r14": 0
+    },
+    "claimed_total": 1,
+    "justification": "Reserve is granted to prevent future shortages, and prod job r14 gets base_gpus as per priority rules.",
+    "reserve": 1
+  },
+  "v2|referee|free1|r13:besteffort:ahead:b0+m2|r14:prod:ahead:b0+m2|r15:besteffort:ontrack:b0+m1|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r14": 0
+    },
+    "claimed_total": 1,
+    "justification": "Reserving all GPUs for potential incoming prod jobs as per supply side request, while no base or margin can be feasibly awarded.",
     "reserve": 1
   },
   "v2|referee|free1|r13:besteffort:ahead:b0+m2|supply:r1:none|llm:qwen2.5:14b": {
@@ -215438,6 +216639,15 @@
     "justification": "Allocated the requested margin to r00 as its justification was convincing and there were no competing base_gpus demands; reserved 1 GPU for incoming prod jobs.",
     "reserve": 1
   },
+  "v2|referee|free2|r00:besteffort:ahead:b0+m1|r03:besteffort:ahead:b0+m1|r04:prod:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r04": 1
+    },
+    "claimed_total": 2,
+    "justification": "Allocated base_gpus for the highest priority job and reserved as requested, adhering to feasibility.",
+    "reserve": 1
+  },
   "v2|referee|free2|r00:besteffort:ahead:b0+m1|r03:besteffort:ahead:b0+m1|r04:prod:behind:b0+m2|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -216286,6 +217496,16 @@
     "justification": "Allocated base_gpus for the 'prod' tier job behind schedule and reserved GPUs for incoming high-priority jobs as per rules.",
     "reserve": 1
   },
+  "v2|referee|free2|r00:prod:ahead:b0+m0|r05:besteffort:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r00": 1,
+      "r05": 0
+    },
+    "claimed_total": 2,
+    "justification": "Allocated base GPUs to the prod job first due to priority and then reserved necessary GPUs for incoming jobs while ensuring no over-allocation.",
+    "reserve": 1
+  },
   "v2|referee|free2|r00:prod:ahead:b0+m0|r05:besteffort:behind:b0+m1|supply:r1:few|dbt8c3569dae608|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -216928,6 +218148,36 @@
     "justification": "The supply side requested a reserve that aligns with high contention and incoming prod jobs, while demand sides did not justify margin needs beyond their base gpus which are zero.",
     "reserve": 2
   },
+  "v2|referee|free2|r01:besteffort:ahead:b0+m0|r02:prod:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r01": 0,
+      "r02": 0
+    },
+    "claimed_total": 2,
+    "justification": "Reserve is prioritized due to incoming prod jobs and low contention, aligning with feasibility rule.",
+    "reserve": 2
+  },
+  "v2|referee|free2|r01:besteffort:ahead:b0+m0|r02:prod:ahead:b0+m2|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r01": 0,
+      "r02": 0
+    },
+    "claimed_total": 2,
+    "justification": "No base_gpus are requested and the supply side's reserve claim is modest given low demand; applying FEASIBILITY to avoid overallocation.",
+    "reserve": 2
+  },
+  "v2|referee|free2|r01:besteffort:ahead:b0+m0|r02:prod:ahead:b0+m2|supply:r2:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r01": 0,
+      "r02": 0
+    },
+    "claimed_total": 2,
+    "justification": "The supply side's request for a reserve is compelling given the high contention and incoming prod jobs, but no demand side requests are sufficiently justified to allocate GPUs beyond reserve.",
+    "reserve": 2
+  },
   "v2|referee|free2|r01:besteffort:ahead:b0+m0|r02:prod:behind:b0+m2|supply:r1:many|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -217246,6 +218496,17 @@
     "claimed_total": 2,
     "justification": "Allocated base GPUs to jobs behind schedule first, then distributed remaining free GPUs while ensuring no job's margin exceeds its base unmet need.",
     "reserve": 0
+  },
+  "v2|referee|free2|r01:besteffort:ahead:b0+m1|r04:besteffort:ahead:b0+m1|r05:besteffort:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r01": 0,
+      "r04": 0,
+      "r05": 0
+    },
+    "claimed_total": 1,
+    "justification": "Reserve is granted to accommodate incoming prod jobs while ensuring no besteffort job's base_gpus are unmet.",
+    "reserve": 1
   },
   "v2|referee|free2|r01:besteffort:ahead:b0+m1|r04:besteffort:ahead:b0+m1|supply:r1:few|dbta9fca3f72ff6|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -217918,6 +219179,28 @@
     "justification": "Allocated the requested margin to r01 due to its risk of demand spikes and prioritized prod tier. Reserved 1 GPU for incoming prod jobs as per supply side request.",
     "reserve": 1
   },
+  "v2|referee|free2|r01:prod:ahead:b0+m1|r02:prod:ahead:b0+m1|r03:besteffort:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r01": 0,
+      "r02": 0,
+      "r03": 0
+    },
+    "claimed_total": 2,
+    "justification": "Reserve all GPUs to protect future incoming prod jobs as contention is low.",
+    "reserve": 2
+  },
+  "v2|referee|free2|r01:prod:ahead:b0+m1|r02:prod:ahead:b0+m1|r04:prod:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r01": 0,
+      "r02": 0,
+      "r04": 0
+    },
+    "claimed_total": 2,
+    "justification": "Reserve all GPUs to protect future incoming prod jobs as contention is low.",
+    "reserve": 2
+  },
   "v2|referee|free2|r01:prod:ahead:b0+m1|r02:prod:ontrack:b0+m1|supply:r1:many|dbt05746a7c83ae|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -218276,6 +219559,16 @@
     },
     "claimed_total": 2,
     "justification": "Allocated all free GPUs to the prod job as per priority rule, with no reserve since supply side did not request any and current conditions do not warrant it.",
+    "reserve": 0
+  },
+  "v2|referee|free2|r02:besteffort:ahead:b0+m0|r05:besteffort:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r02": 1,
+      "r05": 1
+    },
+    "claimed_total": 2,
+    "justification": "Allocated base GPUs to both besteffort jobs as per INDIVIDUAL RATIONALITY and FEASIBILITY rules.",
     "reserve": 0
   },
   "v2|referee|free2|r02:besteffort:ahead:b0+m0|r05:besteffort:ontrack:b0+m0|supply:r1:few|dbt1579a852fbad|llm:qwen2.5:14b": {
@@ -218958,6 +220251,15 @@
     "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying the prod job's base_gpus and then granting it a requested margin to ensure timely completion without exceeding free GPUs.",
     "reserve": 0
   },
+  "v2|referee|free2|r02:prod:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r02": 1
+    },
+    "claimed_total": 2,
+    "justification": "Allocated base_gpus for the prod job first, then granted a convincing margin and reserve as they do not exceed free_gpus.",
+    "reserve": 1
+  },
   "v2|referee|free2|r02:prod:ahead:b0+m2|r03:besteffort:ahead:b0+m0|supply:r1:few|dbt5456f69f64b4|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -219277,6 +220579,16 @@
     "justification": "Allocated base GPUs to the prod job first, then reserved for incoming prod jobs as per supply side request.",
     "reserve": 1
   },
+  "v2|referee|free2|r03:besteffort:ahead:b0+m1|r05:besteffort:ahead:b0+m0|r06:besteffort:ahead:b0+m0|r08:prod:ahead:b0+m0|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r03": 1,
+      "r08": 0
+    },
+    "claimed_total": 2,
+    "justification": "Allocated the requested margin to r03 due to its convincing risk assessment and reserved GPUs for incoming prod jobs as contention is moderate.",
+    "reserve": 1
+  },
   "v2|referee|free2|r03:besteffort:ahead:b0+m1|r05:besteffort:behind:b0+m1|r06:besteffort:behind:b0+m1|r08:prod:ontrack:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -219294,6 +220606,16 @@
     "claimed_total": 2,
     "justification": "Allocated base GPUs to the prod job first, then reserved for incoming jobs as per priority and feasibility rules.",
     "reserve": 1
+  },
+  "v2|referee|free2|r03:besteffort:ahead:b0+m1|r06:besteffort:ahead:b0+m0|r08:prod:ahead:b0+m0|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r06": 1,
+      "r08": 1
+    },
+    "claimed_total": 2,
+    "justification": "Allocated base_gpus to prod job first due to priority rule, then allocated remaining GPU to besteffort job with reasonable margin request.",
+    "reserve": 0
   },
   "v2|referee|free2|r03:besteffort:ahead:b0+m1|r06:besteffort:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -219323,6 +220645,16 @@
     "claimed_total": 2,
     "justification": "Priority rule grants base GPUs to 'prod' tier job r06, and feasibility ensures no over-allocation.",
     "reserve": 1
+  },
+  "v2|referee|free2|r03:besteffort:ahead:b0+m1|r07:besteffort:ahead:b0+m0|r08:prod:ahead:b0+m0|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 1,
+      "r08": 1
+    },
+    "claimed_total": 2,
+    "justification": "Allocated base_gpus to prod job r08 first due to priority rule, then to besteffort job r07 as it has a moderate margin request with low risk.",
+    "reserve": 0
   },
   "v2|referee|free2|r03:besteffort:ahead:b0+m1|r07:besteffort:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -220428,6 +221760,24 @@
     "justification": "Allocated the free GPUs according to feasibility and priority rules.",
     "reserve": 1
   },
+  "v2|referee|free2|r04:besteffort:ahead:b0+m1|r05:besteffort:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b|adm:6cd0c2748e": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r04": 0,
+      "r05": 1
+    },
+    "claimed_total": 2,
+    "defer": [
+      "r06",
+      "r08",
+      "r10",
+      "r11",
+      "r15"
+    ],
+    "justification": "Allocated base GPUs first, then granted margin to the job behind schedule while respecting supply-side reserve request and cluster scarcity.",
+    "reserve": 1
+  },
   "v2|referee|free2|r04:besteffort:ahead:b0+m1|r06:prod:behind:b0+m2|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -221223,6 +222573,15 @@
     "justification": "Allocated based on priority and envy-freeness rules while reserving for incoming prod jobs.",
     "reserve": 1
   },
+  "v2|referee|free2|r05:besteffort:ahead:b0+m0|r06:prod:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r06": 1
+    },
+    "claimed_total": 2,
+    "justification": "Allocated base GPUs to the prod job first due to priority rule, then reserved as requested by supply side without exceeding free pool.",
+    "reserve": 1
+  },
   "v2|referee|free2|r05:besteffort:ahead:b0+m0|r14:besteffort:behind:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -221916,6 +223275,23 @@
     "justification": "Allocated base_gpus for the besteffort job while reserving minimal GPUs to protect against future high-demand scenarios.",
     "reserve": 1
   },
+  "v2|referee|free2|r05:besteffort:ontrack:b0+m1|supply:r0:none|llm:qwen2.5:14b|adm:6cd0c2748e": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r05": 0
+    },
+    "claimed_total": 2,
+    "defer": [
+      "r06",
+      "r08",
+      "r10",
+      "r11",
+      "r15"
+    ],
+    "justification": "The supply side's justification for no reserve is compelling, and r05's requested margin is not granted as its base_gpus are zero.",
+    "reserve": 2
+  },
   "v2|referee|free2|r05:besteffort:ontrack:b0+m1|supply:r1:few|dbtd96eab4dc52a|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -221942,6 +223318,16 @@
     "claimed_total": 2,
     "justification": "The supply side requested a reserve equal to the free pool, leaving no GPUs for any job's base or margin.",
     "reserve": 2
+  },
+  "v2|referee|free2|r05:prod:ahead:b0+m0|r06:prod:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r05": 0,
+      "r06": 0
+    },
+    "claimed_total": 1,
+    "justification": "Reserve is granted to accommodate incoming prod jobs while keeping current demand low.",
+    "reserve": 1
   },
   "v2|referee|free2|r05:prod:ahead:b0+m1|r06:besteffort:ahead:b0+m1|supply:r1:many|dbt654d93e10a96|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -222999,6 +224385,15 @@
     "claimed_total": 2,
     "justification": "The free GPUs are allocated to reserve due to moderate contention and incoming high-priority jobs, while besteffort jobs have low base_gpus needs.",
     "reserve": 2
+  },
+  "v2|referee|free2|r06:besteffort:ahead:b0+m2|r10:prod:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 1
+    },
+    "claimed_total": 2,
+    "justification": "Allocated base_gpus for the prod job first, then granted a modest reserve as supply justification was unconvincing but necessary to meet feasibility.",
+    "reserve": 1
   },
   "v2|referee|free2|r06:besteffort:ahead:b0+m2|r10:prod:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -224780,6 +226175,15 @@
     "justification": "Allocated base_gpus for the prod job first, then reserved as per supply side request without exceeding free pool.",
     "reserve": 1
   },
+  "v2|referee|free2|r07:prod:ahead:b0+m0|supply:r2:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 0
+    },
+    "claimed_total": 2,
+    "justification": "The supply side requested a reserve that matches the free pool size, and there is no base or margin to allocate for the demand side due to low risk and high contention.",
+    "reserve": 2
+  },
   "v2|referee|free2|r07:prod:ahead:b0+m0|supply:r2:many|llm:qwen2.5:14b|noarg": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -224834,6 +226238,26 @@
     "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying the prod job's base_gpus before granting any margin. The reserve was granted to protect future jobs without harming current workload as per PRIORITY and INCENTIVE SKEPTICISM rules.",
     "reserve": 0
   },
+  "v2|referee|free2|r07:prod:ahead:b0+m1|r08:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 0,
+      "r08": 0
+    },
+    "claimed_total": 1,
+    "justification": "Reserve is granted to protect against future high-demand scenarios due to incoming prod jobs, while individual rationality and envy-freeness prevent awarding margin GPUs as base requirements are unmet.",
+    "reserve": 1
+  },
+  "v2|referee|free2|r07:prod:ahead:b0+m1|r08:prod:ahead:b0+m1|supply:r2:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 0,
+      "r08": 0
+    },
+    "claimed_total": 2,
+    "justification": "The supply side's request for reserve is compelling due to high contention, and there are no base GPU needs to satisfy.",
+    "reserve": 2
+  },
   "v2|referee|free2|r07:prod:ahead:b0+m1|r08:prod:behind:b0+m2|supply:r2:many|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -224843,6 +226267,27 @@
     "claimed_total": 2,
     "justification": "Allocated based on priority and feasibility, ensuring prod jobs are served while respecting the free pool limit.",
     "reserve": 1
+  },
+  "v2|referee|free2|r07:prod:ahead:b0+m1|r09:prod:behind:b0+m2|supply:r1:few|llm:qwen2.5:14b|adm:3cd3331006": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r12"
+    ],
+    "alloc": {
+      "r09": 1,
+      "r12": 1
+    },
+    "claimed_total": 2,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r08",
+      "r10",
+      "r11"
+    ],
+    "justification": "Allocated base_gpus to the most urgent prod job and satisfied the reserve request within feasibility constraints.",
+    "reserve": 0
   },
   "v2|referee|free2|r07:prod:ahead:b0+m1|r12:prod:behind:b0+m2|supply:r0:none|dbt21f3788737ce|llm:deepseek-r1:32b": {
     "_source": "llm:deepseek-r1:32b",
@@ -225047,6 +226492,25 @@
     "justification": "Allocated 1 GPU each to r07 and r09 under Envy-freeness, as both are 'prod' tier jobs behind deadline. No reserve granted due to limited free GPUs.",
     "reserve": 0
   },
+  "v2|referee|free2|r07:prod:behind:b0+m2|r09:prod:behind:b0+m2|supply:r2:many|llm:qwen2.5:14b|adm:c547164f9b": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r07": 1,
+      "r09": 1
+    },
+    "claimed_total": 2,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r08",
+      "r10",
+      "r11"
+    ],
+    "justification": "Allocated base GPUs to prod jobs first due to priority and then split the free pool equally between them as they are both behind schedule.",
+    "reserve": 0
+  },
   "v2|referee|free2|r07:prod:behind:b0+m2|r09:prod:behind:b0+m2|supply:r2:many|llm:qwen2.5:14b|noarg": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -225124,6 +226588,24 @@
     "claimed_total": 2,
     "justification": "Allocated based on priority and necessity to avoid missing deadlines while respecting feasibility limits.",
     "reserve": 1
+  },
+  "v2|referee|free2|r07:prod:ontrack:b0+m1|r09:prod:behind:b0+m2|supply:r2:many|llm:qwen2.5:14b|adm:c547164f9b": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r09": 2
+    },
+    "claimed_total": 2,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r08",
+      "r10",
+      "r11"
+    ],
+    "justification": "Allocated base GPUs to the most behind prod job, respecting feasibility and priority rules.",
+    "reserve": 0
   },
   "v2|referee|free2|r07:prod:ontrack:b0+m1|r10:prod:ontrack:b0+m1|supply:r2:many|dbt1792b65aab41|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -225323,6 +226805,16 @@
     "justification": "Allocated base GPUs to jobs behind deadline as per INDIVIDUAL RATIONALITY and ENVY-FREENESS rules.",
     "reserve": 0
   },
+  "v2|referee|free2|r08:besteffort:ahead:b0+m0|r10:besteffort:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r08": 0,
+      "r10": 0
+    },
+    "claimed_total": 2,
+    "justification": "Reserve all GPUs due to low incoming prod jobs and ahead-of-schedule besteffort jobs with no base or margin needs.",
+    "reserve": 2
+  },
   "v2|referee|free2|r08:besteffort:ahead:b0+m0|r10:besteffort:ontrack:b0+m1|supply:r1:few|dbtc06b8626138d|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -225496,6 +226988,20 @@
     "claimed_total": 2,
     "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying the base_gpus of both besteffort jobs before granting any margin. Applied PRIORITY to serve prod tier job 'r08' which is behind its deadline.",
     "reserve": 0
+  },
+  "v2|referee|free2|r08:besteffort:ahead:b0+m1|r10:besteffort:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b|adm:bffd3c2bd8": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r08": 0,
+      "r10": 0
+    },
+    "claimed_total": 2,
+    "defer": [
+      "r11"
+    ],
+    "justification": "The supply side's justification for no reserve is not compelling given the scarcity and risk of demand spikes; thus, a full reserve is granted to protect against uncertainty.",
+    "reserve": 2
   },
   "v2|referee|free2|r08:besteffort:ahead:b0+m1|r10:besteffort:ontrack:b0+m1|supply:r1:few|llm:deepseek-r1:32b": {
     "_source": "llm:deepseek-r1:32b",
@@ -225863,6 +227369,21 @@
     "justification": "Allocated all GPUs to the 'prod' tier job r15 as per priority rule, with no base or margin demands met for besteffort jobs due to scarcity.",
     "reserve": 0
   },
+  "v2|referee|free2|r08:besteffort:behind:b0+m2|r10:besteffort:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b|adm:1e244a9025": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r08": 1,
+      "r10": 1
+    },
+    "claimed_total": 2,
+    "defer": [
+      "r11",
+      "r15"
+    ],
+    "justification": "Both jobs are behind schedule and request margin, but only base allocation is feasible due to free pool constraints.",
+    "reserve": 0
+  },
   "v2|referee|free2|r08:besteffort:behind:b0+m2|r11:besteffort:behind:b0+m1|supply:r0:none|dbta38e266df873|llm:deepseek-r1:32b": {
     "_source": "llm:deepseek-r1:32b",
     "alloc": {
@@ -226081,6 +227602,21 @@
     },
     "claimed_total": 2,
     "justification": "No base_gpus are requested and the supply side prefers no reserve, aligning with low contention and no incoming prod jobs.",
+    "reserve": 2
+  },
+  "v2|referee|free2|r08:besteffort:ontrack:b0+m1|r10:besteffort:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b|adm:1e244a9025": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r08": 0,
+      "r10": 0
+    },
+    "claimed_total": 2,
+    "defer": [
+      "r08",
+      "r10"
+    ],
+    "justification": "The supply side's justification for no reserve is compelling and the free pool is small, so all GPUs are reserved to protect against unforeseen demand.",
     "reserve": 2
   },
   "v2|referee|free2|r08:besteffort:ontrack:b0+m1|r11:besteffort:behind:b0+m1|supply:r0:none|dbtb21fe59e4e71|llm:deepseek-r1:32b": {
@@ -226313,6 +227849,15 @@
     "claimed_total": 2,
     "justification": "No base_gpus were requested and the supply side asked for a reserve that is feasible with the free pool.",
     "reserve": 2
+  },
+  "v2|referee|free2|r08:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r08": 1
+    },
+    "claimed_total": 2,
+    "justification": "Allocated base_gpus for the prod job first, then granted a convincing reserve request.",
+    "reserve": 1
   },
   "v2|referee|free2|r08:prod:ahead:b0+m1|supply:r2:many|llm:deepseek-r1:32b": {
     "_source": "llm:deepseek-r1:32b",
@@ -227082,6 +228627,16 @@
     "justification": "Allocated base_gpus for r09 as it's a prod job ahead of schedule; reserved GPUs to protect incoming prod jobs.",
     "reserve": 1
   },
+  "v2|referee|free2|r09:prod:ahead:b0+m1|r12:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r09": 0,
+      "r12": 0
+    },
+    "claimed_total": 2,
+    "justification": "No base_gpus were awarded as neither job requested any. Reserve was set to the full free pool due to incoming prod jobs and low contention.",
+    "reserve": 2
+  },
   "v2|referee|free2|r09:prod:behind:b0+m1|r10:besteffort:ontrack:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -227167,6 +228722,44 @@
     },
     "claimed_total": 2,
     "justification": "Allocated base_gpus to both jobs since they are behind schedule and in the prod tier, but no margin due to limited free GPUs.",
+    "reserve": 0
+  },
+  "v2|referee|free2|r09:prod:behind:b0+m2|r12:prod:ontrack:b0+m1|r13:prod:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b|adm:1aef63b519": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r09": 2,
+      "r13": 0
+    },
+    "claimed_total": 2,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r08",
+      "r10",
+      "r11"
+    ],
+    "justification": "Allocated all free GPUs to the 'prod' job behind schedule while ensuring no reserve is needed as it would exceed available resources.",
+    "reserve": 0
+  },
+  "v2|referee|free2|r09:prod:behind:b0+m2|r12:prod:ontrack:b0+m1|supply:r0:none|llm:qwen2.5:14b|adm:53ca018e7d": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r09": 2
+    },
+    "claimed_total": 2,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r08",
+      "r10",
+      "r11",
+      "r15"
+    ],
+    "justification": "Job r09 is behind schedule and has no base_gpus, making it eligible for the full free pool under priority rules.",
     "reserve": 0
   },
   "v2|referee|free2|r09:prod:behind:b0+m2|r12:prod:ontrack:b0+m1|supply:r1:few|dbtb2a924c429ed|llm:qwen2.5:14b": {
@@ -227698,6 +229291,26 @@
     "justification": "The supply side's request for reserve is granted to protect against future contention, while demand sides' base_gpus are zero and their justifications for margin are not compelling enough.",
     "reserve": 2
   },
+  "v2|referee|free2|r10:besteffort:ahead:b0+m1|r12:prod:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r12": 1
+    },
+    "claimed_total": 2,
+    "justification": "Priority rule grants base and margin to prod job r12; reserve is set to match remaining free GPUs.",
+    "reserve": 1
+  },
+  "v2|referee|free2|r10:besteffort:ahead:b0+m1|r12:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r12": 1
+    },
+    "claimed_total": 2,
+    "justification": "Priority rule grants base and margin to 'prod' tier job r12 ahead of 'besteffort' r10; feasibility limits total allocation.",
+    "reserve": 1
+  },
   "v2|referee|free2|r10:besteffort:ahead:b0+m1|r12:prod:ahead:b0+m2|supply:r1:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -228097,6 +229710,22 @@
     "justification": "The prod job r14 is prioritized but its base_gpus are unmet due to scarcity, so reserve all free GPUs.",
     "reserve": 2
   },
+  "v2|referee|free2|r10:besteffort:behind:b0+m2|r15:besteffort:ahead:b0+m0|supply:r1:none|llm:qwen2.5:14b|adm:bffd3c2bd8": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r10"
+    ],
+    "alloc": {
+      "r10": 2
+    },
+    "claimed_total": 2,
+    "defer": [
+      "r15",
+      "r11"
+    ],
+    "justification": "Allocated the full free pool to r10 due to its behind-schedule status and compelling safety margin request, while respecting feasibility constraints.",
+    "reserve": 0
+  },
   "v2|referee|free2|r10:besteffort:behind:b0+m2|r15:besteffort:behind:b0+m2|supply:r1:none|llm:deepseek-r1:32b": {
     "_source": "rule",
     "alloc": {
@@ -228115,6 +229744,20 @@
     "claimed_total": 2,
     "justification": "The free GPUs are allocated as reserve to prevent future shortages due to moderate contention and potential incoming prod jobs.",
     "reserve": 2
+  },
+  "v2|referee|free2|r10:besteffort:behind:b0+m2|r15:besteffort:behind:b0+m2|supply:r1:none|llm:qwen2.5:14b|adm:bffd3c2bd8": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r10": 0,
+      "r15": 0
+    },
+    "claimed_total": 1,
+    "defer": [
+      "r11"
+    ],
+    "justification": "The free pool cannot satisfy the base and margin demands of besteffort jobs while maintaining a reserve.",
+    "reserve": 1
   },
   "v2|referee|free2|r10:besteffort:behind:b0+m2|r15:besteffort:behind:b0+m2|supply:r1:none|llm:qwen2.5:14b|noarg": {
     "_source": "llm:qwen2.5:14b",
@@ -228553,6 +230196,26 @@
     },
     "claimed_total": 2,
     "justification": "The free pool is small, so reserving all for incoming prod jobs aligns with moderate contention and protects future workload.",
+    "reserve": 2
+  },
+  "v2|referee|free2|r10:prod:ahead:b0+m1|r11:besteffort:ahead:b0+m1|r12:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 1,
+      "r12": 1
+    },
+    "claimed_total": 2,
+    "justification": "Allocated base_gpus to prod jobs first due to priority and then granted margin as justified by the demand side's strategic claims without exceeding free pool.",
+    "reserve": 0
+  },
+  "v2|referee|free2|r10:prod:ahead:b0+m1|r11:besteffort:ahead:b0+m1|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r11": 0
+    },
+    "claimed_total": 2,
+    "justification": "No base_gpus were requested and the supply side's justification for reserve is convincing under moderate contention.",
     "reserve": 2
   },
   "v2|referee|free2|r10:prod:ahead:b0+m1|r11:besteffort:behind:b0+m1|supply:r0:none|dbtceb5c0f7980b|llm:qwen2.5:14b": {
@@ -229229,6 +230892,17 @@
     "justification": "No base_gpus were requested and the supply side justified no reserve initially, but due to free pool availability and lack of higher priority jobs, a full reserve is held idle.",
     "reserve": 2
   },
+  "v2|referee|free2|r11:besteffort:ahead:b0+m1|r12:prod:ahead:b0+m0|r14:besteffort:ahead:b0+m0|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r11": 0,
+      "r12": 0,
+      "r14": 0
+    },
+    "claimed_total": 2,
+    "justification": "The free GPUs are reserved to prevent future shortages as no base_gpus are claimed and contention is moderate.",
+    "reserve": 2
+  },
   "v2|referee|free2|r11:besteffort:ahead:b0+m1|r12:prod:ontrack:b0+m1|supply:r1:few|dbt4c9099c0ce4d|llm:deepseek-r1:32b": {
     "_source": "llm:deepseek-r1:32b",
     "alloc": {},
@@ -229281,6 +230955,15 @@
     },
     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
     "reserve": 0
+  },
+  "v2|referee|free2|r11:besteffort:ahead:b0+m1|r13:besteffort:ahead:b0+m1|r14:besteffort:ahead:b0+m0|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r14": 0
+    },
+    "claimed_total": 1,
+    "justification": "Reserving one GPU to prevent future shortages aligns with moderate contention and no incoming prod jobs; r14's base is zero so it gets none.",
+    "reserve": 1
   },
   "v2|referee|free2|r11:besteffort:ahead:b0+m1|r13:besteffort:behind:b0+m2|r14:besteffort:behind:b0+m2|supply:r1:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -230535,6 +232218,15 @@
     "justification": "No base_gpus were requested and feasibility requires holding all GPUs in reserve for incoming prod jobs.",
     "reserve": 2
   },
+  "v2|referee|free2|r12:besteffort:ahead:b0+m1|r13:prod:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r13": 1
+    },
+    "claimed_total": 2,
+    "justification": "Allocated base_gpus for the prod job first, then reserved remaining GPUs.",
+    "reserve": 1
+  },
   "v2|referee|free2|r12:besteffort:ahead:b0+m1|r13:prod:ontrack:b0+m1|supply:r0:none|dbtee057fc0a482|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -231521,6 +233213,15 @@
     "claimed_total": 2,
     "justification": "Given the low free_gpus and high uncertainty in demand spikes, it's prudent to reserve all GPUs for potential incoming prod jobs.",
     "reserve": 2
+  },
+  "v2|referee|free2|r13:besteffort:ahead:b0+m1|r14:prod:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r14": 1
+    },
+    "claimed_total": 2,
+    "justification": "Allocated base_gpus for the prod job first due to priority rule, then reserved remaining GPUs as no convincing demand or supply justification for margin beyond base.",
+    "reserve": 1
   },
   "v2|referee|free2|r13:besteffort:ahead:b0+m1|r14:prod:behind:b0+m2|supply:r0:none|dbt9c074a21cdce|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -232760,6 +234461,16 @@
     "claimed_total": 1,
     "justification": "The prod job 'none' is ahead of its deadline, and the besteffort job r14's request for a margin was deemed convincing given low contention and no incoming prod jobs.",
     "reserve": 0
+  },
+  "v2|referee|free2|r14:prod:ahead:b0+m0|r15:prod:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r14": 0,
+      "r15": 0
+    },
+    "claimed_total": 2,
+    "justification": "No base_gpus were requested and the supply side prefers no reserve due to low contention.",
+    "reserve": 2
   },
   "v2|referee|free2|r14:prod:ahead:b0+m0|supply:r0:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -234686,6 +236397,16 @@
     "justification": "Reserve all GPUs due to low incoming prod jobs and low contention, adhering to feasibility.",
     "reserve": 3
   },
+  "v2|referee|free3|r00:besteffort:ahead:b0+m1|r01:besteffort:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r00": 0,
+      "r01": 0
+    },
+    "claimed_total": 3,
+    "justification": "Reserve all GPUs due to incoming prod jobs; no base or margin needs are met.",
+    "reserve": 3
+  },
   "v2|referee|free3|r00:besteffort:ahead:b0+m1|r01:besteffort:ontrack:b0+m0|supply:r1:many|dbt9b289c77a6dc|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -234920,6 +236641,16 @@
     },
     "claimed_total": 3,
     "justification": "Allocated base GPUs to jobs as per feasibility and individual rationality rules; granted reserve based on convincing justification.",
+    "reserve": 1
+  },
+  "v2|referee|free3|r00:besteffort:ahead:b0+m1|r05:besteffort:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r00": 1,
+      "r05": 0
+    },
+    "claimed_total": 2,
+    "justification": "Allocated base and margin as per feasibility and individual rationality rules while reserving for incoming prod jobs.",
     "reserve": 1
   },
   "v2|referee|free3|r00:besteffort:ahead:b0+m1|r05:besteffort:ahead:b0+m1|supply:r1:many|dbt7fb567613862|llm:qwen2.5:14b": {
@@ -236817,6 +238548,15 @@
     "justification": "Allocated base GPUs first due to individual rationality and then adjusted margins based on risk assessment while reserving for incoming prod jobs as justified.",
     "reserve": 1
   },
+  "v2|referee|free3|r02:besteffort:ahead:b0+m0|r03:prod:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r03": 1
+    },
+    "claimed_total": 2,
+    "justification": "Prioritized the prod job's base need and reserved for incoming prod jobs as per rules 2 and 3.",
+    "reserve": 1
+  },
   "v2|referee|free3|r02:besteffort:ahead:b0+m0|r03:prod:ontrack:b0+m1|supply:r1:many|dbtee1923a1dcef|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -237635,6 +239375,15 @@
     "alloc": {},
     "claimed_total": 1,
     "justification": "The reserve is granted to accommodate incoming prod jobs without significantly impacting existing workload, as per INDIVIDUAL RATIONALITY and PRIORITY rules.",
+    "reserve": 1
+  },
+  "v2|referee|free3|r03:besteffort:ahead:b0+m1|r04:prod:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r04": 1
+    },
+    "claimed_total": 2,
+    "justification": "Priority rule grants base and margin to 'prod' job r04; reserve is granted for incoming prod jobs as contention is low.",
     "reserve": 1
   },
   "v2|referee|free3|r03:besteffort:ahead:b0+m1|r04:prod:behind:b0+m2|supply:r1:few|dbt363f5e0d7db8|llm:qwen2.5:14b": {
@@ -239359,6 +241108,15 @@
     "justification": "Prioritized the job behind schedule for base allocation while reserving for incoming prod jobs as per supply side request.",
     "reserve": 1
   },
+  "v2|referee|free3|r05:besteffort:ahead:b0+m1|r09:prod:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r09": 1
+    },
+    "claimed_total": 2,
+    "justification": "Allocated base GPUs to the prod job first, then reserved for future contention as justified.",
+    "reserve": 1
+  },
   "v2|referee|free3|r05:besteffort:ahead:b0+m1|r09:prod:ontrack:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -239598,6 +241356,23 @@
     },
     "claimed_total": 3,
     "justification": "Allocated base GPUs to both besteffort jobs as they are behind schedule and justified their margin needs, while reserving some for future contention.",
+    "reserve": 1
+  },
+  "v2|referee|free3|r05:besteffort:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b|adm:6cd0c2748e": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r05": 2
+    },
+    "claimed_total": 3,
+    "defer": [
+      "r06",
+      "r08",
+      "r10",
+      "r11",
+      "r15"
+    ],
+    "justification": "Allocated the requested margin to r05 as it is behind schedule and justified by its forecast uncertainty. Reserved one GPU for potential future needs.",
     "reserve": 1
   },
   "v2|referee|free3|r05:besteffort:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b|noarg": {
@@ -240277,6 +242052,16 @@
     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
     "reserve": 1
   },
+  "v2|referee|free3|r06:besteffort:ahead:b0+m2|r11:besteffort:ahead:b0+m1|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r06": 0,
+      "r11": 0
+    },
+    "claimed_total": 3,
+    "justification": "No base_gpus were requested and feasibility constraints prevent allocating margin to besteffort jobs without meeting their base first.",
+    "reserve": 3
+  },
   "v2|referee|free3|r06:besteffort:ahead:b0+m2|r11:besteffort:behind:b0+m2|supply:r1:none|dbt8386b886dd9b|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -240575,6 +242360,16 @@
     "claimed_total": 3,
     "justification": "Allocated base and margin for ahead-of-schedule prod job while reserving headroom due to low incoming contention.",
     "reserve": 2
+  },
+  "v2|referee|free3|r06:prod:ahead:b0+m1|r07:prod:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r06": 1,
+      "r07": 0
+    },
+    "claimed_total": 2,
+    "justification": "Allocated base_gpus and margin to r06 while reserving for incoming prod jobs as contention is low.",
+    "reserve": 1
   },
   "v2|referee|free3|r06:prod:ahead:b0+m1|r07:prod:ontrack:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -241044,6 +242839,15 @@
     "justification": "Allocated margin to the job behind schedule while respecting feasibility and envy-freeness rules.",
     "reserve": 1
   },
+  "v2|referee|free3|r07:besteffort:behind:b0+m1|r14:besteffort:ontrack:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 1
+    },
+    "claimed_total": 3,
+    "justification": "Allocated margin to job r07 due to being behind schedule and high uncertainty, while reserving the rest for potential spikes or incoming prod jobs.",
+    "reserve": 2
+  },
   "v2|referee|free3|r07:besteffort:behind:b0+m1|r15:prod:ahead:b0+m1|supply:r0:none|dbtae89f37ccd3a|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -241273,6 +243077,16 @@
     "justification": "Allocated 0 GPUs to job r07 as its base is met and no margin was requested. Reserved 1 GPU based on convincing justification, totaling 1 awarded GPU within the free pool.",
     "reserve": 1
   },
+  "v2|referee|free3|r07:besteffort:ontrack:b0+m1|r14:besteffort:ontrack:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 1,
+      "r14": 1
+    },
+    "claimed_total": 3,
+    "justification": "Allocated base_gpus and margin to both besteffort jobs as contention is low, while reserving minimal GPUs due to lack of incoming prod jobs.",
+    "reserve": 1
+  },
   "v2|referee|free3|r07:prod:ahead:b0+m0|supply:r0:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -241281,6 +243095,16 @@
     "claimed_total": 3,
     "justification": "Allocated base_gpus for the prod job as per INDIVIDUAL RATIONALITY and reserved minimal GPUs to maintain FEASIBILITY.",
     "reserve": 2
+  },
+  "v2|referee|free3|r07:prod:ahead:b0+m1|r08:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 0,
+      "r08": 0
+    },
+    "claimed_total": 1,
+    "justification": "No base_gpus were requested and the reserve is granted to protect against future high-demand scenarios.",
+    "reserve": 1
   },
   "v2|referee|free3|r07:prod:ahead:b0+m1|r10:besteffort:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -242844,6 +244668,126 @@
     "justification": "Allocated base GPUs to both jobs as they are behind schedule and in the prod tier, then reserved one GPU to maintain pool flexibility.",
     "reserve": 1
   },
+  "v2|referee|free3|r09:prod:behind:b0+m2|r12:prod:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b|adm:62a6d3087a": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r09": 2,
+      "r12": 0
+    },
+    "claimed_total": 3,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r08",
+      "r10",
+      "r11",
+      "r15"
+    ],
+    "justification": "Allocated base_gpus for 'prod' jobs first due to priority and then granted margin to the job behind schedule while respecting feasibility.",
+    "reserve": 1
+  },
+  "v2|referee|free3|r09:prod:behind:b0+m2|r12:prod:ontrack:b0+m1|supply:r0:none|llm:qwen2.5:14b|adm:53ca018e7d": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r09": 2,
+      "r12": 0
+    },
+    "claimed_total": 3,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r08",
+      "r10",
+      "r11",
+      "r15"
+    ],
+    "justification": "Allocated base_gpus to the behind-schedule prod job and reserved some for potential spikes or incoming high-priority jobs.",
+    "reserve": 1
+  },
+  "v2|referee|free3|r09:prod:behind:b0+m2|r12:prod:ontrack:b0+m1|supply:r0:none|llm:qwen2.5:14b|adm:609da8a8b6": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r14"
+    ],
+    "alloc": {
+      "r09": 2,
+      "r12": 0
+    },
+    "claimed_total": 3,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r08",
+      "r10",
+      "r11"
+    ],
+    "justification": "Allocated base_gpus to the behind-schedule prod job first, then reserved some for potential future contention.",
+    "reserve": 1
+  },
+  "v2|referee|free3|r09:prod:behind:b0+m2|r12:prod:ontrack:b0+m1|supply:r1:few|llm:qwen2.5:14b|adm:1aef63b519": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r09": 2,
+      "r12": 0
+    },
+    "claimed_total": 3,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r08",
+      "r10",
+      "r11"
+    ],
+    "justification": "Allocated the full free pool to job r09 due to its behind schedule status and compelling justification for margin. Reserved 1 GPU as requested by supply side.",
+    "reserve": 1
+  },
+  "v2|referee|free3|r09:prod:behind:b0+m2|r12:prod:ontrack:b0+m1|supply:r1:few|llm:qwen2.5:14b|adm:3745fedba9": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r09": 2,
+      "r12": 0
+    },
+    "claimed_total": 3,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r08",
+      "r10",
+      "r11"
+    ],
+    "justification": "Allocated base_gpus for 'r09' due to being behind schedule and reserved 1 GPU as requested by supply side.",
+    "reserve": 1
+  },
+  "v2|referee|free3|r09:prod:behind:b0+m2|r12:prod:ontrack:b0+m1|supply:r1:few|llm:qwen2.5:14b|adm:ac5ca8082f": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r13"
+    ],
+    "alloc": {
+      "r09": 1,
+      "r12": 0
+    },
+    "claimed_total": 2,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r08",
+      "r10",
+      "r11"
+    ],
+    "justification": "Allocated base GPUs to the 'prod' job behind schedule and reserved some for incoming prod jobs as justified.",
+    "reserve": 1
+  },
   "v2|referee|free3|r09:prod:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -243491,6 +245435,25 @@
     "claimed_total": 3,
     "justification": "The free pool is small, and no prod jobs need base gpus; reserving all for future needs aligns with moderate contention concerns.",
     "reserve": 3
+  },
+  "v2|referee|free3|r10:prod:ahead:b0+m1|r11:besteffort:ahead:b0+m1|r12:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 1,
+      "r12": 1
+    },
+    "claimed_total": 3,
+    "justification": "Allocated base_gpus for prod jobs first due to priority and then allocated reserve as per supply side request while ensuring feasibility.",
+    "reserve": 1
+  },
+  "v2|referee|free3|r10:prod:ahead:b0+m1|r11:besteffort:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 1
+    },
+    "claimed_total": 3,
+    "justification": "Allocated base_gpus for the prod job first due to priority rule, then granted a margin as its justification was convincing; no reserve was awarded since contention is low and incoming prod jobs are none.",
+    "reserve": 2
   },
   "v2|referee|free3|r10:prod:ahead:b0+m1|r11:besteffort:behind:b0+m1|supply:r0:none|dbtc69ee2432e56|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -245354,6 +247317,15 @@
     "justification": "Applied INDIVIDUAL RATIONALITY by satisfying each job's base_gpus first and then granting requested margins. Applied PRIORITY to serve prod tier jobs before besteffort jobs.",
     "reserve": 0
   },
+  "v2|referee|free3|r13:besteffort:ahead:b0+m1|r14:prod:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r14": 1
+    },
+    "claimed_total": 3,
+    "justification": "Allocated base_gpus for the prod job first due to priority rule, then reserved idle GPUs as no convincing need was shown by supply side or demand sides beyond that.",
+    "reserve": 2
+  },
   "v2|referee|free3|r13:besteffort:ahead:b0+m1|r14:prod:ontrack:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -245823,6 +247795,15 @@
     },
     "claimed_total": 3,
     "justification": "The free GPUs are allocated as reserve to manage potential spikes since the demand side does not require any base or margin and no other prod jobs are urgent.",
+    "reserve": 3
+  },
+  "v2|referee|free3|r13:prod:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r13": 0
+    },
+    "claimed_total": 3,
+    "justification": "No base_gpus needed and no convincing justification for margin; reserve all free GPUs as contention is low.",
     "reserve": 3
   },
   "v2|referee|free3|r13:prod:ahead:b0+m2|supply:r1:none|dbt3af422dda211|llm:qwen2.5:14b": {
@@ -247234,6 +249215,16 @@
     },
     "claimed_total": 9,
     "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying all jobs' base_gpus and then granting requested margins. Prod tier jobs 'jA' were prioritized due to their behind schedule deadline, followed by besteffort tiers 'jB' and 'jC'. The reserve was granted based on the supply side's request for light hea",
+    "reserve": 1
+  },
+  "v2|referee|free4|r00:besteffort:ahead:b0+m0|r01:besteffort:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r00": 0,
+      "r01": 0
+    },
+    "claimed_total": 1,
+    "justification": "Reserve is granted to accommodate incoming prod jobs while keeping current besteffort jobs ahead of schedule.",
     "reserve": 1
   },
   "v2|referee|free4|r00:besteffort:ahead:b0+m0|r01:besteffort:ontrack:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
@@ -249148,6 +251139,21 @@
     "justification": "Reserve was prioritized due to incoming prod jobs, leaving no GPUs for besteffort margins while satisfying feasibility.",
     "reserve": 4
   },
+  "v2|referee|free4|r01:besteffort:ahead:b0+m1|r02:besteffort:ahead:b0+m0|supply:r1:many|llm:qwen2.5:14b|adm:da39a3ee5e": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r01": 0,
+      "r02": 0
+    },
+    "claimed_total": 1,
+    "defer": [
+      "r01",
+      "r02"
+    ],
+    "justification": "Reserve is granted to protect future incoming prod jobs as per supply side request.",
+    "reserve": 1
+  },
   "v2|referee|free4|r01:besteffort:ahead:b0+m1|r02:besteffort:ahead:b0+m0|supply:r1:many|llm:qwen2.5:14b|noarg": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -249206,6 +251212,21 @@
     "claimed_total": 4,
     "justification": "Reserve was granted due to incoming prod jobs and low contention, while besteffort jobs were ahead of schedule with no base gpus needed.",
     "reserve": 4
+  },
+  "v2|referee|free4|r01:besteffort:ahead:b0+m1|r02:besteffort:ontrack:b0+m0|supply:r1:many|llm:qwen2.5:14b|adm:da39a3ee5e": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r01": 0,
+      "r02": 0
+    },
+    "claimed_total": 1,
+    "defer": [
+      "r01",
+      "r02"
+    ],
+    "justification": "Reserve is granted to protect future incoming prod jobs as contention is low.",
+    "reserve": 1
   },
   "v2|referee|free4|r01:besteffort:ahead:b0+m1|r02:besteffort:ontrack:b0+m0|supply:r1:many|llm:qwen2.5:14b|noarg": {
     "_source": "llm:qwen2.5:14b",
@@ -249965,6 +251986,16 @@
     },
     "claimed_total": 1,
     "justification": "No base_gpus were requested and reserve is granted to protect future incoming prod jobs as contention is low.",
+    "reserve": 1
+  },
+  "v2|referee|free4|r01:prod:ahead:b0+m1|r02:prod:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r01": 0,
+      "r02": 0
+    },
+    "claimed_total": 1,
+    "justification": "No base_gpus were requested and the reserve is granted to protect future incoming prod jobs.",
     "reserve": 1
   },
   "v2|referee|free4|r01:prod:ahead:b0+m1|r03:prod:ahead:b0+m0|supply:r1:many|llm:qwen2.5:14b": {
@@ -252490,6 +254521,16 @@
     "justification": "Reserving GPUs for incoming prod jobs as contention is low.",
     "reserve": 1
   },
+  "v2|referee|free4|r04:besteffort:ahead:b0+m1|r08:besteffort:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r04": 1,
+      "r08": 1
+    },
+    "claimed_total": 4,
+    "justification": "Allocated base_gpus and margin to jobs as they are ahead of schedule with low contention; reserved minimal GPUs due to lack of incoming prod jobs.",
+    "reserve": 2
+  },
   "v2|referee|free4|r04:besteffort:ahead:b0+m1|r08:besteffort:behind:b0+m1|supply:r0:none|dbte7d62624190c|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -253028,6 +255069,25 @@
     "justification": "Allocated base_gpus for the prod job and granted a modest reserve to accommodate incoming prod jobs.",
     "reserve": 1
   },
+  "v2|referee|free4|r05:besteffort:ahead:b0+m0|r06:prod:ahead:b0+m0|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r05": 1,
+      "r06": 1
+    },
+    "claimed_total": 4,
+    "justification": "Allocated base GPUs to both jobs as per INDIVIDUAL RATIONALITY and ENVY-FREENESS rules; no margin or reserve granted due to lack of justification.",
+    "reserve": 2
+  },
+  "v2|referee|free4|r05:besteffort:ahead:b0+m0|r06:prod:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r06": 1
+    },
+    "claimed_total": 2,
+    "justification": "Prioritize the prod job r06's base need while reserving for incoming high-priority jobs as justified.",
+    "reserve": 1
+  },
   "v2|referee|free4|r05:besteffort:ahead:b0+m0|supply:r0:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -253135,6 +255195,16 @@
     "justification": "No base_gpus were awarded as neither job has a base claim. Reserve was granted to supply side due to incoming prod jobs.",
     "reserve": 1
   },
+  "v2|referee|free4|r05:besteffort:ahead:b0+m1|r09:prod:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r05": 0,
+      "r09": 1
+    },
+    "claimed_total": 2,
+    "justification": "Allocated base_gpus for prod job first due to priority rule; r05's margin request was not compelling enough given low spike risk and high contention.",
+    "reserve": 1
+  },
   "v2|referee|free4|r05:besteffort:ahead:b0+m1|r09:prod:behind:b0+m2|supply:r1:few|dbt1cf65baf3abf|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -253188,6 +255258,23 @@
     "claimed_total": 4,
     "justification": "Allocated base_gpus and margin to the besteffort job as it claims a risk of missing its deadline; reserved minimal GPUs due to lack of incoming high-priority jobs.",
     "reserve": 3
+  },
+  "v2|referee|free4|r05:besteffort:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b|adm:6cd0c2748e": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r05": 0
+    },
+    "claimed_total": 0,
+    "defer": [
+      "r06",
+      "r08",
+      "r10",
+      "r11",
+      "r15"
+    ],
+    "justification": "The supply side's justification for not requesting a reserve is compelling, and the demand side's request lacks urgency given the current scarcity.",
+    "reserve": 0
   },
   "v2|referee|free4|r05:besteffort:ahead:b0+m1|supply:r1:few|dbt22f8e0722ad5|llm:deepseek-r1:32b": {
     "_source": "llm:deepseek-r1:32b",
@@ -255273,6 +257360,16 @@
     "justification": "Job r07 is behind schedule and requests a margin to hedge against potential spikes, aligning with INDIVIDUAL RATIONALITY and ENVY-FREENESS rules.",
     "reserve": 0
   },
+  "v2|referee|free4|r07:besteffort:behind:b0+m1|r14:besteffort:ontrack:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 1,
+      "r14": 0
+    },
+    "claimed_total": 4,
+    "justification": "Allocated margin to the job behind schedule while respecting feasibility and envy-freeness.",
+    "reserve": 3
+  },
   "v2|referee|free4|r07:besteffort:behind:b0+m1|r15:prod:ontrack:b0+m1|supply:r0:none|dbt23a145fc404f|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -255337,6 +257434,15 @@
     },
     "claimed_total": 4,
     "justification": "Allocated base_gpus for the behind-schedule job first, then respected supply side's request to minimize reserve due to scarcity.",
+    "reserve": 3
+  },
+  "v2|referee|free4|r07:besteffort:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 1
+    },
+    "claimed_total": 4,
+    "justification": "Allocated minimal GPUs to the behind-schedule besteffort job while conserving most of the pool as reserve due to lack of incoming high-priority jobs.",
     "reserve": 3
   },
   "v2|referee|free4|r07:besteffort:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b|noarg": {
@@ -255602,6 +257708,26 @@
     },
     "claimed_total": 4,
     "justification": "Allocated base GPUs to both jobs as they are behind schedule and in the prod tier, then reserved necessary GPUs for supply side contention.",
+    "reserve": 2
+  },
+  "v2|referee|free4|r07:prod:behind:b0+m2|r09:prod:behind:b0+m2|supply:r2:many|llm:qwen2.5:14b|adm:c547164f9b": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r04"
+    ],
+    "alloc": {
+      "r07": 2,
+      "r09": 0
+    },
+    "claimed_total": 4,
+    "defer": [
+      "r05",
+      "r06",
+      "r08",
+      "r10",
+      "r11"
+    ],
+    "justification": "Allocated base_gpus to the 'prod' job that is behind schedule and granted a convincing margin. Reserved GPUs for incoming prod jobs as per supply side request.",
     "reserve": 2
   },
   "v2|referee|free4|r07:prod:behind:b0+m2|r10:prod:ontrack:b0+m1|supply:r1:none|dbt79958c31831c|llm:deepseek-r1:32b": {
@@ -256239,6 +258365,24 @@
     "claimed_total": 2,
     "justification": "Allocated base and margin for r08 as it is behind schedule, then reserved one GPU to balance future demand.",
     "reserve": 1
+  },
+  "v2|referee|free4|r08:besteffort:behind:b0+m2|r10:besteffort:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b|adm:1e244a9025": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r08"
+    ],
+    "alloc": {
+      "r08": 2,
+      "r10": 0
+    },
+    "claimed_total": 2,
+    "defer": [
+      "r10",
+      "r11",
+      "r15"
+    ],
+    "justification": "Allocated the maximum feasible margin to r08 due to its compelling justification and behind schedule status, while respecting feasibility constraints.",
+    "reserve": 0
   },
   "v2|referee|free4|r08:besteffort:behind:b0+m2|r12:besteffort:behind:b0+m2|supply:r1:none|dbt31ac36180b66|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -257192,6 +259336,25 @@
     "justification": "No base_gpus were requested and the supply side prefers to hold a reserve due to low incoming prod demands.",
     "reserve": 4
   },
+  "v2|referee|free4|r09:prod:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b|adm:99374dc0f3": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r09": 0
+    },
+    "claimed_total": 0,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r08",
+      "r10",
+      "r11",
+      "r15"
+    ],
+    "justification": "The free pool is too small to satisfy any base or margin requests without reserving, and no convincing justification was given for a reserve.",
+    "reserve": 0
+  },
   "v2|referee|free4|r09:prod:ahead:b0+m1|supply:r1:few|dbt52349cc20550|llm:deepseek-r1:32b": {
     "_source": "llm:deepseek-r1:32b",
     "alloc": {
@@ -257387,6 +259550,25 @@
     "justification": "Allocated base_gpus to the behind-schedule job first and reserved some GPUs for future incoming prod jobs.",
     "reserve": 1
   },
+  "v2|referee|free4|r09:prod:behind:b0+m2|r12:prod:ontrack:b0+m1|supply:r1:few|llm:qwen2.5:14b|adm:3a69763ed3": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r09": 2,
+      "r12": 0
+    },
+    "claimed_total": 3,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r08",
+      "r10",
+      "r11"
+    ],
+    "justification": "Job r09 is behind schedule and justified its margin request convincingly; reserve is granted to protect against incoming prod jobs.",
+    "reserve": 1
+  },
   "v2|referee|free4|r09:prod:behind:b0+m2|r12:prod:ontrack:b0+m1|supply:r1:few|llm:qwen2.5:14b|noarg": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -257405,6 +259587,46 @@
     "claimed_total": 4,
     "justification": "Allocated minimal GPUs to the 'prod' tier job behind deadline, prioritizing feasibility and envy-freeness.",
     "reserve": 3
+  },
+  "v2|referee|free4|r09:prod:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b|adm:0798db5746": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r09": 2
+    },
+    "claimed_total": 2,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r08",
+      "r10",
+      "r11",
+      "r15"
+    ],
+    "justification": "Job r09 is behind schedule and requires GPUs to meet its deadline, while no reserve is needed as there are no incoming high-priority jobs.",
+    "reserve": 0
+  },
+  "v2|referee|free4|r09:prod:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b|adm:99374dc0f3": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r09"
+    ],
+    "alloc": {
+      "r09": 2
+    },
+    "claimed_total": 2,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r08",
+      "r10",
+      "r11",
+      "r15"
+    ],
+    "justification": "Job r09 is behind schedule and requires GPUs to meet its deadline, while no reserve is needed as there are no incoming high-priority jobs.",
+    "reserve": 0
   },
   "v2|referee|free4|r09:prod:behind:b0+m2|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -257628,6 +259850,15 @@
     "justification": "No base_gpus needed and no incoming prod pressure; holding minimal reserve.",
     "reserve": 1
   },
+  "v2|referee|free4|r10:besteffort:ahead:b0+m0|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0
+    },
+    "claimed_total": 1,
+    "justification": "The supply side requested a modest reserve to prevent future shortages, which is reasonable given the low contention and no incoming prod jobs.",
+    "reserve": 1
+  },
   "v2|referee|free4|r10:besteffort:ahead:b0+m1|r13:besteffort:ahead:b0+m0|supply:r1:few|dbt18965cb34cbd|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -257636,6 +259867,16 @@
     },
     "claimed_total": 4,
     "justification": "Given the low contention and incoming production jobs, reserving all GPUs is prudent to protect future demands while no base or margin needs are convincingly met for besteffort jobs.",
+    "reserve": 4
+  },
+  "v2|referee|free4|r10:besteffort:ahead:b0+m1|r13:besteffort:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0,
+      "r13": 0
+    },
+    "claimed_total": 4,
+    "justification": "Given low contention and no immediate prod demand, all GPUs are reserved to prepare for incoming production jobs without harming current workload.",
     "reserve": 4
   },
   "v2|referee|free4|r10:besteffort:ahead:b0+m1|supply:r0:none|dbt3e75daf1b3f5|llm:qwen2.5:14b": {
@@ -257986,6 +260227,21 @@
     "justification": "Insufficient free GPUs to meet any margin requests while maintaining reserve; priority given to supply side reserve due to lack of incoming prod jobs.",
     "reserve": 1
   },
+  "v2|referee|free4|r10:besteffort:behind:b0+m2|supply:r1:none|llm:qwen2.5:14b|adm:bffd3c2bd8": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r10"
+    ],
+    "alloc": {
+      "r10": 2
+    },
+    "claimed_total": 3,
+    "defer": [
+      "r11"
+    ],
+    "justification": "Allocated the requested margin to r10 as it is behind schedule and justified by its low forecast uncertainty. Reserved 1 GPU for future contingencies.",
+    "reserve": 1
+  },
   "v2|referee|free4|r10:besteffort:ontrack:b0+m0|supply:r0:none|dbt3e3acac823fe|llm:deepseek-r1:32b": {
     "_source": "rule",
     "alloc": {
@@ -258196,6 +260452,15 @@
     "justification": "Reserve is granted to protect future incoming prod jobs as contention is low and current demand is minimal.",
     "reserve": 1
   },
+  "v2|referee|free4|r10:prod:ahead:b0+m1|r11:besteffort:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 1
+    },
+    "claimed_total": 4,
+    "justification": "Allocated base_gpus for the prod job first due to priority rule, then granted a convincing margin as it is ahead of schedule and justified by low contention. No reserve was taken since supply side did not request any.",
+    "reserve": 3
+  },
   "v2|referee|free4|r10:prod:ahead:b0+m1|r11:besteffort:behind:b0+m1|supply:r0:none|dbt7bcc32f74bcf|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -258341,6 +260606,15 @@
     "claimed_total": 4,
     "justification": "The supply side's justification for no reserve is compelling, and the demand side requests margin without a base need, which cannot be granted under Envy-Freeness and Incentive Skepticism rules.",
     "reserve": 4
+  },
+  "v2|referee|free4|r10:prod:ahead:b0+m2|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0
+    },
+    "claimed_total": 1,
+    "justification": "Insufficient free GPUs to satisfy any margin after granting reserve; priority is given to potential incoming prod jobs.",
+    "reserve": 1
   },
   "v2|referee|free4|r10:prod:ahead:b0+m2|supply:r1:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -258675,6 +260949,16 @@
     "claimed_total": 4,
     "justification": "Reserve all GPUs due to low incoming prod jobs and no compelling need for margin in besteffort tier.",
     "reserve": 4
+  },
+  "v2|referee|free4|r11:besteffort:ahead:b0+m1|r14:besteffort:ahead:b0+m0|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r11": 0,
+      "r14": 0
+    },
+    "claimed_total": 1,
+    "justification": "No base_gpus were requested and contention is high, so no margin was granted to any job while reserving some GPUs for future needs.",
+    "reserve": 1
   },
   "v2|referee|free4|r11:besteffort:ahead:b0+m1|r15:prod:ontrack:b0+m0|supply:r0:none|dbt95441c490e11|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -259756,6 +262040,15 @@
     "justification": "The free pool is small and no base or margin GPUs are justified beyond the reserve.",
     "reserve": 4
   },
+  "v2|referee|free4|r12:prod:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r12": 0
+    },
+    "claimed_total": 1,
+    "justification": "The prod job is ahead of schedule and requests no margin; reserving one GPU for incoming prod jobs aligns with low contention.",
+    "reserve": 1
+  },
   "v2|referee|free4|r12:prod:ahead:b0+m1|r13:besteffort:ahead:b0+m0|supply:r1:few|llm:deepseek-r1:32b": {
     "_source": "llm:deepseek-r1:32b",
     "alloc": {
@@ -260438,6 +262731,16 @@
     "claimed_total": 4,
     "justification": "Allocated base_gpus for the 'prod' tier job first, then reserved remaining GPUs due to low contention and no incoming prod jobs.",
     "reserve": 2
+  },
+  "v2|referee|free4|r13:besteffort:ahead:b0+m1|r15:besteffort:ahead:b0+m0|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r13": 0,
+      "r15": 0
+    },
+    "claimed_total": 4,
+    "justification": "No base_gpus were requested and the supply side prefers no reserve due to low contention.",
+    "reserve": 4
   },
   "v2|referee|free4|r13:besteffort:ahead:b0+m1|r15:prod:ahead:b0+m1|supply:r0:none|llm:qwen2.5:3b": {
     "_source": "llm:qwen2.5:3b",
@@ -261164,6 +263467,15 @@
     "claimed_total": 4,
     "justification": "No base_gpus needed and no convincing margin justification; reserve all for potential future prod jobs.",
     "reserve": 4
+  },
+  "v2|referee|free4|r13:prod:ahead:b0+m2|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r13": 0
+    },
+    "claimed_total": 1,
+    "justification": "Insufficient free GPUs to satisfy any margin requests while maintaining reserve; priority given to supply side reserve due to moderate contention.",
+    "reserve": 1
   },
   "v2|referee|free4|r13:prod:ahead:b0+m2|supply:r1:none|llm:qwen2.5:14b|noarg": {
     "_source": "llm:qwen2.5:14b",
@@ -262649,6 +264961,15 @@
     "justification": "Job r15 has a base requirement of 0 GPUs, so no allocation is needed to satisfy individual rationality. The requested margin is denied as the justification relies on strategic exaggeration ('heavy safety margin') rather than a critical need, failing the incentive skepticism rule.",
     "reserve": 0
   },
+  "v2|referee|free4|r15:prod:ahead:b0+m2|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r15": 0
+    },
+    "claimed_total": 1,
+    "justification": "Insufficient free GPUs to satisfy any margin after granting reserve; priority is given to preventing future shortages.",
+    "reserve": 1
+  },
   "v2|referee|free4|r15:prod:behind:b0+m2|supply:r0:none|dbt54989681f566|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -263342,6 +265663,19 @@
     },
     "claimed_total": 2,
     "justification": "Allocated base_gpus for r00 and reserved considering incoming prod jobs.",
+    "reserve": 1
+  },
+  "v2|referee|free5|r00:besteffort:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b|adm:da39a3ee5e": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r00"
+    ],
+    "alloc": {
+      "r00": 1
+    },
+    "claimed_total": 2,
+    "defer": [],
+    "justification": "Granting the requested margin to r00 and reserve to supply without exceeding free_gpus.",
     "reserve": 1
   },
   "v2|referee|free5|r00:besteffort:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b|nothink": {
@@ -265203,6 +267537,15 @@
     "justification": "Allocated base_gpus and convincing margin for besteffort job, reserved lightly to accommodate incoming prod jobs.",
     "reserve": 1
   },
+  "v2|referee|free5|r05:prod:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r05": 1
+    },
+    "claimed_total": 2,
+    "justification": "Satisfied the base_gpus requirement of job r05 and granted a modest reserve to accommodate incoming prod jobs without exceeding free_gpus.",
+    "reserve": 1
+  },
   "v2|referee|free5|r05:prod:ontrack:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -265805,6 +268148,16 @@
     },
     "claimed_total": 1,
     "justification": "The supply side's request for a small reserve is reasonable given the low contention and incoming prod jobs, while demand side has no base or margin needs.",
+    "reserve": 1
+  },
+  "v2|referee|free5|r07:prod:ahead:b0+m1|r08:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 1,
+      "r08": 0
+    },
+    "claimed_total": 2,
+    "justification": "Allocated margin to r07 due to its convincing justification while reserving some capacity for incoming prod jobs.",
     "reserve": 1
   },
   "v2|referee|free5|r07:prod:ahead:b0+m1|r08:prod:behind:b0+m2|supply:r1:few|llm:qwen2.5:14b": {
@@ -266768,6 +269121,16 @@
     "justification": "Allocated base_gpus for the prod job first, then reserved minimal GPUs to protect future incoming jobs as per supply side request.",
     "reserve": 1
   },
+  "v2|referee|free5|r09:prod:ahead:b0+m1|r12:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r09": 1,
+      "r12": 1
+    },
+    "claimed_total": 3,
+    "justification": "Allocated base_gpus and margin to prod jobs as contention is low and forecast uncertainty is medium.",
+    "reserve": 1
+  },
   "v2|referee|free5|r09:prod:ahead:b0+m1|supply:r1:few|dbt0194f984bbb7|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -266829,6 +269192,26 @@
     },
     "claimed_total": 1,
     "justification": "The prod tier job r09 is behind schedule and requires a margin to ensure availability, while the supply side does not request any reserve. The allocation fits within the free_gpus limit.",
+    "reserve": 0
+  },
+  "v2|referee|free5|r09:prod:behind:b0+m2|r12:prod:ontrack:b0+m1|supply:r0:none|llm:qwen2.5:14b|adm:53ca018e7d": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r09": 2,
+      "r12": 1
+    },
+    "claimed_total": 3,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r08",
+      "r10",
+      "r11",
+      "r15"
+    ],
+    "justification": "Allocated base and margin GPUs to prod jobs as they have priority. No reserve is needed since supply side does not request it.",
     "reserve": 0
   },
   "v2|referee|free5|r09:prod:behind:b0+m2|r12:prod:ontrack:b0+m1|supply:r1:few|dbtb9fd7f2762a1|llm:qwen2.5:14b": {
@@ -267321,6 +269704,15 @@
     "claimed_total": 2,
     "justification": "The supply side requested a reserve to protect incoming prod jobs under high contention, which is reasonable given the free pool size and lack of immediate demand from 'prod' tier jobs.",
     "reserve": 2
+  },
+  "v2|referee|free5|r11:besteffort:ahead:b0+m0|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r11": 0
+    },
+    "claimed_total": 5,
+    "justification": "No base or margin is needed for the besteffort job, and no incoming prod jobs necessitate a reserve.",
+    "reserve": 5
   },
   "v2|referee|free5|r11:besteffort:ahead:b0+m1|supply:r0:none|dbt1ebaec056cd0|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -267931,6 +270323,15 @@
     "justification": "Applied INDIVIDUAL RATIONALITY by first satisfying the prod job's base_gpus, then applied PRIORITY to grant a margin above its deadline.",
     "reserve": 0
   },
+  "v2|referee|free5|r12:prod:ahead:b0+m2|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r12": 0
+    },
+    "claimed_total": 1,
+    "justification": "Insufficient free GPUs to satisfy any margin requests while maintaining reserve; priority given to supply side justification for incoming contention.",
+    "reserve": 1
+  },
   "v2|referee|free5|r12:prod:behind:b0+m2|supply:r0:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -268340,6 +270741,15 @@
     },
     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
     "reserve": 0
+  },
+  "v2|referee|free5|r14:prod:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r14": 0
+    },
+    "claimed_total": 5,
+    "justification": "No base_gpus needed, and requested margin is not compelling enough to allocate GPUs away from reserve given low contention.",
+    "reserve": 5
   },
   "v2|referee|free5|r14:prod:ontrack:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -269016,6 +271426,19 @@
     },
     "claimed_total": 2,
     "justification": "Allocated base_gpus for r00 and reserved considering incoming prod jobs.",
+    "reserve": 1
+  },
+  "v2|referee|free6|r00:besteffort:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b|adm:da39a3ee5e": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r00"
+    ],
+    "alloc": {
+      "r00": 1
+    },
+    "claimed_total": 2,
+    "defer": [],
+    "justification": "Granting the requested margin to a job ahead of schedule and reserving GPUs for incoming prod jobs, while keeping total awarded within free pool.",
     "reserve": 1
   },
   "v2|referee|free6|r00:besteffort:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b|noarg": {
@@ -269731,6 +272154,35 @@
     },
     "claimed_total": 1,
     "justification": "The job r01's margin request is not granted due to lack of compelling justification, while a modest reserve is kept for incoming prod jobs.",
+    "reserve": 1
+  },
+  "v2|referee|free6|r01:besteffort:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b|adm:4bb605d656": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r02"
+    ],
+    "alloc": {
+      "r01": 0,
+      "r02": 2
+    },
+    "claimed_total": 3,
+    "defer": [
+      "r01"
+    ],
+    "justification": "Reserving GPUs for incoming prod jobs as per supply side request while ensuring base needs are met.",
+    "reserve": 1
+  },
+  "v2|referee|free6|r01:besteffort:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b|adm:da39a3ee5e": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [],
+    "alloc": {
+      "r01": 0
+    },
+    "claimed_total": 1,
+    "defer": [
+      "r01"
+    ],
+    "justification": "The supply side's request for reserve is convincing given incoming prod jobs, and r01's margin is not essential as it is ahead of schedule.",
     "reserve": 1
   },
   "v2|referee|free6|r01:besteffort:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b|noarg": {
@@ -271021,6 +273473,15 @@
     "justification": "Satisfying the base_gpus requirement for the prod job while granting a modest reserve to protect future incoming prod jobs.",
     "reserve": 1
   },
+  "v2|referee|free6|r05:prod:ahead:b0+m1|supply:r1:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r05": 1
+    },
+    "claimed_total": 2,
+    "justification": "Satisfied the base_gpus requirement of job r05 and granted a modest reserve to accommodate incoming prod jobs without exceeding free_gpus.",
+    "reserve": 1
+  },
   "v2|referee|free6|r05:prod:ontrack:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -271513,6 +273974,15 @@
     "justification": "The free pool is small and no base or margin GPUs are strictly needed; a light reserve is kept for operational smoothness.",
     "reserve": 1
   },
+  "v2|referee|free6|r07:besteffort:ahead:b0+m0|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 1
+    },
+    "claimed_total": 2,
+    "justification": "Satisfying the base_gpus requirement of job r07 and granting a modest reserve to avoid future shortages.",
+    "reserve": 1
+  },
   "v2|referee|free6|r07:besteffort:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -271799,6 +274269,15 @@
     "justification": "Satisfying the base_gpus requirement for the prod job and granting a modest reserve to accommodate incoming jobs without exceeding free pool.",
     "reserve": 1
   },
+  "v2|referee|free6|r07:prod:ahead:b0+m0|supply:r2:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 1
+    },
+    "claimed_total": 3,
+    "justification": "Allocated base_gpus for the prod job first, then reserved necessary GPUs considering incoming contention.",
+    "reserve": 2
+  },
   "v2|referee|free6|r07:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -272060,6 +274539,24 @@
     "claimed_total": 6,
     "justification": "Allocated base GPUs to both besteffort jobs as they are behind schedule and have a small request size; no margin was granted due to low spike risk and reserve is set aside for potential incoming prod jobs.",
     "reserve": 4
+  },
+  "v2|referee|free6|r08:besteffort:ahead:b0+m0|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r08": 1
+    },
+    "claimed_total": 6,
+    "justification": "Allocated base_gpus for the besteffort job as per INDIVIDUAL RATIONALITY and reserved sufficient GPUs to maintain FEASIBILITY.",
+    "reserve": 5
+  },
+  "v2|referee|free6|r08:besteffort:ahead:b0+m0|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r08": 0
+    },
+    "claimed_total": 1,
+    "justification": "The supply side's request for reserve is convincing given low contention and incoming prod jobs; no demand exceeds base_gpus.",
+    "reserve": 1
   },
   "v2|referee|free6|r08:besteffort:ahead:b0+m0|supply:r1:many|dbt588b20a527c4|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
@@ -272437,6 +274934,15 @@
     },
     "claimed_total": 2,
     "justification": "Satisfying the base_gpus requirement and granting a modest reserve to accommodate incoming prod jobs without exceeding free pool.",
+    "reserve": 1
+  },
+  "v2|referee|free6|r08:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r08": 1
+    },
+    "claimed_total": 2,
+    "justification": "Allocated base_gpus for the prod job and reserved as requested, adhering to feasibility.",
     "reserve": 1
   },
   "v2|referee|free6|r08:prod:ahead:b0+m1|supply:r1:many|dbt88cdea762aef|llm:qwen2.5:14b": {
@@ -272911,6 +275417,27 @@
     "justification": "Allocated base GPU to meet the job's minimal requirement while maintaining a high reserve due to low contention and no incoming production jobs.",
     "reserve": 5
   },
+  "v2|referee|free6|r09:prod:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b|adm:99374dc0f3": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r09"
+    ],
+    "alloc": {
+      "r09": 1
+    },
+    "claimed_total": 1,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r08",
+      "r10",
+      "r11",
+      "r15"
+    ],
+    "justification": "The prod job's request is feasible and justified, while the supply side does not require a reserve.",
+    "reserve": 0
+  },
   "v2|referee|free6|r09:prod:ahead:b0+m1|supply:r1:few|dbt8b640fba7874|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -272918,6 +275445,15 @@
     },
     "claimed_total": 2,
     "justification": "Allocated base and margin for prod job r09 ahead of deadline, reserved minimal headroom as per supply side request.",
+    "reserve": 1
+  },
+  "v2|referee|free6|r09:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r09": 1
+    },
+    "claimed_total": 2,
+    "justification": "Allocated base_gpus for the prod job and a modest reserve to accommodate incoming jobs without exceeding free pool.",
     "reserve": 1
   },
   "v2|referee|free6|r09:prod:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b|noarg": {
@@ -273146,6 +275682,15 @@
     },
     "claimed_total": 1,
     "justification": "The job r10's margin request is not compelling enough to grant beyond its base, and a reserve is justified for incoming prod jobs.",
+    "reserve": 1
+  },
+  "v2|referee|free6|r10:besteffort:ahead:b0+m1|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r10": 0
+    },
+    "claimed_total": 1,
+    "justification": "The demand side's request for margin is not compelling enough to grant when the supply side needs reserve to prevent future shortages.",
     "reserve": 1
   },
   "v2|referee|free6|r10:besteffort:behind:b0+m1|supply:r0:none|llm:deepseek-r1:32b": {
@@ -274863,6 +277408,15 @@
     "justification": "No base_gpus needed, and requested margin is not compelling enough to allocate GPUs away from reserve given low contention.",
     "reserve": 6
   },
+  "v2|referee|free6|r14:prod:ahead:b0+m2|supply:r1:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r14": 0
+    },
+    "claimed_total": 1,
+    "justification": "No base_gpus for r14, and its requested margin is not convincing enough to allocate beyond reserve.",
+    "reserve": 1
+  },
   "v2|referee|free6|r14:prod:behind:b0+m1|supply:r0:none|dbtf56f1ad75ad8|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -276533,6 +279087,15 @@
     "justification": "rule: bases by tier/deadline, margins from surplus, reserve last",
     "reserve": 1
   },
+  "v2|referee|free7|r07:prod:ahead:b0+m1|supply:r2:many|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r07": 1
+    },
+    "claimed_total": 3,
+    "justification": "Allocated base and margin to prod job r07 ahead of schedule, then reserved for incoming contention.",
+    "reserve": 2
+  },
   "v2|referee|free7|r07:prod:behind:b0+m2|supply:r2:many|dbt5219374ec89a|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -277511,6 +280074,15 @@
     "justification": "The supply side's justification for not needing a reserve is compelling, and the demand side requests no margin or base GPUs.",
     "reserve": 7
   },
+  "v2|referee|free7|r13:besteffort:ahead:b0+m1|supply:r0:none|llm:qwen2.5:14b": {
+    "_source": "llm:qwen2.5:14b",
+    "alloc": {
+      "r13": 0
+    },
+    "claimed_total": 7,
+    "justification": "No base_gpus were requested and the supply side prefers no reserve, aligning with low contention; thus, holding all GPUs idle satisfies feasibility without risking over-allocation.",
+    "reserve": 7
+  },
   "v2|referee|free7|r13:besteffort:ahead:b0+m1|supply:r1:few|llm:qwen2.5:14b": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {
@@ -278195,6 +280767,63 @@
     "justification": "The supply side does not request a reserve and there are no incoming high-priority jobs, so the free pool remains idle.",
     "reserve": 0
   },
+  "v2|referee|free8|supply:r0:none|llm:qwen2.5:14b|adm:60d56e1fe9": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r08",
+      "r10"
+    ],
+    "alloc": {
+      "r08": 2,
+      "r10": 2
+    },
+    "claimed_total": 4,
+    "defer": [
+      "r11",
+      "r15"
+    ],
+    "justification": "The supply side does not request a reserve and there are no incoming prod jobs. The free pool can only satisfy the base_gpus of two besteffort jobs.",
+    "reserve": 0
+  },
+  "v2|referee|free8|supply:r0:none|llm:qwen2.5:14b|adm:6cd0c2748e": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r06"
+    ],
+    "alloc": {
+      "r06": 8
+    },
+    "claimed_total": 8,
+    "defer": [
+      "r08",
+      "r10",
+      "r11",
+      "r15"
+    ],
+    "justification": "The supply side does not request a reserve, and job r06 is the only prod-tier job available but marked as 'none'. Job r06 gets its full base_gpus since it's behind deadline.",
+    "reserve": 0
+  },
+  "v2|referee|free8|supply:r0:none|llm:qwen2.5:14b|adm:99374dc0f3": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r04",
+      "r05"
+    ],
+    "alloc": {
+      "r04": 2,
+      "r05": 4
+    },
+    "claimed_total": 6,
+    "defer": [
+      "r06",
+      "r08",
+      "r10",
+      "r11",
+      "r15"
+    ],
+    "justification": "The supply side does not request a reserve and there are no incoming prod jobs. Prioritize meeting the base GPU requirements of waiting jobs.",
+    "reserve": 0
+  },
   "v2|referee|free8|supply:r0:none|llm:qwen2.5:14b|noarg": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {},
@@ -278377,6 +281006,45 @@
     "justification": "Reserve is granted to accommodate incoming prod jobs while contention is low.",
     "reserve": 1
   },
+  "v2|referee|free8|supply:r1:many|llm:qwen2.5:14b|adm:a0a89234b0": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r00"
+    ],
+    "alloc": {
+      "r00": 2
+    },
+    "claimed_total": 3,
+    "defer": [],
+    "justification": "Reserving 1 GPU for future prod jobs as contention is low, while allocating the base requirement of 2 GPUs to the besteffort job.",
+    "reserve": 1
+  },
+  "v2|referee|free8|supply:r1:many|llm:qwen2.5:14b|adm:c317a9a313": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r01"
+    ],
+    "alloc": {
+      "r01": 2
+    },
+    "claimed_total": 3,
+    "defer": [],
+    "justification": "Reserving 1 GPU for future prod jobs as contention is low, while allocating the base requirement of 2 GPUs to job r01.",
+    "reserve": 1
+  },
+  "v2|referee|free8|supply:r1:many|llm:qwen2.5:14b|adm:e03434b8fd": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r03"
+    ],
+    "alloc": {
+      "r03": 7
+    },
+    "claimed_total": 8,
+    "defer": [],
+    "justification": "The supply side's request for a reserve is reasonable given the incoming prod jobs, and it allows allocating exactly the base_gpus needed for the waiting prod job without exceeding free_gpus.",
+    "reserve": 1
+  },
   "v2|referee|free8|supply:r1:many|llm:qwen2.5:14b|noarg": {
     "_source": "llm:qwen2.5:14b",
     "alloc": {},
@@ -278508,6 +281176,28 @@
     "claimed_total": 1,
     "justification": "Granting a modest reserve to accommodate incoming prod jobs while maintaining system flexibility and avoiding over-reservation.",
     "reserve": 1
+  },
+  "v2|referee|free8|supply:r2:many|llm:qwen2.5:14b|adm:2bb6f92fad": {
+    "_source": "llm:qwen2.5:14b",
+    "admit_order": [
+      "r07",
+      "r09"
+    ],
+    "alloc": {
+      "r07": 2,
+      "r09": 2
+    },
+    "claimed_total": 6,
+    "defer": [
+      "r04",
+      "r05",
+      "r06",
+      "r08",
+      "r10",
+      "r11"
+    ],
+    "justification": "Allocated base GPUs to prod jobs first due to priority and then reserved necessary GPUs for incoming contention.",
+    "reserve": 2
   },
   "v2|referee|free8|supply:r2:many|llm:qwen2.5:14b|noarg": {
     "_source": "llm:qwen2.5:14b",

@@ -37,7 +37,7 @@ import time
 
 from pins.llm_agent import load_cache, save_cache, take_tokens
 from pins.negotiation_sim import Job
-from pins.two_sided_sim import (make_policy_isolated, make_policy_negotiated,
+from pins.two_sided_sim import (set_tick, make_policy_isolated, make_policy_negotiated,
                                 make_policy_single, policy_none, simulate,
                                 simulate_backfill)
 from pins.uncertainty_sim import assign, load_uncertainty_distribution
@@ -49,13 +49,29 @@ USAGE_CSV = os.path.join(HERE, "eval", "pred_job_usage.csv")
 MEM_CSV = os.path.join(HERE, "eval", "pred_job_mem.csv")
 RUNTIME_CSV = os.path.join(HERE, "eval", "pred_job_runtime.csv")
 
-TICK_S = 120         # one sim tick = 2 real minutes -> median trace job ≈ 9 ticks of work
+TICK_S = 120         # the REFERENCE tick every pre-Exp-97 tier was measured at (2 real minutes);
+#                      the seconds-denominated constants below are stated against it
+STD_TICK_S = 30      # Exp 97 standard: 30 s slices -> median trace job ~36 ticks of work, so a
+#                      job's lifetime is ~36 decision points instead of ~9
 # Second trace (Exp 43/44 external-validity caveat): MIT Supercloud slurm log — university
 # HPC batch vs v2020's cloud PAI. Jobs are ~14x longer, so its tick is 900 s to keep median
 # work ≈ 9 ticks: SAME sim regime, different world. Built by data/build_supercloud_replay.py.
-TRACES = {"v2020": (REPLAY_CSV, TICK_S),
+TRACES = {"v2020": (REPLAY_CSV, STD_TICK_S),
           "supercloud": (os.path.join(HERE, "..", "data", "supercloud", "replay_jobs.csv"), 900)}
-WORK_CLAMP = (1, 60)
+WORK_CLAMP = (1, 60)   # ticks, at the reference TICK_S=120 — derive with work_clamp(tick)
+# ---- the tick is a RESOLUTION knob, not a workload change --------------------------------------
+# These three were denominated in ticks, so shortening the tick used to shrink the arrival window,
+# the simulated span and the longest representable job all at once (a 30 s tick quartered every one
+# of them). In seconds they are invariant, and `--tick` only changes how finely the same 6 hours of
+# arrivals and 13.3 hours of cluster time are sliced.
+ARRIVAL_SPAN_S = int(300 * 0.6) * 120      # 6 h of arrivals   (= the old 180 ticks x 120 s)
+HORIZON_S = 400 * 120                      # 13.3 h simulated  (= the old 400 ticks x 120 s)
+WORK_CLAMP_S = (WORK_CLAMP[0] * 120, WORK_CLAMP[1] * 120)   # 2 min .. 2 h of real work per job
+
+
+def work_clamp(tick: int) -> tuple[float, float]:
+    """WORK_CLAMP in ticks of `tick` seconds. At tick=120 this is exactly the old (1, 60)."""
+    return max(1.0, WORK_CLAMP_S[0] / tick), WORK_CLAMP_S[1] / tick
 # ---- the Exp 97 STANDARD operating point (2026-07-30) --------------------------------------
 # Defaults describe a cluster someone would actually run. The pre-Exp-97 defaults (pool 4/6/8 =
 # 1-2 GPUs, horizon 300, slack x1) put the floor at 40-54% missed deadlines before any policy
@@ -172,7 +188,7 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
     rng = random.Random(f"replay-{seed}")
     # Arrival span is pinned to the 300-tick default (byte-identical there) so that --horizon adds
     # DRAIN time only; scaling it with the horizon would thin arrivals and change contention too.
-    window_s = int(300 * ARRIVAL_FRAC) * tick             # arrivals within the first 180 ticks
+    window_s = ARRIVAL_SPAN_S                             # 6 h of arrivals, whatever the tick
     t_lo, t_hi = trace[0][0], trace[-1][0] - window_s
     t0 = rng.randrange(t_lo, t_hi)
     in_win = [r for r in trace if t0 <= r[0] < t0 + window_s and (pred is None or r[3] in pred)
@@ -221,7 +237,8 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
     for i, (arr_s, dur_s, quanta, name) in enumerate(window):
         quanta = min(max(1, round(quanta / quantum)), clip)  # trace quanta -> pool units
         arrival = (arr_s - t0) // tick
-        work = float(min(WORK_CLAMP[1], max(WORK_CLAMP[0], round(dur_s / tick))))
+        wc_lo, wc_hi = work_clamp(tick)
+        work = float(min(wc_hi, max(wc_lo, round(dur_s / tick))))
         urgency = round(urg[i] if stratify else rng.uniform(0.6, 2.2), 3)  # make_workload recipe
         slack = max(1.15, min(2.4, 2.5 - 0.65 * urgency)) * slack_mult
         deadline = arrival + int(round(work * slack))
@@ -246,8 +263,7 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
                 p = p[1] if tier == "prod" else p[0]
             cap_map[j.jid] = min(max(1, round(p)), CAP_CLIP)
         if time_mode == "predicted":                       # believed total work, same clamp as work
-            belief[j.jid] = float(min(WORK_CLAMP[1],
-                                      max(WORK_CLAMP[0], round(time_pred[name] / tick))))
+            belief[j.jid] = float(min(wc_hi, max(wc_lo, round(time_pred[name] / tick))))
     return jobs, cap_map, true_cap_map, belief
 
 
@@ -463,7 +479,7 @@ def compare_tiers(spec: str) -> None:
         print(f"                  {tost_line(eq)}")
 
 
-def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
+def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model, tick_s: int = 0,
           caps_mode: str = "real", quantile: str = "p50", truth_mode: str = "plan",
           time_mode: str | None = None, ttf_mode: str | None = None,
           baseline: str | None = None, dyncap: str | None = None,
@@ -502,6 +518,9 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
     assert baseline is None or time_mode == "predicted", \
         "--baseline needs --time predicted (EASY's runtime estimate + window pairing)"
     trace_path, tick = TRACES[trace_name]
+    tick = tick_s or tick                      # --tick overrides the trace's native resolution
+    set_tick(tick)                             # keep the wall-clock thresholds wall-clock
+    horizon = horizon or max(1, HORIZON_S // tick)   # 0 = the standard span at this resolution
     trace = load_trace(trace_path)
     true_map = None
     declared = False
@@ -568,6 +587,10 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         suffix += "+gated"
     if corrected:
         suffix += "+corrected"   # Exp 92: the hard-case winner (signed correction) as the escalation
+    if tick != TICK_S:
+        # a different tick is a different sim: 4x the policy invocations over the same 13.3 h,
+        # and every tick-denominated metric (wait, slowdown) changes units with it
+        suffix += f"+t{tick}"
     if horizon != 300:
         # Exp 97: the horizon is part of a tier's identity, like slack_mult and n_jobs already are
         # (below). Without this a rebase at a longer drain lands on the same key and silently
@@ -670,7 +693,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
     print(f"{'='*86}")
     jobs_of = (lambda q: n_jobs) if n_jobs else (lambda q: LOAD_PER_QUANTUM * q)
     print(f"{n_jobs or f'{LOAD_PER_QUANTUM}x pool'} real jobs/window from {len(trace):,} trace "
-          f"jobs, horizon {horizon} ({int(300 * ARRIVAL_FRAC)} arrival + drain), slack x{slack_mult:g}, "
+          f"jobs, tick {tick}s, horizon {horizon} ticks = {horizon*tick/3600:.1f} h "
+          f"({ARRIVAL_SPAN_S//tick} arrival + drain), slack x{slack_mult:g}, "
           f"mean of {len(seeds)} seeds (window per seed) | spike_max={spike_max} scale={scale} "
           f"| truth={truth_mode} caps={caps_mode} clip={CAP_CLIP}")
     print(f"pool is in QUARTER-GPU QUANTA: {', '.join(f'{q}q = {q/4:g} GPU' for q in pools)}")
@@ -964,11 +988,18 @@ def main() -> None:
                          "jobs start this tick and which keep waiting — on top of the "
                          "margin/reserve split. Only never-started jobs can be deferred, so the "
                          "rigid no-preemption invariant holds. Tier suffix +admit.")
-    ap.add_argument("--horizon", type=int, default=HORIZON, metavar="T",
-                    help=f"simulated ticks (default {HORIZON}). The ARRIVAL span is pinned at "
-                         "ARRIVAL_FRAC*300 = 180 ticks regardless, so this adds DRAIN time without "
-                         "thinning arrivals. At 300 (the pre-Exp-97 value) ~2.5%% of jobs never "
-                         "finish and count as SLA violations by censoring alone. Tier suffix +hT.")
+    ap.add_argument("--tick", type=int, default=0, metavar="S",
+                    help="seconds per tick; 0 (default) = the trace's native 120 s. This is a "
+                         "RESOLUTION knob only: the arrival span (6 h), the simulated span (13.3 h) "
+                         "and the work clamp (2 min..2 h) are denominated in seconds, so a shorter "
+                         "tick slices the same workload more finely instead of shrinking it. Costs "
+                         "per-tick work proportionally — at 30 s every arm pays 4x the policy "
+                         "invocations, and a per-tick LLM arm pays 4x the calls. Tier suffix +tS.")
+    ap.add_argument("--horizon", type=int, default=0, metavar="T",
+                    help=f"simulated ticks; 0 (default) = HORIZON_S/tick (= {HORIZON} at 120 s). "
+                         "The ARRIVAL span is pinned at 6 h regardless, so this only adds DRAIN "
+                         "time. At the pre-Exp-97 300 ticks ~2.5%% of jobs never finish and count "
+                         "as SLA violations by censoring alone. Tier suffix +hT.")
     ap.add_argument("--slack-mult", type=float, default=SLACK_MULT, metavar="M",
                     help=f"scale every job's deadline slack by M (default {SLACK_MULT:g}). The raw "
                          "recipe gives median 1.55x the job's OWN work (p10 = 1.00x -- unmeetable "
@@ -1046,6 +1077,7 @@ def main() -> None:
         return
     sweep([int(p) for p in a.pools.split(",")], n_jobs=a.n_jobs, horizon=a.horizon,
           seeds=list(range(a.seed_start, a.seeds)), scale=a.scale, spike_max=a.spike,
+          tick_s=a.tick,
           use_llm=a.llm, model=a.model, caps_mode=a.caps, quantile=a.quantile,
           truth_mode=a.truth, time_mode=a.time, ttf_mode=a.ttf, baseline=a.baseline,
           dyncap=a.dyncap, trace_name=a.trace, quantum={"quarter": 1, "whole": 4}[a.quantum],
