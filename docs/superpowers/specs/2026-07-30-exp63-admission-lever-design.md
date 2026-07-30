@@ -112,6 +112,21 @@ reserve scalar.
 
 - **No text.** Rule 7 rules over numbers here. This tests admission *judgement*, not the text
   channel; the text-exception version of the same lever remains unbuilt and unmeasured.
+- **The in-sim referee does NOT use the packet.** *(Added 2026-07-31, after H3 was computed — it was
+  missing from the original pre-registration and is disclosed here rather than silently folded in.)*
+  `pins/referee.py` contains no reference to `pins/packet.py`; the packet is imported only by the
+  hard-case harnesses (`exp82_packet_2x2`, `exp88_budget_control`, `no_exception_scenes`,
+  `test_exp90_scenes`), and `trace_replay` exposes no flag to enable it. Every referee ruling scored
+  in this experiment is therefore delivered through the **pre-Exp-82 interface** — the one whose
+  repair moved the market arm 0/31 → 14/31 and collapsed hard-case infeasibility from 11–16 to 0.
+  H3's negative is consequently a result about *the referee as it exists in the simulator*, not
+  about admission judgement in general, and it must be worded that way.
+  Pulling the other way, and why this is a qualification rather than a refutation: in-sim
+  `fallback_rate` is only 2%, so rulings are already mostly feasible and the packet's headline fix
+  (feasibility) is not the binding constraint here; and Exp 92 showed the full packet+signed
+  architecture is a literal no-op in-sim on this trace. A packet-equipped in-sim referee is an
+  **unbuilt arm**, and no result here speaks to it. Same family as the standing weak-packet
+  confound over Exp 65–67.
 - **Cache keys.** The scene key digests the waiting set (`|adm:` hash, jids in, waited_ticks out).
   Untouched arms must keep byte-identical prompts and cache keys; the floor byte-identity check in
   §3 is the tripwire.
