@@ -40,7 +40,7 @@ from pins.llm_agent import (llm_margin, llm_reserve, reserve_amount, load_cache,
 from pins.negotiation_protocol import (DemandJob, HEDGE_GPUS, NegotiationOutcome, negotiate,
                                        single_llm_plan)
 from pins.negotiation_sim import Job, make_workload
-from pins.predictor import PHASE_PROFILES
+from pins.predictor import PHASE_PROFILES, marginal_values
 from pins.uncertainty_sim import (assign, assign_gpu, load_gpu_distribution,
                                    load_uncertainty_distribution, true_need)
 
@@ -58,6 +58,23 @@ DYN_AFTER = 3        # Exp 45: ticks a job must RUN before its cap switches to t
 # 20 min waiting. At the reference 120 s tick they mean exactly that; at any other tick they
 # would silently change meaning, so `set_tick` restates them in the new units instead.
 TICK_REF_S = 120
+
+
+def dynamic_urgency(job, t: int) -> float:
+    """Exp 99: urgency from NORMALIZED DEADLINE SLACK, recomputed every tick.
+
+    laxity = (deadline - t - remaining_work) / (deadline - arrival): 1.0 = the whole original
+    budget is still spare, 0 = the job must run flat out from now on, <0 = already unmeetable.
+    Mapped onto the SAME [0.6, 2.2] band the static draw used, so bid magnitudes stay
+    comparable with every prior tier and only their ORDERING changes.
+
+    This deliberately re-opens a settled design: Exp 9-12 found per-round value-max auctions
+    lose SLA to stable serialisation, which is why the bid is committed at arrival. A dynamic
+    bid is therefore an ARM to be measured against the frozen baseline, never a silent swap.
+    """
+    span = max(1.0, job.deadline - job.arrival)
+    lax = (job.deadline - t - job.remaining()) / span
+    return min(2.2, max(0.6, 2.2 - 1.6 * max(0.0, min(1.0, lax))))
 
 
 def set_tick(tick_s: int) -> None:
@@ -284,6 +301,7 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
              realloc_cost: float = 0.0, alpha: float = 0.0,
              alpha_norm: str = "c0", law: str = "amdahl", kappa: float = 2.0,
              cooldown: int = 0, resize_c1: float = 0.0, phi: float = 0.0,
+             dyn_urgency: bool = False,
              bid_info: str = "exact") -> dict:
     """One run of a policy on a fresh workload copy. Rigid: a running job is never involuntarily
     preempted; it only shrinks VOLUNTARILY to its ceiling (cap0 + this tick's negotiated margin).
@@ -475,7 +493,9 @@ def simulate(jobs_proto: list[Job], policy, total_gpus: int, horizon: int,
             if held[j.jid] > ceiling[j.jid]:
                 held[j.jid] = ceiling[j.jid]
         free = total_gpus - sum(held[j.jid] for j in active)
-        frozen = {j.jid: sum(j.bid()) for j in active}     # bid-once priority (preprocess=urgency)
+        frozen = ({j.jid: sum(marginal_values(j.phase(), dynamic_urgency(j, t))) for j in active}
+                  if dyn_urgency else
+                  {j.jid: sum(j.bid()) for j in active})   # bid-once priority (preprocess=urgency)
         wanters = [j for j in active if held[j.jid] < ceiling[j.jid]]
         # Exp 63: a policy-supplied priority reorders grants WITHIN each tier; the frozen bid stays
         # as the tie-break, so jobs the policy said nothing about keep their original relative order

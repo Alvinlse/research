@@ -69,6 +69,13 @@ GOOGLE_PROD_PRIORITY = 9
 # different trace field from priority -- measured corr(prod, class) = -0.11 against the synthetic
 # recipe's -0.78, so tier and tightness are independent here BY DATA, not by a decorrelate flag.
 SLACK_BY_CLASS = {0: 3.0, 1: 2.0, 2: 1.5, 3: 1.25}
+
+# Exp 99: SLA tightness as a STRATIFIED CLASS rather than a continuous per-job draw. The rho
+# values reproduce the mean of the draw they replace (1.62 vs 1.59) so the operating point does
+# not move, but every window now contains a designed spread of tight/medium/loose instead of
+# whatever the draw happened to give -- the same binomial-variance problem Exp 96 flagged for
+# prod counts. Stratified = equal counts per class within each window, then shuffled.
+TIGHTNESS_CLASSES = (("tight", 1.20), ("medium", 1.60), ("loose", 2.05))
 TRACES = {"v2020": (REPLAY_CSV, STD_TICK_S),
           "google2011": (GOOGLE_CSV, 10),   # median job 162 s -> ~16 ticks, like v2020's ~9
           "supercloud": (os.path.join(HERE, "..", "data", "supercloud", "replay_jobs.csv"), 900)}
@@ -178,7 +185,7 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
                         true_map=None, declared=False, time_pred=None, time_mode=None,
                         tick: int = TICK_S, quantum: int = 1, stratify: bool = False,
                         burst_s: int | None = None, slack_mult: float = 1.0,
-                        decorrelate: bool = False
+                        decorrelate: bool = False, slack_classes: bool = False
                         ) -> tuple[list[Job], dict[str, int], dict[str, int],
                                    dict[str, float] | str | None]:
     """n_jobs real jobs thinned from a random 10-hour trace window, on ONE clock.
@@ -232,7 +239,7 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
         # 5/32 seeds in the Exp 36/37 sweeps. Forward EVERYTHING.
         return make_trace_workload(trace, n_jobs, seed + 7919, horizon, pred, oracle,
                                    true_map, declared, time_pred, time_mode, tick, quantum,
-                                   stratify, burst_s, slack_mult, decorrelate)
+                                   stratify, burst_s, slack_mult, decorrelate, slack_classes)
     if stratify:
         # Phase A diversity (opt-in; eval path keeps rng.sample so its seeds stay byte-paired):
         # systematic draw over the trace's GPU-quanta distribution so each window spans
@@ -262,6 +269,11 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
 
     trng = random.Random(f"tier-{seed}")   # Exp 96: own stream -> other tiers stay byte-paired
     srng = random.Random(f"slack-{seed}")  # Exp 98: tightness, independent of tier and of the bid
+    if slack_classes:
+        # equal counts per class, shuffled: the window's tightness MIX is fixed by design and
+        # only which job gets which class is random (its own stream, so windows stay paired)
+        rho = [TIGHTNESS_CLASSES[k % len(TIGHTNESS_CLASSES)][1] for k in range(n_jobs)]
+        srng.shuffle(rho)
     jobs: list[Job] = []
     cap_map: dict[str, int] = {}
     true_cap_map: dict[str, int] = {}
@@ -282,9 +294,15 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
         # With a REAL tier, tightness must not come off the same draw again (the Exp 96
         # confound). Either the trace supplies it (Google: scheduling class) or it is drawn
         # from its OWN stream, independent of tier and of the bid, keeping windows paired.
-        slack = ((labels[1] if labels[1] is not None else
-                  max(1.15, min(2.4, 2.5 - 0.65 * srng.uniform(0.6, 2.2)))) if labels
-                 else max(1.15, min(2.4, 2.5 - 0.65 * urgency))) * slack_mult
+        if labels and labels[1] is not None:
+            base_slack = labels[1]                     # the trace supplies a real class
+        elif slack_classes:
+            base_slack = rho[i]                        # Exp 99 stratified class
+        elif labels:
+            base_slack = max(1.15, min(2.4, 2.5 - 0.65 * srng.uniform(0.6, 2.2)))
+        else:
+            base_slack = max(1.15, min(2.4, 2.5 - 0.65 * urgency))   # pre-Exp-98 recipe
+        slack = base_slack * slack_mult
         deadline = arrival + int(round(work * slack))
         # Exp 96: the default rule makes tier and deadline tightness ONE variable — prod <=>
         # urgency >= 1.667 <=> slack in [1.15, 1.42] — so "prod protection" and "tight-deadline
@@ -542,6 +560,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model, tick_
           phi: float = 0.0, qcache: float | None = None, market: bool = False,
           gated: bool = False, corrected: bool = False, authored: str = "",
           decorrelate: bool = False, real_tiers: bool = False,
+          slack_classes: bool = False, dyn_urgency: bool = False,
           composed: bool = False, bid_info: str = "exact") -> None:
     assert not (referee and single_ilp), "--referee and --single-ilp are separate arms"
     assert all(m in ("narrated", "attributed") for m in authored.split(",") if m), \
@@ -642,6 +661,10 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model, tick_
         # (below). Without this a rebase at a longer drain lands on the same key and silently
         # overwrites rows it is not comparable with -- the Exp 59 trap with a new face.
         suffix += f"+h{horizon}"
+    if slack_classes:
+        suffix += "+strat3"      # Exp 99: stratified tightness classes, a different workload
+    if dyn_urgency:
+        suffix += "+dynurg"      # Exp 99: the bid tracks slack instead of committing at arrival
     if real_tiers:
         # Exp 98: tier comes from the trace, not from the urgency draw -- a different world
         # under the same arm names, so it must never merge with the synthetic rows
@@ -768,7 +791,8 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model, tick_
                                                                   time_pred, mk_mode, tick,
                                                                   quantum, burst_s=burst_s,
                                                                   slack_mult=slack_mult,
-                                                                  decorrelate=decorrelate)
+                                                                  decorrelate=decorrelate,
+                                                                  slack_classes=slack_classes)
                 cap_map = {k: min(v, gpus) for k, v in cap_map.items()}  # feasible at this pool
                 tcap = {k: min(v, gpus) for k, v in tcap.items()}
                 dyn_map = None
@@ -791,7 +815,7 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model, tick_
                                  dyn_cap_map=dyn_map, realloc_cost=realloc_cost, alpha=alpha,
                                  alpha_norm=alpha_norm, law=law, kappa=kappa,
                                  cooldown=cooldown, resize_c1=resize_c1, phi=phi,
-                                 bid_info=bid_info)
+                                 dyn_urgency=dyn_urgency, bid_info=bid_info)
                 tk = take_tokens()          # marginal inference cost of THIS (seed, arm)
                 from pins.referee import take_shell_stats, take_qcache_stats
                 sh = take_shell_stats()     # fast/llm tick split of the controller shell
@@ -942,6 +966,16 @@ def main() -> None:
                     help="Exp 92 boundary test: validated auction + the SIGNED-CORRECTION "
                          "escalation that wins the hard-case suite (Exp 83/88/89). It only acts "
                          "on jobs carrying text; the trace has none, so the prediction is a no-op.")
+    ap.add_argument("--slack-classes", action="store_true",
+                    help="Exp 99: assign each job an SLA tightness CLASS by stratified sampling "
+                         "(equal counts of tight/medium/loose per window, rho 1.20/1.60/2.05) "
+                         "instead of a continuous per-job draw. Same mean slack (1.62 vs 1.59), "
+                         "but the window's tightness mix stops being a lottery. Tier suffix +strat3.")
+    ap.add_argument("--dyn-urgency", action="store_true",
+                    help="Exp 99: recompute each job's bid urgency every tick from its NORMALIZED "
+                         "DEADLINE SLACK instead of committing the arrival draw. Re-opens the "
+                         "Exp 9-12 result that committed bids beat per-round value-max, so it is "
+                         "an arm to compare against the frozen baseline. Tier suffix +dynurg.")
     ap.add_argument("--real-tiers", action="store_true",
                     help="Exp 98: take `tier` from the TRACE instead of the synthetic urgency "
                          "draw. v2020: prod = the job's instance carries a registered workload "
@@ -1139,7 +1173,8 @@ def main() -> None:
           truth_mode=a.truth, time_mode=a.time, ttf_mode=a.ttf, baseline=a.baseline,
           dyncap=a.dyncap, trace_name=a.trace, quantum={"quarter": 1, "whole": 4}[a.quantum],
           gated=a.gated, corrected=a.corrected, authored=a.authored,
-          decorrelate=a.decorrelate, real_tiers=a.real_tiers, referee=a.referee, manual=a.manual, single_ilp=a.single_ilp, debate=a.debate,
+          decorrelate=a.decorrelate, real_tiers=a.real_tiers,
+          slack_classes=a.slack_classes, dyn_urgency=a.dyn_urgency, referee=a.referee, manual=a.manual, single_ilp=a.single_ilp, debate=a.debate,
           no_think=a.no_think, advocates=a.advocates, realloc_cost=a.realloc_cost,
           alpha=a.alpha, alpha_norm=a.alpha_norm, trigger=a.trigger, theta=a.theta,
           stale=a.stale, extend=a.extend, no_argue=a.no_argue, prev_input=a.prev_input,

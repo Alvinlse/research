@@ -3238,3 +3238,53 @@ deadlines.
 are n=4 and need n=32. Whether any arm can beat a 0.0% floor is not a question worth much compute —
 the useful next question is which metric *does* have headroom here (overall SLA 10.9%, the tight
 tercile 11.7%, and utilisation).
+
+## Experiment 99 — STRATIFIED TIGHTNESS CLASSES + DYNAMIC URGENCY: the laxity lever pays hugely (2026-07-30)
+
+**Two design fixes, both flagged, both no-ops when off** (invariance verified: the real-tier world
+and the pre-Exp-97 world both reproduce byte-identically; `test_mechanism` 5/5).
+
+**1. `--slack-classes` (tier suffix `+strat3`).** SLA tightness becomes a **stratified class** —
+equal counts of tight/medium/loose (ρ = 1.20/1.60/2.05) per window, shuffled on its own rng stream —
+instead of a continuous per-job draw. Mean slack is preserved (1.62 vs 1.59) so the operating point
+does not move, but a window's tightness mix stops being a lottery, which is the same
+binomial-variance problem Exp 96 flagged for prod counts.
+
+**2. `--dyn-urgency` (tier suffix `+dynurg`).** The bid's urgency is recomputed **every tick** from
+normalised deadline slack, `lax = (deadline − t − remaining) / (deadline − arrival)`, mapped onto the
+same [0.6, 2.2] band the static draw used — so bid magnitudes stay comparable and only the ORDERING
+changes. Committed as an arm, not a swap, because Exp 9–12 found committed bids beat per-round
+value-max; this is the test of that boundary, not an assumption about it.
+
+**Finding (pool 32 = 8 GPUs, 96 jobs, tick 30 s, real tiers, stratified classes, n=32 paired).**
+
+| arm | SLA | prodSLA | tight | util | useful | slowdown | wait | done |
+|---|---|---|---|---|---|---|---|---|
+| frozen bid (floor) | 23.8% | 2.4% | 26.7% | 83% | 79% | 17.82 | 223.3 | 94.5/96 |
+| **dynamic urgency (floor)** | **7.4%** | **0.8%** | **7.9%** | 81% | 77% | **5.35** | **121.2** | 95.0/96 |
+
+```
+frozen MINUS dynamic, paired by seed, n=32 (negative = frozen better):
+  dSLA +16.4 ± 3.1*   dprodSLA +1.7 ± 1.9   dutil +1.7 ± 1.9   duseful +1.6 ± 1.8
+  dregret -0.4 ± 0.8 (TOST EQ±2)   dslow +12.5 ± 2.9*
+```
+
+**Ordering grants by current deadline slack cuts violations from 23.8% to 7.4% (−16.4 ± 3.1\*) and
+slowdown from 17.8 to 5.3 (−12.5 ± 2.9\*), for −1.7 utilisation and no regret change (equivalent at
+±2).** This is exactly the **least-laxity grant ordering** that Exp 96's claims-table row 16 named as
+the untried lever — `two_sided_sim.py` ordered grants by frozen bid value and nothing keyed on
+laxity. It is a **0-token deterministic change** and it is the largest single SLA effect measured in
+this project.
+
+**What it does to the argument.** Every LLM arm is flat against the floor in BOTH worlds
+(|dSLA| ≤ 0.1, all ns), so the reasoning layer adds nothing here either way. The headroom that Exp 98
+left — overall SLA and the tight tercile — is now mostly consumed by a deterministic ordering rule:
+the floor misses 7.4% instead of 23.8%. Combined with Exp 96/97/98, the pattern is consistent and
+uncomfortable: **each time a piece of the world is made more realistic or a deterministic lever is
+pulled, the space the LLM could occupy shrinks.**
+
+**Caveats.** Exp 9–12's committed-bid result is not refuted: this is deadline-aware *priority*, not
+per-round value re-auctioning, and churn/thrash metrics were not examined here. n=32, one pool, one
+law, floor arm only for the headline contrast; the LLM arms were run but are inert. The stratified
+classes and the dynamic bid were introduced together, so the +16.4 is the pair's joint effect
+measured against the stratified frozen baseline — the classes alone move SLA by ~0.3 pts (n=4).
