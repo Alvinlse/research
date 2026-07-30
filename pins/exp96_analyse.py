@@ -140,6 +140,19 @@ def main() -> None:
     h1 = _family("=== H1: dprodSLA vs floor, per world ===", per_world, "prod_sla")
     h2 = _family("=== H2: d tight_sla vs floor, per world ===", per_world, "tight_sla")
 
+    # Which arms' laxity effect travels through the tier LABEL at all: if an arm's vs-floor
+    # tight_sla vector is identical seed-for-seed in both worlds, relabelling moved that arm and
+    # the floor by exactly the same amount, i.e. its tight-tercile effect is label-independent.
+    print("\n=== label-independence of the tight-tercile effect (vector equality, not means) ===")
+    for arm in per_world["decorr"]:
+        if arm == FLOOR:
+            continue
+        eq = (_diffs(per_world["correlated"][arm], per_world["correlated"][FLOOR], "tight_sla")
+              == _diffs(per_world["decorr"][arm], per_world["decorr"][FLOOR], "tight_sla"))
+        verdict = ("IDENTICAL in both worlds — does not run through the tier label" if eq
+                   else "differs between worlds — label-dependent")
+        print(f"  {arm:<12s} {verdict}")
+
     print("\n=== H1 diff-in-diff: [arm - floor]_decorr - [arm - floor]_correlated ===")
     did = {}
     for arm in per_world["decorr"]:
