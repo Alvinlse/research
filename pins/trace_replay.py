@@ -752,17 +752,28 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
     if use_llm:
         save_cache(cache)
     print(f"{len(decisions)} distinct decisions/transcripts -> {RESULTS} (tier '{tag}')")
+    def _rej_reasons(c: dict) -> str:
+        """Exp 94 left ~96% of attributed's proposals rejected with the reason counted but never
+        named. Splitting the tally says whether the causal channel OVER-REACHES (change budget /
+        infeasible) or is merely UNFUNDABLE (cannot fund) — different follow-ups entirely.
+
+        Counts REASONS, not rejections: one rejected ruling can trip two constraints, so these
+        sum to >= `rejected`."""
+        r = {k[4:].replace("_", " "): v for k, v in c.items() if k.startswith("rej_")}
+        return ("  [" + ", ".join(f"{k} {v}" for k, v in sorted(r.items())) + "]") if r else ""
+
     if corrected:                 # Exp 92: did the escalation ever have text to act on?
         from pins.market import take_corr_stats
         c = take_corr_stats()
         print(f"corrected: {c['escalated']} escalations, {c['llm_calls']} LLM calls, "
-              f"{c['proposals']} proposals, {c['changed']} ticks changed, {c['rejected']} rejected")
+              f"{c['proposals']} proposals, {c['changed']} ticks changed, {c['rejected']} rejected"
+              + _rej_reasons(c))
     if authored:                  # Exp 94: notes/calls per arm — the budget match is the control
         from pins.market import take_auth_stats
         for mode, c in take_auth_stats().items():
             print(f"{mode}: {c['escalated']} escalations, {c['notes']} notes authored, "
                   f"{c['llm_calls']} LLM calls, {c['proposals']} proposals, "
-                  f"{c['changed']} ticks changed, {c['rejected']} rejected")
+                  f"{c['changed']} ticks changed, {c['rejected']} rejected" + _rej_reasons(c))
     if gated:                     # how often did the contextual trigger actually fire?
         from pins.market import take_gate_stats
         g = take_gate_stats()

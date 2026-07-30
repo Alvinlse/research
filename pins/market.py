@@ -278,6 +278,7 @@ CORR_STATS = {"escalated": 0, "llm_calls": 0, "proposals": 0, "changed": 0, "rej
 
 def take_corr_stats() -> dict:
     out = dict(CORR_STATS)
+    CORR_STATS.clear()                  # also drops the rej_* reason keys added on rejection
     CORR_STATS.update(escalated=0, llm_calls=0, proposals=0, changed=0, rejected=0)
     return out
 
@@ -350,6 +351,9 @@ def make_policy_corrected(use_llm=True, model="qwen2.5:14b", cache=None, trace=N
                 new, viol = apply_signed(margins, dec, free)
                 if viol:
                     stats["rejected"] += 1            # market's allocation stands, never repaired
+                    for v in viol:   # Exp 94 follow-up (a): over-reach ('change budget',
+                        k = "rej_" + v.split(":")[0].replace(" ", "_")   # 'infeasible') or
+                        stats[k] = stats.get(k, 0) + 1                   # merely 'cannot fund'?
                 elif new != margins:
                     stats["changed"] += 1
                     margins = new
