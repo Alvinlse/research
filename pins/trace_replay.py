@@ -161,7 +161,9 @@ def make_trace_workload(trace, n_jobs: int, seed: int, horizon: int, pred=None, 
     every eval tier keeps its byte-identical seed-paired windows.
     """
     rng = random.Random(f"replay-{seed}")
-    window_s = int(horizon * ARRIVAL_FRAC) * tick        # arrivals within first 60%
+    # Arrival span is pinned to the 300-tick default (byte-identical there) so that --horizon adds
+    # DRAIN time only; scaling it with the horizon would thin arrivals and change contention too.
+    window_s = int(300 * ARRIVAL_FRAC) * tick             # arrivals within the first 180 ticks
     t_lo, t_hi = trace[0][0], trace[-1][0] - window_s
     t0 = rng.randrange(t_lo, t_hi)
     in_win = [r for r in trace if t0 <= r[0] < t0 + window_s and (pred is None or r[3] in pred)
@@ -557,6 +559,11 @@ def sweep(pools, n_jobs, horizon, seeds, scale, spike_max, use_llm, model,
         suffix += "+gated"
     if corrected:
         suffix += "+corrected"   # Exp 92: the hard-case winner (signed correction) as the escalation
+    if horizon != 300:
+        # Exp 97: the horizon is part of a tier's identity, like slack_mult and n_jobs already are
+        # (below). Without this a rebase at a longer drain lands on the same key and silently
+        # overwrites rows it is not comparable with -- the Exp 59 trap with a new face.
+        suffix += f"+h{horizon}"
     if decorrelate:
         # Exp 96: same jobs, same deadlines, only the prod LABEL is redrawn — must never merge
         # with the correlated rows, which are a different world under the same arm names
@@ -937,6 +944,11 @@ def main() -> None:
                          "jobs start this tick and which keep waiting — on top of the "
                          "margin/reserve split. Only never-started jobs can be deferred, so the "
                          "rigid no-preemption invariant holds. Tier suffix +admit.")
+    ap.add_argument("--horizon", type=int, default=300, metavar="T",
+                    help="simulated ticks (default 300, every prior tier). The ARRIVAL span is "
+                         "pinned at ARRIVAL_FRAC*300 ticks regardless, so raising this adds DRAIN "
+                         "time without thinning arrivals — the knob for the ~2.5%% of jobs that "
+                         "are counted as SLA violations only because the horizon censored them.")
     ap.add_argument("--slack-mult", type=float, default=1.0, metavar="M",
                     help="scale every job's deadline slack by M. The stock recipe gives median "
                          "1.55x the job's OWN work (p10 = 1.00x -- unmeetable in a shared "
@@ -1011,7 +1023,7 @@ def main() -> None:
     if a.compare:
         compare_tiers(a.compare)
         return
-    sweep([int(p) for p in a.pools.split(",")], n_jobs=a.n_jobs, horizon=300,
+    sweep([int(p) for p in a.pools.split(",")], n_jobs=a.n_jobs, horizon=a.horizon,
           seeds=list(range(a.seed_start, a.seeds)), scale=a.scale, spike_max=a.spike,
           use_llm=a.llm, model=a.model, caps_mode=a.caps, quantile=a.quantile,
           truth_mode=a.truth, time_mode=a.time, ttf_mode=a.ttf, baseline=a.baseline,
