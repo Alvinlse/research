@@ -20,36 +20,22 @@ project root AND its own git repository — run all commands and make all commit
 ```bash
 # Use the project venv directly (uv run also works):
 .venv/bin/python -m pins.test_mechanism            # unit-test the auctioneer (no network/LLM, instant)
-bash pins/run_demo.sh                               # full negotiation: 1 server + 3 agents, 4 GPUs, no LLM
-bash pins/run_demo.sh --llm                          # same, with LLM justifications (needs Ollama)
-.venv/bin/python -m pins.eval.predict_resources      # Stage-1 eval vs baselines on benchmark.json (approx truth)
-.venv/bin/python -m pins.eval.predict_resources --model qwen2.5:7b   # swap model for a size ablation
 
-# Closed-loop Stage-1: predict, then TRAIN the model on the A100 and MEASURE real peak VRAM (needs torch+GPU):
-.venv/bin/python -m pins.eval.predict_cnn                       # raw-LLM + hybrid(facts) vs heuristic/mean, measured
-.venv/bin/python -m pins.eval.predict_cnn --reasoning --show-reasoning   # LLM walks layers; prints the trace
-.venv/bin/python -m pins.eval.predict_cnn --deterministic               # LLM-shapes->code-sum, LOOCV (the winner)
-.venv/bin/python -m pins.eval.predict_cnn --deterministic --precision fp16   # mixed-precision check
-.venv/bin/python -m pins.eval.predict_arch                      # same recipe across CNN/ResNet/Transformer, 1 global calib
+# Stage-1: predict GPU/runtime/util/mem on the Alibaba v2020 trace vs baselines
+.venv/bin/python -m pins.eval.predict_gpu --target runtime   # --target {plan_gpu,runtime,gpu_util,gpu_mem}
+#   declared fields are FEATURES, not targets
 
-# Stage-1 DYNAMIC: forecast a running job's GPU/CPU/mem 5 min ahead on MIT Supercloud traces:
-python data/fetch_supercloud.py --n-jobs 100 --min-gpu-mb 1 --max-gpu-mb 8  # pull a joint CPU+GPU sample (S3, no creds)
-.venv/bin/python -m pins.forecast.dataset            # align cpu(10s)+gpu(100ms)->10s grid; sanity-print
-.venv/bin/python -m pins.forecast.baselines          # persistence / moving-avg gate (per-channel + nMAE)
-.venv/bin/python -m pins.forecast.model              # train+eval the residual attention forecaster vs the gate
+# Stage-2 TRACE REPLAY: the current architecture (validated auction + debate-on-trigger)
+.venv/bin/python -m pins.trace_replay                # replay v2020 jobs against a GPU pool, no LLM
+.venv/bin/python -m pins.trace_replay --llm --model qwen2.5:3b --pools 32 --seeds 8
+.venv/bin/python -m pins.two_sided_sim               # two-sided demand/supply market sweep
 
-# Stage-2 SIMULATION: which allocation MECHANISM rations GPUs best? (pure Python, no GPU, instant)
+# Stage-2 SIMULATION (older synthetic world, still the mechanism sweep): pure Python, no GPU, instant
 .venv/bin/python -m pins.negotiation_sim             # auction vs greedy/equal/static/committed sweep
 .venv/bin/python -m pins.negotiation_sim --llm --model qwen2.5:3b   # + LLM-strategist & LLM-priority rows
 .venv/bin/python -m pins.llm_agent                   # smoke: LLM bid-strategy + committed-priority per state
 .venv/bin/python -m pins.llm_agent --no-llm          # same via the deterministic rule fallback
-```
-
-Run the negotiation system by hand (server first, then one agent process per job):
-
-```bash
-.venv/bin/python -m pins.negotiation_server --agents 3 --gpus 4 --transport sse
-.venv/bin/python -m pins.job_agent --id jobA --urgency 1.3 --timeline preprocess,train,train,eval --no-llm
+.venv/bin/python -m pins.referee                     # smoke: referee LLM on a scene
 ```
 
 **Tests are a plain script, not pytest.** `pins/test_mechanism.py` auto-discovers and runs every
@@ -58,11 +44,12 @@ Run the negotiation system by hand (server first, then one agent process per job
 ## Environment assumptions (hard dependencies of the demos)
 
 - **Ollama** running at `http://localhost:11434`; `qwen2.5` in `3b` (default), `7b`, `14b` are pulled.
-- The negotiation server binds **SSE on `http://localhost:8000/sse`** (hardcoded in `job_agent.py` / `run_demo.sh`).
-- Real-hardware validation + the closed-loop `eval/predict_cnn.py`/`predict_arch.py` target a single **A100-PCIE-40GB**.
-- The LLM path degrades gracefully: the negotiation demo and `predict_resources` fall back if
-  Ollama is down. **Only `predict_cnn.py`/`predict_arch.py` hard-require torch+CUDA** (they
-  measure real VRAM); the rest of the project runs with no GPU.
+- Nothing binds a network port any more — the MCP server/SSE transport was deleted with `1534db2`.
+- Stage-1 is evaluated offline on the **Alibaba v2020 GPU trace** and Stage-2 in simulation, so
+  **no part of the current code needs a GPU**. (The A100-PCIE-40GB target and the closed-loop
+  `predict_cnn.py`/`predict_arch.py` belonged to the retired LLM-prediction track.)
+- The LLM path degrades gracefully: every `--llm` arm falls back to its deterministic rule if
+  Ollama is down.
 - **torch/CUDA gotcha (READ before installing anything):** `pyproject.toml` pins `torch>=2.12.0`,
   whose default PyPI wheel is built for **CUDA 13.0 — too new for this node's 12.7 driver**
   (it errors with `undefined symbol: ncclCommResume` / `cuda.is_available()` False). The working
@@ -89,25 +76,19 @@ while a predictor that has the LLM emit **per-layer shapes** and lets code do th
 from the LLM into code, error dropped ~an order of magnitude. When extending Stage-1, keep the LLM
 on extraction/shapes and never let it emit the final figure.
 
-### `pins/` — Stage-2 negotiation (MCP-based)
+### `pins/` — Stage-2 negotiation
 
-MCP is repurposed as an **agent-to-agent** substrate: it is natively LLM-client ↔ server, so all
-job-agents are independent MCP *clients* that rendezvous through one shared, stateful MCP *server*.
-A networked transport (SSE) is therefore mandatory — agents must see shared allocation state.
+The live MCP wiring (`negotiation_server.py` + `job_agent.py` + `run_demo.sh`) was **deleted** in
+`1534db2` ("trim to paper-relevant code and results"). Everything below is pure in-process Python —
+no MCP, no network. The research results all come from the simulation/replay stack.
 
 - `mechanism.py` — **pure** sealed-bid uniform-price auctioneer + anti-thrashing rescale gate.
-  No MCP, no LLM, no network; this is the "decider" and the only thing the unit tests cover.
+  No LLM, no network; this is the "decider" and the only thing the unit tests cover.
 - `predictor.py` — Stage-1 **stub**: maps a job phase → non-increasing marginal-value curve.
-  Encodes the project's premise (demand varies by phase). Meant to be replaced by the real hybrid predictor.
-- `negotiation_server.py` — the shared MCP server: owns the GPU allocation table (state), exposes
-  `market://state` (resource) + `register`/`submit_bid`/`round_result`/`get_allocation` (tools), and
-  runs the auctioneer. Uses a **round/barrier protocol**: a round clears only when all expected
-  agents have bid. **Gotcha: `--agents` MUST equal the number of agent processes**, or rounds never clear.
-- `job_agent.py` — one MCP client per job: reads the market, asks `predictor.py` for a bid curve,
-  optionally asks the LLM for a one-line justification, submits a *structured* bid, reads its allocation.
+  Encodes the project's premise (demand varies by phase). Superseded by `trace_replay.py` for results.
 
 The clearing produces allocation *deltas*. Wiring those deltas to real rescaling (TorchElastic/SLURM)
-is the actuation layer that lives **below** MCP and is not yet implemented.
+is the actuation layer and is not implemented.
 
 **Anti-thrashing gotcha (fixed Exp 9, keep it this way):** `mechanism.clear`'s gate charges
 `rescale_cost` only for **preemptions** (`sum(max(0, cur-target))`), never for filling *idle* GPUs —
@@ -137,7 +118,7 @@ The full experiment log with numbers is `research_progress.md` (now through **Ex
   budget does **not** fix it (it punishes long honest jobs as much as liars). True fix needs
   value-elicitation with **payments** (per-user budgets / VCG) — the open problem.
 
-**The LLM hinge applies here too:** `llm_agent.py` mirrors `forecast/llm_facts.py` — the LLM emits
+**The LLM hinge applies here too:** in `llm_agent.py` the LLM emits
 only **categorical/ordinal** choices (a bidding `stance`+`focus_gpus`, or a priority *class*) plus a
 justification, **never a number**; deterministic code owns every magnitude. It is kept out of the hot
 loop by **caching one decision per discretised state** (`llm_agent_cache.json`), so a full sweep costs
@@ -145,10 +126,34 @@ loop by **caching one decision per discretised state** (`llm_agent_cache.json`),
 
 ### `pins/eval/` — Stage-1 prediction evaluation
 
-Two generations of harness. The first scores against *approximate* truth; the second **measures**
-truth by actually training on the A100 (`torch.cuda.max_memory_allocated`). All write `results*.json`.
+**Only `predict_gpu.py` survives** (the LLM-VRAM harnesses below were deleted with `1534db2`).
+It predicts a task's resources from **submission metadata** on the Alibaba v2020 GPU trace with
+quantile GBTs, scored against a no-information mean predictor (the research gate). Results land
+in `results_gpu*.json`; `pins/bridge.py` converts the predictions into the qualitative buckets
+Stage-2 consumes.
 
-- `benchmark.json` + `predict_resources.py` — prompts an LLM (metadata only) for
+`--target` picks the quantity (retarget of 2026-07-08):
+
+| target | what it is |
+|---|---|
+| `plan_gpu` | the original track, byte-identical — keeps Exp 30/31 reproducible |
+| `runtime` | `end_time − start_time` (s), Terminated tasks only |
+| `gpu_util` | ACTUAL GPU utilization % (`gpu_wrk_util`, mean over workers) |
+| `gpu_mem` | ACTUAL peak GPU memory GB (`max_gpu_wrk_mem`, max over workers) |
+
+**The governing caveat:** `plan_gpu` is a **user-declared** field — the scheduler already has it at
+decision time, so predicting it is imputation, not demand prediction. For every other target
+`plan_gpu` joins the *features*. Rule: **declared fields are features, not targets.** The
+`gpu_util`/`gpu_mem` targets need `pai_sensor_table`
+(`data/fetch_alibaba_gpu.py --tables pai_sensor_table`).
+
+<details>
+<summary>Retired: the LLM-VRAM prediction track (files deleted, finding retained)</summary>
+
+`predict_resources.py`, `predict_cnn.py`, `predict_arch.py` + `benchmark.json` are gone. What they
+established and why it still constrains the design:
+
+- `benchmark.json` + `predict_resources.py` — prompted an LLM (metadata only) for
   `{peak_mem_gb, recommended_gpus}` and scores it against two baselines it must beat: a
   no-information **mean** predictor (the research gate) and a **params×bytes heuristic**.
 - `predict_cnn.py` — **closed-loop on a VGG-style CNN family.** Defines `SimpleCNN`, predicts its
@@ -168,7 +173,16 @@ truth by actually training on the A100 (`torch.cuda.max_memory_allocated`). All 
   score matrix, so the term should be gated on the attention backend. `research_progress.md` has the
   full result tables.
 
-### `pins/forecast/` + `data/` — Stage-1 DYNAMIC prediction (time-series, the active direction)
+**The finding that outlived the code:** every time a *number* moved from the LLM into code, error
+dropped ~an order of magnitude — but the headline 40× win was **synthetic-only**; on real models it
+was MAPE 18% / ρ 0.80. This is why Stage-1 is now GBTs on a real trace.
+
+</details>
+
+<details>
+<summary>Retired: `pins/forecast/` + `data/` — Stage-1 DYNAMIC prediction (time-series)</summary>
+
+`pins/forecast/` was deleted with `1534db2`; the `data/` fetchers remain. Kept for the design points.
 
 Where `eval/` predicts **one static peak number** per job, this layer forecasts a *running*
 job's **trajectory** — GPU/CPU/memory over the next **5 min (HORIZON=30 steps × 10 s)** — on
@@ -196,10 +210,7 @@ facts, never the number. The pipeline is three stacked modules, each runnable st
   on the dynamic `gpu_util`/`cpu_util` channels). A naive absolute-value model loses on the flat
   memory channels — don't revert to it.
 
-### Top-level `chat_*.py` — legacy prototype
-
-`chat_server.py` (a message-board MCP server) + `chat_agent_a.py`/`chat_agent_b.py` (two Ollama
-agents free-texting through it). Superseded by `pins/`; kept for reference. `main.py` is empty.
+</details>
 
 ## Conventions
 
