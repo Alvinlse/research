@@ -118,6 +118,18 @@ No outcome changes §4.1–§4.3. This is a claim about *why* §4.4 works, not w
   "one sentence to the referee". Exp 94's follow-up (b) flagged output-length asymmetry
   (10.9 vs 28.2 words) as an uncontrolled variable in an earlier text comparison; here the two
   prompt sets are written to the same length and that is checked before the run.
+  **Measured before the run (2026-07-31), opposed vs symmetric, in words:**
+  demand 136/140, supply 106/114, demand-rebut 115/116, supply-rebut 82/92 — a maximum gap of
+  12%, against Exp 94's 2.6× problem. The residual is the objective clause itself ("does OVERALL
+  service quality improve if…" is inherently longer than "should this job get…"), i.e. it *is*
+  the treatment; padding the opposed set to match would introduce a worse confound. Recorded
+  rather than engineered away.
+- **Cache-tag separation (verified before the run).** `correction._ask` keys on
+  `f"{PROMPT_VERSION}|{tag}|{user}|{model}"` and does **not** include the system message, so a
+  symmetric arm reusing the opposed tags would silently return the opposed arm's cached answers
+  and measure nothing. The two sets share no tag (`dem-signed`/`sup-signed`/`dem-rebut`/`sup-rebut`
+  vs `job-sym`/`cap-sym`/`job-sym-rebut`/`cap-sym-rebut`); checked programmatically, empty
+  intersection.
 - **One venue.** This is the authored hard-case suite. A null here does not establish that
   asymmetry is inert in a negotiation over real contested capacity (Exp 22–42's venue), where the
   agents hold genuinely private information rather than assigned framings.

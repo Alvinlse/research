@@ -105,7 +105,7 @@ ARMS = ["market", "single-pkt", "single-pkt-boN", "debate-pkt"]
 # Exp 93 structures: the three arms Exp 65-67 tested on the WEAK pre-packet interface and that
 # were therefore untested, not refuted. `selfcons` is NOT here -- `single-pkt-boN` already is
 # self-consistency (it samples k times at temperature and takes the MODAL action set, see _vote).
-STRUCTURE_ARMS = ["debate-noarg-pkt", "critic-pkt"]
+STRUCTURE_ARMS = ["debate-noarg-pkt", "critic-pkt", "debate-sym-pkt"]
 
 # Exp 95: the same best-of-N control, matched to CRITIC's budget instead of debate's. Exp 88/89
 # settled the budget question at debate's 7x; critic's 3x is a different point on the curve, and
@@ -203,11 +203,15 @@ def run_case(case, model, use_llm, arm, max_delta, temperature, no_text=False):
 
     props = None
     critic_calls = 0
-    if arm in ("debate-pkt", "debate-noarg-pkt"):
+    if arm in ("debate-pkt", "debate-noarg-pkt", "debate-sym-pkt"):
+        # Exp 100: the symmetric set differs from OPPOSED only in the objective clause, and
+        # carries its own cache tags (the cache key excludes the system message).
+        from pins.correction_signed import SYMMETRIC
+        pset = SYMMETRIC if arm == "debate-sym-pkt" else None
         p = gather_signed(jobs, sup, case.free_gpus, alloc, use_llm=use_llm,
-                          model=model, cache=cache)
+                          model=model, cache=cache, prompts=pset)
         p = debate_signed(jobs, sup, case.free_gpus, alloc, p, use_llm=use_llm,
-                          model=model, cache=cache)
+                          model=model, cache=cache, prompts=pset)
         props = {kk: v for kk, v in p.items() if kk in ("demand", "supply", "opening", "debated")}
         if arm == "debate-noarg-pkt":
             props = _strip_evidence(props)
@@ -236,7 +240,8 @@ def run_case(case, model, use_llm, arm, max_delta, temperature, no_text=False):
         obj = _ask(sysmsg, json.dumps(packet, indent=1), model, None, cache, arm) or {}
         d = decision_from_ids(packet, obj.get("action_ids"))
         why = str(obj.get("justification", ""))[:300]
-        n_calls = (2 * n_jobs + 3) if arm in ("debate-pkt", "debate-noarg-pkt") else (
+        n_calls = (2 * n_jobs + 3) if arm in ("debate-pkt", "debate-noarg-pkt",
+                                              "debate-sym-pkt") else (
             critic_calls + 1 if arm == "critic-pkt" else 1)
 
     fired = bool(d["changes"]) or bool(d["hold_free"])
@@ -282,6 +287,13 @@ def main() -> None:
     out_path = os.environ.get(
         "PINS_RESULTS",
         os.path.join(HERE, f"results_{exp}_{a.model.replace(':', '')}_t{a.temp}.json"))
+    # Guard (2026-07-31): the default path is a PUBLISHED results file (Exp 89 is the paper's
+    # headline). A run launched without PINS_RESULTS -- including a --no-llm smoke test -- used to
+    # overwrite it silently. Refuse instead; naming the file is a one-word fix at the call site.
+    if "PINS_RESULTS" not in os.environ and os.path.exists(out_path):
+        raise SystemExit(
+            f"refusing to overwrite {out_path}\n"
+            f"set PINS_RESULTS=<path> explicitly (this file holds a published run)")
     results: dict = {}
     for case in cases:
         arms = {}

@@ -159,9 +159,14 @@ def _parse_decision(obj: dict | None) -> dict:
 
 def gather_signed(jobs: list[dict], supply_note: str, free: int, alloc: dict[str, int],
                   use_llm: bool = True, model: str = DEFAULT_MODEL,
-                  cache: dict | None = None, host: str = HOST) -> dict:
-    """Reviewers, one per job that carries text, plus one supply call. Proposals, not moves."""
+                  cache: dict | None = None, host: str = HOST,
+                  prompts: dict | None = None) -> dict:
+    """Reviewers, one per job that carries text, plus one supply call. Proposals, not moves.
+
+    `prompts` (Exp 100) selects the reviewer objective; None = OPPOSED, so every pre-Exp-100 arm
+    replays byte-identically (same system messages, same cache tags)."""
     cache = {} if cache is None else cache
+    pset = prompts or OPPOSED
     props: dict = {"demand": [], "supply": None}
     if not use_llm:
         return props
@@ -171,7 +176,7 @@ def gather_signed(jobs: list[dict], supply_note: str, free: int, alloc: dict[str
         user = "\n".join([f"free_gpus: {free}", f"market_gave_this_job: {alloc.get(j['jid'], 0)}",
                           f"market_allocation: {dict(sorted(alloc.items()))}",
                           "this job:", *_job_lines([j])])
-        o = _ask(SYSTEM_DEMAND_SIGNED, user, model, host, cache, tag="dem-signed")
+        o = _ask(pset["demand"][0], user, model, host, cache, tag=pset["demand"][1])
         try:
             n = int(round(float((o or {}).get("delta_gpus", 0) or 0)))
         except (TypeError, ValueError):
@@ -182,7 +187,7 @@ def gather_signed(jobs: list[dict], supply_note: str, free: int, alloc: dict[str
     if (supply_note or "").strip():
         user = "\n".join([f"free_gpus: {free}", f"allocated: {sum(alloc.values())}",
                           f"supply note: {supply_note}"])
-        o = _ask(SYSTEM_SUPPLY_SIGNED, user, model, host, cache, tag="sup-signed")
+        o = _ask(pset["supply"][0], user, model, host, cache, tag=pset["supply"][1])
         try:
             n = max(0, int(round(float((o or {}).get("hold_free_gpus", 0) or 0))))
         except (TypeError, ValueError):
@@ -327,6 +332,77 @@ SYSTEM_SUPPLY_REBUT = (
     '{"hold_free_gpus": <integer, 0 for none>, "argument": "<one sentence to the referee>"}')
 
 
+# --------------------------------------------------------------------------- #
+#  Exp 100: the SYMMETRIC prompt set — same structure, shared objective        #
+# --------------------------------------------------------------------------- #
+# The manipulation is the OBJECTIVE CLAUSE ONLY. Both reviewers keep their structural role (one
+# owns a job's delta, one owns the hold-free number) so the call count and output schema cannot
+# change; what is removed is the advocacy ("argue your corner", "every extra GPU your job gets
+# comes out of another job", "do not release capacity that a stated limit requires"). Everything
+# each reviewer may SEE is unchanged, so information is held constant and only the goal differs.
+SYSTEM_JOB_SYM = (
+    "You are a REVIEWER of one job in a GPU scheduler. A market has already "
+    "allocated the pool using each job's numerical bid. Your ONLY question is:\n"
+    "  does OVERALL service quality improve if this job gets MORE than the market gave it, "
+    "or LESS (possibly nothing)?\n"
+    "Answer non-zero only when the job's free-text note carries a fact the numbers cannot "
+    "express — starvation history, an external or contractual deadline, a standing operator "
+    "instruction, a dependency, a suspension, work that will be discarded or killed, a "
+    "declaration the note itself says is wrong. Ordinary urgency, a tight deadline or a large "
+    "request are ALREADY in the bid: they are not evidence.\n"
+    "Respond with ONLY this JSON object:\n"
+    '{"delta_gpus": <signed integer, negative to take GPUs away, 0 for no change>, '
+    '"evidence": "<the exact phrase from the note that justifies it, or empty>"}')
+
+SYSTEM_CAP_SYM = (
+    "You are a REVIEWER of the free pool of a GPU cluster. A market has already allocated the "
+    "free pool using each job's numerical bid. Your ONLY question is:\n"
+    "  does OVERALL service quality improve if some capacity is left UNALLOCATED this tick, "
+    "and how much?\n"
+    "Answer non-zero only when the notes carry a fact the market's price does not contain — an "
+    "announced arrival, a maintenance or drain window, a power or thermal cap, a reservation "
+    "for work that has not been submitted, a correctness limit. Ordinary scarcity is ALREADY in "
+    "the ask price.\n"
+    "Respond with ONLY this JSON object:\n"
+    '{"hold_free_gpus": <0 or a positive integer>, "evidence": "<the phrase that justifies it, '
+    'or empty>"}')
+
+SYSTEM_JOB_SYM_REBUT = (
+    "You are a REVIEWER of ONE job. You already stated whether it should get "
+    "more or less than the market gave it. You can now see what the other reviewers said about "
+    "the other jobs, and what was proposed to be held free. The pool is finite: every extra "
+    "GPU this job gets comes out of another job on this list.\n"
+    "Revise your own position if the other positions change what best serves OVERALL service "
+    "quality — you may raise or lower it — and state your reasoning to the referee in one "
+    "sentence. Only this job.\n"
+    "Respond with ONLY this JSON object:\n"
+    '{"delta_gpus": <signed integer, 0 for no change>, "argument": "<one sentence to the '
+    'referee>"}')
+
+SYSTEM_CAP_SYM_REBUT = (
+    "You are a REVIEWER of the free pool. You already stated how many GPUs must be left "
+    "unallocated. You can now see every job's position and the evidence behind it. Revise your "
+    "position if the other positions change what best serves OVERALL service quality: release "
+    "capacity when the demand on the table is more urgent than what it is being held for, and "
+    "keep it when a stated limit or an announced arrival requires it.\n"
+    "Respond with ONLY this JSON object:\n"
+    '{"hold_free_gpus": <integer, 0 for none>, "argument": "<one sentence to the referee>"}')
+
+# A prompt set is (system message, cache tag) per role. The tag MUST travel with the prompt:
+# `correction._ask` keys the cache on f"{PROMPT_VERSION}|{tag}|{user}|{model}" and does NOT
+# include the system message, so a set that reused the opposed tags would silently return the
+# opposed arm's cached answers and the comparison would measure nothing.
+OPPOSED = {"demand": (SYSTEM_DEMAND_SIGNED, "dem-signed"),
+           "supply": (SYSTEM_SUPPLY_SIGNED, "sup-signed"),
+           "demand_rebut": (SYSTEM_DEMAND_REBUT, "dem-rebut"),
+           "supply_rebut": (SYSTEM_SUPPLY_REBUT, "sup-rebut")}
+
+SYMMETRIC = {"demand": (SYSTEM_JOB_SYM, "job-sym"),
+             "supply": (SYSTEM_CAP_SYM, "cap-sym"),
+             "demand_rebut": (SYSTEM_JOB_SYM_REBUT, "job-sym-rebut"),
+             "supply_rebut": (SYSTEM_CAP_SYM_REBUT, "cap-sym-rebut")}
+
+
 def _opening_view(props: dict, me: str | None) -> dict:
     """What one reviewer may see: every OTHER position and its evidence, never private state."""
     return {"other_jobs": [{"job": p["jid"], "proposed_delta": p["delta"],
@@ -338,9 +414,13 @@ def _opening_view(props: dict, me: str | None) -> dict:
 
 def debate_signed(jobs: list[dict], supply_note: str, free: int, alloc: dict[str, int],
                   props: dict, use_llm: bool = True, model: str = DEFAULT_MODEL,
-                  cache: dict | None = None, host: str = HOST) -> dict:
-    """One rebuttal round over the openings. Returns the same shape, plus `opening` kept."""
+                  cache: dict | None = None, host: str = HOST,
+                  prompts: dict | None = None) -> dict:
+    """One rebuttal round over the openings. Returns the same shape, plus `opening` kept.
+
+    `prompts` (Exp 100): None = OPPOSED, byte-identical to every pre-Exp-100 arm."""
     cache = {} if cache is None else cache
+    pset = prompts or OPPOSED
     if not use_llm or (not props["demand"] and not props["supply"]):
         return dict(props, opening=props, debated=False)
 
@@ -360,7 +440,8 @@ def debate_signed(jobs: list[dict], supply_note: str, free: int, alloc: dict[str
                                       "market_gave": alloc.get(j["jid"], 0),
                                       "my_opening_delta": (mine or {}).get("delta", 0)},
                            "other_positions": view}, indent=1)
-        o = _ask(SYSTEM_DEMAND_REBUT, user, model, host, cache, tag=f"dem-rebut-{j['jid']}")
+        o = _ask(pset["demand_rebut"][0], user, model, host, cache,
+                 tag=f"{pset['demand_rebut'][1]}-{j['jid']}")
         try:
             n = int(round(float((o or {}).get("delta_gpus", (mine or {}).get("delta", 0)) or 0)))
         except (TypeError, ValueError):
@@ -378,7 +459,8 @@ def debate_signed(jobs: list[dict], supply_note: str, free: int, alloc: dict[str
                            "job_positions": [{"job": p["jid"], "proposed_delta": p["delta"],
                                               "evidence": p["evidence"]}
                                              for p in props["demand"]]}, indent=1)
-        o = _ask(SYSTEM_SUPPLY_REBUT, user, model, host, cache, tag="sup-rebut")
+        o = _ask(pset["supply_rebut"][0], user, model, host, cache,
+                 tag=pset["supply_rebut"][1])
         try:
             h = max(0, int(round(float((o or {}).get("hold_free_gpus",
                                                      (sup or {}).get("hold_free", 0)) or 0))))
