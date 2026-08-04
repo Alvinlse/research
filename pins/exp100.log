@@ -1,0 +1,121 @@
+P3-POLICY-01   nl_policy    debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P3-POLICY-02   nl_policy    debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P3-POLICY-03   nl_policy    debate-pkt=.* debate-sym-pkt=.* critic-pkt=H* single-pkt=.*
+P3-POLICY-04   nl_policy    debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P3-POLICY-05   nl_policy    debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P3-POLICY-06   nl_policy    debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P3-POLICY-07   nl_policy    debate-pkt=. debate-sym-pkt=.* critic-pkt=. single-pkt=.*
+P3-UNMOD-01    unmodeled    debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P3-UNMOD-02    unmodeled    debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P3-UNMOD-03    unmodeled    debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P3-UNMOD-04    unmodeled    debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P3-UNMOD-05    unmodeled    debate-pkt=.* debate-sym-pkt=.* critic-pkt=. single-pkt=.
+P3-UNMOD-06    unmodeled    debate-pkt=H* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P3-UNMOD-07    unmodeled    debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=.*
+P3-UNMOD-08    unmodeled    debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=.*
+P3-CORRUPT-01  corrupt      debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=.*
+P3-CORRUPT-02  corrupt      debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=.*
+P3-CORRUPT-03  corrupt      debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P3-CORRUPT-04  corrupt      debate-pkt=H* debate-sym-pkt=H* critic-pkt=. single-pkt=H*
+P3-CORRUPT-05  corrupt      debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P3-CONTRA-01   contradiction debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P3-CONTRA-02   contradiction debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P3-CONTRA-03   contradiction debate-pkt=.* debate-sym-pkt=.* critic-pkt=H* single-pkt=H*
+P3-CONTRA-04   contradiction debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P3-AMBIG-01    ambiguous    debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P3-AMBIG-02    ambiguous    debate-pkt=. debate-sym-pkt=. critic-pkt=.* single-pkt=.
+P3-AMBIG-03    ambiguous    debate-pkt=.* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P3-INFEAS-01   infeasible   debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P3-INFEAS-02   infeasible   debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P3-INFEAS-03   infeasible   debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P3-PLACEBO-01  placebo      debate-pkt=H debate-sym-pkt=H critic-pkt=H single-pkt=H
+P3-PLACEBO-02  placebo      debate-pkt=.* debate-sym-pkt=.* critic-pkt=H single-pkt=.*
+P3-PLACEBO-03  placebo      debate-pkt=H debate-sym-pkt=H critic-pkt=.* single-pkt=H
+P3-PLACEBO-04  placebo      debate-pkt=H debate-sym-pkt=H critic-pkt=.* single-pkt=H
+P3-PLACEBO-05  placebo      debate-pkt=H debate-sym-pkt=H critic-pkt=.* single-pkt=H
+P3-CONFIRM-01  confirm      debate-pkt=H debate-sym-pkt=.* critic-pkt=H single-pkt=.*
+P3-CONFIRM-02  confirm      debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P3-CONFIRM-03  confirm      debate-pkt=H debate-sym-pkt=H critic-pkt=.* single-pkt=H
+P3-CONFIRM-04  confirm      debate-pkt=H debate-sym-pkt=H critic-pkt=H single-pkt=H
+P3-POLICY-08   nl_policy    debate-pkt=. debate-sym-pkt=. critic-pkt=. single-pkt=.
+P4-POLICY-01   nl_policy    debate-pkt=. debate-sym-pkt=.* critic-pkt=.* single-pkt=.
+P4-POLICY-02   nl_policy    debate-pkt=H* debate-sym-pkt=H* critic-pkt=. single-pkt=.*
+P4-POLICY-03   nl_policy    debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.
+P4-POLICY-04   nl_policy    debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P4-POLICY-05   nl_policy    debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P4-POLICY-06   nl_policy    debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P4-POLICY-07   nl_policy    debate-pkt=.* debate-sym-pkt=.* critic-pkt=H* single-pkt=.*
+P4-POLICY-09   nl_policy    debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P4-POLICY-08   nl_policy    debate-pkt=.* debate-sym-pkt=.* critic-pkt=. single-pkt=.*
+P4-POLICY-10   nl_policy    debate-pkt=.* debate-sym-pkt=H* critic-pkt=. single-pkt=H*
+P4-POLICY-11   nl_policy    debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P4-POLICY-12   nl_policy    debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P4-POLICY-13   nl_policy    debate-pkt=.* debate-sym-pkt=.* critic-pkt=. single-pkt=.
+P4-UNMOD-01    unmodeled    debate-pkt=.* debate-sym-pkt=.* critic-pkt=H* single-pkt=.*
+P4-UNMOD-02    unmodeled    debate-pkt=H* debate-sym-pkt=H* critic-pkt=.* single-pkt=.*
+P4-UNMOD-03    unmodeled    debate-pkt=. debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P4-UNMOD-04    unmodeled    debate-pkt=H* debate-sym-pkt=H* critic-pkt=.* single-pkt=.*
+P4-UNMOD-05    unmodeled    debate-pkt=. debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P4-UNMOD-06    unmodeled    debate-pkt=H* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P4-UNMOD-07    unmodeled    debate-pkt=H* debate-sym-pkt=.* critic-pkt=.* single-pkt=H*
+P4-UNMOD-08    unmodeled    debate-pkt=H* debate-sym-pkt=H* critic-pkt=.* single-pkt=.*
+P4-UNMOD-09    unmodeled    debate-pkt=H* debate-sym-pkt=H* critic-pkt=.* single-pkt=.*
+P4-UNMOD-10    unmodeled    debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=.*
+P4-UNMOD-11    unmodeled    debate-pkt=H* debate-sym-pkt=H* critic-pkt=.* single-pkt=.*
+P4-UNMOD-12    unmodeled    debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P4-UNMOD-13    unmodeled    debate-pkt=H* debate-sym-pkt=H* critic-pkt=.* single-pkt=.*
+P4-CORRUPT-01  corrupt      debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P4-CORRUPT-02  corrupt      debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P4-CORRUPT-03  corrupt      debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P4-CORRUPT-04  corrupt      debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P4-CORRUPT-05  corrupt      debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P4-CORRUPT-06  corrupt      debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P4-CORRUPT-07  corrupt      debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P4-CORRUPT-08  corrupt      debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=.*
+P4-CONTRA-01   contradiction debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P4-CONTRA-02   contradiction debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P4-CONTRA-03   contradiction debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P4-CONTRA-04   contradiction debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P4-CONTRA-05   contradiction debate-pkt=.* debate-sym-pkt=.* critic-pkt=. single-pkt=.
+P4-CONTRA-06   contradiction debate-pkt=.* debate-sym-pkt=.* critic-pkt=. single-pkt=.*
+P4-AMBIG-01    ambiguous    debate-pkt=H* debate-sym-pkt=H* critic-pkt=.* single-pkt=.*
+P4-AMBIG-02    ambiguous    debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P4-AMBIG-03    ambiguous    debate-pkt=H* debate-sym-pkt=.* critic-pkt=H* single-pkt=H*
+P4-AMBIG-04    ambiguous    debate-pkt=H* debate-sym-pkt=H* critic-pkt=. single-pkt=.*
+P4-AMBIG-05    ambiguous    debate-pkt=. debate-sym-pkt=. critic-pkt=H* single-pkt=.*
+P4-INFEAS-01   infeasible   debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P4-INFEAS-02   infeasible   debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P4-INFEAS-03   infeasible   debate-pkt=H* debate-sym-pkt=H* critic-pkt=.* single-pkt=.*
+P4-INFEAS-04   infeasible   debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P4-INFEAS-05   infeasible   debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P4-PLACEBO-01  placebo      debate-pkt=H debate-sym-pkt=H critic-pkt=H single-pkt=H
+P4-PLACEBO-02  placebo      debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P4-PLACEBO-03  placebo      debate-pkt=.* debate-sym-pkt=.* critic-pkt=H single-pkt=.*
+P4-PLACEBO-04  placebo      debate-pkt=H debate-sym-pkt=H critic-pkt=H single-pkt=H
+P4-CONFIRM-01  confirm      debate-pkt=H debate-sym-pkt=H critic-pkt=H single-pkt=H
+P4-CONFIRM-02  confirm      debate-pkt=H debate-sym-pkt=H critic-pkt=H single-pkt=H
+P4-CONFIRM-03  confirm      debate-pkt=H debate-sym-pkt=.* critic-pkt=H single-pkt=H
+P4-CONFIRM-04  confirm      debate-pkt=H debate-sym-pkt=H critic-pkt=H single-pkt=H
+
+=== PRIMARY  n=81 ===
+  arm               strict  handled  fired  invalid  calls
+  debate-pkt         43/81     43/81      74        0    569
+  debate-sym-pkt     41/81     41/81      78        0    569
+  critic-pkt         35/81     35/81      70        0    244
+  single-pkt         28/81     28/81      74        0     81
+  head-to-head debate-pkt vs single-pkt: b=18 c=3
+  head-to-head critic-pkt vs debate-pkt: b=6 c=14
+  head-to-head critic-pkt vs single-pkt: b=10 c=3
+
+=== CONTROLS  n=17 ===
+  arm               strict  handled  fired  invalid  calls
+  debate-pkt         13/17     13/17       4        0    113
+  debate-sym-pkt     11/17     11/17       6        0    113
+  critic-pkt         11/17     11/17       6        0     48
+  single-pkt         12/17     12/17       5        0     17
+  head-to-head debate-pkt vs single-pkt: b=1 c=0
+  head-to-head critic-pkt vs debate-pkt: b=2 c=4
+  head-to-head critic-pkt vs single-pkt: b=3 c=4
+
+full detail -> pins/results_exp100.json
+now run: .venv/bin/python -m pins.exp89_analyse pins/results_exp100.json

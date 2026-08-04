@@ -146,3 +146,67 @@ PINS_RESULTS=pins/results_exp100.json .venv/bin/python -m pins.exp88_budget_cont
 ```
 Analysis against this document; the McNemar and TOST are computed from the per-case outcome
 vectors, the same shape `exp93_analyse.py` reads.
+
+## 9. Analysis amendment (2026-08-04, added MID-RUN — read §9.1 first)
+
+Two additions to §5's reporting, prompted by an external adversarial review of the Exp 93
+premise this design rests on.
+
+### 9.1 Provenance — exactly what had been observed when this was written
+
+**This is not a blind amendment and must not be presented as one.** Written 2026-08-04T16:11+09:00,
+after the run of §8 was launched. At that moment `pins/results_exp100.json` did not yet exist, no
+aggregate score, discordant count, McNemar or TOST had been computed for any arm, and the log
+contained **6 of 98 case lines** — the entirety of what had been seen:
+
+```
+P3-POLICY-01   nl_policy    debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P3-POLICY-02   nl_policy    debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+P3-POLICY-03   nl_policy    debate-pkt=.* debate-sym-pkt=.* critic-pkt=H* single-pkt=.*
+P3-POLICY-04   nl_policy    debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P3-POLICY-05   nl_policy    debate-pkt=H* debate-sym-pkt=H* critic-pkt=H* single-pkt=H*
+P3-POLICY-06   nl_policy    debate-pkt=.* debate-sym-pkt=.* critic-pkt=.* single-pkt=.*
+```
+
+Five of those six are concordant across all four arms; the sixth differs on `critic-pkt`, which is
+not an H1 arm. Neither addition below is derivable from those lines. Recorded rather than
+engineered away, in the same spirit as §7's prompt-length disclosure.
+
+### 9.2 Report the ±3 bound alongside the pre-registered ±5
+
+§5 registers TOST at ±5 cases. That bound is **looser than the ±3 bound Exp 93 already failed**
+(90% CI [−4.91, +4.91], `research_progress.md:2635`), and Exp 89's headline debate-vs-best-of-N gap
+is 14 cases. A ±5 pass is therefore compatible with a difference that is not practically negligible
+on this suite.
+
+- **Primary, pre-registered:** TOST at ±5. Unchanged; this is what §6's decision rule keys on.
+- **Secondary, added here and labelled post-hoc in every write-up:** TOST at ±3, the Exp 93 bound.
+
+A ±5 pass that fails at ±3 must be reported as *"equivalent within 5 cases, not shown equivalent
+within 3"* — **not** as equivalence. Decision rule 1 ("symmetric ≡ opposed → the asymmetry is
+scaffolding") requires the ±3 result to be stated next to it, because the wording change it
+licenses in §4.4 is exactly the overclaim this amendment exists to prevent.
+
+### 9.3 Report discordant pairs, never bare totals
+
+Exp 93 was recorded as "43 = 43, zero cases changed". The totals tied; the **per-case vectors did
+not** — 8 discordant pairs, 4 in each direction (`research_progress.md:2625`). Equal totals were
+read downstream as "the argument content is inert", which is stronger than the data supports and
+became the stated premise for running this experiment.
+
+Every arm comparison here reports **b, c, and b+c** (the McNemar discordant counts) beside the
+score, and no comparison in the write-up may cite matched totals without them. Two arms scoring
+43/81 with 0 discordant pairs and two scoring 43/81 with 20 are different results.
+
+### 9.4 What this experiment can and cannot conclude
+
+Recorded before the numbers, to bound the write-up. Exp 100 varies the objective clause while
+holding multiple roles, openings, cross-visible positions, rebuttals and the referee fixed
+(§3, `exp88_budget_control.py:206`). Equivalence therefore licenses exactly:
+
+> *"Opposed advocacy was not shown load-bearing within this authored suite and this architecture."*
+
+It does **not** separate second-pass from role diversity, cross-talk from independent
+reconsideration, multiple contexts from multiple agents, or repeated calls to one model from
+genuinely distinct agents holding private information. It is not evidence about whether multi-LLM
+negotiation beats a single LLM in general; §7's "one venue" and "model-bound" threats still apply.

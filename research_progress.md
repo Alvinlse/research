@@ -38,24 +38,38 @@
 | 11 | The negotiation-era mechanism (bounded protocol, ILP guarantee, per-user tariff, small-model sufficiency) is **superseded as a contribution** but retained as the `negotiated` **baseline arm** the market is measured against | Exp 22–48 (compressed) | superseded; baseline only |
 
 | 14 | **A cheaper structure also survives its budget control** — an objection-only critic scores 34/81 against a best-of-N sampler at *identical* per-case spend (26/81, p=0.0193), while that sampler is one case *worse* than a single call at 3× the price. Third replication of "budget alone buys nothing" | Exp 93 → **Exp 95** | moderate (pooled n=81; blind r4 stratum ns, p=0.227) |
-| 13 | **Debate's win is the second pass, not the arguments** — stripping `evidence` from the packet changes the score by exactly zero cases (43/81 both ways, discordant 4-4). The transcript stays readable but is not load-bearing for the decision; `evidence` can be dropped at no measured cost | Exp 93 | solid (null, n=81; TOST at ±3 fails on m=8) |
+| 13 | **Debate's win is not in the argument *content*** — stripping `evidence` from the packet changes the score by exactly zero cases (43/81 both ways) but flips **8 discordant pairs, 4 each way**; the transcript stays readable and `evidence` can be dropped at no measured *net* cost | Exp 93 | **qualified — equal totals are not equivalence.** TOST at ±3 FAILS (CI [−4.91, +4.91]) on m=8. Do not state as "the win is the second pass": Exp 100 tried to extend that reading and came back inconclusive (claim 17) |
 | 15 | **The text channel cannot be generated from the simulator's own state.** Agent-authored causal notes (`attributed`) vs a what-only placebo (`narrated`) give SLA identical *seed for seed at full precision*, and both equal the 0-token market exactly; the notes moved the allocation on 4 of ~842 escalated ticks and flipped no outcome. The cross-tick history the market lacks bought nothing, so §4.1 is untouched | Exp 92 → **Exp 94** | solid (negative, n=32, exact identity) |
 | 16 | **Nothing in the system serves deadline laxity.** Once tier and tightness are drawn independently, no reasoning arm protects the tightest-laxity tercile in either law, and under sat the referee makes it significantly *worse* (+6.9 ± 5.1\*); the market's tight-tercile effect is identical seed-for-seed across both worlds, i.e. label-independent. Motivates least-laxity grant ordering (`two_sided_sim.py:454` still orders by frozen bid) | **Exp 96** | solid (negative, n=32, both laws) |
 | 12 | The round-2 54-scene suite was **insensitive**, not merely negative: text-blind baselines (ILP 30/54, rule 31/54) scored within noise of every LLM arm, min p=0.238 across ~30 tests. Round 3's text-dependent design drops the rigid floor to 0/31 — the instrument was replaced, not the hypothesis re-shopped | Exp 65–67 → 79–83 | solid (methodology) |
+| 17 | **A second pass with cross-talk beats one call whether or not the reviewers are opposed** — opposed 43/81 and symmetric 41/81 both beat `single-pkt` 28/81 (p=0.0015, p=0.0044), confirmed on the blind r4 stratum. But **opposed vs symmetric is UNRESOLVED, not equivalent**: b=4 c=2, McNemar p=0.6875, and TOST **fails at the pre-registered ±5** (CI [−2.74, +5.25]) as well as ±3. Only 6 discordant pairs — the instrument cannot separate them. `CLAUDE.md`'s founding "symmetric objectives are theater" assumption stays **open**; it is not measured false | **Exp 100** | inconclusive (underpowered, n=81, m=6) — do not cite as equivalence |
 
 **Open / next**, roughly by value:
 
-1. **Exp 63 — the admission lever is built and never run.** `admission_plan` / rule 7 / `wait_full`
-   exist in the tree (commits `9c1d127`, `438df61`). §5 of the paper scopes exactly this as future
-   work. It is the arm most likely to convert §4.3's efficiency-neutral result into an in-sim SLA
-   gain.
+1. ~~**Exp 63 — the admission lever is built and never run.**~~ *(Done 2026-08-03, results
+   `e978039`. Pre-registered **branch 2**: deterministic `negotiated+admit` improves SLA
+   23.4% → 16.8%* and prodSLA 13.7% → 8.4%* at zero tokens, while the referee arm degrades to
+   29.9% SLA / 66% util. Admission belongs in the deterministic core.)* **Live follow-ups:**
+   (a) wire `admission_plan` into `make_policy_market` and re-run against claim 1's cells — the
+   pre-named branch-2 successor, cheap and token-free; (b) re-run the referee arm on the **strong
+   packet**, since the measured arm used the weak pre-packet interface and that is what the
+   negative reading rests on.
 2. ~~**Re-run the confounded structures on the strong packet.**~~ *(Done 2026-07-28 — Exp 93.
    `selfcons` needed no re-run (`single-pkt-boN` already is it); the argumentation ablation is an
    **exact tie** with debate (43 = 43), so debate's win is the second pass, not the arguments; the
    critic reconstruction is 34/81 vs single 27/81, p=0.0461, which **fails Holm** and is therefore
    suggestive only.)* *(Closed 2026-07-28 — Exp 95: the budget-matched critic arm ran, critic 34/81
    vs matched-budget boNc 26/81, p=0.0193, H1 supported; the blind r4 stratum is ns.)* Remaining
-   work: **critic vs debate at matched budget** — the last confounded pair.
+   work: **critic vs debate at matched budget** — the last confounded pair. *(Exp 100 measured this
+   pair unmatched: debate 43 vs critic 35, b=14 c=6, p=0.1153 ns — suggestive, still not the
+   budget-matched test.)*
+2b. **Power the opposed-vs-symmetric question (Exp 100 follow-up).** Exp 100 came back
+   **inconclusive, not equivalent**: b=4 c=2, m=6, TOST fails at ±5 and ±3 (claim 17). Resolving it
+   needs more CASES, not more arms — at a ~7% discordant rate, separating the arms at ±3 takes
+   several times n=81. Worth it only if the write-up needs to say *why* debate works; the
+   *that* it works result (both debate arms ≫ single, p≤0.0044) does not depend on it. Note the
+   bound: even resolved, it speaks to this authored suite and this architecture, and does not
+   separate second-pass from role diversity or repeated calls to one model from distinct agents.
 3. ~~**Update §4.4 to lead with Exp 92, not Exp 84.**~~ *(CLOSED — this entry was stale when
    re-read on 2026-07-30. Exp 92 already ran at n=32 (843 escalations, 0 calls, 0 changes) and
    commit `a8f6886` rewrote §4.4 to lead with the no-op boundary and demoted Exp 84 to an
@@ -1436,24 +1450,49 @@ than 32/64 — the large-pool cells are slack-dominated and separate nothing.
 
 ---
 
-## Experiment 63 — THE ADMISSION LEVER: BUILT, NEVER RUN (2026-07-22)
+## Experiment 63 — THE ADMISSION LEVER: RUN. Deterministic admission pays, the referee does not (2026-07-22 built, run 2026-08-03)
 
-**Date:** 2026-07-22
+**Date:** built 2026-07-22 (`9c1d127`, `438df61`), run 2026-08-03, results committed `e978039`,
+heading corrected 2026-08-04 (it read "BUILT, NEVER RUN" for a day after the results landed).
 
-**Status.** **Build only — no run log, no results JSON, no measurement.** Commits `9c1d127`
-("the admission lever — policy decides WHO STARTS, not just who gets margin") and `438df61`
-("referee decides ADMISSION (rule 7), reserve-aware admission_plan, wait_full").
+**Status.** **Measured**, n=32 seeds, 8 quarter-GPU quanta (2 GPU), truth=plan / caps=predicted.
+Logs `pins/exp63_base.log`, `pins/exp63_admit.log`; results `pins/results_exp63.json`.
 
-**Why this is the most valuable open item in the backlog.** §5 of `paper/pins_gated_draft.md`
-argues:
+| arm | SLA base → +admit | prodSLA base → +admit | util base → +admit |
+|---|---|---|---|
+| no-llm (floor) | 24.9% → 24.9% | 16.3% → 16.3% | 88% → 88% |
+| **referee** | 25.3% → **29.9%** | 9.8%* → 12.2% | 81% → **66%** |
+| **negotiated** (deterministic) | 23.4%* → **16.8%*** | 13.7% → **8.4%*** | 89% → 90% |
 
-> *"In this contended sim, overall SLA is governed by which jobs start, not which go faster... A
-> reasoning gain on overall SLA therefore requires a text exception that moves admission or
-> priority, not margin — a direction we scope for future work."*
+Paired vs the floor, with admission on:
 
-That lever is **already implemented**. The paper scopes as future work a mechanism that exists in
-the tree and has never been measured. If a text exception can move admission, this is the arm that
-would show an in-sim SLA gain rather than the efficiency-neutral result of Exp 87.
+```
+referee      dSLA  +5.1 ± 4.0*   dutil -22.6 ± 4.5*   duseful -23.2 ± 4.4*   dregret +29.9 ± 5.1*
+negotiated   dSLA  -8.1 ± 4.2*   dutil  +2.1 ± 1.2*   duseful  +2.7 ± 1.3*   dslow    -9.2 ± 3.8*
+```
+
+**Verdict — pre-registered branch 2** (`docs/superpowers/specs/2026-07-30-exp63-admission-lever-design.md:99`):
+*H2 pays, H3 null → admission belongs in the deterministic core, next to the market.* The lever is
+real and large — it is the second-biggest SLA effect in the project after Exp 99's urgency rule —
+but it is a **mechanism** result, not a reasoning one. Wiring `admission_plan` into
+`make_policy_market` is the pre-named follow-up.
+
+**The referee arm got worse on every axis that matters**: +5.1 SLA points, and it paid for that by
+running the cluster at 66% utilisation (−22.6 pts, regret +29.9) — it is admitting fewer jobs and
+calling the resulting idleness a win. Cost: **94.1 calls, 102,812 tokens, 634.6 s per seed** versus
+0/0/0.0 for both deterministic arms.
+
+**Branch 4 (censoring artefact) does not fire.** `negotiated+admit` finishes *more* jobs than the
+floor, 23.8/24 vs 23.5/24, so the SLA gain is not bought by dropping work.
+
+**Qualification — do not over-read this.** The in-sim referee here runs the **weak pre-packet
+interface** (spec §7, `:111`); Exp 81's "cannot fund" failure mode is exactly what an
+un-budgeted reviewer does. This licenses *"this referee configuration handled admission badly"*,
+**not** *"an LLM cannot do admission"*. A packet-equipped re-run is the open version of this arm.
+
+**What it closes.** §5 of `paper/pins_gated_draft.md` scoped an admission-moving exception as
+future work and predicted a reasoning gain there. The lever exists, it moves SLA by 6.6 points —
+and it does so with **zero tokens**. The paper's §5 must be rewritten accordingly.
 
 ---
 
@@ -3377,3 +3416,84 @@ floor@quarter MINUS market@whole, paired, n=32  (the recovery test)
 points from the quantum against 0.9 from the best mechanism and 16.4 from the ordering rule (99).
 Two of the three largest in-sim effects in this project are properties of the world, not of the
 scheduler — which is the case for reporting them in that order.
+
+---
+
+## Experiment 100 — SYMMETRIC vs OPPOSED DEBATE: unresolved, and NOT equivalent (2026-08-04)
+
+**Date:** 2026-08-04. **Spec:** `docs/superpowers/specs/2026-07-31-exp100-symmetric-vs-opposed-debate-design.md`,
+pre-registered 2026-07-31 before any code, **amended §9 mid-run** (provenance disclosed there: 6 of
+98 case lines had streamed, no aggregate/McNemar/TOST computed).
+
+```
+PINS_RESULTS=pins/results_exp100.json .venv/bin/python -m pins.exp88_budget_control \
+    --suite r34 --model qwen2.5:14b --arms debate-pkt,debate-sym-pkt,critic-pkt,single-pkt
+```
+
+**Harness tripwire (spec §7) PASSES.** `debate-pkt` = **43/81**, byte-reproducing Exp 89. The
+prompt-set refactor did not change behaviour, so the comparison is valid.
+
+### H1 — the question: is the demand/supply asymmetry load-bearing?
+
+```
+debate-pkt      43/81   (opposed)      debate-sym-pkt  41/81   (symmetric)
+
+b=4  c=2  b+c=6   net +2 cases
+McNemar exact 2-sided p = 0.6875      one-sided (opposed>symmetric) p = 0.3438
+TOST ±5  PRE-REGISTERED  : D=+2, 90% CI [-2.74, +5.25]  -> FAIL
+TOST ±3  post-hoc (§9.2) : D=+2, 90% CI [-2.74, +5.25]  -> FAIL
+```
+
+**No decision branch of §6 fires.** Rule 1 ("symmetric ≡ opposed → the asymmetry is scaffolding")
+required *equivalence*, and TOST fails at the pre-registered ±5 as well as at ±3. Rule 2 required a
+significant difference, and McNemar is null. The result is **underpowered and unresolved**: only
+**6 discordant pairs** in 81 cases, so the instrument cannot separate the hypotheses.
+
+`CLAUDE.md`'s founding assumption — *"with symmetric objectives the discussion is theater"* — is
+therefore **neither vindicated nor measured false.** It stays open. The pre-registered sceptical
+prediction (symmetric ties opposed) is **not** confirmed; a tie in totals is not equivalence.
+
+**This is exactly the failure mode §9.3 exists to prevent.** Reported as bare totals — *43 vs 41,
+p=0.69* — this reads as equivalence and would have licensed rewriting §4.4 away from "opposed
+advocates". The confidence interval says the data cannot support that.
+
+### H2 — placement on the ladder (POOLED n=81, STRICT)
+
+| comparison | b | c | b+c | 2-sided p |
+|---|---|---|---|---|
+| debate-pkt vs single-pkt | 18 | 3 | 21 | **0.0015** |
+| debate-sym-pkt vs single-pkt | 16 | 3 | 19 | **0.0044** |
+| debate-pkt vs critic-pkt | 14 | 6 | 20 | 0.1153 ns |
+| debate-sym-pkt vs critic-pkt | 12 | 6 | 18 | 0.2379 ns |
+| critic-pkt vs single-pkt | 10 | 3 | 13 | 0.0923 ns |
+
+**The robust finding: both debate arms beat the single call decisively, whether or not the
+reviewers are opposed** (43 and 41 vs 28). The clean confirmatory r4 stratum (n=50) agrees in
+direction and significance — debate 30/50, sym 28/50, critic 21/50, single 18/50; debate vs single
+p=0.0018, sym vs single p=0.0129. So *"a second pass with cross-talk beats one call"* is what this
+run establishes; *"the reviewers must want different things"* is what it fails to resolve.
+
+### H3 — controls (n=17): no specificity confound
+
+debate 13/17, symmetric 11/17, critic 11/17, single 12/17. Neither debate arm fires more than the
+other (b=2, c=0, p=0.50), so §6's rule 4 does not apply and H1 is not confounded by specificity.
+
+### Harness notes
+
+- **Arm drift, disclosed rather than absorbed.** `critic-pkt` scored 35/81 and `single-pkt` 28/81,
+  against Exp 89/95's 34 and 27 — each **+1**. Only `debate-pkt` was the registered tripwire and it
+  reproduced exactly, so nothing is voided, but the two non-tripwire arms are not byte-stable and
+  any future comparison against 34/27 must say so.
+- **`exp89_analyse` crashes on this file** with `KeyError: 'single-pkt-boN'` — that arm is Exp 89's
+  budget-matched comparator and was not in this run's `--arms`. The numbers above come from the
+  same helpers (`exp88_analyse.discordant/counts/mcnemar_exact_two_sided/tost`,
+  `exp89_analyse.mcnemar_one_sided`) driven directly over `blob["results"]`. Either add
+  `single-pkt-boN` to the arm list on a re-run, or give the analyser a skip-missing-arm guard.
+
+### What would resolve it
+
+Power, not more arms. At b+c=6 the discordant rate is ~7%; separating opposed from symmetric at
+±3 cases needs several times the case count. Per the external review this remains bounded even if
+resolved: it would speak to *this authored suite and this architecture*, and would still not
+separate second-pass from role diversity, cross-talk from independent reconsideration, or repeated
+calls to one model from genuinely distinct agents holding private information.
