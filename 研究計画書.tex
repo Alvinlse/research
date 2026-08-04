@@ -1,0 +1,50 @@
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[top=18mm,bottom=18mm,left=19mm,right=19mm]{geometry}
+\usepackage{fontspec}
+\usepackage{xeCJK}
+\usepackage{titlesec}
+\usepackage{enumitem}
+
+\setCJKmainfont{Noto Serif CJK JP}
+\setCJKsansfont{Noto Sans CJK JP}
+\setmainfont{TeX Gyre Termes}
+\setsansfont{TeX Gyre Heros}
+\setlength{\parindent}{1em}
+\setlength{\parskip}{0.25em}
+\linespread{1.04}
+\pagestyle{empty}
+\titleformat{\section}{\sffamily\bfseries\normalsize}{}{0pt}{}
+\titlespacing*{\section}{0pt}{0.55em}{0.15em}
+
+\begin{document}
+
+\begin{center}
+  {\Large\sffamily\bfseries 研究計画書}\par
+  \vspace{0.45em}
+  {\large\sffamily\bfseries
+  予測不確実性と説明可能なAIエージェントを用いた\\[-0.1em]
+  高性能計算環境のGPU資源スケジューリング}
+\end{center}
+
+\section{研究背景と目的}
+
+生成AIや科学技術計算の発展により、GPUを共有する高性能計算（HPC）環境の需要が急増している。しかし、利用者が申請したGPU数と実際の使用量には差が生じやすく、過剰申請による資源の遊休や、過少申請による処理遅延が問題となる。また、深層強化学習などを用いる既存方式は判断根拠を説明しにくく、運用条件が変化した場合の信頼性にも課題がある。
+
+本研究では、ジョブの資源需要を不確実性付きで予測し、その結果と自然言語による運用情報を利用してGPUを動的に配分する方式PINS（Prediction-Informed Negotiated Scheduling）を研究する。基本方針は、\textbf{「大規模言語モデル（LLM）は状況を解釈して理由を説明し、決定論的プログラムが最終判断と制約保証を担う」}ことである。これにより、LLMの柔軟性を活用しながら、計算誤りや実行不可能な割当てを防止する。
+
+\section{これまでの研究成果}
+
+Alibaba GPU Cluster Trace、Google Cluster DataおよびMIT Supercloudの実データを用いて検証を進めてきた。ジョブの実行時間、GPU使用率、最大メモリ使用量について、LLMに数値を直接予測させるより、勾配ブースティング木と分位点予測を組み合わせる方が高精度であることを確認した。また、LLMが自由形式で割当てを決定するのではなく、入札理由や例外情報を提示し、オークションと整数計画法が配分・配置を決定する構成を実装した。
+
+さらに、複数シードによる対応付き実験を行い、予測誤差、GPU配分単位、期限の切迫度、利用率およびSLA違反率の関係を評価した。その結果、期限までの余裕を動的に反映する決定論的な優先順位付けがSLA違反を大幅に削減し、GPUの配分単位もAIモデルの選択以上に性能を左右し得ることが明らかになった。この結果は、LLMを用いること自体ではなく、LLMが実際に価値を持つ条件を厳密に特定する必要性を示している。
+
+\section{今後の研究計画}
+
+第一に、需要側と供給側に分けた複数LLMの対立的議論が必要なのか、それとも目的を共有する複数回のレビューで同等の効果が得られるのかを、事前登録した比較実験により検証する。第二に、予測モデル、オークション、LLMレビューおよび整数計画法を統合し、FIFO、EASY Backfilling、単一LLM方式などと比較する。評価指標には、SLA違反率、ジョブ完了時間、GPU利用率、割当て変更回数、推論時間およびLLM使用コストを用いる。第三に、通常時は高速な決定論的手法を使用し、例外的で解釈を要する場合のみLLMを呼び出す選択的実行方式を確立する。
+
+\section{期待される成果と意義}
+
+本研究は、LLMの利用を前提として性能向上を主張するのではなく、実データと統計的検証を通じて、LLMが必要な判断と決定論的手法で十分な判断を切り分けるものである。最終的に、効率性、安全性、説明可能性を両立し、実際のHPC運用へ適用可能なGPU資源管理の設計指針を提示する。
+
+\end{document}
