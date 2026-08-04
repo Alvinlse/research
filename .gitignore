@@ -17,8 +17,12 @@ pins/eval/pred_job_usage.csv
 pins/eval/pred_job_mem.csv
 pins/eval/pred_job_runtime.csv
 
-# Generated results (results_trace_replay.json exceeds GitHub 100MB limit)
+# Generated results (these exceed, or grow past, GitHub's 100MB limit)
 pins/results_trace_replay.json
+# results_exp99.json reached 175MB and made the branch unpushable; stripped from
+# history 2026-08-04 (see backup/pre-strip-exp99). The numbers live in research_progress.md.
+pins/results_exp99.json
+pins/results_exp63.json
 pins/results_backup_*.json
 pins/llm_agent_cache.json.lock
 pins/llm_agent_cache.json.tmp*
