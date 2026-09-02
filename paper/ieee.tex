@@ -16,7 +16,7 @@
 \usepackage{url}
 \usepackage{xcolor}
 \usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric}
 
 \newcommand{\todo}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
 % * = 95% CI excludes 0, paired by seed, n=32
@@ -84,7 +84,7 @@ its deadline effect is null, so the gain is throughput, not service quality boug
 elsewhere.
 \item \textbf{The largest SLA lever is also deterministic} (\S\ref{sec:laxity}). Recomputing
 bid urgency from normalised deadline slack every tick — least-laxity grant ordering — cuts
-violations 23.8\% $\rightarrow$ 7.4\% and slowdown $17.8 \rightarrow 5.3$ at zero tokens.
+violations 23.8\% $\rightarrow$ 7.4\% and slowdown $17.8 \rightarrow 5.4$ at zero tokens.
 Every LLM arm is flat against this floor.
 \item \textbf{Reasoning earns its cost on text exceptions, and structure — not budget — is
 what pays} (\S\ref{sec:text}). On a pre-registered 81-case suite of text-dependent exceptions,
@@ -117,15 +117,20 @@ Decima~\cite{decima}) learn allocation policies but are black-box and brittle un
 distribution shift. On our interface a tabular Q-learner's episode-return variance dominates
 the action effect at realisable sample counts.
 
-\textbf{Multi-agent LLM structures.} Debate and self-consistency are usually evaluated on QA
-benchmarks; budget-matched controls are rare. Our text-exception result is budget-matched by
-construction and includes a blind confirmatory batch. \todo{debate/self-consistency refs
-(Du et al., Wang et al.), LLM-as-judge refs}
+\textbf{Multi-agent LLM structures.} Multiagent debate~\cite{du2024debate} and
+self-consistency~\cite{wang2023selfconsistency} are usually evaluated on QA benchmarks, and
+LLM-as-judge protocols~\cite{zheng2023judge} inherit that setting; budget-matched controls are
+rare, so a reported gain is rarely separable from the extra calls that buy it. Our
+text-exception result is budget-matched by construction and includes a blind confirmatory
+batch.
 
 \textbf{Malleability and mechanism design.} Runtime elasticity is rarely deployed in
 production~\cite{tarraf2024}; our partial-allocation model rests on it and we state that
-dependence. Uniform-price auctions are the classical route to truthful revelation; our
-contribution is measurement in a closed loop containing declarative LLM agents.
+dependence. Uniform-price auctions are the classical route to truthful revelation, and
+automated negotiation for resource allocation is a classical subject~\cite{boan2011}, with
+prediction-guided \emph{selective} negotiation explored in one-shot fair
+division~\cite{croitoru2025}; our contribution is measurement in a closed loop containing
+declarative LLM agents.
 
 \section{The Gated Architecture}
 \label{sec:arch}
@@ -193,12 +198,15 @@ from the trace and synthesising only what the trace lacks (tier, deadline, urgen
 recipe). Standard operating point: one 8-GPU node in quarter-GPU quanta, 96 jobs per window
 ($3\times$ load ratio — the last ratio at which every job finishes), 30\,s ticks, deadline
 slack calibrated so the floor violates 11--13\% (the violation--utilisation curve is reported
-across the slack regime, so no result hangs on the calibration point). 32 seeds, windows and
-seeds paired across arms; \sig{} marks a 95\% CI excluding 0; multiplicity is controlled by
-Holm within each family. Progress runs under both an Amdahl and a saturating law; a claim
-counts only if it holds under both. LLMs are local Ollama models (qwen2.5, gemma2). Baselines:
-the no-LLM floor, EASY backfill~\cite{easy}, a negotiation pipeline with ILP guarantees
-(our prior system, kept as a baseline arm), and a tabular Q-learner.
+across the slack regime, so no result hangs on the calibration point). \todo{reconcile
+operating points: Exp 99 (Table~\ref{tab:laxity}) runs at slack$\times$10 with a 23.8\% floor
+and Table~\ref{tab:noop} reports 21.0\%/18.9\% --- either state the per-table point or fix this
+sentence} 32 seeds, windows and seeds paired across arms; \sig{} marks a 95\% CI excluding 0;
+multiplicity is controlled by Holm within each family. Progress runs under both an Amdahl and a
+saturating law; a claim counts only if it holds under both. LLMs are local Ollama models
+(qwen2.5, gemma2). Baselines: the no-LLM floor, EASY backfill~\cite{easy}, a negotiation
+pipeline with ILP guarantees (our prior system, kept as a baseline arm), and a tabular
+Q-learner.
 
 \subsection{The deterministic market wins efficiency at zero cost}
 \label{sec:market}
@@ -206,7 +214,7 @@ the no-LLM floor, EASY backfill~\cite{easy}, a negotiation pipeline with ILP gua
 Replacing the reasoning layer with the explicit bid/ask market, paired against the floor
 (n=32, both laws):
 
-\begin{table}[h]
+\begin{table}[t]
 \caption{Market vs.\ floor, paired deltas (n=32, standard 8-GPU point). Under sat,
 duseful is nominal (95\% CI excludes 0) but does not survive Holm; util and regret
 survive in both laws.}
@@ -236,7 +244,7 @@ value. Recomputing each bid's urgency every tick from normalised slack,
 $\mathrm{lax} = (d - t - \mathrm{rem})/(d - \mathrm{arr})$, mapped onto the same urgency band
 so only the \emph{ordering} changes, gives least-laxity grant ordering at zero tokens:
 
-\begin{table}[h]
+\begin{table}[t]
 \caption{Dynamic urgency vs.\ frozen-bid floor (n=32, paired).}
 \label{tab:laxity}
 \centering
@@ -276,11 +284,12 @@ floor in Table~\ref{tab:arms} is therefore an inclusion criterion, not a finding
 suite measures is the comparison \emph{among} arms that can read text. Two control categories
 guard the boundary: \emph{placebo} scenes with decorative or expired prose (including a keyword
 trap naming a policy the note itself retracts) and \emph{confirm} scenes whose salient prose
-confirms the default ranking; the rigid arms pass 17/17 and 16/17 of these. Of the 81 primary
-cases, 50 were authored blind to the per-case outcomes of the earlier under-powered round, and
+confirms the default ranking; the fixed-ILP arm and the deterministic market pass 17/17 and
+16/17 of these, respectively. Of the 81 primary cases, 50 were authored blind to the per-case
+outcomes of the earlier under-powered round, and
 the harness reproduces that round's head-to-head exactly ($b{=}6$, $c{=}1$).
 
-\begin{table}[h]
+\begin{table}[t]
 \caption{The text-exception suite: 81 primary + 17 control cases.}
 \label{tab:suite}
 \centering
@@ -306,7 +315,7 @@ packet. Alongside a single LLM call we run best-of-$N$ sampling given the \emph{
 budget as the debate, so the only difference between the two expensive arms is how the budget
 is spent, not how much there is.
 
-\begin{table}[h]
+\begin{table}[t]
 \caption{Handled cases on the 81 primary text exceptions (qwen2.5:14b).}
 \label{tab:arms}
 \centering
@@ -345,7 +354,7 @@ therefore ran \emph{this exact escalation} — unmodified, LLM enabled — insid
 gated behind the \S\ref{sec:arch} trigger, at the standard operating point (n=32 paired
 seeds):
 
-\begin{table}[h]
+\begin{table}[t]
 \caption{The winning escalation, in-sim (n=32, standard point, both laws).}
 \label{tab:noop}
 \centering
@@ -363,8 +372,9 @@ sat & market + escalation & 18.9\% & 5.2\% & 86\% & 79\% & 8\% \\
 
 The two arms are identical on every metric, every paired vs.-floor delta, and every surviving
 Holm $p$-value, in both laws — the same allocation tick for tick. The trigger genuinely fired
-(\textbf{5{,}494 / 5{,}517 escalations} across the 32 seeds under the two laws); each
-escalation entered the correction pipeline, found no job carrying text, and returned, making
+(\textbf{5{,}494 escalations} under amdahl and \textbf{5{,}517} under sat, across the 32
+seeds); each escalation entered the correction pipeline, found no job carrying text, and
+returned, making
 \textbf{zero LLM calls and zero changes}. The reason is structural: public GPU traces are scrubbed of operator free text
 (it is PII), so the channel this capability acts on is absent by construction — a fact we
 verified across the public trace landscape rather than synthesising notes into a trace that
@@ -402,18 +412,31 @@ gated architecture delivers that capability at exactly zero cost where the text 
 open frontier is a workload that actually carries operator text, on which the
 efficiency-neutral capability should convert into a measurable service-quality gain.
 
-\begin{thebibliography}{9}
+\begin{thebibliography}{11}
 \bibitem{llmsched} \todo{LLM-Driven Adaptive Cloud Resource Scheduling: Bridging Reasoning
 Intelligence with Optimization Guarantees. IEEE OJ-CS, 2026 — exact citation}
 \bibitem{deeprm} H.~Mao et al., ``Resource management with deep reinforcement learning,''
 HotNets, 2016.
 \bibitem{decima} H.~Mao et al., ``Learning scheduling algorithms for data processing
 clusters,'' SIGCOMM, 2019.
-\bibitem{tarraf2024} A.~Tarraf et al., ``Malleability in modern HPC systems,'' IEEE TPDS,
-2024. \todo{exact citation}
+\bibitem{tarraf2024} A.~Tarraf et al., ``Malleability in modern HPC systems: current
+experiences, challenges, and future opportunities,'' \emph{IEEE Trans.\ Parallel Distrib.\
+Syst.}, vol.~35, no.~9, pp.~1551--1564, 2024.
 \bibitem{alibaba2020} Q.~Weng et al., ``MLaaS in the wild: workload analysis and scheduling
 in large-scale heterogeneous GPU clusters,'' NSDI, 2022 (cluster-trace-gpu-v2020).
 \bibitem{easy} D.~Lifka, ``The ANL/IBM SP scheduling system,'' JSSPP, 1995.
+\bibitem{du2024debate} Y.~Du, S.~Li, A.~Torralba, J.~B.~Tenenbaum, and I.~Mordatch,
+``Improving factuality and reasoning in language models through multiagent debate,'' ICML,
+2024, pp.~11733--11763.
+\bibitem{wang2023selfconsistency} X.~Wang et al., ``Self-consistency improves chain of thought
+reasoning in language models,'' ICLR, 2023.
+\bibitem{zheng2023judge} L.~Zheng et al., ``Judging LLM-as-a-judge with MT-Bench and Chatbot
+Arena,'' NeurIPS Datasets and Benchmarks Track, 2023.
+\bibitem{boan2011} B.~An, ``Automated negotiation for complex multi-agent resource
+allocation,'' Ph.D.\ dissertation, Univ.\ of Massachusetts Amherst, 2011.
+\bibitem{croitoru2025} M.~Croitoru, C.~Croitoru, and G.~Ganesh, ``Prediction-based selective
+negotiation for refining multi-agent resource allocation,'' ICAART, vol.~1, 2025,
+pp.~656--662.
 \end{thebibliography}
 
 \end{document}
