@@ -1,0 +1,383 @@
+% IEEE workshop paper (6 pages) — "Does the LLM Earn Its Cost in GPU Scheduling?"
+% Build: cd Research/paper && latexmk -pdf ieee.tex
+%
+% 2026-09-02: fresh port from pins_gated_draft.md, restructured around the results that
+% survive the Exp 97 operating-point rebase:
+%   IV-A  market wins efficiency at zero tokens          (Exp 72 -> rebased Exp 97)
+%   IV-B  the deterministic laxity lever                  (Exp 99, measured AT the new point)
+%   IV-C  text exceptions: debate at matched budget       (Exp 89, not in-sim, untouched)
+%   IV-D  the boundary: literal no-op in-sim              (Exp 92, re-run 2026-09-02 at new point)
+% CUT (needs the killed Exp 97 Stage-2 rerun): the one-scalar/composed claim, the
+% referee frontier, the negotiation-era results (kept as one baseline row only).
+\documentclass[conference]{IEEEtran}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{url}
+\usepackage{xcolor}
+
+\newcommand{\todo}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
+% * = 95% CI excludes 0, paired by seed, n=32
+\newcommand{\sig}{$^{*}$}
+
+\begin{document}
+
+\title{Does the LLM Earn Its Cost in GPU Scheduling?\\
+A Gated Architecture That Separates Efficiency from Exception Handling}
+
+\author{\IEEEauthorblockN{Lay Kim Seng}
+\IEEEauthorblockA{Cyberscience Center, Tohoku University\\
+lay.kim.seng.q4@dc.tohoku.ac.jp}
+\and
+\IEEEauthorblockN{\todo{co-authors / advisor}}
+\IEEEauthorblockA{~}}
+
+\maketitle
+
+\begin{abstract}
+On a saturated GPU cluster, utilisation and SLA compliance trade off through a rationing
+decision: whose safety margin gets cut. Recent work proposes letting a reasoning LLM make that
+decision. We test whether it earns its cost, by decomposition rather than by a single arm. On
+the Alibaba cluster-trace-gpu-v2020 replayed as a two-sided allocation game (32 paired seeds,
+two progress laws), (1) a deterministic bid/ask market wins every efficiency metric —
+utilisation, useful utilisation, oracle regret — against every LLM arm at zero tokens, with a
+null deadline effect; (2) the largest service-quality lever we measure is also
+deterministic: ordering grants by current deadline laxity cuts violations from 23.8\% to 7.4\%
+($-16.4 \pm 3.1$\sig) at zero tokens; (3) the reasoning layer earns its cost precisely on
+\emph{text exceptions} the numbers cannot express — on a pre-registered suite of 81 such cases,
+a debate of LLM reviewers corrects a single model's rulings (43/81 vs.\ 29/81 at an identical
+call budget, one-sided exact McNemar $p=0.0007$), while the same budget spent on best-of-$N$
+sampling buys nothing ($p=0.25$); and (4) the boundary is exact, not inferred: the same
+escalation, run unmodified inside the simulator, is a literal no-op — zero LLM calls, zero
+changes, an allocation identical to the bare market tick for tick — because public GPU traces
+carry no operator free text. Invoked where no exception exists, reasoning \emph{costs} accuracy
+(12/17 vs.\ the market's 16/17). We conclude that the deterministic layer should decide, and
+reasoning should be gated behind a contextual trigger: a capability that costs nothing until
+text arrives.
+\end{abstract}
+
+\begin{IEEEkeywords}
+GPU scheduling, large language models, resource allocation, multi-agent debate, cluster traces
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+AI and scientific workloads are bursty and heterogeneous; static batch schedulers cannot hold
+both high utilisation and a low SLA-violation rate. The reason is physical: in the saturated
+regime it is impossible to give every job a safety margin, so what sets service quality is the
+rationing decision — \emph{whose margin gets cut} — which classical schedulers make blindly.
+
+Recent work~\cite{llmsched} proposes a \emph{reason-then-guarantee} spine: an LLM proposes a
+schedule and a fast solver repairs it to feasibility. The appeal is that an LLM can reason over
+a messy multi-objective situation and generalise to unfamiliar states. This paper asks the
+question that determines whether that appeal is real for rationing: \textbf{does the reasoning
+layer earn its cost, and if so, on which decisions?}
+
+Our contributions:
+\begin{enumerate}
+\item \textbf{The deterministic market wins efficiency at zero cost} (\S\ref{sec:market}). A
+bid/ask auction over each job's real marginal useful progress beats every LLM arm on
+utilisation, useful utilisation, and regret, under both progress laws, with no LLM calls — and
+its deadline effect is null, so the gain is throughput, not service quality bought
+elsewhere.
+\item \textbf{The largest SLA lever is also deterministic} (\S\ref{sec:laxity}). Recomputing
+bid urgency from normalised deadline slack every tick — least-laxity grant ordering — cuts
+violations 23.8\% $\rightarrow$ 7.4\% and slowdown $17.8 \rightarrow 5.3$ at zero tokens.
+Every LLM arm is flat against this floor.
+\item \textbf{Reasoning earns its cost on text exceptions, and structure — not budget — is
+what pays} (\S\ref{sec:text}). On a pre-registered 81-case suite of text-dependent exceptions,
+debate between two reviewers corrects a single LLM's rulings at an identical call budget
+(43/81 vs.\ 29/81, $p=0.0007$); best-of-$N$ at the same budget is flat ($p=0.25$); a blind
+50-case confirmatory batch reproduces the effect ($p=0.0032$).
+\item \textbf{The boundary is measured exactly} (\S\ref{sec:boundary}). The same escalation,
+gated behind a contextual trigger and run unmodified in-sim, makes zero LLM calls and zero
+changes — the allocation is identical to the bare market tick for tick — because the trace
+carries no operator text. Where no exception exists, reasoning \emph{costs} accuracy (12/17
+vs.\ 16/17). Gating is therefore load-bearing, not decorative.
+\end{enumerate}
+
+The governing rule throughout is \emph{the LLM reasons and explains; deterministic code
+decides} — and our findings sharpen it: on numeric scenes the deterministic code should also
+\emph{decide efficiently on its own}, and reasoning should be invoked only where text carries a
+fact the numbers cannot.
+
+\section{Related Work}
+\label{sec:related}
+
+\textbf{LLM-driven scheduling.} LLMsched~\cite{llmsched} repairs a single LLM's proposal with
+an ILP and reports large gains over Kubernetes. We inherit the reason-then-guarantee spine but
+invert its default: on numeric rationing the deterministic layer should be the proposer, not
+just the repairer, and the LLM should be gated behind a contextual trigger.
+\todo{2--3 more LLM-scheduling refs}
+
+\textbf{Learning-based schedulers.} DRL schedulers (DeepRM~\cite{deeprm},
+Decima~\cite{decima}) learn allocation policies but are black-box and brittle under
+distribution shift. On our interface a tabular Q-learner's episode-return variance dominates
+the action effect at realisable sample counts.
+
+\textbf{Multi-agent LLM structures.} Debate and self-consistency are usually evaluated on QA
+benchmarks; budget-matched controls are rare. Our text-exception result is budget-matched by
+construction and includes a blind confirmatory batch. \todo{debate/self-consistency refs
+(Du et al., Wang et al.), LLM-as-judge refs}
+
+\textbf{Malleability and mechanism design.} Runtime elasticity is rarely deployed in
+production~\cite{tarraf2024}; our partial-allocation model rests on it and we state that
+dependence. Uniform-price auctions are the classical route to truthful revelation; our
+contribution is measurement in a closed loop containing declarative LLM agents.
+
+\section{The Gated Architecture}
+\label{sec:arch}
+
+\todo{Figure 1: market $\rightarrow$ validator $\rightarrow$ [trigger] $\rightarrow$ debate
+escalation pipeline}
+
+\textbf{Auction (default path, zero LLM).} Each epoch, demand posts a non-increasing marginal
+value curve $b_{j,k} = \alpha\,\widehat{dp}_{j,k} + \beta R_{\mathrm{SLA}} +
+\gamma W_{\mathrm{wait}} - \delta C_{\mathrm{resize}}$ per job per extra GPU, where
+$\widehat{dp}$ is the job's real marginal useful progress under the counterfactual progress
+model; supply posts a rising ask from scarcity, fragmentation, reserve pressure and arrival
+pressure; the market clears where bid meets ask.
+
+\textbf{Validation (every tick, cheap code).} Before an allocation is applied, a deterministic
+check verifies feasibility, non-negative awards and known job ids. On violation the tick
+concedes to the floor. On correct clearings the validator is byte-identical to the unvalidated
+market across both laws and all pools (fault injection confirms it rejects when it should).
+
+\textbf{Escalation (only on a trigger).} A reasoning arm rules only when the auction output
+conflicts with an operator note, a production job arrives, a job falls behind its deadline, or
+contested capacity crosses a bucket boundary. The escalation is a \emph{debate}: demand- and
+supply-side reviewers read a structured decision packet, state positions, read each other, and
+revise before a referee rules. An infeasible ruling is never repaired silently; it falls back
+and re-fires. Reasoning is best-effort improvement, never on the critical path.
+
+\section{Evaluation}
+\label{sec:eval}
+
+\textbf{Setup.} We replay contiguous windows of the 606k-job Alibaba
+cluster-trace-gpu-v2020~\cite{alibaba2020}, taking arrival, duration, and GPU demand jointly
+from the trace and synthesising only what the trace lacks (tier, deadline, urgency; seeded
+recipe). Standard operating point: one 8-GPU node in quarter-GPU quanta, 96 jobs per window
+($3\times$ load ratio — the last ratio at which every job finishes), 30\,s ticks, deadline
+slack calibrated so the floor violates 11--13\% (the violation--utilisation curve is reported
+across the slack regime, so no result hangs on the calibration point). 32 seeds, windows and
+seeds paired across arms; \sig{} marks a 95\% CI excluding 0; multiplicity is controlled by
+Holm within each family. Progress runs under both an Amdahl and a saturating law; a claim
+counts only if it holds under both. LLMs are local Ollama models (qwen2.5, gemma2). Baselines:
+the no-LLM floor, EASY backfill~\cite{easy}, a negotiation pipeline with ILP guarantees
+(our prior system, kept as a baseline arm), and a tabular Q-learner.
+
+\subsection{The deterministic market wins efficiency at zero cost}
+\label{sec:market}
+
+Replacing the reasoning layer with the explicit bid/ask market, paired against the floor
+(n=32, both laws):
+
+\begin{table}[h]
+\caption{Market vs.\ floor, paired deltas (n=32, standard 8-GPU point).
+\todo{sat row pending (run in flight); amdahl row measured 2026-09-02}}
+\label{tab:market}
+\centering
+\begin{tabular}{lccccc}
+\toprule
+law & dSLA & dprodSLA & dutil & duseful & dregret \\
+\midrule
+amdahl & $-0.3$ (ns) & $-0.4$ (ns) & $+1.6$\sig & $+1.3$\sig & $-1.4$\sig \\
+sat    & \todo{}     &             &            &            &            \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The market is the only arm in the project's history simultaneously positive on useful
+utilisation and negative on regret, and it costs zero tokens with 0\% fallback. Its deadline
+effect is null ($-0.3 \pm 0.4$, ns; exactly $0.0 \pm 0.0$ at the smaller 2-GPU pool), so the
+efficiency gain is pure throughput, not service quality bought elsewhere. Efficiency belongs
+to the deterministic layer.
+
+\subsection{The largest SLA lever is deterministic too}
+\label{sec:laxity}
+
+No arm above — LLM or market — keys on deadline laxity: grants were ordered by frozen bid
+value. Recomputing each bid's urgency every tick from normalised slack,
+$\mathrm{lax} = (d - t - \mathrm{rem})/(d - \mathrm{arr})$, mapped onto the same urgency band
+so only the \emph{ordering} changes, gives least-laxity grant ordering at zero tokens:
+
+\begin{table}[h]
+\caption{Dynamic urgency vs.\ frozen-bid floor (n=32, paired).}
+\label{tab:laxity}
+\centering
+\begin{tabular}{lcccc}
+\toprule
+arm & SLA viol. & slowdown & util & done \\
+\midrule
+frozen bid (floor) & 23.8\% & 17.8 & 83\% & 94.5/96 \\
+dynamic urgency    & \textbf{7.4\%} & \textbf{5.4} & 81\% & 95.0/96 \\
+\midrule
+\multicolumn{5}{l}{dSLA $-16.4 \pm 3.1$\sig,\ dslow $-12.5 \pm 2.9$\sig,\ dutil $-1.7 \pm 1.9$ (ns)} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This is the largest single service-quality effect we measure, it is invariant to the deadline
+calibration (reproduced across the slack-multiplier regime), and every LLM arm is flat against
+it ($|$dSLA$| \le 0.1$, all ns). The pattern across our calibration experiments is consistent:
+each time the world is made more realistic or a deterministic lever is pulled, the space the
+reasoning layer could occupy shrinks. What remains for it is what no number carries at all —
+text.
+
+\subsection{Where reasoning earns its cost: text exceptions}
+\label{sec:text}
+
+A deterministic mechanism cannot act on an exception whose content is \emph{text}: an operator
+instruction, a declaration a note says is wrong, a crash-restart the numbers do not show. We
+measure this on a pre-registered suite of hand-authored exception scenes.
+
+\textbf{The suite} (Table~\ref{tab:suite}). Each case is a small allocation scene (median two
+jobs, one supply note, 2--8 free GPUs, $\sim$36 words of prose) with a pre-registered predicate
+defining the defensible ruling, authored \emph{before} any LLM was run on it. The authoring
+rule is text-dependence: deleting the exception sentence leaves a scene whose numbers imply a
+different, perfectly reasonable answer. \textbf{Admission required both rigid arms — a fixed
+ILP over the same submissions and a rule-based floor — to fail the predicate; the 0/81 rigid
+floor in Table~\ref{tab:arms} is therefore an inclusion criterion, not a finding.} What the
+suite measures is the comparison \emph{among} arms that can read text. Two control categories
+guard the boundary: \emph{placebo} scenes with decorative or expired prose (including a keyword
+trap naming a policy the note itself retracts) and \emph{confirm} scenes whose salient prose
+confirms the default ranking; the rigid arms pass 17/17 and 16/17 of these. Of the 81 primary
+cases, 50 were authored blind to the per-case outcomes of the earlier under-powered round, and
+the harness reproduces that round's head-to-head exactly ($b{=}6$, $c{=}1$).
+
+\begin{table}[h]
+\caption{The text-exception suite: 81 primary + 17 control cases.}
+\label{tab:suite}
+\centering
+\begin{tabular}{lcl}
+\toprule
+category & $n$ & the exceptional fact arrives as\ldots \\
+\midrule
+nl\_policy     & 21 & an operator rule that exists only in words \\
+unmodeled      & 21 & a fact the world model does not represent \\
+corrupt        & 13 & a declaration a note says is wrong \\
+contradiction  & 10 & two statements that cannot both hold \\
+ambiguous      &  8 & an under-specified scene needing judgement \\
+infeasible     &  8 & demand that cannot be met as declared \\
+\midrule
+placebo        &  9 & decorative/expired prose (control) \\
+confirm        &  8 & prose confirming the default (control) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Arms, budget-matched by construction.} All arms read an identical structured decision
+packet. Alongside a single LLM call we run best-of-$N$ sampling given the \emph{same} call
+budget as the debate, so the only difference between the two expensive arms is how the budget
+is spent, not how much there is.
+
+\begin{table}[h]
+\caption{Handled cases on the 81 primary text exceptions (qwen2.5:14b).}
+\label{tab:arms}
+\centering
+\begin{tabular}{lcc}
+\toprule
+arm & handled & LLM calls \\
+\midrule
+rigid floor (inclusion criterion) & 0/81 & 0 \\
+single LLM & 27/81 & 81 \\
+single LLM, best-of-$N$ (budget-matched) & 29/81 & 569 \\
+\textbf{debate} & \textbf{43/81} & 569 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The pre-registered primary contrast, debate vs.\ budget-matched best-of-$N$: $b{=}16$,
+$c{=}2$, one-sided exact McNemar $\boldsymbol{p=0.0007}$. Three controls make this hard to explain
+away: (i) \emph{budget alone buys nothing} — best-of-$N$ spends $7\times$ the single arm's
+calls and gains two cases ($p=0.25$, ns), while debate spends the identical budget and gains
+sixteen; (ii) \emph{a blind confirmatory batch reproduces it} — on the 50 cases authored blind
+to earlier outcomes, debate 29/50 vs.\ 19/50, $b{=}11$, $c{=}1$, $p=0.0032$; (iii) \emph{the
+effect respects the boundary} — on the 17 control scenes every LLM arm scores 12/17 against
+the deterministic market's 16/17, i.e.\ reasoning invoked where there is nothing to reason
+about is actively harmful. An exploratory per-category split (post-hoc, small cells) locates
+the gain where a fact is \emph{missing} from the model of the world (unmodeled: 13/21 vs.\
+4/21, $b{=}9$, $c{=}0$) rather than where an instruction is present (nl\_policy: 8/21 in every
+LLM arm): debate helps when reviewers must notice an absence, not follow a presence.
+\todo{if the gemma2:9b/27b replication lands: one sentence on cross-family robustness}
+\todo{rater-agreement number for the predicates, threats para}
+
+\subsection{The boundary, measured exactly}
+\label{sec:boundary}
+
+The natural objection is that an authored suite proves little about a real workload. We
+therefore ran \emph{this exact escalation} — unmodified, LLM enabled — inside the simulator,
+gated behind the \S\ref{sec:arch} trigger, at the standard operating point (n=32 paired
+seeds):
+
+\begin{table}[h]
+\caption{The winning escalation, in-sim (n=32, standard point, Amdahl law).
+\todo{sat law pending}}
+\label{tab:noop}
+\centering
+\begin{tabular}{lccccc}
+\toprule
+arm & SLA & prodSLA & util & useful & regret \\
+\midrule
+market & 21.0\% & 5.6\% & 85\% & 81\% & 7\% \\
+market + escalation & 21.0\% & 5.6\% & 85\% & 81\% & 7\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The two arms are identical on every metric, every paired vs.-floor delta, and every surviving
+Holm $p$-value — the same allocation tick for tick. The trigger genuinely fired
+(\textbf{5{,}494 escalations} across the 32 seeds); each escalation entered the correction
+pipeline, found no job carrying text, and returned, making \textbf{zero LLM calls and zero
+changes}. The reason is structural: public GPU traces are scrubbed of operator free text
+(it is PII), so the channel this capability acts on is absent by construction — a fact we
+verified across the public trace landscape rather than synthesising notes into a trace that
+has none.
+
+This is the boundary stated exactly rather than inferred: the mechanism that corrects 43/81
+text-exception rulings is a literal no-op where no text exists. It cannot help — and, the part
+that matters for deployment, it cannot hurt or cost anything either. Combined with the
+specificity cost above (12/17 vs.\ 16/17), the design conclusion is symmetric: reasoning must
+be gated \emph{on} when text arrives and gated \emph{off} when it does not, and both gates are
+now measured.
+
+\section{Threats to Validity}
+\label{sec:threats}
+
+Tier, deadline, and urgency are a synthetic recipe over a real trace; the replay world never
+preempts base allocations, so we make no free-malleability claims. The text-exception suite is
+authored, not sampled from operations, and its ground-truth predicates are
+single-annotator \todo{replace with rater-agreement number}; the rigid-arm floor is an
+inclusion criterion by design. The headline debate result is one model family at one scale
+\todo{update if gemma replication lands}. SLA levels depend on a calibrated slack multiplier;
+contrasts are therefore reported across the calibration regime, and the operating point is one
+where every job finishes. LLM latency is hidden behind wait time by the gate in the design,
+but evaluation runs on simulation clock.
+
+\section{Conclusion}
+
+The division of labour ``the LLM reasons and explains; deterministic code decides'' is not a
+slogan but the empirically optimal split — sharpened. On numeric GPU rationing the
+deterministic layer should also decide \emph{efficiently on its own}: the market wins every
+efficiency metric at zero tokens, and the largest SLA lever is a deterministic ordering rule.
+The reasoning layer earns its cost precisely on the exceptions numbers cannot express — text —
+where structured debate corrects a single model's unreliable rulings at matched budget, and a
+gated architecture delivers that capability at exactly zero cost where the text is absent. The
+open frontier is a workload that actually carries operator text, on which the
+efficiency-neutral capability should convert into a measurable service-quality gain.
+
+\begin{thebibliography}{9}
+\bibitem{llmsched} \todo{LLM-Driven Adaptive Cloud Resource Scheduling: Bridging Reasoning
+Intelligence with Optimization Guarantees. IEEE OJ-CS, 2026 — exact citation}
+\bibitem{deeprm} H.~Mao et al., ``Resource management with deep reinforcement learning,''
+HotNets, 2016.
+\bibitem{decima} H.~Mao et al., ``Learning scheduling algorithms for data processing
+clusters,'' SIGCOMM, 2019.
+\bibitem{tarraf2024} A.~Tarraf et al., ``Malleability in modern HPC systems,'' IEEE TPDS,
+2024. \todo{exact citation}
+\bibitem{alibaba2020} Q.~Weng et al., ``MLaaS in the wild: workload analysis and scheduling
+in large-scale heterogeneous GPU clusters,'' NSDI, 2022 (cluster-trace-gpu-v2020).
+\bibitem{easy} D.~Lifka, ``The ANL/IBM SP scheduling system,'' JSSPP, 1995.
+\end{thebibliography}
+
+\end{document}
