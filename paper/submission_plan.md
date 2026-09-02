@@ -33,8 +33,32 @@ only as a baseline row in Setup.
 2. **Cross-family Exp 89 replication** — gemma2:9b then gemma2:27b, r34 suite, default arms
    (`pins/exp89x_gemma2*.log`, results `pins/results_exp89x_gemma2*_t0.8.json`).
    If it lands: one sentence in IV-C + threats update. If negative: report it as measured.
-3. **To queue next:** market-vs-floor at standard point, `--law sat`, n=32 (deterministic,
-   minutes) — completes Table "market".
+3. ~~**To queue next:** market-vs-floor at standard point, `--law sat`, n=32~~ *(done
+   2026-09-02: no-op holds in both laws; Tables 1 and 5 complete.)*
+4. **Frontier-model arm (NEW 2026-09-02).** All hard-case results are local models ≤27b; a
+   reviewer will ask whether the debate effect is an artifact of small-model weakness. Test
+   the same suite on a frontier API model (Claude Sonnet/Haiku via Anthropic API; optionally
+   a GPT-5.x model via OpenAI API).
+   - **Implementation:** adapter in `pins/correction.py:_ask` — route model names
+     `claude-*`/`gpt-*` to the respective API instead of the Ollama client. Prompts, cache
+     (key already includes model), arms, and scoring unchanged. `format="json"` has no
+     Anthropic equivalent; prompts already demand JSON and `_parse` handles it — verify on a
+     5-case smoke run first. Temperature must be honoured for the boN arm.
+   - **Pre-registered read, declared before running:** primary contrast stays debate vs
+     budget-matched boN, one-sided McNemar, per model, never pooled with qwen. Two admissible
+     outcomes, both publishable: (a) the debate edge *persists* → structure is orthogonal to
+     capability; (b) single-call *saturates* and the edge shrinks → extends the
+     capability-gating result (claim 7: packet +6 at 14b, −6 at 7b) upward — debate is a
+     capability prosthesis small local models need. Also record the 17 controls (does frontier
+     fix the 12/17 specificity cost?) and citation faithfulness.
+   - **Caveat to state in the paper either way:** cases were authored/iterated against rigid
+     arms in the qwen era; a ceiling effect compresses discordant pairs, so a null at high
+     scores is underpowered, not evidence of equivalence.
+   - **Cost:** ~1,300 calls × ~2k tokens ≈ a few million tokens — single-digit dollars on
+     Sonnet/Haiku. **Prerequisite: API key(s)** — confirm `ANTHROPIC_API_KEY` (and OpenAI if
+     used) are available on the login node; runs are I/O-bound, reaper-safe.
+   - **Paper placement:** one row block in Table "arms" or one paragraph in IV-C + Threats
+     rewrite ("one model family at one scale" → measured across scale and provider).
 
 ## Schedule
 
@@ -49,6 +73,10 @@ only as a baseline row in Setup.
 - [ ] Confirm co-author list (tex TODO)
 
 ### Days 5–10 · Sep 6–11 (Sun–Fri) — skeleton → full draft body
+- [ ] **Frontier-model arm** (compute item 4): API adapter in `_ask` + 5-case smoke run,
+  then full r34 run on Claude (Haiku first as the cheap canary, then Sonnet). Declare the
+  per-model primary contrast before the full run. Blocked on API key confirmation — resolve
+  that Day 5.
 - [ ] Figure 1: pipeline (market → validator → trigger → debate), TikZ in-tex
 - [ ] Related work: ~25 real references (currently 6, 2 placeholders). Budget 2 full days.
   Needed: LLM-scheduling (2–3), debate/self-consistency (Du et al., Wang et al.),
@@ -80,6 +108,8 @@ only as a baseline row in Setup.
 |---|---|
 | ~~Exp 92 no-op fails at new operating point~~ | **Retired** — probe confirms it holds |
 | gemma replication comes back negative | Report honestly; headline stays qwen2.5:14b with a scoped claim |
+| Frontier model saturates the suite (ceiling effect) | Pre-declared as outcome (b): extends capability-gating upward; report with the underpowered-null caveat, never as equivalence |
+| No API key / budget on the node | Arm degrades to a stated limitation in Threats; paper does not depend on it |
 | Rater agreement is low | Report the number, scope the claim to "author-defined defensibility"; still better than silence |
 | 6-page overflow | Cut order pre-decided (above) |
 | Advisor turnaround | Draft delivered Sep 17, not Sep 19 |
