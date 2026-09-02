@@ -74,7 +74,7 @@ only as a baseline row in Setup.
 
 ### Days 5–10 · Sep 6–11 (Sun–Fri) — skeleton → full draft body
 - [ ] **Frontier-model arm** (compute item 4): API adapter in `_ask` + 5-case smoke run,
-  then full r34 run on Claude (Haiku first as the cheap canary, then Sonnet). Declare the
+  then full r34 run on Claude (Haiku first as the cheap canary, then Sonnet). *Adapter built + smoke-tested 2026-09-02 (`correction.py:_ask_api`); temperature rides extra_body (SDK 1.x dropped the kwarg — if the server rejects it, boN runs at API default sampling, documented).* Declare the
   per-model primary contrast before the full run. Blocked on API key confirmation — resolve
   that Day 5.
 - [ ] Figure 1: pipeline (market → validator → trigger → debate), TikZ in-tex

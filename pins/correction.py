@@ -94,6 +94,36 @@ def _has_text(s) -> bool:
     return bool((s or "").strip())
 
 
+def _ask_api(system: str, user: str, model: str, max_tokens: int, temperature: float) -> str:
+    """Frontier-model route (submission_plan.md item 4): claude-* -> Anthropic, gpt-* -> OpenAI.
+
+    Same prompts, same cache (the key already includes the model), same output budget as the
+    local arms, so an API model drops into every existing arm unchanged. Keys come from the
+    environment (ANTHROPIC_API_KEY / OPENAI_API_KEY); a missing key surfaces as the standard
+    '! tag fallback' error and the arm scores as 'proposed nothing', it never crashes a run.
+    format='json' has no API equivalent; the prompts already demand a JSON object and _parse
+    extracts one from surrounding prose."""
+    if model.startswith("claude-"):
+        import anthropic
+        # SDK 1.x dropped the temperature kwarg (sampling knobs left the typed surface).
+        # Send it via extra_body ONLY for the boN arm (temperature>0); if the server also
+        # rejects it, boN degrades to the API's default sampling — document, don't hide.
+        # No output_config json_schema: it requires a schema, and the local arms run
+        # schemaless format='json'; a per-provider interface change is exactly the confound
+        # Exp 80-82 warned about.
+        extra = {"temperature": temperature} if temperature else {}
+        r = anthropic.Anthropic().messages.create(
+            model=model, max_tokens=max_tokens, system=system,
+            messages=[{"role": "user", "content": user}], extra_body=extra or None)
+        return r.content[0].text
+    import openai
+    r = openai.OpenAI().chat.completions.create(
+        model=model, max_completion_tokens=max_tokens, temperature=temperature,
+        messages=[{"role": "system", "content": system},
+                  {"role": "user", "content": user}])
+    return r.choices[0].message.content
+
+
 def _ask(system: str, user: str, model: str, host: str, cache: dict, tag: str,
          num_predict: int = 200, think: bool | None = None,
          temperature: float = 0) -> dict | None:
@@ -114,15 +144,18 @@ def _ask(system: str, user: str, model: str, host: str, cache: dict, tag: str,
     if key in cache:
         return cache[key]
     try:
-        from pins.referee import _HYBRID
-        client = metered_client(host)
-        kw = {"think": think} if (think is not None and _HYBRID(model)) else {}
-        resp = client.chat(model=model, format="json", **kw,
-                           options={"temperature": temperature, "num_predict": num_predict,
-                                    **CTX_OPT},
-                           messages=[{"role": "system", "content": system},
-                                     {"role": "user", "content": user}])
-        out = _parse(resp.message.content)
+        if model.startswith(("claude-", "gpt-")):
+            out = _parse(_ask_api(system, user, model, num_predict, temperature))
+        else:
+            from pins.referee import _HYBRID
+            client = metered_client(host)
+            kw = {"think": think} if (think is not None and _HYBRID(model)) else {}
+            resp = client.chat(model=model, format="json", **kw,
+                               options={"temperature": temperature, "num_predict": num_predict,
+                                        **CTX_OPT},
+                               messages=[{"role": "system", "content": system},
+                                         {"role": "user", "content": user}])
+            out = _parse(resp.message.content)
     except Exception as e:
         print(f"  ! {tag} fallback: {type(e).__name__}: {e}")
         out = None
