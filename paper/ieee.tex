@@ -15,6 +15,8 @@
 \usepackage{amsmath}
 \usepackage{url}
 \usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,calc}
 
 \newcommand{\todo}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
 % * = 95% CI excludes 0, paired by seed, n=32
@@ -128,8 +130,40 @@ contribution is measurement in a closed loop containing declarative LLM agents.
 \section{The Gated Architecture}
 \label{sec:arch}
 
-\todo{Figure 1: market $\rightarrow$ validator $\rightarrow$ [trigger] $\rightarrow$ debate
-escalation pipeline}
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[
+  font=\scriptsize,
+  box/.style={draw, rounded corners=1pt, align=center, minimum height=6.5mm, inner sep=2pt},
+  code/.style={box, fill=black!6},
+  llm/.style={box, fill=black!18, dashed},
+  gate/.style={diamond, draw, aspect=2, align=center, inner sep=1pt},
+  arr/.style={-{Latex[length=1.5mm]}, thick},
+  lab/.style={font=\tiny, fill=white, inner sep=1pt},
+]
+\node[code] (mkt) at (0,0) {Auction\\(bid $\ge$ ask)};
+\node[code] (val) at (2.35,0) {Validator\\(feasible, $\ge0$, ids)};
+\node[gate] (trg) at (4.75,0) {trigger?};
+\node[code] (apply) at (7.0,0) {Apply};
+\node[code] (floor) at (1.2,-1.5) {Floor allocation\\(no LLM, applied)};
+\node[llm, text width=3.1cm] (deb) at (4.75,-1.5) {Debate: demand \& supply reviewers, then referee};
+\draw[arr] (mkt) -- (val);
+\draw[arr] (val) -- (trg);
+\draw[arr] (trg) -- node[lab,above]{no} (apply);
+\draw[arr] (trg) -- node[lab,right]{yes} (deb);
+\draw[arr] (deb.east) -| node[lab,pos=0.3,above]{feasible ruling} (apply);
+\draw[arr] (val.south) -- node[lab,sloped,above]{violation} (floor.north east);
+\draw[arr] (deb) -- node[lab,above]{infeasible} (floor);
+\end{tikzpicture}
+\caption{The gated pipeline. Every tick runs through deterministic code (grey): the auction
+clears, the validator checks feasibility. Only a trigger (operator-note conflict, production
+arrival, deadline slip, contested-capacity boundary) escalates to the LLM debate (dashed).
+Any infeasible output, from either path, concedes the tick to the no-LLM floor; the LLM is
+never on the critical path.}
+\label{fig:pipeline}
+\end{figure}
+
+Fig.~\ref{fig:pipeline} shows the pipeline.
 
 \textbf{Auction (default path, zero LLM).} Each epoch, demand posts a non-increasing marginal
 value curve $b_{j,k} = \alpha\,\widehat{dp}_{j,k} + \beta R_{\mathrm{SLA}} +

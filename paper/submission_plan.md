@@ -77,7 +77,7 @@ only as a baseline row in Setup.
   then full r34 run on Claude (Haiku first as the cheap canary, then Sonnet). *Adapter built + smoke-tested 2026-09-02 (`correction.py:_ask_api`); temperature rides extra_body (SDK 1.x dropped the kwarg — if the server rejects it, boN runs at API default sampling, documented).* Declare the
   per-model primary contrast before the full run. Blocked on API key confirmation — resolve
   that Day 5.
-- [ ] Figure 1: pipeline (market → validator → trigger → debate), TikZ in-tex
+- [x] Figure 1: pipeline (market → validator → trigger → debate), TikZ in-tex *(done 2026-09-02)*
 - [ ] Related work: ~25 real references (currently 6, 2 placeholders). Budget 2 full days.
   Needed: LLM-scheduling (2–3), debate/self-consistency (Du et al., Wang et al.),
   LLM-as-judge, DRL schedulers, trace papers, mechanism design.
