@@ -78,7 +78,7 @@ only as a baseline row in Setup.
   per-model primary contrast before the full run. Blocked on API key confirmation — resolve
   that Day 5.
 - [x] Figure 1: pipeline (market → validator → trigger → debate), TikZ in-tex *(done 2026-09-02)*
-- [ ] Related work: ~25 real references (currently 6, 2 placeholders). Budget 2 full days.
+- [ ] Related work: ~25 real references (2026-09-02: 10 verified, 1 placeholder — `llmsched` needs its author list). Budget 2 full days.
   Needed: LLM-scheduling (2–3), debate/self-consistency (Du et al., Wang et al.),
   LLM-as-judge, DRL schedulers, trace papers, mechanism design.
 - [ ] §I–III polish (intro, related, architecture)
