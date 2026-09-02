@@ -43,7 +43,7 @@ only as a baseline row in Setup.
 - [x] IEEEtran skeleton `paper/ieee.tex`, builds clean
 - [x] Exp 92 re-run launched at standard point; probe confirms no-op
 - [x] gemma2 9b/27b replication launched
-- [ ] sat-law market run (after Exp 92 sweep frees CPU)
+- [x] sat-law market run — done 2026-09-02: no-op holds in both laws (5494/5517 escalations, 0 calls)
 - [ ] **Recruit two raters** for predicate-agreement study: 30 sampled cases, scenes shown
   without predicates. *Only item nobody else can start — start it now.*
 - [ ] Confirm co-author list (tex TODO)
