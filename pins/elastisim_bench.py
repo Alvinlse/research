@@ -22,6 +22,7 @@ limit (NOT an ElastiSim walltime kill -- only completed jobs are replayed, so no
 from __future__ import annotations
 
 import argparse
+import bisect
 import csv
 import functools
 import json
@@ -69,12 +70,18 @@ def _trace_rows() -> tuple[dict, ...]:
     return tuple(rows)
 
 
-def load_window(day: int, hours: float, offset_h: float = 0) -> list[dict]:
+def load_window(day: int, hours: float, offset_h: float = 0, warmup_h: float = 0) -> list[dict]:
+    """The measured window's jobs plus `warmup_h` of PRIOR arrivals, so no window starts on an empty
+    cluster. Submits are shifted so warm-up occupies [0, warmup) and the measured window is
+    [warmup, warmup+hours) -- ElastiSim needs submit_time >= 0. Warm-up jobs are flagged, but the
+    flag is invisible to the scheduler (they are ordinary pending work); only scoring reads it."""
     rows = _trace_rows()
     t0 = rows[0]["submit"] + day * 86400 + int(offset_h * 3600)
-    win = [dict(x) for x in rows if t0 <= x["submit"] < t0 + hours * 3600]   # copy: _trace_rows is cached
+    w0 = t0 - int(warmup_h * 3600)
+    win = [dict(x) for x in rows if w0 <= x["submit"] < t0 + hours * 3600]   # copy: _trace_rows is cached
     for x in win:
-        x["submit"] -= t0
+        x["warmup"] = x["submit"] < t0
+        x["submit"] -= w0
     return win
 
 
@@ -99,16 +106,20 @@ def real_stats(jobs: list[dict]) -> dict:
             "real_max_wait_s": w[-1], "real_frac_wait_gt_1h": round(sum(x > 3600 for x in w) / len(w), 3)}
 
 
-def build(day: int, hours: float, pool: int, out: Path, offset_h: float = 0, load: float = 0.0) -> dict:
-    """pool=0 with load>0 sizes the pool by offered load: pool = GPU-hours / hours / load (min 8)."""
+def build(day: int, hours: float, pool: int, out: Path, offset_h: float = 0, load: float = 0.0,
+          warmup_h: float = 0) -> dict:
+    """pool=0 with load>0 sizes the pool by offered load (exploratory path only: it makes load an
+    OUTPUT, so windows cannot be stratified by it). The measured design passes a fixed pool and
+    lets each window's own demand set its load. Meta describes the MEASURED window, not the warm-up."""
     out = out.resolve()
     (out / "in").mkdir(parents=True, exist_ok=True)
     (out / "out").mkdir(exist_ok=True)
-    jobs = load_window(day, hours, offset_h)
-    if not jobs:
+    jobs = load_window(day, hours, offset_h, warmup_h)
+    scored = [j for j in jobs if not j["warmup"]]
+    if not scored:
         return {}
     if pool <= 0:
-        pool = max(8, round(sum(j["dur"] * j["gpus"] for j in jobs) / 3600 / hours / load))
+        pool = max(8, round(sum(j["dur"] * j["gpus"] for j in scored) / 3600 / hours / load))
     (out / "in/application_model.json").write_text(json.dumps({
         "phases": [{"iterations": 1, "scheduling_point": False, "tasks": [
             {"type": "gpu", "name": "train", "flops": "flops", "computation_pattern": "uniform"}]}]},
@@ -123,6 +134,8 @@ def build(day: int, hours: float, pool: int, out: Path, offset_h: float = 0, loa
                        # class (9.1% of GPU jobs) -> that bit is the tier; the raw number is not shown to arms
                        "tier": "prod" if int(j["priority"] or 0) >= 100000 else "batch",
                        "priority": j["priority"], "partition": j["partition"], "user": j["user"],
+                       "_warmup": int(j["warmup"]),  # scoring-only: no arm ever reads it.
+                       # int, not bool: ElastiSim's attribute mapper rejects bool (Utility.cpp:159)
                        "_true_dur": j["dur"], "_real_wait": j["real_wait"]}}
         for j in jobs]}, indent=0))
     (out / "in/platform.xml").write_text(f"""<?xml version='1.0'?>
@@ -148,12 +161,14 @@ def build(day: int, hours: float, pool: int, out: Path, offset_h: float = 0, loa
   </zone>
 </platform>
 """)
-    meta = {"day": day, "offset_h": offset_h, "hours": hours, "pool": pool, "n_jobs": len(jobs),
-            "n_prod": sum(j["priority"].isdigit() and int(j["priority"]) >= 100000 for j in jobs),
-            "gpu_hours": sum(j["dur"] * j["gpus"] for j in jobs) / 3600, **real_stats(jobs)}
+    meta = {"day": day, "offset_h": offset_h, "hours": hours, "warmup_h": warmup_h, "pool": pool,
+            "n_jobs": len(scored), "n_warmup": len(jobs) - len(scored),
+            "n_prod": sum(j["priority"].isdigit() and int(j["priority"]) >= 100000 for j in scored),
+            "gpu_hours": sum(j["dur"] * j["gpus"] for j in scored) / 3600, **real_stats(scored)}
     meta["offered_load"] = round(meta["gpu_hours"] / hours / pool, 2)
     (out / "meta.json").write_text(json.dumps(meta))
-    print(f"built {out}: {len(jobs)} jobs, pool {pool} GPUs, offered load {meta['offered_load']}x")
+    print(f"built {out}: {len(scored)} scored jobs (+{len(jobs)-len(scored)} warm-up), "
+          f"pool {pool} GPUs, offered load {meta['offered_load']}x")
     return meta
 
 
@@ -180,7 +195,20 @@ def arm_firstfit(pending, free, ctx):
 
 
 def arm_sjf(pending, free, ctx):
+    """NOT shortest-job-first: requested walltime is ~uncorrelated with true runtime on this trace
+    (487 jobs share 9 distinct values; the one significant Spearman is -0.73). Label it
+    'requested-walltime ordering' in every write-up. See arm_declared_first for the decomposition."""
     key = lambda j: (int(j.attributes["req_min"]) or 10 ** 9, j.submit_time)
+    arm_firstfit(sorted(pending, key=key), free, ctx)
+
+
+def arm_declared_first(pending, free, ctx):
+    """Control for arm_sjf: keeps ONLY its declared-before-undeclared split, FCFS within each group.
+    firstfit -> declared_first isolates what the declared/undeclared bit is worth; declared_first ->
+    sjf isolates what requested-walltime ORDERING adds on top. All three route through arm_firstfit,
+    so packing (skip a non-fitting job and keep scanning) is held constant -- arm_fcfs does not, and
+    comparing against it confounds ordering with head-of-line bypass."""
+    key = lambda j: (int(j.attributes["req_min"]) == 0, j.submit_time)
     arm_firstfit(sorted(pending, key=key), free, ctx)
 
 
@@ -355,6 +383,7 @@ def arm_llm(pending, free, ctx, debate=False):
 
 
 ARMS = {"fcfs": arm_fcfs, "firstfit": arm_firstfit, "easy": arm_easy, "sjf": arm_sjf,
+        "declared_first": arm_declared_first,
         "tier_fcfs": arm_tier_fcfs, "tier_sjf": arm_tier_sjf,
         "single": lambda p, f, c: arm_llm(p, f, c, False),
         "debate": lambda p, f, c: arm_llm(p, f, c, True)}
@@ -426,17 +455,22 @@ def summarise(stats: Path, world: Path) -> dict:
     meta = json.loads((world / "meta.json").read_text())
     jobs = json.loads((world / "in/jobs.json").read_text())["jobs"]
     rows = list(csv.DictReader(open(stats)))
-    W = meta["hours"] * 3600                      # arrival window: util is measured here only
+    W = meta["hours"] * 3600
+    a = meta.get("warmup_h", 0) * 3600            # the MEASURED interval is [a, a+W)
     wait, bsd, busy_win, gpu_s, late, late_req, n_req = [], [], 0.0, 0.0, 0, 0, 0
     tier = {"prod": {"n": 0, "late": 0, "wait": 0.0}, "batch": {"n": 0, "late": 0, "wait": 0.0}}
     for r in rows:
         j = jobs[int(r["ID"])]
         g, sub, st, en, run, ta = (j["num_nodes"], float(r["Submit Time"]), float(r["Start Time"]),
                                    float(r["End Time"]), float(r["Makespan"]), float(r["Turnaround Time"]))
+        # occupancy counts EVERY job running in the measured interval, warm-up included: those
+        # nodes really are busy. Every other metric below is measured-window arrivals only.
+        busy_win += g * max(0.0, min(en, a + W) - max(st, a))
+        if j["attributes"].get("_warmup"):
+            continue
         wait.append(float(r["Wait Time"]))
         bsd.append(max(1.0, ta / max(10.0, run)))
         gpu_s += run * g
-        busy_win += g * max(0.0, min(en, W) - max(st, 0.0))
         late += ta > SLACK * run
         t = tier.get(j["attributes"].get("tier"))
         if t is not None:
@@ -444,10 +478,14 @@ def summarise(stats: Path, world: Path) -> dict:
         if j["walltime"] > 0:                        # TURNAROUND vs the requested limit -- not an ElastiSim kill
             n_req += 1                               # (only completed jobs are replayed, so no job ever hits it)
             late_req += ta > j["walltime"]
-    span = max(float(r["End Time"]) for r in rows) - min(float(r["Submit Time"]) for r in rows)
+    scored = [r for r in rows if not jobs[int(r["ID"])]["attributes"].get("_warmup")]
+    if not scored:
+        return {"n": 0}
+    span = max(float(r["End Time"]) for r in scored) - min(float(r["Submit Time"]) for r in scored)
     wait.sort()
-    return {"n": len(rows), "completed": sum(r["Status"] == "completed" for r in rows),
-            "sla10_viol_pct": round(100 * late / len(rows), 1),
+    return {"n": len(scored), "completed": sum(r["Status"] == "completed" for r in scored),
+            "n_warmup": len(rows) - len(scored),
+            "sla10_viol_pct": round(100 * late / len(scored), 1),
             "ta_over_req_limit_pct": round(100 * late_req / max(1, n_req), 1), "n_with_req_limit": n_req,
             "util_win": round(busy_win / (meta["pool"] * W), 3), "util_span": round(gpu_s / (meta["pool"] * span), 3),
             "mean_wait_s": round(statistics.mean(wait)), "p50_wait_s": round(wait[len(wait) // 2]),
@@ -482,11 +520,43 @@ def summary(world: Path) -> None:
             print(f"  {name} LLM wrapper: " + " ".join(f"{k}={v}" for k, v in ts.items()))
 
 
+def census(hours: float, pool: int, min_jobs: int = 100, out: Path | None = None) -> list[dict]:
+    """Every hourly window start described by WORKLOAD properties alone -- no scheduler is ever run.
+    Window selection is made from this table, so it cannot see a result (design spec §3)."""
+    rows = _trace_rows()
+    subs = [r["submit"] for r in rows]
+    cands = []
+    for h in range(int((subs[-1] - subs[0] - hours * 3600) / 3600) + 1):
+        t0 = subs[0] + h * 3600
+        w = rows[bisect.bisect_left(subs, t0):bisect.bisect_left(subs, t0 + hours * 3600)]
+        if len(w) < min_jobs:
+            continue
+        gh = sum(j["dur"] * j["gpus"] for j in w) / 3600
+        d = sorted(j["dur"] for j in w)
+        cands.append(dict(h=h, day=h // 24, off=h % 24, n=len(w), gpu_h=round(gh, 1),
+                          demand=round(gh / hours, 1), load=round(gh / hours / pool, 2),
+                          prod=round(sum(int(j["priority"] or 0) >= 100000 for j in w) / len(w), 3),
+                          med_s=d[len(d) // 2], p90_s=d[int(0.9 * (len(d) - 1))],
+                          g1=round(sum(j["gpus"] == 1 for j in w) / len(w), 2),
+                          gmax=max(j["gpus"] for j in w)))
+    q = lambda v, p: sorted(v)[int(p * (len(v) - 1))]
+    print(f"{len(cands)} candidate {hours:g}h windows with >= {min_jobs} jobs "
+          f"(of {int((subs[-1]-subs[0]-hours*3600)/3600)+1} hourly starts, trace "
+          f"{(subs[-1]-subs[0])/86400:.1f} days); load = demand / {pool} GPUs")
+    for f in ("load", "prod"):
+        v = [c[f] for c in cands]
+        print(f"  {f:6} " + " ".join(f"p{p}={q(v, p/100):.2f}" for p in (5, 10, 25, 50, 75, 90, 95, 99)))
+    if out:
+        out.write_text(json.dumps(cands))
+        print(f"  wrote {out}")
+    return cands
+
+
 BASELINE = "easy"   # EASY backfilling -- what a production batch system actually runs
 DELTA_COLS = ["sla10_viol_pct", "prod_sla10_viol_pct", "mean_wait_s", "p90_wait_s", "max_wait_s", "mean_bsd"]
 
 
-def report(rows: dict[str, list[dict]], hours: float, load: float) -> None:
+def report(rows: dict[str, list[dict]], hours: float, note: str) -> None:
     """Three views of the same windows: the mean ± 95% CI, the spread across windows, and how OFTEN
     an arm beats the baseline -- a mean win carried by two outlier windows is not a win."""
     arms = sorted((a for a in rows if rows[a]), key=lambda a: (a != BASELINE, a))
@@ -498,7 +568,7 @@ def report(rows: dict[str, list[dict]], hours: float, load: float) -> None:
                      if len(v) > 1 else f"{v[0]:.1f}")
     fmt = lambda c: ci1 if "pct" in c or c == "mean_bsd" or "util" in c else ci
     n = len(rows[arms[0]])
-    print(f"\n{n} windows, {hours} h, pool sized to offered load {load}x; mean ± 95% CI across windows")
+    print(f"\n{n} windows, {hours:g} h, {note}; mean ± 95% CI across windows")
     _table([(a, {c: fmt(c)([r[c] for r in rows[a] if c in r])
                  for c in COLS if any(c in r for r in rows[a])}) for a in arms], w=16)
 
@@ -529,30 +599,38 @@ def report(rows: dict[str, list[dict]], hours: float, load: float) -> None:
 
 
 def sweep(days: list[int], hours: float, load: float, arms: list[str], out: Path, min_jobs: int = 100,
-          sample: int = 0, seed: int = 0) -> None:
+          sample: int = 0, seed: int = 0, pool: int = 0, warmup_h: float = 0,
+          manifest: Path | None = None) -> None:
     """Floors over many windows: build each (pool by offered load), run every arm, report the
     distribution across windows. With --sample N, N non-overlapping windows are drawn at RANDOM
     instead of walking the day grid (a step of 7 days is locked to one weekday, and always starts
     at midnight). N counts windows KEPT: candidates with < min_jobs jobs are redrawn, not counted
     -- half of all 12 h windows in this trace are that thin. LLM arms cost ~1 h/window each."""
     out.mkdir(parents=True, exist_ok=True)
+    man = json.loads(manifest.read_text()) if manifest else None
+    if man:            # the frozen pre-registered set: its parameters win over the CLI
+        pool, hours, warmup_h = man["pool"], man["hours"], man["warmup_h"]
+        print(f"manifest {manifest}: {len(man['windows'])} windows, pool {pool} GPUs, "
+              f"{hours:g}h measured + {warmup_h:g}h warm-up, seed {man['seed']}")
     rows: dict[str, list[dict]] = {a: [] for a in arms}
     accepted: list[int] = []
 
     def candidates():
-        if not sample:
+        if man:
+            yield from ((w["day"], w["off"]) for w in man["windows"])
+        elif not sample:
             yield from ((d, 0) for d in days)
-            return
-        starts = _rand_starts(hours, seed, accepted)
-        for _ in range(200 * sample):
-            if len(accepted) >= sample:
-                return
-            yield divmod(next(starts), 24)
+        else:
+            starts = _rand_starts(hours, seed, accepted)
+            for _ in range(200 * sample):
+                if len(accepted) >= sample:
+                    return
+                yield divmod(next(starts), 24)
 
     n_skip = 0
     for day, off in candidates():
-        key = f"d{day}h{off}" if sample else f"d{day}"
-        meta = build(day, hours, 0, out / key, offset_h=off, load=load)
+        key = f"d{day}" if not (sample or man) else f"d{day}h{off}"
+        meta = build(day, hours, pool, out / key, offset_h=off, load=load, warmup_h=warmup_h)
         if not meta or meta["n_jobs"] < min_jobs:
             print(f"  {key}: {meta.get('n_jobs', 0)} jobs, skipped"); n_skip += 1; continue
         accepted.append(day * 24 + off)
@@ -564,7 +642,8 @@ def sweep(days: list[int], hours: float, load: float, arms: list[str], out: Path
                 f.write(json.dumps(r) + "\n")
     if sample:
         print(f"\ndrew {len(accepted)}/{sample} windows (seed {seed}); {n_skip} rejected for < {min_jobs} jobs")
-    report(rows, hours, load)
+    report(rows, hours, (f"pool {pool} GPUs fixed" if pool > 0 else f"pool sized to offered load {load}x")
+           + (f", {warmup_h:g}h warm-up" if warmup_h else ""))
 
 
 def sweep_report(out: Path) -> None:
@@ -581,34 +660,45 @@ def sweep_report(out: Path) -> None:
     m = next((p for w in {r["win"] for rs in rows.values() for r in rs}     # a REPORTED window, not
               if (p := out / w / "meta.json").exists()), None)              # whatever glob finds first
     meta = json.loads(m.read_text()) if m else {}
-    report(rows, meta.get("hours", 0), meta.get("offered_load", 0))
+    report(rows, meta.get("hours", 0), f"pool {meta.get('pool', '?')} GPUs"
+           + (f", {meta['warmup_h']:g}h warm-up" if meta.get("warmup_h") else ""))
 
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
-    b = sub.add_parser("build"); b.add_argument("--day", type=int, default=157); b.add_argument("--hours", type=float, default=12)
-    b.add_argument("--pool", type=int, default=256); b.add_argument("--out", type=Path, required=True)
+    b = sub.add_parser("build"); b.add_argument("--day", type=int, default=157); b.add_argument("--hours", type=float, default=24)
+    b.add_argument("--pool", type=int, default=80); b.add_argument("--out", type=Path, required=True)
     b.add_argument("--offset-h", type=float, default=0, help="window start offset within the day (12 = pm half)")
+    b.add_argument("--warmup-h", type=float, default=12, help="hours of PRIOR arrivals, run but not scored")
     r = sub.add_parser("run"); r.add_argument("--world", type=Path, required=True); r.add_argument("--arm", choices=ARMS, required=True)
     r.add_argument("--model", default="qwen2.5:14b"); r.add_argument("--interval", type=int, default=300); r.add_argument("--tag", default="")
     r.add_argument("--est-default", type=int, default=86400, help="EASY runtime estimate (s) for jobs with no declared limit")
     b.add_argument("--load", type=float, default=0, help="size the pool by offered load when --pool 0")
     s = sub.add_parser("summary"); s.add_argument("--world", type=Path, required=True)
     w = sub.add_parser("sweep"); w.add_argument("--days", default="3:227:7", help="start:stop:step of window start days")
-    w.add_argument("--hours", type=float, default=12); w.add_argument("--load", type=float, default=3.93)
-    w.add_argument("--arms", default="fcfs,firstfit,easy,sjf,tier_fcfs,tier_sjf"); w.add_argument("--out", type=Path, required=True)
+    w.add_argument("--hours", type=float, default=24); w.add_argument("--load", type=float, default=3.93)
+    w.add_argument("--arms", default="easy,fcfs,firstfit,declared_first,sjf,tier_fcfs,tier_sjf")
+    w.add_argument("--out", type=Path, required=True)
     w.add_argument("--sample", type=int, default=0, help="draw N random non-overlapping windows instead of --days")
     w.add_argument("--seed", type=int, default=0)
+    w.add_argument("--pool", type=int, default=0, help="fixed pool; 0 = size by --load (makes load an OUTPUT)")
+    w.add_argument("--warmup-h", type=float, default=0)
+    w.add_argument("--manifest", type=Path, help="frozen window set (pins/windows12.json); its pool/hours/warmup win")
+    c = sub.add_parser("census"); c.add_argument("--hours", type=float, default=24)
+    c.add_argument("--pool", type=int, default=80); c.add_argument("--min-jobs", type=int, default=100)
+    c.add_argument("--out", type=Path)
     sr = sub.add_parser("sweep-report"); sr.add_argument("--out", type=Path, required=True)
     a = ap.parse_args()
     if a.cmd == "build":
-        build(a.day, a.hours, a.pool, a.out, a.offset_h, a.load)
+        build(a.day, a.hours, a.pool, a.out, a.offset_h, a.load, a.warmup_h)
     elif a.cmd == "summary":
         summary(a.world)
+    elif a.cmd == "census":
+        census(a.hours, a.pool, a.min_jobs, a.out)
     elif a.cmd == "sweep":
         sweep(list(range(*map(int, a.days.split(":")))), a.hours, a.load, a.arms.split(","), a.out,
-              sample=a.sample, seed=a.seed)
+              sample=a.sample, seed=a.seed, pool=a.pool, warmup_h=a.warmup_h, manifest=a.manifest)
     elif a.cmd == "sweep-report":
         sweep_report(a.out)
     else:
