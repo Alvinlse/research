@@ -66,6 +66,21 @@ Warm-up exists so no window begins on an empty cluster. All submit times shift b
 ElastiSim never receives a negative submit time. Warm-up jobs carry `"_warmup": true` in
 `attributes`.
 
+**Warm-up jobs are scheduled by the arm under test.** There is one scheduler in the simulation and
+the tag is invisible to it — warm-up jobs are ordinary pending work, and only scoring (§4) treats
+them differently. This is deliberate: a real scheduler inherits the backlog its own earlier
+decisions produced, and an arm should live with that.
+
+The consequence is that the cluster state at `t = 12h` is **arm-dependent** — an arm that clears
+the warm-up efficiently enters the measured window less congested than one that does not. Arms
+therefore receive identical *inputs* but not an identical starting state, and a measured-window
+difference includes the effect of how the arm handled the run-up. Two things follow, and both are
+reported: the pairing in §6 is on the window, not on the state at measurement start; and any arm
+whose advantage disappears when the warm-up is scheduled by a common policy is winning on run-up
+management rather than on the measured window. The fixed-warm-up variant (one reference policy
+through `t = 12h`, handover to the arm under test after) is **not** part of this design and is
+named here only as the follow-up that would separate the two effects.
+
 12h does not cover every job: p90 runtime reaches 129772s (36h) in `stress/hi` and 115087s in
 `stress/md`. Those two cells begin marginally emptier than reality. This is documented rather than
 fixed, because extending the warm-up shrinks how many disjoint windows each cell can supply.
@@ -160,7 +175,9 @@ only, clearly marked as not implementable.
 
 ## 6. Analysis
 
-Each of the 12 windows is a paired block: every arm sees an identical world. The primary comparison
+Each of the 12 windows is a paired block: every arm sees an identical *world* — the same jobs,
+arrivals and cluster. It does not see an identical cluster *state* at the start of the measured
+window, because each arm schedules its own warm-up (§2). The primary comparison
 is the paired delta against the baseline, pooled across all 12, with the win-rate table already in
 `report()` showing whether a mean win is consistent or carried by outliers.
 
