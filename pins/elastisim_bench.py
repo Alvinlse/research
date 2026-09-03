@@ -534,6 +534,8 @@ def summarise(stats: Path, world: Path) -> dict:
     a = meta.get("warmup_h", 0) * 3600            # the MEASURED interval is [a, a+W)
     wait, bsd, busy_win, gpu_s, late_req, n_req = [], [], 0.0, 0.0, 0, 0
     late = dict.fromkeys(SLACKS, 0)
+    killed = 0
+    alloc = 0.0        # GPU-seconds the scheduler SPENT: a decision once jobs are moldable
     tier = {t: {"n": 0, "wait": 0.0, **dict.fromkeys(SLACKS, 0)} for t in ("prod", "batch")}
     for r in rows:
         j = jobs[int(r["ID"])]
@@ -547,13 +549,18 @@ def summarise(stats: Path, world: Path) -> dict:
         wait.append(float(r["Wait Time"]))
         bsd.append(max(1.0, ta / max(10.0, run)))
         gpu_s += run * g
+        alloc += g * run
+        # A job killed at its walltime finishes EARLY, so every wait-based metric flatters it.
+        # Downsizing a moldable job can push it past its limit, so this must be first-class.
+        dead = r["Status"] != "completed"
+        killed += dead
         for k in SLACKS:
-            late[k] += ta > k * run
+            late[k] += dead or ta > k * run
         t = tier.get(j["attributes"].get("tier"))
         if t is not None:
             t["n"] += 1; t["wait"] += wait[-1]
             for k in SLACKS:
-                t[k] += ta > k * run
+                t[k] += dead or ta > k * run
         if j["walltime"] > 0:                        # TURNAROUND vs the requested limit -- not an ElastiSim kill
             n_req += 1                               # (only completed jobs are replayed, so no job ever hits it)
             late_req += ta > j["walltime"]
@@ -564,6 +571,8 @@ def summarise(stats: Path, world: Path) -> dict:
     wait.sort()
     return {"n": len(scored), "completed": sum(r["Status"] == "completed" for r in scored),
             "n_warmup": len(rows) - len(scored),
+            "killed_pct": round(100 * killed / len(scored), 1),
+            "alloc_gpu_h": round(alloc / 3600, 1),
             **{f"sla{k}_viol_pct": round(100 * late[k] / len(scored), 1) for k in SLACKS},
             "ta_over_req_limit_pct": round(100 * late_req / max(1, n_req), 1), "n_with_req_limit": n_req,
             "util_win": round(busy_win / (meta["pool"] * W), 3), "util_span": round(gpu_s / (meta["pool"] * span), 3),
@@ -576,7 +585,7 @@ def summarise(stats: Path, world: Path) -> dict:
 
 
 COLS = ([f"sla{k}_viol_pct" for k in SLACKS]
-        + ["ta_over_req_limit_pct", "util_win", "mean_wait_s", "p50_wait_s", "p90_wait_s",
+        + ["killed_pct", "alloc_gpu_h", "ta_over_req_limit_pct", "util_win", "mean_wait_s", "p50_wait_s", "p90_wait_s",
            "max_wait_s", "mean_bsd"]
         + [f"prod_sla{k}_viol_pct" for k in SLACKS] + ["prod_mean_wait_s"]
         + [f"batch_sla{k}_viol_pct" for k in SLACKS] + ["batch_mean_wait_s"])
@@ -636,7 +645,7 @@ def census(hours: float, pool: int, min_jobs: int = 100, out: Path | None = None
 
 BASELINE = "easy"   # EASY backfilling -- what a production batch system actually runs
 DELTA_COLS = ([f"sla{k}_viol_pct" for k in SLACKS] + [f"prod_sla{k}_viol_pct" for k in SLACKS]
-              + ["mean_wait_s", "p90_wait_s", "mean_bsd"])
+              + ["killed_pct", "alloc_gpu_h", "mean_wait_s", "p90_wait_s", "mean_bsd"])
 
 
 def report(rows: dict[str, list[dict]], hours: float, note: str) -> None:
