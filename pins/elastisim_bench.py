@@ -238,6 +238,14 @@ def _fit(job, free, ctx, pending_n: int = 1):
     return _size(job, free, ctx, pending_n) > 0
 
 
+def _start_at(job, free, ctx, k: int):
+    """Start at an explicitly chosen size (the LLM arms). _validate has already made k legal."""
+    job.assign(free[:k]); del free[:k]
+    ctx.setdefault("sizes", {})[job.identifier] = k
+    if getattr(job, "num_nodes", None) is None:
+        job.assign_num_gpus_per_node(1)
+
+
 def _start(job, free, ctx, pending_n: int = 1):
     k = _size(job, free, ctx, pending_n)
     job.assign(free[:k]); del free[:k]
@@ -337,10 +345,16 @@ def arm_tier_sjf(pending, free, ctx):      # prod first (reserving), requested-w
     _prod_reserving(sorted(pending, key=key), free, ctx)
 
 
-SYSTEM = ("You are the batch scheduler of a GPU cluster. Jobs are rigid: a job needs exactly `gpus` "
-          "GPUs for its whole run, and you only know its REQUESTED walltime (req_min, 0 = unlimited), "
-          "not the true runtime. Goal: minimise mean waiting time and bounded slowdown while keeping "
-          "GPUs busy. Reply with JSON only: {\"start\": [job ids in start order], \"why\": \"one line\"}.")
+SYSTEM = ("You are the batch scheduler of a GPU cluster. A job shown as `gpus=N` is rigid and needs "
+          "exactly N GPUs for its whole run. A job shown as `gpus=LO-HI` is MOLDABLE: you choose its "
+          "size once, at start, and it cannot change afterwards; `asked=` is the size its owner "
+          "originally requested. Scaling is sublinear -- doubling a job's GPUs does NOT halve its "
+          "runtime, so a large allocation costs more machine time than it saves, while too small an "
+          "allocation risks the job exceeding its requested walltime and being killed. You only know "
+          "each job's REQUESTED walltime, never its true runtime. Goal: minimise mean waiting time "
+          "and bounded slowdown without wasting GPU-hours. Reply with JSON only: "
+          "{\"start\": [[job id, gpus to give it], ...] in start order, \"why\": \"one line\"}. "
+          "A bare job id means: use `asked`.")
 CRITIC = ("You are a second scheduler reviewing a colleague's start list for the same queue. Check "
           "it fits free_gpus, does not starve long-waiting jobs, and does not leave GPUs idle when a "
           "job fits. Return the FINAL list as JSON only: {\"start\": [job ids], \"why\": \"one line\"}.")
@@ -364,7 +378,12 @@ def _packet(pending, free, now):
         cls = f"tier={a['tier']}" if "tier" in a else f"priority={a['priority']}"
         req = (f"req_min={a['req_min']}" if PACKET_VERSION == "v1" else
                (f"req_limit={a['req_min']}min" if int(a["req_min"]) else "req_limit=UNLIMITED(no estimate)"))
-        lines.append(f"id={j.identifier} gpus={_sizes(j)[0]} {req} "
+        # A MOLDABLE job has a legal RANGE, not a size. Reporting num_nodes_min here (as an earlier
+        # revision did) tells the model every elastic job needs 1 GPU, which is false and makes the
+        # packet describe a cluster that does not exist.
+        lo, hi = _sizes(j)
+        size = f"gpus={lo}" if lo == hi else f"gpus={lo}-{hi} asked={a.get('req_nodes', lo)}"
+        lines.append(f"id={j.identifier} {size} {req} "
                      f"waited_s={int(now - j.submit_time)} {cls} partition={a['partition']}")
     return "\n".join(lines)
 
@@ -385,6 +404,7 @@ def transcript_stats(path: Path) -> dict:
                 ff.append(i); free -= g[i]
         same += x["picked"] == ff
         p = (x["proposal"] or {}).get("start") or []
+        p = [e[0] if isinstance(e, (list, tuple)) and e else e for e in p]
         proposed += len(p); dropped += len(p) - len(x["picked"] or [])
     return {"decisions": len(L), "ids_proposed": proposed, "ids_dropped_by_validator": dropped,
             "invalid_answers": sum(x["picked"] is None for x in L),
@@ -393,18 +413,38 @@ def transcript_stats(path: Path) -> dict:
 
 
 def _validate(ans, pending, free):
-    """Feasibility only: keep ids that are pending and fit, in the LLM's order."""
+    """Feasibility only: keep (job, size) pairs that are pending, legal and fit, in the LLM's order.
+    An entry is either a bare id (use the size its owner asked for) or [id, gpus]. The size is
+    CLAMPED into the job's legal range rather than rejected -- the LLM proposes, this decides."""
     if not ans or not isinstance(ans.get("start"), list):
         return None
     by_id = {j.identifier: j for j in pending}
-    picks = []
+    picks, used = [], 0
     for x in ans["start"]:
+        n = None
+        if isinstance(x, (list, tuple)) and len(x) == 2:
+            x, n = x
+        # models echo the packet's literal "id=43" rather than 43, so strip the label before
+        # parsing. Left unhandled this silently empties every pick list (interface, not reasoning).
+        if isinstance(x, str):
+            x = x.strip().removeprefix("id=")
         try:
             j = by_id.get(int(x))
+            n = int(n) if n is not None else None
         except (TypeError, ValueError):
             continue
-        if j and j not in picks and _sizes(j)[0] <= len(free) - sum(_sizes(p)[0] for p in picks):
-            picks.append(j)
+        if not j or any(j is p for p, _ in picks):
+            continue
+        lo, hi = _sizes(j)
+        if lo == hi:
+            k = lo                                  # rigid: one legal size
+        else:
+            # clamp into the legal range AND into what is still free: an over-ask becomes the most
+            # the job may legally have right now, rather than dropping a job that could have started.
+            k = max(lo, min(hi, len(free) - used,
+                            n if n is not None else int(j.attributes.get("req_nodes", lo))))
+        if used + k <= len(free):
+            picks.append((j, k)); used += k
     return picks
 
 
@@ -430,7 +470,8 @@ def _llm_decide(pending, free, ctx, debate: bool):
     ctx["transcript"].write(json.dumps({
         "t": ctx["now"], "free": len(free), "pending": len(pending), "packet": packet,
         "proposal": ans, "critic": final,
-        "picked": None if picks is None else [j.identifier for j in picks]}) + "\n")
+        "picked": None if picks is None else [j.identifier for j, _ in picks],
+        "sizes": None if picks is None else [k for _, k in picks]}) + "\n")
     ctx["transcript"].flush()
     return picks
 
@@ -440,11 +481,13 @@ def arm_llm(pending, free, ctx, debate=False):
         ctx["trivial"] += 1
         return arm_firstfit(pending, free, ctx)
     picks = _llm_decide(pending, free, ctx, debate)
-    if picks is None:
+    # an EMPTY pick list idles the cluster while jobs fit -- never right here, and in practice it
+    # means the answer failed to parse. Treat it as a fallback, not as a decision to hold.
+    if not picks:
         ctx["fallbacks"] += 1
         return arm_firstfit(pending, free, ctx)
-    for j in picks:
-        _start(j, free, ctx, len(pending))
+    for j, k in picks:
+        _start_at(j, free, ctx, k)
 
 
 ARMS = {"fcfs": arm_fcfs, "firstfit": arm_firstfit, "easy": arm_easy, "sjf": arm_sjf,
