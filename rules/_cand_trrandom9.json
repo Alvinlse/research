@@ -1,0 +1,1 @@
+{"branches": [{"if": ["prod_waiting", "<", 0], "then": {"ordering": "fcfs", "sizing": "adaptive"}}, {"if": ["prod_waiting", "<=", 5], "then": {"ordering": "sjf", "sizing": "adaptive"}}, {"if": ["offered_load", "<=", 3.0], "then": {"ordering": "sjf", "sizing": "greedy"}}], "default": {"ordering": "tier_sjf", "sizing": "as_requested"}}

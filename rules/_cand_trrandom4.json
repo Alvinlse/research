@@ -1,0 +1,1 @@
+{"branches": [{"if": ["free_gpus", "==", 16], "then": {"ordering": "tier_sjf", "sizing": "greedy"}}], "default": {"ordering": "easy", "sizing": "as_requested"}}

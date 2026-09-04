@@ -1,0 +1,1 @@
+{"branches": [{"if": ["free_gpus", "<=", 0], "then": {"ordering": "easy", "sizing": "as_requested"}}, {"if": ["free_gpus", "==", 1], "then": {"ordering": "declared_first", "sizing": "greedy"}}], "default": {"ordering": "declared_first", "sizing": "adaptive"}}

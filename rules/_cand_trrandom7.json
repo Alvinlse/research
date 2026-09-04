@@ -1,0 +1,1 @@
+{"branches": [{"if": ["prod_waiting", ">=", 2], "then": {"ordering": "sjf", "sizing": "adaptive"}}], "default": {"ordering": "firstfit", "sizing": "greedy"}}

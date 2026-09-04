@@ -1441,6 +1441,26 @@ POLICY_SELECT = ("You choose the scheduling policy for a GPU cluster for the nex
                  '"why": "one line naming the state feature that drove the choice"}.')
 
 
+
+def _load_fields(pending, ctx) -> dict:
+    """Two DIFFERENT quantities that were previously conflated under one name.
+
+    `queue_pressure` is waiting GPU demand over pool size -- instantaneous backlog. It was called
+    `offered_load`, which it is not: the window-level offered load used for stratification is
+    submitted GPU-hours per window-hour per GPU, and the two disagree most exactly when the queue is
+    empty but arrivals are heavy.
+    `arrival_load` is the trailing arrival rate over the last hour, in GPUs demanded per pool GPU.
+    It is computable online from what the scheduler has already seen, and unlike backlog it does not
+    read zero on a quiet cluster that is filling up.
+    """
+    pool = max(1, ctx.get("pool_n", 1))
+    now = ctx.get("now", 0)
+    window = 3600.0
+    recent = sum(g for t, g in ctx.get("arrivals", ()) if now - window <= t <= now)
+    return {"queue_pressure": sum(max(1, int(j.attributes.get("req_nodes", 1))) for j in pending) / pool,
+            "arrival_load": recent / pool}
+
+
 def _packet_policy(pending, free, ctx) -> str:
     """Cluster state plus the menu and the constraints: everything the choice may depend on."""
     pool = ctx.get("pool_n", 0)
@@ -1450,7 +1470,9 @@ def _packet_policy(pending, free, ctx) -> str:
     declared = sum(1 for j in pending if int(j.attributes.get("req_min", 0)) > 0)
     lines = [f"now={int(ctx['now'])}s pool={pool} free={len(free)} running={len(running)}",
              f"queue_depth={len(pending)} waiting_demand={demand} "
-             f"offered_load={demand / max(1, pool):.2f} prod_waiting={prod} declared_walltime={declared}",
+             f"queue_pressure={_load_fields(pending, ctx)['queue_pressure']:.2f} "
+             f"arrival_load_1h={_load_fields(pending, ctx)['arrival_load']:.2f} "
+             f"prod_waiting={prod} declared_walltime={declared}",
              f"current_policy=ordering:{ctx.get('sel_ordering', 'firstfit')} "
              f"sizing:{ctx.get('sel_sizing', 'as_requested')}",
              "", "ORDERING MENU:"]
@@ -1564,15 +1586,159 @@ def arm_market(pending, free, ctx):
     ctx["market_price"] = res.price
     ctx["market_clearings"] = ctx.get("market_clearings", 0) + 1
     award = res.allocation
-    # Award in descending value so the most valuable jobs get the GPUs when free runs short.
-    for job in sorted(pending, key=lambda j: -sum(bids.get(str(j.identifier), [0])[:award.get(str(j.identifier), 0)])):
-        k = award.get(str(job.identifier), 0)
-        lo, hi = _sizes(job)
-        k = min(k, len(free), hi)
-        if k < lo:                       # cannot run below its minimum: it waits
-            continue
-        _start_at(job, free, ctx, k)
-        ctx.setdefault("sizes", {})[job.identifier] = k
+    # The auction decides WHO runs and in what order; the SIZING rule decides how many GPUs, exactly
+    # as it does for every other ordering arm. An earlier version allocated the auction's award
+    # directly via _start_at, which never read ctx["sizer"] -- so market+as_requested,
+    # market+adaptive and market+greedy were one implementation under three names, and the menu was
+    # not the 24 distinct pairs it advertised. `_start` routes through `_size`, restoring the
+    # ordering-by-sizing factorisation that makes the arms comparable.
+    ranked = sorted((j for j in pending if award.get(str(j.identifier), 0) >= _sizes(j)[0]),
+                    key=lambda j: -sum(bids.get(str(j.identifier), [0])[:award.get(str(j.identifier), 0)]))
+    for job in ranked:
+        if not _fit(job, free, ctx, len(pending)):
+            continue                     # cannot be sized from what is free: it waits
+        _start(job, free, ctx, len(pending))
+
+
+# ---------------------------------------------------------------------------------------------
+# Rule synthesis: the model writes a POLICY-SELECTION PROGRAM once; code executes it every tick.
+# This is the manual/precedent idea with the compliance problem removed. Exp 51-53 could not
+# separate "the referee will not follow the rule" from "the rule is worthless", because the rule
+# was advisory text handed to another model (3b complied 11%, 14b 72%). Here the rule IS the
+# scheduler, so compliance is 100% by construction and the CONTENT is what gets measured.
+#
+# A TYPED FIELD TABLE, not prose. Exp 51's costliest lesson: paraphrase a field and the model
+# invents one ("incoming_prod_count" for a categorical), so the legal vocabulary is stated exactly
+# as the evaluator spells it.
+RULE_FIELDS = {
+    "offered_load": "float >= 0. INSTANTANEOUS backlog: waiting GPU demand divided by pool size. "
+                    "Reads ~0 whenever the queue is empty, even if heavy arrivals are imminent.",
+    "arrival_load": "float >= 0. Trailing 1 hour arrival rate: GPUs demanded by newly submitted jobs "
+                    "divided by pool size. Unlike offered_load this does NOT collapse on a quiet queue.",
+    "queue_depth": "int >= 0. Number of jobs waiting right now.",
+    "free_gpus": "int >= 0. GPUs free right now.",
+    "prod_waiting": "int >= 0. Number of waiting jobs in the production tier.",
+    "declared_walltime": "int >= 0. Number of waiting jobs that declared a walltime limit.",
+}
+RULE_OPS = (">=", ">", "<=", "<", "==")
+RULE_MAX_BRANCHES = 5
+
+
+def _validate_rule(rule) -> tuple[bool, str]:
+    """Structural + vocabulary check. A rule that fails is not repaired, it is refused."""
+    if not isinstance(rule, dict):
+        return False, "not an object"
+    branches, default = rule.get("branches"), rule.get("default")
+    if not isinstance(branches, list) or not branches:
+        return False, "no branches"
+    if len(branches) > RULE_MAX_BRANCHES:
+        return False, f"{len(branches)} branches > {RULE_MAX_BRANCHES}"
+    def _pair(d, where):
+        if not isinstance(d, dict):
+            return f"{where}: not an object"
+        if d.get("ordering") not in POLICY_MENU["ordering"]:
+            return f"{where}: unknown ordering {d.get('ordering')!r}"
+        if d.get("sizing") not in POLICY_MENU["sizing"]:
+            return f"{where}: unknown sizing {d.get('sizing')!r}"
+        return ""
+    err = _pair(default, "default")
+    if err:
+        return False, err
+    for i, b in enumerate(branches):
+        if not isinstance(b, dict):
+            return False, f"branch {i}: not an object"
+        cond = b.get("if")
+        if not (isinstance(cond, list) and len(cond) == 3):
+            return False, f"branch {i}: `if` must be [field, op, number]"
+        f, op, v = cond
+        if f not in RULE_FIELDS:
+            return False, f"branch {i}: unknown field {f!r}"
+        if op not in RULE_OPS:
+            return False, f"branch {i}: unknown operator {op!r}"
+        if not isinstance(v, (int, float)) or isinstance(v, bool):
+            return False, f"branch {i}: threshold {v!r} is not a number"
+        err = _pair(b.get("then"), f"branch {i}")
+        if err:
+            return False, err
+    return True, ""
+
+
+def _rule_state(pending, free, ctx) -> dict:
+    """The observable vocabulary, computed exactly as RULE_FIELDS describes it."""
+    pool = max(1, ctx.get("pool_n", 1))
+    lf = _load_fields(pending, ctx)
+    return {
+        "offered_load": lf["queue_pressure"],
+        "arrival_load": lf["arrival_load"],
+        "queue_depth": len(pending),
+        "free_gpus": len(free),
+        "prod_waiting": sum(1 for j in pending if j.attributes.get("tier") == "prod"),
+        "declared_walltime": sum(1 for j in pending if int(j.attributes.get("req_min", 0)) > 0),
+    }
+
+
+def _eval_rule(rule, state, ctx=None) -> tuple[str, str]:
+    """First matching branch wins; otherwise the default. Per-branch fire counts are recorded so a
+    rule whose precondition never holds is visible rather than silently inert (Exp 51's vacuous P1)."""
+    import operator
+    OPS = {">=": operator.ge, ">": operator.gt, "<=": operator.le, "<": operator.lt, "==": operator.eq}
+    for i, b in enumerate(rule["branches"]):
+        f, op, v = b["if"]
+        if OPS[op](state[f], v):
+            if ctx is not None:
+                ctx.setdefault("rule_fires", {})[str(i)] = ctx.setdefault("rule_fires", {}).get(str(i), 0) + 1
+            return b["then"]["ordering"], b["then"]["sizing"]
+    if ctx is not None:
+        ctx.setdefault("rule_fires", {})["default"] = ctx.setdefault("rule_fires", {}).get("default", 0) + 1
+    return rule["default"]["ordering"], rule["default"]["sizing"]
+
+
+RULE_SYNTH = ("You write the scheduling policy for a GPU cluster ONCE, as a small decision rule. "
+              + WORLD +
+              "\n\nYou do NOT schedule jobs and you will not be asked again: code evaluates your rule "
+              "at every scheduling point and applies the policy it selects. Write the rule you would "
+              "defend across a whole day of this workload, not one moment of it.\n"
+              "Each branch tests ONE field against ONE number. The first matching branch wins, so "
+              "order them from the most specific condition to the least. Use only the fields listed; "
+              "a field you invent makes the rule invalid and it will be refused.\n"
+              "Reply with JSON only:\n"
+              '{"branches": [{"if": ["<field>", "<op>", <number>], '
+              '"then": {"ordering": "<name>", "sizing": "<name>"}}, ...], '
+              '"default": {"ordering": "<name>", "sizing": "<name>"}, '
+              '"why": "one line for the shape of the rule"}')
+
+
+def _packet_synth(ctx) -> str:
+    """What a scheduler operator knows before the day starts: the machine, the menu, the vocabulary."""
+    lines = [f"CLUSTER: {ctx.get('pool_n', 0)} GPUs, jobs are malleable and may be resized while running.",
+             "", "FIELDS you may test (use these names EXACTLY):"]
+    lines += [f"  {k}: {v}" for k, v in RULE_FIELDS.items()]
+    lines += [f"  operators: {', '.join(RULE_OPS)}    at most {RULE_MAX_BRANCHES} branches", ""]
+    lines += ["ORDERING MENU:"] + [f"  {k}: {v}" for k, v in POLICY_MENU["ordering"].items()]
+    lines += ["", "SIZING MENU:"] + [f"  {k}: {v}" for k, v in POLICY_MENU["sizing"].items()]
+    lines += ["", "CLUSTER RULES:", POLICY_RULES]
+    return "\n".join(lines)
+
+
+def arm_rule_synth(pending, free, ctx):
+    """Synthesise the rule on the first call (or load a frozen one), then execute it deterministically."""
+    from pins.correction import _ask
+    rule = ctx.get("rule")
+    if rule is None:
+        ans = _ask(RULE_SYNTH, _packet_synth(ctx), ctx["model"], ctx["host"], ctx["cache"],
+                   "es-rule-synth", num_predict=500)
+        ctx["calls"] += 1
+        ok, why = _validate_rule(ans)
+        if ok:
+            rule = ans
+        else:                       # refused, not repaired: the fallback is a named constant
+            ctx["rule_invalid"] = why
+            rule = {"branches": [], "default": {"ordering": "firstfit", "sizing": "as_requested"}}
+        ctx["rule"] = rule
+        ctx["rule_text"] = ans
+    o, z = _eval_rule(rule, _rule_state(pending, free, ctx), ctx)
+    ctx["sizer"] = z
+    ARMS[o](pending, free, ctx)
 
 
 ARMS = {"fcfs": arm_fcfs, "firstfit": arm_firstfit, "easy": arm_easy, "sjf": arm_sjf,
@@ -1584,6 +1750,7 @@ ARMS = {"fcfs": arm_fcfs, "firstfit": arm_firstfit, "easy": arm_easy, "sjf": arm
         "protect": arm_firstfit, "resize_single": arm_firstfit, "text_single": arm_firstfit,
         "text_debate": arm_firstfit,
         "policy_select": arm_policy_select,
+        "rule_synth": arm_rule_synth,
         "resize_debate": arm_firstfit,
         "single": lambda p, f, c: arm_llm(p, f, c, "single"),
         "debate": lambda p, f, c: arm_llm(p, f, c, "debate"),
@@ -1600,6 +1767,7 @@ ARMS = {"fcfs": arm_fcfs, "firstfit": arm_firstfit, "easy": arm_easy, "sjf": arm
 def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, tag: str = "",
         est_default: int = 86400, quiet: bool = False, sizer: str = "as_requested",
         switch_at: float = 1.0, switch_on: str = "queue", sel_every: int = 1800,
+        rule: Path | None = None, rule_out: Path | None = None,
         packet_order: str = "submit", gate: str = "scarcity", resize_cooldown: int = 600,
         resize_budget: int = CORRECT_BUDGET, text_exceptions: Path | None = None,
         text_labels: Path | None = None) -> dict:
@@ -1629,7 +1797,8 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
            "resize_events": 0, "resized_gpus": 0, "size_history": {}, "last_resize": {},
            "resize_cooldown": resize_cooldown, "resize_budget": resize_budget,
            "resize_cooldown_blocks": 0, "protected_events": 0,
-           "sel_every": sel_every, "sel_ordering": "firstfit", "sel_sizing": "as_requested"}
+           "sel_every": sel_every, "sel_ordering": "firstfit", "sel_sizing": "as_requested",
+           "rule": json.loads(rule.read_text()) if rule else None}
     notes_path = text_exceptions or world / "in/text_exceptions.json"
     if arm in ("text_single", "text_debate") and notes_path.exists():
         note_doc = json.loads(notes_path.read_text())
@@ -1644,6 +1813,16 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
         # feature that predicted the per-window winner. Queue COUNT is not the same quantity.
         ctx["pending_demand"] = sum(max(1, int(j.attributes.get("req_nodes", 1))) for j in pending)
         ctx["pool_n"] = len(nodes)
+        # Arrivals, so the packet can carry a load figure that does NOT read ~0 on an empty queue.
+        # `queue_pressure` is instantaneous backlog; it collapses exactly when a quiet cluster is
+        # about to be hit, which is when the long-horizon choice matters most.
+        seen = ctx.setdefault("seen_jobs", set())
+        for j in jobs:
+            if j.identifier not in seen:
+                seen.add(j.identifier)
+                ctx.setdefault("arrivals", []).append(
+                    (float(getattr(j, "submit_time", ctx["now"])),
+                     max(1, int(j.attributes.get("req_nodes", 1)))))
         free = [n for n in nodes if n.state == NodeState.FREE]
         # A malleable job pauses at each work boundary and may change size before continuing. Keep
         # this deterministic: debate still decides waiting-job starts, never reconfiguration maths.
@@ -1678,6 +1857,12 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
         sim.wait(timeout=60)
         ctx["transcript"].close()
     (world / f"out/{tag}_sizes.json").write_text(json.dumps({str(k): v for k, v in ctx.get("sizes", {}).items()}))
+    if ctx.get("rule") is not None:
+        (world / f"out/{tag}_rule.json").write_text(json.dumps(
+            {"rule": ctx["rule"], "raw": ctx.get("rule_text"), "fires": ctx.get("rule_fires", {}),
+             "invalid": ctx.get("rule_invalid")}, indent=1))
+        if rule_out and not rule_out.exists():
+            rule_out.write_text(json.dumps(ctx["rule"], indent=1))
     if ctx.get("sel_log"):
         (world / f"out/{tag}_policy_log.json").write_text(json.dumps(ctx["sel_log"], indent=1))
     (world / f"out/{tag}_size_history.json").write_text(json.dumps(
@@ -1690,8 +1875,10 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
                                     world)
     llm_arms = ("single", "debate", "negotiate", "bo3", "correct", "neg_signed",
                 "correct3", "sham", "neg_v2", "resize_single", "text_single", "resize_debate",
-                "text_debate")
+                "text_debate", "policy_select", "rule_synth")
     res.update(arm=arm, sizer=sizer, switch_at=switch_at, switch_on=switch_on,
+               rule_frozen=bool(rule), rule_invalid=ctx.get("rule_invalid"),
+               rule_fires=ctx.get("rule_fires", {}),
                market_clearings=ctx.get("market_clearings", 0),
                sel_every=sel_every, sel_invalid=ctx.get("sel_invalid", 0),
                sel_counts=ctx.get("sel_counts", {}), packet_order=packet_order, gate=gate,
@@ -2003,6 +2190,8 @@ if __name__ == "__main__":
     r.add_argument("--model", default="qwen2.5:14b"); r.add_argument("--interval", type=int, default=300); r.add_argument("--tag", default="")
     r.add_argument("--est-default", type=int, default=86400, help="EASY runtime estimate (s) for jobs with no declared limit")
     r.add_argument("--sizer", choices=["as_requested", "greedy", "adaptive", "auto"], default="as_requested")
+    r.add_argument("--rule", type=Path, help="rule_synth: execute this FROZEN rule instead of writing one")
+    r.add_argument("--rule-out", type=Path, help="rule_synth: save the synthesised rule here")
     r.add_argument("--sel-every", type=int, default=1800,
                    help="policy_select: seconds between policy re-selections")
     r.add_argument("--switch-on", choices=["queue", "load"], default="queue",
@@ -2053,6 +2242,7 @@ if __name__ == "__main__":
     else:
         run(a.world, a.arm, a.model, a.interval, a.tag, a.est_default, sizer=a.sizer,
             switch_at=a.switch_at, switch_on=a.switch_on, sel_every=a.sel_every,
+            rule=a.rule, rule_out=a.rule_out,
             packet_order=a.packet_order, gate=a.gate, resize_cooldown=a.resize_cooldown,
             resize_budget=a.resize_budget, text_exceptions=a.text_exceptions,
             text_labels=a.text_labels)

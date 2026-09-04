@@ -1,0 +1,431 @@
+[
+ {
+  "rule": {
+   "branches": [
+    {
+     "if": [
+      "declared_walltime",
+      ">=",
+      5
+     ],
+     "then": {
+      "ordering": "firstfit",
+      "sizing": "adaptive"
+     }
+    },
+    {
+     "if": [
+      "prod_waiting",
+      "<",
+      5
+     ],
+     "then": {
+      "ordering": "sjf",
+      "sizing": "as_requested"
+     }
+    }
+   ],
+   "default": {
+    "ordering": "market",
+    "sizing": "as_requested"
+   }
+  },
+  "score": 29844.333333333332
+ },
+ {
+  "rule": {
+   "branches": [
+    {
+     "if": [
+      "prod_waiting",
+      "==",
+      0
+     ],
+     "then": {
+      "ordering": "market",
+      "sizing": "adaptive"
+     }
+    },
+    {
+     "if": [
+      "queue_depth",
+      "==",
+      1
+     ],
+     "then": {
+      "ordering": "tier_fcfs",
+      "sizing": "as_requested"
+     }
+    },
+    {
+     "if": [
+      "offered_load",
+      ">=",
+      3.0
+     ],
+     "then": {
+      "ordering": "fcfs",
+      "sizing": "adaptive"
+     }
+    },
+    {
+     "if": [
+      "queue_depth",
+      "<",
+      100
+     ],
+     "then": {
+      "ordering": "fcfs",
+      "sizing": "greedy"
+     }
+    }
+   ],
+   "default": {
+    "ordering": "sjf",
+    "sizing": "adaptive"
+   }
+  },
+  "score": 42816
+ },
+ {
+  "rule": {
+   "branches": [
+    {
+     "if": [
+      "declared_walltime",
+      ">",
+      5
+     ],
+     "then": {
+      "ordering": "sjf",
+      "sizing": "greedy"
+     }
+    },
+    {
+     "if": [
+      "queue_depth",
+      "<",
+      10
+     ],
+     "then": {
+      "ordering": "fcfs",
+      "sizing": "adaptive"
+     }
+    },
+    {
+     "if": [
+      "declared_walltime",
+      ">=",
+      1
+     ],
+     "then": {
+      "ordering": "declared_first",
+      "sizing": "as_requested"
+     }
+    },
+    {
+     "if": [
+      "free_gpus",
+      "==",
+      8
+     ],
+     "then": {
+      "ordering": "sjf",
+      "sizing": "adaptive"
+     }
+    }
+   ],
+   "default": {
+    "ordering": "declared_first",
+    "sizing": "greedy"
+   }
+  },
+  "score": 117111.25
+ },
+ {
+  "rule": {
+   "branches": [
+    {
+     "if": [
+      "declared_walltime",
+      "<",
+      0
+     ],
+     "then": {
+      "ordering": "market",
+      "sizing": "as_requested"
+     }
+    },
+    {
+     "if": [
+      "prod_waiting",
+      "<",
+      1
+     ],
+     "then": {
+      "ordering": "tier_fcfs",
+      "sizing": "greedy"
+     }
+    },
+    {
+     "if": [
+      "free_gpus",
+      ">=",
+      8
+     ],
+     "then": {
+      "ordering": "firstfit",
+      "sizing": "as_requested"
+     }
+    },
+    {
+     "if": [
+      "declared_walltime",
+      "<",
+      5
+     ],
+     "then": {
+      "ordering": "market",
+      "sizing": "greedy"
+     }
+    }
+   ],
+   "default": {
+    "ordering": "fcfs",
+    "sizing": "adaptive"
+   }
+  },
+  "score": 51505.583333333336
+ },
+ {
+  "rule": {
+   "branches": [
+    {
+     "if": [
+      "free_gpus",
+      "==",
+      16
+     ],
+     "then": {
+      "ordering": "tier_sjf",
+      "sizing": "greedy"
+     }
+    }
+   ],
+   "default": {
+    "ordering": "easy",
+    "sizing": "as_requested"
+   }
+  },
+  "score": 40082.5
+ },
+ {
+  "rule": {
+   "branches": [
+    {
+     "if": [
+      "queue_depth",
+      ">=",
+      5
+     ],
+     "then": {
+      "ordering": "sjf",
+      "sizing": "adaptive"
+     }
+    },
+    {
+     "if": [
+      "declared_walltime",
+      "<=",
+      5
+     ],
+     "then": {
+      "ordering": "market",
+      "sizing": "adaptive"
+     }
+    },
+    {
+     "if": [
+      "declared_walltime",
+      "==",
+      0
+     ],
+     "then": {
+      "ordering": "tier_sjf",
+      "sizing": "greedy"
+     }
+    },
+    {
+     "if": [
+      "declared_walltime",
+      ">",
+      1
+     ],
+     "then": {
+      "ordering": "tier_sjf",
+      "sizing": "as_requested"
+     }
+    },
+    {
+     "if": [
+      "prod_waiting",
+      "<=",
+      1
+     ],
+     "then": {
+      "ordering": "tier_sjf",
+      "sizing": "adaptive"
+     }
+    }
+   ],
+   "default": {
+    "ordering": "tier_fcfs",
+    "sizing": "adaptive"
+   }
+  },
+  "score": 39939.666666666664
+ },
+ {
+  "rule": {
+   "branches": [
+    {
+     "if": [
+      "offered_load",
+      "==",
+      2.0
+     ],
+     "then": {
+      "ordering": "tier_fcfs",
+      "sizing": "adaptive"
+     }
+    },
+    {
+     "if": [
+      "declared_walltime",
+      ">=",
+      1
+     ],
+     "then": {
+      "ordering": "easy",
+      "sizing": "greedy"
+     }
+    },
+    {
+     "if": [
+      "declared_walltime",
+      ">",
+      0
+     ],
+     "then": {
+      "ordering": "declared_first",
+      "sizing": "as_requested"
+     }
+    }
+   ],
+   "default": {
+    "ordering": "firstfit",
+    "sizing": "as_requested"
+   }
+  },
+  "score": 145422.75
+ },
+ {
+  "rule": {
+   "branches": [
+    {
+     "if": [
+      "prod_waiting",
+      ">=",
+      2
+     ],
+     "then": {
+      "ordering": "sjf",
+      "sizing": "adaptive"
+     }
+    }
+   ],
+   "default": {
+    "ordering": "firstfit",
+    "sizing": "greedy"
+   }
+  },
+  "score": 75248.5
+ },
+ {
+  "rule": {
+   "branches": [
+    {
+     "if": [
+      "free_gpus",
+      "<=",
+      0
+     ],
+     "then": {
+      "ordering": "easy",
+      "sizing": "as_requested"
+     }
+    },
+    {
+     "if": [
+      "free_gpus",
+      "==",
+      1
+     ],
+     "then": {
+      "ordering": "declared_first",
+      "sizing": "greedy"
+     }
+    }
+   ],
+   "default": {
+    "ordering": "declared_first",
+    "sizing": "adaptive"
+   }
+  },
+  "score": 40518.083333333336
+ },
+ {
+  "rule": {
+   "branches": [
+    {
+     "if": [
+      "prod_waiting",
+      "<",
+      0
+     ],
+     "then": {
+      "ordering": "fcfs",
+      "sizing": "adaptive"
+     }
+    },
+    {
+     "if": [
+      "prod_waiting",
+      "<=",
+      5
+     ],
+     "then": {
+      "ordering": "sjf",
+      "sizing": "adaptive"
+     }
+    },
+    {
+     "if": [
+      "offered_load",
+      "<=",
+      3.0
+     ],
+     "then": {
+      "ordering": "sjf",
+      "sizing": "greedy"
+     }
+    }
+   ],
+   "default": {
+    "ordering": "tier_sjf",
+    "sizing": "as_requested"
+   }
+  },
+  "score": 42527.833333333336
+ }
+]

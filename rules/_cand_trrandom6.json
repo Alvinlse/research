@@ -1,0 +1,1 @@
+{"branches": [{"if": ["offered_load", "==", 2.0], "then": {"ordering": "tier_fcfs", "sizing": "adaptive"}}, {"if": ["declared_walltime", ">=", 1], "then": {"ordering": "easy", "sizing": "greedy"}}, {"if": ["declared_walltime", ">", 0], "then": {"ordering": "declared_first", "sizing": "as_requested"}}], "default": {"ordering": "firstfit", "sizing": "as_requested"}}
