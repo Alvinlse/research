@@ -381,13 +381,27 @@ PACKET_CAP = 40
 PACKET_VERSION = os.environ.get("ES_PACKET", "v2")
 
 
-def _packet(pending, free, now):
-    if PACKET_VERSION == "v1":
+def _packet(pending, free, now, order: str = "submit"):
+    """`order` controls DISPLAY order only; the same jobs are shown either way, and every row
+    already carries waited_s, so shuffling loses no information. The default labels the list
+    "first N by submit", which reads as an endorsement of arrival order -- the critic's answers
+    matched plain first-fit on 5.1 / 17.2 / 29.5% of decisions as it was told more, and arrival
+    priming is the leading hypothesis. `shuffled` removes the cue so the effect can be measured
+    rather than assumed. Seeded on the sim clock, so a run stays reproducible."""
+    shown = pending[:PACKET_CAP]
+    if order == "shuffled":
+        shown = list(shown); random.Random(int(now)).shuffle(shown)
+        head = (f"now={int(now)}s free_gpus={len(free)} pending={len(pending)} "
+                f"(showing {len(shown)} of them, IN NO PARTICULAR ORDER -- the list order carries no "
+                f"priority, use the fields). You can start jobs totalling at most {len(free)} GPUs "
+                f"now; list only those, in the order you want them started.")
+        lines = [head]
+    elif PACKET_VERSION == "v1":
         lines = [f"now={int(now)}s free_gpus={len(free)} pending={len(pending)} (showing first {PACKET_CAP} by submit)"]
     else:
         lines = [f"now={int(now)}s free_gpus={len(free)} pending={len(pending)} (showing first {PACKET_CAP} by submit). "
                  f"You can start jobs totalling at most {len(free)} GPUs now; list only those, in start order."]
-    for j in pending[:PACKET_CAP]:
+    for j in shown:
         a = j.attributes
         # worlds built before the tier label keep the old priority field so old runs replay byte-identically
         cls = f"tier={a['tier']}" if "tier" in a else f"priority={a['priority']}"
@@ -477,7 +491,7 @@ def _llm_decide(pending, free, ctx, debate: bool):
     from pins.correction import _ask
     tiered = "tier" in pending[0].attributes
     system, critic = SYSTEM + (TIER_NOTE if tiered else ""), CRITIC + (TIER_NOTE if tiered else "")
-    packet = _packet(pending, free, ctx["now"])
+    packet = _packet(pending, free, ctx["now"], ctx.get("packet_order", "submit"))
     ans = _ask(system, packet, ctx["model"], ctx["host"], ctx["cache"], "es-propose", num_predict=300)
     ctx["calls"] += 1
     if ctx["calls"] % 50 == 0:
@@ -524,7 +538,8 @@ ARMS = {"fcfs": arm_fcfs, "firstfit": arm_firstfit, "easy": arm_easy, "sjf": arm
 
 # ---------------------------------------------------------------- run
 def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, tag: str = "",
-        est_default: int = 86400, quiet: bool = False, sizer: str = "as_requested") -> dict:
+        est_default: int = 86400, quiet: bool = False, sizer: str = "as_requested",
+        packet_order: str = "submit") -> dict:
     from elastisim_python import JobState, NodeState, pass_algorithm
     from pins.llm_agent import HOST
     world = world.resolve()
@@ -544,7 +559,7 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
            "invocations": 0, "now": 0.0,
            "transcript": open(world / f"out/{tag}_transcript.jsonl", "w"),   # one line per LLM decision
            "est": lambda j: (int(j.attributes["req_min"]) * 60) or est_default, "running": [],
-           "sizer": sizer}
+           "sizer": sizer, "packet_order": packet_order}
     fn = ARMS[arm]
 
     def schedule(jobs, nodes, system):
@@ -569,7 +584,7 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
         ctx["transcript"].close()
     (world / f"out/{tag}_sizes.json").write_text(json.dumps({str(k): v for k, v in ctx.get("sizes", {}).items()}))
     res = summarise(stats, world)
-    res.update(arm=arm, sizer=sizer, model=model if arm in ("single", "debate") else None, interval=interval,
+    res.update(arm=arm, sizer=sizer, packet_order=packet_order, model=model if arm in ("single", "debate") else None, interval=interval,
                packet=PACKET_VERSION if arm in ("single", "debate") else None,
                est_default=est_default if arm == "easy" else None,
                **transcript_stats(world / f"out/{tag}_transcript.jsonl"),
@@ -851,6 +866,8 @@ if __name__ == "__main__":
     r.add_argument("--model", default="qwen2.5:14b"); r.add_argument("--interval", type=int, default=300); r.add_argument("--tag", default="")
     r.add_argument("--est-default", type=int, default=86400, help="EASY runtime estimate (s) for jobs with no declared limit")
     r.add_argument("--sizer", choices=["as_requested", "greedy", "adaptive"], default="as_requested")
+    r.add_argument("--packet-order", choices=["submit", "shuffled"], default="submit",
+                   help="display order of the queue in the LLM packet; shuffled removes the arrival-order cue")
     b.add_argument("--load", type=float, default=0, help="size the pool by offered load when --pool 0")
     s = sub.add_parser("summary"); s.add_argument("--world", type=Path, required=True)
     w = sub.add_parser("sweep"); w.add_argument("--days", default="3:227:7", help="start:stop:step of window start days")
@@ -881,4 +898,5 @@ if __name__ == "__main__":
     elif a.cmd == "sweep-report":
         sweep_report(a.out, a.rebuild)
     else:
-        run(a.world, a.arm, a.model, a.interval, a.tag, a.est_default, sizer=a.sizer)
+        run(a.world, a.arm, a.model, a.interval, a.tag, a.est_default, sizer=a.sizer,
+            packet_order=a.packet_order)
