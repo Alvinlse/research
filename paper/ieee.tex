@@ -24,8 +24,8 @@
 
 \begin{document}
 
-\title{Utilisation Is the Wrong Objective for Elastic GPU Scheduling\\
-And the Rigid Replay That Hides It}
+\title{Can Multi-LLM Negotiation Improve Scheduling Decisions?\\
+A Market View of Elastic GPU Job Scheduling}
 
 \author{\IEEEauthorblockN{Lay Kim Seng}
 \IEEEauthorblockA{Cyberscience Center, Tohoku University\\
@@ -37,28 +37,27 @@ lay.kim.seng.q4@dc.tohoku.ac.jp}
 \maketitle
 
 \begin{abstract}
-AI training and inference jobs are \emph{elastic}: they scale across devices, so a scheduler on
-such a workload chooses not only which job runs but how large it is. Almost every published
-evaluation instead replays a trace \emph{rigidly}, with each job pinned to the size it
-historically used. We show that this choice is not a simplification but a suppression. Replaying
-the MIT Supercloud GPU trace through a malleability-aware batch simulator, we find (1) in rigid
-mode the total device-seconds a workload consumes is fixed, so schedulers can differ only in
-\emph{when} work runs: across five schedulers, occupancy differs by at most $1.3$ points and the
-idle capacity any ordering rule can recover is $0.2\%$ --- the setting cannot answer an
-efficiency question, yet is where efficiency claims are routinely made; (2) restoring
-moldability makes \emph{sizing}, not ordering, the dominant decision --- on $12$ pre-registered
-windows stratified by offered load and priority mix, the sizing rule alone moves mean waiting
-time by $7\times$ ($+232{,}451 \pm 60{,}823$\,s, $p<10^{-4}$); (3) utilisation is then an
-\emph{anti-metric}: the rule that maximises occupancy is the worst scheduler we measure on every
-service axis, and in $12$ of $12$ windows the highest-occupancy arm is the worst-service arm;
-and (4) the obvious remedy does not work --- an adaptive rule that shrinks jobs under contention
-fails to beat simply honouring each job's requested size (mean wait $p=0.77$; SLA violations
-$10.2$ points \emph{worse}, $p=0.035$), so sizing under uncertainty is an open decision rather
-than a solved one. We retain, on an authored exception suite that no public trace supplies, the
-finding that a debate between LLM reviewers corrects a single model's rulings at an identical
-call budget ($43/81$ vs.\ $29/81$, $p=0.0007$). We conclude that occupancy should be retired as
-a headline metric for elastic workloads, and that the rigid replay be treated as an instrument
-that cannot detect the difference.
+A reasoning LLM has been proposed as the decision-maker for cluster scheduling, and multi-agent
+structures --- one model proposing, another contesting --- as the way to make that decision
+reliable. We ask whether the negotiation earns its cost on GPU job scheduling, and we argue that
+answering it requires first fixing the setting, because the standard one cannot express the
+question. Replaying the MIT Supercloud GPU trace through a malleability-aware batch simulator, we
+show that a \emph{rigid} replay --- every job pinned to the size it historically used, as in
+almost all published evaluations --- fixes the device-seconds a workload consumes, leaving
+schedulers to differ only in \emph{when} work runs: five schedulers separate by at most $1.3$
+points of occupancy, only $0.2\%$ of idle capacity is recoverable by any ordering rule, and no
+ordering effect survives multiplicity correction. There is nothing for a negotiation to win.
+Restoring elasticity creates a genuine decision --- how large to make each job --- and on $12$
+windows selected from workload statistics alone, stratified by offered load and priority mix,
+that decision moves mean waiting time by $7\times$ ($p<10^{-4}$). It also exposes a trap for any
+agent optimising the usual objective: the rule maximising utilisation is the worst scheduler we
+measure on every service axis, and holds the highest occupancy in $12$ of $12$ windows.
+Deterministic sizing does not solve the decision either --- an adaptive rule fails to beat simply
+honouring each job's requested size ($p=0.77$ on waiting; $10.2$ points worse on SLA,
+$p=0.035$) --- which leaves it genuinely open, and therefore a fair test.
+\todo{headline: single vs debate vs the deterministic floor across the 12 windows; runs in
+flight. Retain from the authored exception suite: debate corrects a single model's rulings at an
+identical call budget, $43/81$ vs.\ $29/81$, $p=0.0007$.}
 \end{abstract}
 
 \begin{IEEEkeywords}
