@@ -440,8 +440,15 @@ def _validate(ans, pending, free):
     picks, used = [], 0
     for x in ans["start"]:
         n = None
-        if isinstance(x, (list, tuple)) and len(x) == 2:
-            x, n = x
+        if isinstance(x, (list, tuple)):
+            # models emit [id, gpus], and also bare [id] -- treat the latter as an unsized pick
+            # rather than letting int([id]) throw and silently empty the whole decision.
+            if len(x) == 2:
+                x, n = x
+            elif len(x) == 1:
+                x = x[0]
+            else:
+                continue
         # models echo the packet's literal "id=43" rather than 43, so strip the label before
         # parsing. Left unhandled this silently empties every pick list (interface, not reasoning).
         if isinstance(x, str):
