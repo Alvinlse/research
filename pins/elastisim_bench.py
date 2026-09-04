@@ -437,6 +437,17 @@ def _anchor_plan(pending, free, ctx):
     return plan
 
 
+def _anchor_line(plan, free) -> str:
+    """State the baseline AND the capacity arithmetic. Without `unsold` and each job's headroom the
+    model has to subtract the anchor from free_gpus and accumulate its own deltas to stay feasible
+    -- which is exactly the arithmetic the signed contract exists to take away from it."""
+    used = sum(k for _, k in plan)
+    rows = "; ".join(f"job {j.identifier} -> {k} GPU (may go up to {_sizes(j)[1]})"
+                     for j, k in plan[:PACKET_CAP]) or "nothing"
+    return (f"the deterministic baseline for this moment: {rows}\n"
+            f"it allocates {used} of the {len(free)} free GPUs, leaving {len(free) - used} unsold.")
+
+
 def _apply_correction(plan, ans, pending, free):
     """Delegate to pins.correction_signed: the same parser, the same max(gained,lost) disruption
     budget, and the same funding rule (revoke from the least-valued units, never from a
@@ -446,7 +457,7 @@ def _apply_correction(plan, ans, pending, free):
 
     A non-empty violations list means the decision is REJECTED and the anchor stands, which is why
     this arm cannot finish worse than its deterministic baseline."""
-    from pins.correction_signed import _parse_decision, apply_signed, SIGNED_BUDGET
+    from pins.correction_signed import _parse_decision, apply_signed
     by_id = {str(j.identifier): j for j in pending}
     # every pending job is in the allocation, at 0 if the anchor does not start it -- otherwise a
     # correction that PROMOTES a waiting job would be rejected as naming an unknown id
@@ -454,16 +465,23 @@ def _apply_correction(plan, ans, pending, free):
     for j, k in plan:
         alloc[str(j.identifier)] = k
     floors = {jid: _sizes(j)[0] for jid, j in by_id.items()}
-    # least-valued first: batch before prod, then shortest-waiting -- these give up GPUs first
-    ranking = sorted((float(j.attributes.get("tier") == "prod") * 1e9 + j.submit_time, jid)
+    # least-valued donates first: batch before prod, then SHORTEST-waiting. submit_time ascending
+    # is oldest-first, i.e. longest-waiting -- the opposite of what we want -- so negate it.
+    ranking = sorted((float(j.attributes.get("tier") == "prod") * 1e9 - j.submit_time, jid)
                      for jid, j in by_id.items())
     dec = _parse_decision(ans)
     if dec.get("_source") == "fallback":     # nothing parseable came back
         return plan, "no parse"
+    # Normalise every delta so the resulting size is within [0, hi] BEFORE funding: apply_signed
+    # has no per-job maximum, so an over-large ask would otherwise be costed against capacity and
+    # the disruption budget as phantom GPUs that a later clip removes.
+    dec["changes"] = {jid: n for jid, n in (
+        (jid, max(-alloc.get(jid, 0), min(n, _sizes(by_id[jid])[1] - alloc.get(jid, 0))))
+        for jid, n in dec["changes"].items() if jid in by_id) if n}
     if not dec["changes"] and not dec["hold_free"]:
         return plan, "no change"             # the right answer for an ordinary scene
     new_alloc, viol = apply_signed(alloc, dec, len(free),
-                                   ranking=ranking, floors=floors, budget=SIGNED_BUDGET)
+                                   ranking=ranking, floors=floors, budget=CORRECT_BUDGET)
     if viol:
         return plan, "; ".join(viol)[:40]
     out = []
@@ -480,13 +498,21 @@ def _apply_correction(plan, ans, pending, free):
 # with opposed interests argue, a referee rules, and the ruling is a signed EDIT to a
 # deterministic plan rather than a plan of its own. It answers the multi-agent question (unlike
 # `correct`, which is single-agent) while keeping the property `negotiate` lacks -- an unusable
-# ruling leaves the anchor standing, so the arm cannot finish worse than its baseline.
+# ruling leaves the anchor standing. That is safety against unusable actions, not a guarantee of improvement --
+        # an accepted correction can still hurt, and it perturbs every later queue state.
 # Each role is told it does NOT produce an allocation, and that the anchor's ordinary sizing is
 # already correct: an advocate should speak only where it has a reason the sizer could not see.
 _ANCHOR_RULE = (" A deterministic scheduler has ALREADY chosen which jobs to start and how large "
                 "to make each one, sizing each job as its owner requested. That baseline is "
                 "competent. Ordinary urgency, an ordinary size and ordinary scarcity are ALREADY "
-                "in it and are NOT reasons to change anything. You do NOT produce a schedule.")
+                "in it and are NOT reasons to change anything. You do NOT produce a schedule.\n"
+                # correction_signed's contract, dropped in the first port: without it the model
+                # tries to balance the books itself and asks for GPUs that do not exist (7 of 11
+                # smoke rulings were unfundable).
+                "You do NOT need to make the numbers add up. Code funds every grant: it decides "
+                "which jobs give up capacity, refuses anything it cannot pay for, and leaves the "
+                "baseline standing if your judgement cannot be funded. Say what SHOULD change and "
+                "why; do not do the arithmetic.")
 DEMAND_SIGNED = ("You are the DEMAND-side reviewer, speaking for the waiting jobs. " + WORLD +
                  _ANCHOR_RULE +
                  " Your only question is: which jobs should get MORE than the baseline gave them, "
@@ -653,10 +679,10 @@ def _llm_decide(pending, free, ctx, mode: str):
     if mode == "neg_signed":
         # negotiation that emits a CORRECTION: demand and supply argue about the deterministic
         # plan, the referee rules, and apply_signed funds the ruling. A rejected ruling leaves
-        # the anchor standing, so the arm cannot finish worse than its baseline.
+        # the anchor standing. That is safety against unusable actions, not a guarantee of improvement --
+        # an accepted correction can still hurt, and it perturbs every later queue state.
         plan = _anchor_plan(pending, free, ctx)
-        shown = "; ".join(f"job {j.identifier} -> {k} GPU" for j, k in plan[:PACKET_CAP]) or "nothing"
-        base = packet + f"\n\nthe deterministic baseline for this moment: {shown}"
+        base = packet + "\n\n" + _anchor_line(plan, free)
         d = _ask(DEMAND_SIGNED + T, base, ctx["model"], ctx["host"], ctx["cache"], "es-dsigned", num_predict=300)
         sup = _ask(SUPPLY_SIGNED + T, base, ctx["model"], ctx["host"], ctx["cache"], "es-ssigned", num_predict=300)
         ctx["calls"] += 2
@@ -676,8 +702,7 @@ def _llm_decide(pending, free, ctx, mode: str):
         return picks
     if mode == "correct":
         plan = _anchor_plan(pending, free, ctx)
-        shown = "; ".join(f"job {j.identifier} -> {k} GPU" for j, k in plan[:PACKET_CAP]) or "nothing"
-        user = packet + f"\n\nthe deterministic scheduler's plan for this moment: {shown}"
+        user = packet + "\n\n" + _anchor_line(plan, free)
         ans = _ask(CORRECTOR + T, user, ctx["model"], ctx["host"], ctx["cache"], "es-correct",
                    num_predict=300)
         ctx["calls"] += 1
