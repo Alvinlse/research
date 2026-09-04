@@ -24,8 +24,8 @@
 
 \begin{document}
 
-\title{Does the LLM Earn Its Cost in GPU Scheduling?\\
-A Gated Architecture That Separates Efficiency from Exception Handling}
+\title{Utilisation Is the Wrong Objective for Elastic GPU Scheduling\\
+And the Rigid Replay That Hides It}
 
 \author{\IEEEauthorblockN{Lay Kim Seng}
 \IEEEauthorblockA{Cyberscience Center, Tohoku University\\
@@ -37,25 +37,28 @@ lay.kim.seng.q4@dc.tohoku.ac.jp}
 \maketitle
 
 \begin{abstract}
-On a saturated GPU cluster, utilisation and SLA compliance trade off through a rationing
-decision: whose safety margin gets cut. Recent work proposes letting a reasoning LLM make that
-decision. We test whether it earns its cost, by decomposition rather than by a single arm. On
-the Alibaba cluster-trace-gpu-v2020 replayed as a two-sided allocation game (32 paired seeds,
-two progress laws), (1) a deterministic bid/ask market wins every efficiency metric —
-utilisation, useful utilisation, oracle regret — against every LLM arm at zero tokens, with a
-null deadline effect; (2) the largest service-quality lever we measure is also
-deterministic: ordering grants by current deadline laxity cuts violations from 23.8\% to 7.4\%
-($-16.4 \pm 3.1$\sig) at zero tokens; (3) the reasoning layer earns its cost precisely on
-\emph{text exceptions} the numbers cannot express — on a pre-registered suite of 81 such cases,
-a debate of LLM reviewers corrects a single model's rulings (43/81 vs.\ 29/81 at an identical
-call budget, one-sided exact McNemar $p=0.0007$), while the same budget spent on best-of-$N$
-sampling buys nothing ($p=0.25$); and (4) the boundary is exact, not inferred: the same
-escalation, run unmodified inside the simulator, is a literal no-op — zero LLM calls, zero
-changes, an allocation identical to the bare market tick for tick — because public GPU traces
-carry no operator free text. Invoked where no exception exists, reasoning \emph{costs} accuracy
-(12/17 vs.\ the market's 16/17). We conclude that the deterministic layer should decide, and
-reasoning should be gated behind a contextual trigger: a capability that costs nothing until
-text arrives.
+AI training and inference jobs are \emph{elastic}: they scale across devices, so a scheduler on
+such a workload chooses not only which job runs but how large it is. Almost every published
+evaluation instead replays a trace \emph{rigidly}, with each job pinned to the size it
+historically used. We show that this choice is not a simplification but a suppression. Replaying
+the MIT Supercloud GPU trace through a malleability-aware batch simulator, we find (1) in rigid
+mode the total device-seconds a workload consumes is fixed, so schedulers can differ only in
+\emph{when} work runs: across five schedulers, occupancy differs by at most $1.3$ points and the
+idle capacity any ordering rule can recover is $0.2\%$ --- the setting cannot answer an
+efficiency question, yet is where efficiency claims are routinely made; (2) restoring
+moldability makes \emph{sizing}, not ordering, the dominant decision --- on $12$ pre-registered
+windows stratified by offered load and priority mix, the sizing rule alone moves mean waiting
+time by $7\times$ ($+232{,}451 \pm 60{,}823$\,s, $p<10^{-4}$); (3) utilisation is then an
+\emph{anti-metric}: the rule that maximises occupancy is the worst scheduler we measure on every
+service axis, and in $12$ of $12$ windows the highest-occupancy arm is the worst-service arm;
+and (4) the obvious remedy does not work --- an adaptive rule that shrinks jobs under contention
+fails to beat simply honouring each job's requested size (mean wait $p=0.77$; SLA violations
+$10.2$ points \emph{worse}, $p=0.035$), so sizing under uncertainty is an open decision rather
+than a solved one. We retain, on an authored exception suite that no public trace supplies, the
+finding that a debate between LLM reviewers corrects a single model's rulings at an identical
+call budget ($43/81$ vs.\ $29/81$, $p=0.0007$). We conclude that occupancy should be retired as
+a headline metric for elastic workloads, and that the rigid replay be treated as an instrument
+that cannot detect the difference.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -64,44 +67,56 @@ GPU scheduling, large language models, resource allocation, multi-agent debate, 
 
 \section{Introduction}
 
-AI and scientific workloads are bursty and heterogeneous; static batch schedulers cannot hold
-both high utilisation and a low SLA-violation rate. The reason is physical: in the saturated
-regime it is impossible to give every job a safety margin, so what sets service quality is the
-rationing decision — \emph{whose margin gets cut} — which classical schedulers make blindly.
+AI training and inference are the dominant consumers of GPU clusters, and they are
+\emph{elastic}: a training job can run on more or fewer devices, trading device-hours against
+completion time. A scheduler on such a workload therefore makes two decisions per job, not one
+--- \emph{which} job to start, and \emph{how large} to make it.
 
-Recent work~\cite{llmsched} proposes a \emph{reason-then-guarantee} spine: an LLM proposes a
-schedule and a fast solver repairs it to feasibility. The appeal is that an LLM can reason over
-a messy multi-objective situation and generalise to unfamiliar states. This paper asks the
-question that determines whether that appeal is real for rationing: \textbf{does the reasoning
-layer earn its cost, and if so, on which decisions?}
+Almost every published evaluation erases the second decision. A trace records that a job used
+$g$ devices for $t$ seconds; it does not record what that job would have done on $2g$ or on
+$g/2$, because the counterfactual was never observed. The standard response is to replay the
+trace \emph{rigidly}, pinning each job to its historical size. This is usually presented as a
+conservative simplification. We show it is a suppression, and that it silently invalidates the
+efficiency claims most commonly made on top of it.
 
-Our contributions:
+The argument is short. If no job can be resized, the device-seconds a workload consumes are
+fixed: every scheduler must run the same jobs for the same durations, so it can only move work
+earlier or later. Utilisation is then close to a conserved quantity, and a comparison of
+schedulers on it is close to a comparison of nothing. Restoring elasticity does not merely add
+a tuning knob; it makes utilisation controllable, and --- as we show --- makes maximising it
+actively harmful.
+
+Our contributions, all on the MIT Supercloud GPU trace replayed through a malleability-aware
+batch simulator~\cite{elastisim}:
 \begin{enumerate}
-\item \textbf{The deterministic market wins efficiency at zero cost} (\S\ref{sec:market}). A
-bid/ask auction over each job's real marginal useful progress beats every LLM arm on
-utilisation, useful utilisation, and regret, under both progress laws, with no LLM calls — and
-its deadline effect is null, so the gain is throughput, not service quality bought
-elsewhere.
-\item \textbf{The largest SLA lever is also deterministic} (\S\ref{sec:laxity}). Recomputing
-bid urgency from normalised deadline slack every tick — least-laxity grant ordering — cuts
-violations 23.8\% $\rightarrow$ 7.4\% and slowdown $17.8 \rightarrow 5.4$ at zero tokens.
-Every LLM arm is flat against this floor.
-\item \textbf{Reasoning earns its cost on text exceptions, and structure — not budget — is
-what pays} (\S\ref{sec:text}). On a pre-registered 81-case suite of text-dependent exceptions,
-debate between two reviewers corrects a single LLM's rulings at an identical call budget
-(43/81 vs.\ 29/81, $p=0.0007$); best-of-$N$ at the same budget is flat ($p=0.25$); a blind
-50-case confirmatory batch reproduces the effect ($p=0.0032$).
-\item \textbf{The boundary is measured exactly} (\S\ref{sec:boundary}). The same escalation,
-gated behind a contextual trigger and run unmodified in-sim, makes zero LLM calls and zero
-changes — the allocation is identical to the bare market tick for tick — because the trace
-carries no operator text. Where no exception exists, reasoning \emph{costs} accuracy (12/17
-vs.\ 16/17). Gating is therefore load-bearing, not decorative.
+\item \textbf{The rigid replay cannot answer an efficiency question}
+(\S\ref{sec:rigid}). With jobs pinned to their historical sizes, five schedulers on the same
+window differ by at most $1.3$ points of occupancy, and the idle capacity any ordering rule can
+still recover --- devices left free while a job that fitted was waiting --- is $0.2\%$. No
+ordering effect on service quality survives multiplicity correction either.
+\item \textbf{Made elastic, sizing dominates ordering} (\S\ref{sec:sizing}). On $12$
+pre-registered windows, stratified by offered load and high-priority fraction and selected
+before any scheduler was run, the sizing rule alone moves mean waiting time by $7\times$
+($+232{,}451 \pm 60{,}823$\,s, $p<10^{-4}$) --- an effect larger than any ordering difference
+we or the prior literature report on this class of trace.
+\item \textbf{Utilisation is an anti-metric} (\S\ref{sec:antimetric}). The rule that maximises
+occupancy is the worst scheduler on every service axis: $2.6\times$ the device-hours,
+$7\times$ the waiting, $+53.9$ points of SLA violation. In $12$ of $12$ windows the
+highest-occupancy arm is the worst-service arm. A scheduler optimising the reported metric
+would choose it.
+\item \textbf{Sizing under uncertainty is open, not solved} (\S\ref{sec:open}). The natural
+remedy --- shrink jobs when the queue is deep --- does not beat simply honouring each job's
+requested size (mean wait $p=0.77$, device-hours $p=0.36$, and SLA violations $10.2$ points
+\emph{worse}, $p=0.035$). A single contended window suggested otherwise; it did not replicate,
+which is why the pre-registered stratification matters.
 \end{enumerate}
 
-The governing rule throughout is \emph{the LLM reasons and explains; deterministic code
-decides} — and our findings sharpen it: on numeric scenes the deterministic code should also
-\emph{decide efficiently on its own}, and reasoning should be invoked only where text carries a
-fact the numbers cannot.
+We additionally retain, unchanged, a result that does not depend on any trace
+(\S\ref{sec:text}): on an authored suite of exceptions expressible only in operator text ---
+which no public GPU trace supplies --- a debate between LLM reviewers corrects a single model's
+rulings at an identical call budget. That is where a reasoning layer earned its cost in our
+setting; it is not the numeric rationing decision, and \S\ref{sec:antimetric} explains why the
+numeric decision has been measured against the wrong target.
 
 \section{Related Work}
 \label{sec:related}
@@ -146,7 +161,7 @@ declarative LLM agents.
   arr/.style={-{Latex[length=1.5mm]}, thick},
   lab/.style={font=\tiny, fill=white, inner sep=1pt},
 ]
-\node[code] (mkt) at (0,0) {Auction\\(bid $\ge$ ask)};
+\node[code] (mkt) at (0,0) {Order\\+ size};
 \node[code] (val) at (2.35,0) {Validator\\(feasible, $\ge0$, ids)};
 \node[gate] (trg) at (4.75,0) {trigger?};
 \node[code] (apply) at (7.0,0) {Apply};
@@ -160,112 +175,176 @@ declarative LLM agents.
 \draw[arr] (val.south) -- node[lab,sloped,above]{violation} (floor.north east);
 \draw[arr] (deb) -- node[lab,above]{infeasible} (floor);
 \end{tikzpicture}
-\caption{The gated pipeline. Every tick runs through deterministic code (grey): the auction
-clears, the validator checks feasibility. Only a trigger (operator-note conflict, production
+\caption{The gated pipeline. Every scheduling point runs through deterministic code (grey):
+the ordering and sizing rules decide, the validator checks feasibility. Only a trigger (operator-note conflict, production
 arrival, deadline slip, contested-capacity boundary) escalates to the LLM debate (dashed).
 Any infeasible output, from either path, concedes the tick to the no-LLM floor; the LLM is
 never on the critical path.}
 \label{fig:pipeline}
 \end{figure}
 
-Fig.~\ref{fig:pipeline} shows the pipeline.
+Fig.~\ref{fig:pipeline} shows the pipeline as evaluated.
 
-\textbf{Auction (default path, zero LLM).} Each epoch, demand posts a non-increasing marginal
-value curve $b_{j,k} = \alpha\,\widehat{dp}_{j,k} + \beta R_{\mathrm{SLA}} +
-\gamma W_{\mathrm{wait}} - \delta C_{\mathrm{resize}}$ per job per extra GPU, where
-$\widehat{dp}$ is the job's real marginal useful progress under the counterfactual progress
-model; supply posts a rising ask from scarcity, fragmentation, reserve pressure and arrival
-pressure; the market clears where bid meets ask.
+\textbf{Deterministic scheduling (default path, zero LLM).} Every scheduling point runs two
+rules. An \emph{ordering} rule sequences the pending queue; a \emph{sizing} rule assigns each
+started job a device count within its legal range. Rigid jobs admit exactly one size, so on a
+rigid replay the sizing rule is inert and the ordering rule is the entire policy --- which is
+the situation \S\ref{sec:rigid} shows carries almost no signal. On an elastic workload both
+rules are live, and \S\ref{sec:sizing} shows the sizing rule dominates.
 
-\textbf{Validation (every tick, cheap code).} Before an allocation is applied, a deterministic
-check verifies feasibility, non-negative awards and known job ids. On violation the tick
-concedes to the floor. On correct clearings the validator is byte-identical to the unvalidated
-market across both laws and all pools (fault injection confirms it rejects when it should).
+\textbf{Validation (every scheduling point, cheap code).} No proposal is applied as given. A
+deterministic check keeps only jobs that are actually pending, clamps each requested size into
+that job's legal range and into the capacity still free, and drops the remainder in order. An
+unparseable or empty answer concedes the point to the no-LLM floor. This is feasibility
+enforcement, not repair: the mechanism never invents capacity, and it never silently rewrites a
+decision into a better one.
 
-\textbf{Escalation (only on a trigger).} A reasoning arm rules only when the auction output
-conflicts with an operator note, a production job arrives, a job falls behind its deadline, or
-contested capacity crosses a bucket boundary. The escalation is a \emph{debate}: demand- and
-supply-side reviewers read a structured decision packet, state positions, read each other, and
-revise before a referee rules. An infeasible ruling is never repaired silently; it falls back
-and re-fires. Reasoning is best-effort improvement, never on the critical path.
+\textbf{Escalation (only on a trigger).} The reasoning path is consulted only when capacity must
+actually be rationed --- when the work waiting exceeds what is free. Otherwise everything that
+fits is started and no call is made. When consulted, the model receives a textual packet
+(free capacity, and per job its identifier, legal size range, requested size, requested
+walltime, waiting time, priority tier, partition) and returns job/size pairs with a one-line
+justification; a \emph{debate} variant adds a second reviewer that reads the first proposal
+before a final list is returned. The model never sees any job's true runtime. Because the
+validator stands between the proposal and the cluster, an infeasible answer costs a fallback,
+not a violation, and reasoning is best-effort improvement rather than a step on the critical
+path.
 
 \section{Evaluation}
 \label{sec:eval}
 
-\textbf{Setup.} We replay contiguous windows of the 606k-job Alibaba
-cluster-trace-gpu-v2020~\cite{alibaba2020}, taking arrival, duration, and GPU demand jointly
-from the trace and synthesising only what the trace lacks (tier, deadline, urgency; seeded
-recipe). Standard operating point: one 8-GPU node in quarter-GPU quanta, 96 jobs per window
-($3\times$ load ratio — the last ratio at which every job finishes), 30\,s ticks, deadline
-slack calibrated so the floor violates 11--13\% (the violation--utilisation curve is reported
-across the slack regime, so no result hangs on the calibration point). \todo{reconcile
-operating points: Exp 99 (Table~\ref{tab:laxity}) runs at slack$\times$10 with a 23.8\% floor
-and Table~\ref{tab:noop} reports 21.0\%/18.9\% --- either state the per-table point or fix this
-sentence} 32 seeds, windows and seeds paired across arms; \sig{} marks a 95\% CI excluding 0;
-multiplicity is controlled by Holm within each family. Progress runs under both an Amdahl and a
-saturating law; a claim counts only if it holds under both. LLMs are local Ollama models
-(qwen2.5, gemma2). Baselines: the no-LLM floor, EASY backfill~\cite{easy}, a negotiation
-pipeline with ILP guarantees (our prior system, kept as a baseline arm), and a tabular
-Q-learner.
+\textbf{Setup.} We replay the MIT Supercloud GPU trace (a $235$-day Slurm accounting log)
+through ElastiSim~\cite{elastisim}, a batch-system simulator for malleable workloads. One
+simulated node is one GPU, so a job that used $g$ GPUs becomes a $g$-node job; its work is set
+so that it reproduces its recorded runtime exactly. The scheduler sees each job's arrival, size
+and \emph{requested} walltime, never its true runtime --- the same information a production
+batch system has. Capacity is a fixed $80$-GPU pool, so a window's offered load is a property
+we \emph{measure} rather than a consequence of sizing the cluster to fit it.
 
-\subsection{The deterministic market wins efficiency at zero cost}
-\label{sec:market}
+\textbf{Window selection is pre-registered.} Every $24$\,h window of the trace is described by
+workload statistics alone --- job count, GPU-hours, offered load, high-priority fraction,
+median and p90 runtime, size distribution --- with no scheduler executed. Of $5{,}613$ hourly
+starts, $4{,}312$ carry at least $100$ jobs. These are stratified into four offered-load bands
+($0.7$--$1.0$, $1.0$--$1.5$, $1.5$--$2.5$, ${>}2.5\times$) crossed with three high-priority
+bands (${<}2\%$, $2$--$10\%$, ${>}10\%$), and one window is drawn per cell under a fixed seed,
+subject to a non-overlap constraint. The resulting $12$ windows span days $41$--$222$, offered
+loads $0.75$--$4.97\times$ and priority fractions $0.7$--$58\%$. Each is preceded by $12$\,h of
+warm-up arrivals, which the arm under test also schedules but which are excluded from scoring,
+so no run begins on an empty cluster. Selection never sees a scheduler result.
 
-Replacing the reasoning layer with the explicit bid/ask market, paired against the floor
-(n=32, both laws):
+\textbf{Elasticity model.} A job may be \emph{moldable}: its size is chosen once, at launch, and
+fixed thereafter. Speed-up follows Amdahl's law anchored on the observed point --- a job seen at
+$g$ GPUs reproduces its recorded runtime exactly at $g$, so the rigid replay is this same model
+evaluated at the size the job really ran, and the parallel fraction $s$ is swept rather than
+assumed ($s{=}1$ is rigid at every size, $s{=}0$ is linear speed-up). Results below use
+$s{=}0.7$, a deliberately conservative value: scaling is sublinear, so growing a job costs more
+device-time than it saves. We report SLA-$k$ (turnaround exceeding $k\times$ true runtime) at
+$k \in \{2,5,10\}$, mean waiting time, device-hours actually spent, walltime kills, and
+occupancy over the measured window.
+
+\subsection{The rigid replay cannot answer an efficiency question}
+\label{sec:rigid}
+
+With every job pinned to its historical size, the device-seconds consumed are fixed by the
+window, not chosen by the scheduler. Empirically this leaves almost nothing to compete over.
+Across five schedulers (strict FCFS, first-fit, EASY backfilling, requested-walltime ordering,
+and a declared/undeclared split) occupancy differs by at most $1.3$ points within a window and
+is identical to three decimal places in several. The idle capacity any ordering rule could
+still recover --- devices free while a job that fitted was waiting --- averages $0.2\%$, with a
+worst case of $1.3\%$.
+
+Service quality is equally flat. Over $11$ windows no arm separates from the EASY baseline
+after Holm correction across three SLA thresholds; the largest raw effect, $-4.2$ points of
+SLA-2, carries $p_{\text{Holm}}=0.41$. Two properties of the trace explain the flatness and are
+worth recording, because both are usually assumed away. First, EASY backfilling is inert here:
+across $1{,}351$ blocked scheduling points it backfilled $48$ times ($3.6\%$), because
+requested walltimes exceed true runtimes by $100$--$600\times$, so no job can be shown to fit
+before the head job's reservation. EASY and strict FCFS are byte-identical on most windows.
+Second, requested walltime carries no runtime signal: among $487$ jobs in one window there are
+$9$ distinct requested values, and the rank correlation with true runtime is $+0.16$, $-0.11$,
+$-0.73$ and $-0.01$ across four windows --- the only significant value is negative. Any
+``shortest-job-first'' arm on this trace is therefore ordering on noise.
+
+\subsection{Made elastic, sizing dominates ordering}
+\label{sec:sizing}
+
+We now allow every job to be moldable and hold the ordering rule fixed at first-fit, varying
+only how each job is sized: \textsc{as-requested} honours the size its owner asked for and
+waits until that many devices are free; \textsc{greedy} takes the largest legal size that fits;
+\textsc{adaptive} shares free capacity across the waiting queue. Table~\ref{tab:sizing} reports
+means over the $12$ pre-registered windows.
 
 \begin{table}[t]
-\caption{Market vs.\ floor, paired deltas (n=32, standard 8-GPU point). Under sat,
-duseful is nominal (95\% CI excludes 0) but does not survive Holm; util and regret
-survive in both laws.}
-\label{tab:market}
 \centering
-\begin{tabular}{lccccc}
+\caption{Sizing rule, $12$ pre-registered windows, $s=0.7$, first-fit ordering held fixed.
+Mean $\pm$ 95\% CI.}
+\label{tab:sizing}
+\small
+\begin{tabular}{lrrrr}
 \toprule
-law & dSLA & dprodSLA & dutil & duseful & dregret \\
+sizing & device-h & occupancy & SLA-10 (\%) & mean wait (s) \\
 \midrule
-amdahl & $-0.3$ (ns) & $-0.4$ (ns) & $+1.6$\sig & $+1.3$\sig & $-1.4$\sig \\
-sat    & $-0.2$ (ns) & $-0.3$ (ns) & $+1.6$\sig & $+0.7$\sig & $-0.5$\sig \\
+\textsc{as-requested} & $3653$ & $0.890$ & $22.3$ & $38{,}072$ \\
+\textsc{adaptive}     & $3339$ & $0.964$ & $32.5$ & $39{,}756$ \\
+\textsc{greedy}       & $9581$ & $0.988$ & $76.2$ & $270{,}522$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The market is the only arm in the project's history simultaneously positive on useful
-utilisation and negative on regret, and it costs zero tokens with 0\% fallback. Its deadline
-effect is null ($-0.3 \pm 0.4$, ns; exactly $0.0 \pm 0.0$ at the smaller 2-GPU pool), so the
-efficiency gain is pure throughput, not service quality bought elsewhere. Efficiency belongs
-to the deterministic layer.
+The spread is an order of magnitude, on an axis that does not exist in the rigid replay. Paired
+against \textsc{as-requested}, \textsc{greedy} costs $+5{,}929 \pm 1{,}707$ device-hours
+($p{=}3\times10^{-5}$), $+232{,}451 \pm 60{,}823$\,s of mean waiting ($p{=}10^{-5}$) and
+$+53.9 \pm 12.3$ points of SLA-10 ($p{<}10^{-5}$). No ordering rule we measured in
+\S\ref{sec:rigid} moves any metric by a comparable amount.
 
-\subsection{The largest SLA lever is deterministic too}
-\label{sec:laxity}
+\subsection{Utilisation is an anti-metric}
+\label{sec:antimetric}
 
-No arm above — LLM or market — keys on deadline laxity: grants were ordered by frozen bid
-value. Recomputing each bid's urgency every tick from normalised slack,
-$\mathrm{lax} = (d - t - \mathrm{rem})/(d - \mathrm{arr})$, mapped onto the same urgency band
-so only the \emph{ordering} changes, gives least-laxity grant ordering at zero tokens:
+The three sizing rules order identically on occupancy and inversely on service.
+\textsc{greedy} attains the \emph{highest} occupancy of any arm we measure --- $0.988$, against
+$0.890$ for \textsc{as-requested} ($+0.1 \pm 0.1$, $p{=}0.009$) --- while being the worst on
+every service axis simultaneously. In $12$ of $12$ windows the highest-occupancy arm is the
+worst-service arm, and in $10$ of $12$ the highest-occupancy arm is not the best-service arm.
 
-\begin{table}[t]
-\caption{Dynamic urgency vs.\ frozen-bid floor (n=32, paired).}
-\label{tab:laxity}
-\centering
-\begin{tabular}{lcccc}
-\toprule
-arm & SLA viol. & slowdown & util & done \\
-\midrule
-frozen bid (floor) & 23.8\% & 17.8 & 83\% & 94.5/96 \\
-dynamic urgency    & \textbf{7.4\%} & \textbf{5.4} & 81\% & 95.0/96 \\
-\midrule
-\multicolumn{5}{l}{dSLA $-16.4 \pm 3.1$\sig,\ dslow $-12.5 \pm 2.9$\sig,\ dutil $-1.7 \pm 1.9$ (ns)} \\
-\bottomrule
-\end{tabular}
-\end{table}
+The mechanism is not subtle, which is what makes the metric dangerous. Under sublinear scaling,
+a job given $4\times$ the devices at $s{=}0.7$ finishes about $1.6\times$ sooner while
+consuming $4\times$ the capacity. \textsc{greedy} therefore converts the cluster into
+\emph{busy-ness} without converting it into completed work, and the queue behind it grows.
+Occupancy records the busy-ness and is blind to the waste: on one low-load window it reads
+$1.000$ for all three sizing rules while their mean waiting times span $21{,}429$\,s to
+$244{,}781$\,s.
 
-This is the largest single service-quality effect we measure, it is invariant to the deadline
-calibration (reproduced across the slack-multiplier regime), and every LLM arm is flat against
-it ($|$dSLA$| \le 0.1$, all ns). The pattern across our calibration experiments is consistent:
-each time the world is made more realistic or a deterministic lever is pulled, the space the
-reasoning layer could occupy shrinks. What remains for it is what no number carries at all —
-text.
+This is the practical consequence of \S\ref{sec:rigid}. A rigid replay reports occupancy
+differences of a fraction of a point and no scheduler can game them; the metric looks harmless
+because it is inert. Made elastic, the same metric becomes controllable --- and the controller
+that maximises it is the one to avoid. We therefore recommend reporting device-hours spent per
+unit of completed work, together with waiting time, and retiring occupancy as a headline number
+for elastic workloads.
+
+\subsection{Sizing under uncertainty is open, not solved}
+\label{sec:open}
+
+The obvious fix for \textsc{greedy} is to shrink jobs when the queue is deep. It does not work.
+Paired over the $12$ windows, \textsc{adaptive} does not beat \textsc{as-requested} on mean
+waiting ($+1{,}684 \pm 10{,}847$\,s, $p{=}0.77$) or on device-hours ($-313 \pm 637$,
+$p{=}0.36$), and is significantly \emph{worse} on SLA-10 ($+10.2 \pm 8.3$ points, $p{=}0.035$).
+It also introduces a failure the other rules do not have: shrinking a job lengthens it, and at
+lower parallel fractions this pushes long jobs past their requested walltime and gets them
+killed. We therefore count kills as SLA violations rather than as fast completions, since a
+killed job otherwise flatters every wait-based metric.
+
+We record one negative result about our own method. On the single most contended window
+($4.97\times$ offered load), \textsc{adaptive} cut mean waiting by $42\%$ against
+\textsc{as-requested} and looked like a clear win. It did not replicate across the
+pre-registered set. Had the window been chosen after seeing that number, the effect would have
+been reported as a finding. This is the concrete argument for selecting windows from workload
+statistics alone.
+
+What remains open is therefore the interesting decision: sizing a job under genuine uncertainty
+about its runtime, on a trace where the only available estimate is uninformative
+(\S\ref{sec:rigid}). We regard that, not ordering, as the decision on which a reasoning layer
+should next be asked to earn its cost \todo{fold in the LLM sizing arms across the 12 windows;
+the current LLM result is a single window and directional only}.
 
 \subsection{Where reasoning earns its cost: text exceptions}
 \label{sec:text}
@@ -346,105 +425,80 @@ LLM arm): debate helps when reviewers must notice an absence, not follow a prese
 \todo{if the gemma2:9b/27b replication lands: one sentence on cross-family robustness}
 \todo{rater-agreement number for the predicates, threats para}
 
-\subsection{The boundary, measured exactly}
+\subsection{Why the suite must be authored}
 \label{sec:boundary}
 
-The natural objection is that an authored suite proves little about a real workload. We
-therefore ran \emph{this exact escalation} — unmodified, LLM enabled — inside the simulator,
-gated behind the \S\ref{sec:arch} trigger, at the standard operating point (n=32 paired
-seeds):
+The natural objection is that an authored suite proves little about a real workload. It is the
+only option available. The Supercloud accounting log carries $29$ fields --- identifiers,
+timestamps, requested and allocated resources, partition, priority, exit state --- and not one
+of them is free text. No public GPU or HPC trace we surveyed --- including the other widely used GPU
+trace~\cite{alibaba2020} --- ships operator-authored exception text; what text exists in this domain is source code and logs, not scheduling rationale.
 
-\begin{table}[t]
-\caption{The winning escalation, in-sim (n=32, standard point, both laws).}
-\label{tab:noop}
-\centering
-\begin{tabular}{llccccc}
-\toprule
-law & arm & SLA & prodSLA & util & useful & regret \\
-\midrule
-amdahl & market & 21.0\% & 5.6\% & 85\% & 81\% & 7\% \\
-amdahl & market + escalation & 21.0\% & 5.6\% & 85\% & 81\% & 7\% \\
-sat & market & 18.9\% & 5.2\% & 86\% & 79\% & 8\% \\
-sat & market + escalation & 18.9\% & 5.2\% & 86\% & 79\% & 8\% \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The two arms are identical on every metric, every paired vs.-floor delta, and every surviving
-Holm $p$-value, in both laws — the same allocation tick for tick. The trigger genuinely fired
-(\textbf{5{,}494 escalations} under amdahl and \textbf{5{,}517} under sat, across the 32
-seeds); each escalation entered the correction pipeline, found no job carrying text, and
-returned, making
-\textbf{zero LLM calls and zero changes}. The reason is structural: public GPU traces are scrubbed of operator free text
-(it is PII), so the channel this capability acts on is absent by construction — a fact we
-verified across the public trace landscape rather than synthesising notes into a trace that
-has none.
-
-This is the boundary stated exactly rather than inferred: the mechanism that corrects 43/81
-text-exception rulings is a literal no-op where no text exists. It cannot help — and, the part
-that matters for deployment, it cannot hurt or cost anything either. Combined with the
-specificity cost above (12/17 vs.\ 16/17), the design conclusion is symmetric: reasoning must
-be gated \emph{on} when text arrives and gated \emph{off} when it does not, and both gates are
-now measured.
+This is the boundary, and it cuts both ways. A reasoning layer cannot demonstrate value on a
+channel the data does not contain, which is why \S\ref{sec:text} is measured on an authored
+suite rather than in simulation. It also means the numeric results of
+\S\ref{sec:rigid}--\S\ref{sec:open} are the whole of what this trace can adjudicate, and on
+those the decisive quantity is a sizing rule, not a reasoning step. Acquiring a workload that
+carries operator text remains the prerequisite for testing the exception claim in situ.
 
 \section{Threats to Validity}
 \label{sec:threats}
 
-Tier, deadline, and urgency are a synthetic recipe over a real trace; the replay world never
-preempts base allocations, so we make no free-malleability claims. That rigidity also bounds
-what \emph{any} efficiency claim here can demonstrate, and we can now say by how much. When no
-job can be resized, the GPU-seconds a workload consumes are fixed: a scheduler chooses only
-\emph{when} work runs, never how much of it there is, so utilisation is close to a conserved
-quantity. We measured this on a second instrument. The MIT Supercloud GPU trace is replayed through a
-malleability-aware batch simulator \cite{elastisim} in which one node is one GPU, so a job that
-used $g$ GPUs becomes a $g$-node job whose work is its true runtime; the scheduler sees only
-the \emph{requested} walltime, never the true one. Capacity is a fixed $80$-GPU pool, so a
-window's offered load is a measured property of that window rather than a consequence of
-sizing the cluster to it. Windows are selected from workload statistics alone --- no scheduler
-is executed during selection --- by stratifying every $24$\,h window of the $235$-day trace on
-offered load and on the fraction of high-priority jobs, then drawing one window per stratum
-under a fixed seed. Each window is preceded by $12$\,h of warm-up arrivals that the arm under
-test also schedules but which are excluded from scoring, so no run begins on an empty cluster.
-In this rigid configuration, five schedulers on one window differed by at most $1.3$ points of
-occupancy, and the idle capacity any ordering rule could still recover --- GPUs left free while
-a job that fitted was waiting --- was $0.2\%$. A job may instead be made \emph{moldable}, its
-size chosen once at launch, with speed-up following Amdahl's law anchored on the observed
-point: a job seen at $g$ GPUs reproduces its recorded runtime exactly at $g$, so the rigid
-replay is the same model evaluated at the size the job really ran, and the parallel fraction is
-swept rather than assumed. Claim~(1) is therefore established in a regime where the achievable efficiency spread
-is structurally small; it should be read as ``the market is not beaten on efficiency here,''
-not as evidence that reasoning cannot improve efficiency on an elastic workload. The text-exception suite is
-authored, not sampled from operations, and its ground-truth predicates are
-single-annotator \todo{replace with rater-agreement number}; the rigid-arm floor is an
-inclusion criterion by design. The headline debate result is one model family at one scale
-\todo{update if gemma replication lands}. SLA levels depend on a calibrated slack multiplier;
-contrasts are therefore reported across the calibration regime, and the operating point is one
-where every job finishes. LLM latency is hidden behind wait time by the gate in the design,
-but evaluation runs on simulation clock.
+\textbf{The elasticity model is an assumption, and a swept one.} No trace records what a job
+would have done at a different size, so any elastic study must supply that counterfactual. We
+supply Amdahl's law anchored on the observed point, which reproduces each job's recorded runtime
+exactly at the size it really used, and we sweep the parallel fraction rather than fixing it:
+$s{=}1$ recovers the rigid replay at every size and $s{=}0$ gives linear speed-up. Our
+conclusions concern the \emph{shape} of the result across that sweep, not a single value.
+Real training jobs also pay a reconfiguration cost we do not model, which would penalise
+\textsc{greedy} further; our claim that occupancy-maximising sizing is harmful is therefore
+conservative.
+
+\textbf{One node is one GPU.} Supercloud's TX-GAIA nodes carry two V100s; we model the
+allocation unit as a device, so intra-node placement effects are absent.
+
+\textbf{Moldable, not malleable.} Sizes are chosen once at launch and fixed. Mid-run resizing
+--- elastic training in the strict sense --- would give a scheduler strictly more power, and we
+do not measure it.
+
+\textbf{SLA-$k$ is an oracle metric and is length-biased.} It is defined from a job's true
+runtime, which no scheduler knows at submission, so no arm can target it; and because the
+allowance scales with the job, short jobs violate readily while the longest decile of jobs
+cannot violate at all within a $24$\,h window despite waiting longest. We therefore report
+$k \in \{2,5,10\}$ throughout and lead with waiting time and device-hours, which carry neither
+defect. The trace supplies no deadline field, so no absolute deadline claim is available.
+
+\textbf{Twelve windows, one per stratum.} A difference confined to one cell cannot be separated
+from that particular window; the strata establish that a result is not confined to one corner
+of the load/priority space, not that a stratum causes it. \S\ref{sec:open} reports a case where
+this mattered.
+
+\textbf{Only completed GPU jobs are replayed}, so failed and cancelled work, non-GPU
+contention, and the cluster's background load are absent. LLM latency is hidden behind wait
+time by the gate in the design, but evaluation runs on the simulation clock.
 
 \section{Conclusion}
 
-The division of labour ``the LLM reasons and explains; deterministic code decides'' is not a
-slogan but the empirically optimal split — sharpened. On numeric GPU rationing the
-deterministic layer should also decide \emph{efficiently on its own}: the market wins every
-efficiency metric at zero tokens, and the largest SLA lever is a deterministic ordering rule.
-The reasoning layer earns its cost precisely on the exceptions numbers cannot express — text —
-where structured debate corrects a single model's unreliable rulings at matched budget, and a
-gated architecture delivers that capability at exactly zero cost where the text is absent. The
-open frontier is a workload that actually carries operator text, on which the
-efficiency-neutral capability should convert into a measurable service-quality gain.
+Elastic workloads make a scheduler choose job \emph{size}, and that decision dominates the
+ordering decisions the literature usually measures --- by an order of magnitude on our
+pre-registered windows. It also breaks the metric the literature usually reports. Because
+sublinear scaling lets a scheduler spend four times the capacity to finish a job $1.6$ times
+sooner, the rule that maximises utilisation is the worst scheduler we measure, and it is the
+worst in every one of twelve windows. Utilisation records busy-ness; on an elastic workload
+busy-ness and completed work come apart, and optimising the former destroys the latter.
 
-A second frontier is \emph{elasticity}, and it is the one our own negative efficiency result
-argues for. AI training and inference jobs are not rigid: they scale across devices, so a
-scheduler on such a workload decides not only which job runs but how large it is. That second
-decision does not exist in any of the replays above, which is precisely why efficiency is
-near-conserved in them. Restoring it changes the problem rather than the tuning: on a
-moldable replay of Supercloud under Amdahl scaling, the sizing rule alone moves mean waiting
-time by an order of magnitude, and the rule that maximises occupancy is the worst of the three
-we tried --- it converts the cluster into busy-ness without converting it into completed work.
-We regard sizing under uncertainty, not ordering, as the decision on which a reasoning layer
-should next be asked to earn its cost \todo{fold in the powered elastic run when it lands;
-current elastic numbers are a single window and directional only}.
+The rigid replay hides all of this. With sizes pinned, device-seconds are conserved, occupancy
+varies by fractions of a point, and the metric appears both stable and harmless --- which is
+precisely why efficiency claims made in that setting should not be read as claims about
+elastic clusters. The instrument cannot detect the failure it is being used to rule out.
+
+We do not offer a solved replacement. The natural adaptive rule fails to beat simply honouring
+what users asked for, and a promising result on the single most contended window did not
+survive the pre-registered set. Sizing under uncertainty --- on a trace whose only runtime
+estimate is uncorrelated with truth --- is where we think the next contribution lies, and it is
+a decision on which a reasoning layer has yet to be fairly tested. Where reasoning did earn its
+cost in our setting was on exceptions expressible only in operator text, a channel no public
+GPU trace currently supplies.
 
 \begin{thebibliography}{11}
 \bibitem{llmsched} \todo{LLM-Driven Adaptive Cloud Resource Scheduling: Bridging Reasoning
