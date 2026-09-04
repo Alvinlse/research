@@ -375,6 +375,111 @@ CRITIC = ("You are a second scheduler reviewing a colleague's start list for the
           "return it unchanged. " + REPLY)
 TIER_NOTE = (" Jobs carry tier=prod (operator-granted high-priority QoS, must not be starved) or tier=batch; "
              "protect prod jobs' waiting time first, then optimise the rest.")
+# --- three-role negotiation ------------------------------------------------------------------
+# The debate arm gives both agents the SAME objective and the SAME information, so the second call
+# is theatre: measured on the stress window it overrode 329/349 proposals and cost 17% of mean wait.
+# These roles are ASYMMETRIC on purpose. In an elastic world the conflict is real -- demand wants a
+# job large (it finishes sooner), supply wants it small (sublinear scaling makes a big allocation
+# 2.5x less efficient per device-hour at s=0.7) -- so there is something to negotiate about.
+# NOTE the supply objective is device-hours per completed job, NOT utilisation: the occupancy-
+# maximising rule measured worst on every service axis and held the highest occupancy in 12/12
+# windows, so an advocate told to "keep GPUs busy" would be arguing for the worst known policy.
+DEMAND = ("You represent the JOBS WAITING in the queue. " + WORLD +
+          " Your objective is to minimise how long jobs wait and how badly they are slowed down. "
+          "Argue for the start list and sizes that serve the queue best; a larger allocation is "
+          "worth arguing for when it genuinely finishes a job sooner, and a job that has waited a "
+          "long time deserves to start. You are an ADVOCATE, not the decider -- a referee will "
+          "weigh your proposal against the cluster's. " + REPLY)
+SUPPLY = ("You represent the CLUSTER's capacity. " + WORLD +
+          " Your objective is to minimise the device-hours spent per completed job, and to keep "
+          "capacity free for work that has not arrived yet. Because scaling is sublinear, a large "
+          "allocation buys a little speed for a lot of capacity. Keeping devices BUSY is explicitly "
+          "not your goal -- completing work cheaply is. Argue for the start list and sizes that "
+          "waste least. You are an ADVOCATE, not the decider -- a referee will weigh your proposal "
+          "against the queue's. " + REPLY)
+REFEREE = ("You are the referee. Two advocates have read the same queue as you: one speaks for the "
+           "waiting jobs and wants short waits, the other speaks for the cluster and wants each job "
+           "completed for the fewest device-hours. " + WORLD +
+           " Both are partial and both may overstate. Decide the final start list and sizes "
+           "yourself: take what is right from each, reject special pleading, and say in one line "
+           "which side you followed and why. " + REPLY)
+
+# --- correction arm: the LLM corrects a deterministic anchor, it never allocates -------------
+# Ported from pins/correction_signed.py, whose governing rule is "nobody generates an allocation
+# from scratch": deterministic code decides, the agents may only propose a SIGNED correction, and
+# an unusable answer leaves the anchor standing. That last property is why this arm exists here.
+# The from-scratch arms (single/debate/negotiate) fall back to firstfit and can therefore finish
+# WORSE than the heuristic they are meant to improve -- measured: debate 89,979s against
+# as_requested's 66,908s on the stress window. Anchored on as_requested (the best sizing rule over
+# 12 windows), a rejected correction costs nothing, so the arm can only help or be neutral.
+CORRECT_BUDGET = 6      # GPUs that may change hands, measured as max(gained, lost): L1 double-
+                        # counts a transfer, and a transfer is exactly what restraint needs.
+CORRECTOR = ("A deterministic scheduler has already chosen which jobs to start and how large to "
+             "make each one. It is competent and you should usually leave it alone. " + WORLD +
+             " You may propose a SIGNED correction to its plan, and nothing else -- you never "
+             "produce a schedule. Reply with JSON only: "
+             '{"changes": {"<job id>": <signed integer GPUs, negative to take some or all away>}, '
+             '"hold_free": <integer GPUs to leave deliberately unallocated, 0 if none>, '
+             '"why": "one line"}. '
+             "Correct only what you can justify: a job sized so small it risks exceeding its "
+             "requested walltime, a job given more than sublinear scaling can repay, a job that has "
+             "waited far too long, or capacity worth holding for imminent higher-priority work. "
+             "Empty changes with hold_free 0 is the correct answer for an ordinary scene.")
+
+
+def _anchor_plan(pending, free, ctx):
+    """What the deterministic sizer would do right now: the plan the corrector may edit."""
+    plan, used = [], 0
+    for j in pending:
+        k = _size(j, free[used:], ctx, len(pending))
+        if k and used + k <= len(free):
+            plan.append([j, k]); used += k
+    return plan
+
+
+def _apply_correction(plan, ans, pending, free):
+    """Fund a signed correction against the anchor. Code does every piece of arithmetic: it caps
+    the disruption, keeps sizes legal, and never lets the total exceed capacity. Returns the
+    anchor unchanged when the answer is unusable -- the fallback is the strong baseline, not
+    first-fit."""
+    if not isinstance(ans, dict) or not isinstance(ans.get("changes"), dict):
+        return plan, "no parse"
+    by_id = {j.identifier: j for j in pending}
+    idx = {j.identifier: i for i, (j, _) in enumerate(plan)}
+    out = [[j, k] for j, k in plan]
+    gained = lost = 0
+    for jid, d in ans["changes"].items():
+        try:
+            jid, d = int(str(jid).strip().removeprefix("id=")), int(d)
+        except (TypeError, ValueError):
+            continue
+        if jid in idx:                                   # adjust a job the anchor is starting
+            row = out[idx[jid]]; lo, hi = _sizes(row[0])
+            new = max(0, min(hi, row[1] + d))
+            if 0 < new < lo:                             # below its legal minimum -> drop it
+                new = 0
+            gained += max(0, new - row[1]); lost += max(0, row[1] - new)
+            row[1] = new
+        elif d > 0 and jid in by_id:                     # promote a job the anchor left waiting
+            j = by_id[jid]; lo, hi = _sizes(j)
+            new = max(lo, min(hi, d))
+            gained += new; out.append([j, new])
+    hold = max(0, int(ans.get("hold_free") or 0))
+    if max(gained, lost) > CORRECT_BUDGET or gained + lost == 0 and not hold:
+        return plan, ("over budget" if max(gained, lost) > CORRECT_BUDGET else "no change")
+    out = [[j, k] for j, k in out if k > 0]
+    cap = len(free) - hold
+    kept, used = [], 0
+    for j, k in out:
+        # Code funds what it CAN, it does not refuse outright. Dropping a job whose corrected size
+        # no longer fits would leave the cluster idler than the anchor -- an over-large correction
+        # would then make this arm worse than the baseline it is supposed to be unable to harm.
+        k = min(k, cap - used)
+        if k >= _sizes(j)[0]:
+            kept.append((j, k)); used += k
+    return kept, "applied"
+
+
 PACKET_CAP = 40
 # v1 (day-157 single/debate runs): "req_min=0" for undeclared limits -- the 14b model read 0 as SHORTEST and
 # returned the whole queue ignoring free_gpus (transcript autopsy 2026-09-03). v2 spells both out.
@@ -487,18 +592,76 @@ def _validate(ans, pending, free):
     return picks
 
 
-def _llm_decide(pending, free, ctx, debate: bool):
+def _llm_decide(pending, free, ctx, mode: str):
     from pins.correction import _ask
     tiered = "tier" in pending[0].attributes
-    system, critic = SYSTEM + (TIER_NOTE if tiered else ""), CRITIC + (TIER_NOTE if tiered else "")
+    T = TIER_NOTE if tiered else ""
+    system, critic = SYSTEM + T, CRITIC + T
     packet = _packet(pending, free, ctx["now"], ctx.get("packet_order", "submit"))
+    if mode == "negotiate":
+        # two advocates with OPPOSED objectives, then a referee that sees the packet AND both
+        d = _ask(DEMAND + T, packet, ctx["model"], ctx["host"], ctx["cache"], "es-demand", num_predict=300)
+        sup = _ask(SUPPLY + T, packet, ctx["model"], ctx["host"], ctx["cache"], "es-supply", num_predict=300)
+        ctx["calls"] += 2
+        user = (packet + f"\n\nqueue advocate proposes: {json.dumps(d) if d else 'none'}"
+                       + f"\n\ncluster advocate proposes: {json.dumps(sup) if sup else 'none'}")
+        ans = _ask(REFEREE + T, user, ctx["model"], ctx["host"], ctx["cache"], "es-referee", num_predict=300)
+        ctx["calls"] += 1
+        picks = _validate(ans, pending, free)
+        ctx["transcript"].write(json.dumps({
+            "t": ctx["now"], "free": len(free), "pending": len(pending), "packet": packet,
+            "demand": d, "supply": sup, "proposal": ans, "critic": None,
+            "picked": None if picks is None else [j.identifier for j, _ in picks],
+            "sizes": None if picks is None else [k for _, k in picks]}) + "\n")
+        ctx["transcript"].flush()
+        return picks
+    if mode == "correct":
+        plan = _anchor_plan(pending, free, ctx)
+        shown = "; ".join(f"job {j.identifier} -> {k} GPU" for j, k in plan[:PACKET_CAP]) or "nothing"
+        user = packet + f"\n\nthe deterministic scheduler's plan for this moment: {shown}"
+        ans = _ask(CORRECTOR + T, user, ctx["model"], ctx["host"], ctx["cache"], "es-correct",
+                   num_predict=300)
+        ctx["calls"] += 1
+        picks, how = _apply_correction(plan, ans, pending, free)
+        ctx.setdefault("correct_outcome", {}).setdefault(how, 0)
+        ctx["correct_outcome"][how] += 1
+        ctx["transcript"].write(json.dumps({
+            "t": ctx["now"], "free": len(free), "pending": len(pending), "packet": packet,
+            "anchor": [[j.identifier, k] for j, k in plan], "proposal": ans, "critic": None,
+            "outcome": how,
+            "picked": [j.identifier for j, _ in picks], "sizes": [k for _, k in picks]}) + "\n")
+        ctx["transcript"].flush()
+        return picks
+    if mode == "bo3":
+        # budget-matched control: 3 samples of ONE model, self-consistency. temperature must be
+        # raised AND the tag varied per sample -- the cache key ignores temperature (correction._ask).
+        cands = []
+        for k in range(3):
+            a = _ask(system, packet, ctx["model"], ctx["host"], ctx["cache"], f"es-bo3-{k}",
+                     num_predict=300, temperature=0.8)
+            ctx["calls"] += 1
+            v = _validate(a, pending, free)
+            if v:
+                cands.append((tuple((j.identifier, n) for j, n in v), v, a))
+        picks = None; ans = None
+        if cands:
+            from collections import Counter
+            win = Counter(c[0] for c in cands).most_common(1)[0][0]
+            picks, ans = next((c[1], c[2]) for c in cands if c[0] == win)
+        ctx["transcript"].write(json.dumps({
+            "t": ctx["now"], "free": len(free), "pending": len(pending), "packet": packet,
+            "proposal": ans, "critic": None, "n_samples": len(cands),
+            "picked": None if picks is None else [j.identifier for j, _ in picks],
+            "sizes": None if picks is None else [k for _, k in picks]}) + "\n")
+        ctx["transcript"].flush()
+        return picks
     ans = _ask(system, packet, ctx["model"], ctx["host"], ctx["cache"], "es-propose", num_predict=300)
     ctx["calls"] += 1
     if ctx["calls"] % 50 == 0:
         print(f"  {ctx['calls']} calls, sim t={ctx['now'] / 3600:.1f}h, {len(pending)} pending", flush=True)
     final = None
     picks = _validate(ans, pending, free)
-    if debate:
+    if mode == "debate":
         user = packet + f"\n\ncolleague's proposal: {json.dumps(ans) if ans else 'none'}"
         final = _ask(critic, user, ctx["model"], ctx["host"], ctx["cache"], "es-critic", num_predict=300)
         ctx["calls"] += 1
@@ -515,11 +678,11 @@ def _llm_decide(pending, free, ctx, debate: bool):
     return picks
 
 
-def arm_llm(pending, free, ctx, debate=False):
+def arm_llm(pending, free, ctx, mode="single"):
     if sum(_sizes(j)[0] for j in pending) <= len(free):   # nothing to ration -> no call (the gate)
         ctx["trivial"] += 1
         return arm_firstfit(pending, free, ctx)
-    picks = _llm_decide(pending, free, ctx, debate)
+    picks = _llm_decide(pending, free, ctx, mode)
     # an EMPTY pick list idles the cluster while jobs fit -- never right here, and in practice it
     # means the answer failed to parse. Treat it as a fallback, not as a decision to hold.
     if not picks:
@@ -532,8 +695,11 @@ def arm_llm(pending, free, ctx, debate=False):
 ARMS = {"fcfs": arm_fcfs, "firstfit": arm_firstfit, "easy": arm_easy, "sjf": arm_sjf,
         "declared_first": arm_declared_first,
         "tier_fcfs": arm_tier_fcfs, "tier_sjf": arm_tier_sjf,
-        "single": lambda p, f, c: arm_llm(p, f, c, False),
-        "debate": lambda p, f, c: arm_llm(p, f, c, True)}
+        "single": lambda p, f, c: arm_llm(p, f, c, "single"),
+        "debate": lambda p, f, c: arm_llm(p, f, c, "debate"),
+        "negotiate": lambda p, f, c: arm_llm(p, f, c, "negotiate"),
+        "bo3": lambda p, f, c: arm_llm(p, f, c, "bo3"),
+        "correct": lambda p, f, c: arm_llm(p, f, c, "correct")}
 
 
 # ---------------------------------------------------------------- run
@@ -584,8 +750,8 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
         ctx["transcript"].close()
     (world / f"out/{tag}_sizes.json").write_text(json.dumps({str(k): v for k, v in ctx.get("sizes", {}).items()}))
     res = summarise(stats, world)
-    res.update(arm=arm, sizer=sizer, packet_order=packet_order, model=model if arm in ("single", "debate") else None, interval=interval,
-               packet=PACKET_VERSION if arm in ("single", "debate") else None,
+    res.update(arm=arm, sizer=sizer, packet_order=packet_order, model=model if arm in ("single", "debate", "negotiate", "bo3", "correct") else None, interval=interval,
+               packet=PACKET_VERSION if arm in ("single", "debate", "negotiate", "bo3", "correct") else None,
                est_default=est_default if arm == "easy" else None,
                **transcript_stats(world / f"out/{tag}_transcript.jsonl"),
                invocations=ctx["invocations"], llm_calls=ctx["calls"], fallbacks=ctx["fallbacks"],
@@ -593,7 +759,9 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
                # raises TypeError *after* the simulation has finished, discarding the whole run.
                critic_changed_applied=ctx["critic_changed"], trivial=ctx["trivial"],
                wall_s=round(time.time() - t),
-               **ctx.get("easy_stats", {}))
+               **ctx.get("easy_stats", {}),
+               **{f"correct_{k.replace(' ', '_')}": v
+                  for k, v in ctx.get("correct_outcome", {}).items()})
     with open(world / "results.jsonl", "a") as f:
         f.write(json.dumps(res) + "\n")
     if not quiet:
