@@ -1,0 +1,73 @@
+{
+ "world": "d48h22 (stress cell: load 4.97x, prod 20%)",
+ "note": "one window, n=1 -- directional only, no significance claim",
+ "config": {
+  "day": 48,
+  "offset_h": 22.0,
+  "hours": 24.0,
+  "warmup_h": 12.0,
+  "pool": 80,
+  "n_jobs": 429,
+  "n_warmup": 11,
+  "elastic_frac": 1.0,
+  "par_frac": 0.7,
+  "max_scale": 4.0,
+  "offered_load": 4.97
+ },
+ "arms": {
+  "firstfit+as_requested": {
+   "n": 429,
+   "killed_pct": 0.0,
+   "alloc_gpu_h": 9541.5,
+   "sla2_viol_pct": 73.4,
+   "sla5_viol_pct": 56.4,
+   "sla10_viol_pct": 50.3,
+   "mean_wait_s": 114910,
+   "p90_wait_s": 167608,
+   "mean_bsd": 68.18,
+   "util_win": 0.85
+  },
+  "firstfit+adaptive": {
+   "n": 429,
+   "killed_pct": 0.0,
+   "alloc_gpu_h": 5857.2,
+   "sla2_viol_pct": 66.0,
+   "sla5_viol_pct": 52.7,
+   "sla10_viol_pct": 46.6,
+   "mean_wait_s": 66908,
+   "p90_wait_s": 125882,
+   "mean_bsd": 37.04,
+   "util_win": 0.86
+  },
+  "firstfit+greedy": {
+   "n": 429,
+   "killed_pct": 0.0,
+   "alloc_gpu_h": 18180.9,
+   "sla2_viol_pct": 90.2,
+   "sla5_viol_pct": 74.1,
+   "sla10_viol_pct": 63.6,
+   "mean_wait_s": 393142,
+   "p90_wait_s": 651356,
+   "mean_bsd": 291.83,
+   "util_win": 0.86
+  },
+  "single(qwen2.5:14b)+adaptive": {
+   "n": 429,
+   "killed_pct": 0.0,
+   "alloc_gpu_h": 5934.9,
+   "sla2_viol_pct": 67.8,
+   "sla5_viol_pct": 50.8,
+   "sla10_viol_pct": 42.2,
+   "mean_wait_s": 62558,
+   "p90_wait_s": 116887,
+   "mean_bsd": 25.83,
+   "util_win": 0.86,
+   "decisions": 350,
+   "ids_proposed": 872,
+   "ids_dropped_by_validator": 463,
+   "invalid_answers": 0,
+   "critic_changed": 0,
+   "pick_eq_firstfit_pct": 5.1
+  }
+ }
+}

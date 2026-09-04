@@ -397,7 +397,10 @@ def transcript_stats(path: Path) -> dict:
     same = dropped = proposed = 0
     for x in L:
         rows = [l.split() for l in x["packet"].splitlines()[1:]]
-        ids = [int(r[0][3:]) for r in rows]; g = {int(r[0][3:]): int(r[1][5:]) for r in rows}
+        # a moldable job prints "gpus=LO-HI"; the first-fit reference below only needs the smallest
+        # size that lets it start, so take LO. Rigid jobs print "gpus=N", where LO == N.
+        lo = lambda tok: int(tok[5:].split("-")[0])
+        ids = [int(r[0][3:]) for r in rows]; g = {int(r[0][3:]): lo(r[1]) for r in rows}
         free, ff = x["free"], []
         for i in ids:
             if g[i] <= free:
