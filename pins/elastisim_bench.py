@@ -438,46 +438,41 @@ def _anchor_plan(pending, free, ctx):
 
 
 def _apply_correction(plan, ans, pending, free):
-    """Fund a signed correction against the anchor. Code does every piece of arithmetic: it caps
-    the disruption, keeps sizes legal, and never lets the total exceed capacity. Returns the
-    anchor unchanged when the answer is unusable -- the fallback is the strong baseline, not
-    first-fit."""
-    if not isinstance(ans, dict) or not isinstance(ans.get("changes"), dict):
+    """Delegate to pins.correction_signed: the same parser, the same max(gained,lost) disruption
+    budget, and the same funding rule (revoke from the least-valued units, never from a
+    beneficiary, never below a floor unless the decision explicitly reduced that job). Reusing it
+    rather than reimplementing keeps the two studies on ONE contract -- an earlier local version
+    lacked the donor logic and funded grants by simply filling until capacity ran out.
+
+    A non-empty violations list means the decision is REJECTED and the anchor stands, which is why
+    this arm cannot finish worse than its deterministic baseline."""
+    from pins.correction_signed import _parse_decision, apply_signed, SIGNED_BUDGET
+    by_id = {str(j.identifier): j for j in pending}
+    # every pending job is in the allocation, at 0 if the anchor does not start it -- otherwise a
+    # correction that PROMOTES a waiting job would be rejected as naming an unknown id
+    alloc = {jid: 0 for jid in by_id}
+    for j, k in plan:
+        alloc[str(j.identifier)] = k
+    floors = {jid: _sizes(j)[0] for jid, j in by_id.items()}
+    # least-valued first: batch before prod, then shortest-waiting -- these give up GPUs first
+    ranking = sorted((float(j.attributes.get("tier") == "prod") * 1e9 + j.submit_time, jid)
+                     for jid, j in by_id.items())
+    dec = _parse_decision(ans)
+    if dec.get("_source") == "fallback":     # nothing parseable came back
         return plan, "no parse"
-    by_id = {j.identifier: j for j in pending}
-    idx = {j.identifier: i for i, (j, _) in enumerate(plan)}
-    out = [[j, k] for j, k in plan]
-    gained = lost = 0
-    for jid, d in ans["changes"].items():
-        try:
-            jid, d = int(str(jid).strip().removeprefix("id=")), int(d)
-        except (TypeError, ValueError):
-            continue
-        if jid in idx:                                   # adjust a job the anchor is starting
-            row = out[idx[jid]]; lo, hi = _sizes(row[0])
-            new = max(0, min(hi, row[1] + d))
-            if 0 < new < lo:                             # below its legal minimum -> drop it
-                new = 0
-            gained += max(0, new - row[1]); lost += max(0, row[1] - new)
-            row[1] = new
-        elif d > 0 and jid in by_id:                     # promote a job the anchor left waiting
-            j = by_id[jid]; lo, hi = _sizes(j)
-            new = max(lo, min(hi, d))
-            gained += new; out.append([j, new])
-    hold = max(0, int(ans.get("hold_free") or 0))
-    if max(gained, lost) > CORRECT_BUDGET or gained + lost == 0 and not hold:
-        return plan, ("over budget" if max(gained, lost) > CORRECT_BUDGET else "no change")
-    out = [[j, k] for j, k in out if k > 0]
-    cap = len(free) - hold
-    kept, used = [], 0
-    for j, k in out:
-        # Code funds what it CAN, it does not refuse outright. Dropping a job whose corrected size
-        # no longer fits would leave the cluster idler than the anchor -- an over-large correction
-        # would then make this arm worse than the baseline it is supposed to be unable to harm.
-        k = min(k, cap - used)
-        if k >= _sizes(j)[0]:
-            kept.append((j, k)); used += k
-    return kept, "applied"
+    if not dec["changes"] and not dec["hold_free"]:
+        return plan, "no change"             # the right answer for an ordinary scene
+    new_alloc, viol = apply_signed(alloc, dec, len(free),
+                                   ranking=ranking, floors=floors, budget=SIGNED_BUDGET)
+    if viol:
+        return plan, "; ".join(viol)[:40]
+    out = []
+    for jid, k in new_alloc.items():
+        j = by_id[jid]
+        lo, hi = _sizes(j)
+        if k >= lo:                       # below its legal minimum means "not started"
+            out.append((j, min(k, hi)))
+    return out, "applied"
 
 
 PACKET_CAP = 40
