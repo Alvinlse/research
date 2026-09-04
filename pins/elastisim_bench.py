@@ -3,7 +3,7 @@
     .venv/bin/python -m pins.elastisim_bench build --day 157 --hours 12 --pool 256 --out runs/es_d157
     .venv/bin/python -m pins.elastisim_bench run --world runs/es_d157 --arm fcfs|firstfit|sjf|single|debate
 
-World (whole-GPU HPC batch; jobs are rigid by default, MOLDABLE under --elastic-frac):
+World (whole-GPU HPC batch; jobs are rigid by default, MALLEABLE under --elastic-frac):
   * one ElastiSim node == one GPU (Supercloud jobs are 82% 1x1, 16% 1x2; a job needing g GPUs
     becomes a rigid job with num_nodes=g, 1 GPU per node), so the allocation unit is a GPU;
   * each job is ONE gpu task, flops = true_runtime * flops_per_gpu with pattern "uniform" (every
@@ -108,7 +108,7 @@ def real_stats(jobs: list[dict]) -> dict:
 
 def build(day: int, hours: float, pool: int, out: Path, offset_h: float = 0, load: float = 0.0,
           warmup_h: float = 0, elastic_frac: float = 0.0, par_frac: float = 1.0,
-          max_scale: float = 4.0, elastic_seed: int = 0) -> dict:
+          max_scale: float = 4.0, elastic_seed: int = 0, resize_points: int = 10) -> dict:
     """pool=0 with load>0 sizes the pool by offered load (exploratory path only: it makes load an
     OUTPUT, so windows cannot be stratified by it). The measured design passes a fixed pool and
     lets each window's own demand set its load. Meta describes the MEASURED window, not the warm-up."""
@@ -121,7 +121,9 @@ def build(day: int, hours: float, pool: int, out: Path, offset_h: float = 0, loa
         return {}
     if pool <= 0:
         pool = max(8, round(sum(j["dur"] * j["gpus"] for j in scored) / 3600 / hours / load))
-    # Elastic jobs are MOLDABLE: the scheduler picks the size at launch, fixed thereafter.
+    # Elastic jobs are MALLEABLE: the scheduler picks their launch size and may resize them at
+    # `resize_points - 1` equally spaced work boundaries. Dividing each iteration's work by the
+    # number of points preserves the original total work exactly.
     # Amdahl anchored on the observed point -- a job seen at n0 nodes for `dur` seconds gets
     #     runtime(n) = dur * (s + (1-s)/n) / (s + (1-s)/n0)
     # so runtime(n0) == dur EXACTLY (the rigid replay is this model at the observed size) while
@@ -130,7 +132,7 @@ def build(day: int, hours: float, pool: int, out: Path, offset_h: float = 0, loa
     #     size(n) = n * FLOPS_PER_GPU * runtime(n) = a_par*n + a_ser,
     # which is linear in num_nodes -- exprtk substitutes num_nodes at assignment time.
     rng = random.Random(elastic_seed)
-    elastic = {j["jid"]: (par_frac < 1.0 and rng.random() < elastic_frac) for j in jobs}
+    elastic = {j["jid"]: rng.random() < elastic_frac for j in jobs}
 
     def amdahl(j):
         n0, s = max(1, j["gpus"]), par_frac
@@ -141,16 +143,17 @@ def build(day: int, hours: float, pool: int, out: Path, offset_h: float = 0, loa
         "phases": [{"iterations": 1, "scheduling_point": False, "tasks": [
             {"type": "gpu", "name": "train", "flops": "flops", "computation_pattern": "uniform"}]}]},
         indent=1))
+    resize_points = max(1, resize_points)
     (out / "in/application_model_elastic.json").write_text(json.dumps({
-        "phases": [{"iterations": 1, "scheduling_point": False, "tasks": [
-            {"type": "gpu", "name": "train", "flops": "a_par*num_nodes + a_ser",
+        "phases": [{"iterations": resize_points, "scheduling_point": resize_points > 1, "tasks": [
+            {"type": "gpu", "name": "train", "flops": "(a_par*num_nodes + a_ser)/resize_points",
              "computation_pattern": "total"}]}]}, indent=1))
     (out / "in/jobs.json").write_text(json.dumps({"jobs": [{
-        **({"type": "moldable", "num_nodes_min": 1,
+        **({"type": "malleable", "num_nodes_min": 1,
             "num_nodes_max": min(pool, max(1, int(max_scale * j["gpus"]))),
             "num_gpus_per_node_min": 1, "num_gpus_per_node_max": 1,
             "application_model": str(out / "in/application_model_elastic.json"),
-            "arguments": amdahl(j)}
+            "arguments": amdahl(j) | {"resize_points": resize_points}}
            if elastic[j["jid"]] else
            {"type": "rigid", "num_nodes": j["gpus"], "num_gpus_per_node": 1,
             "application_model": str(out / "in/application_model.json"),
@@ -194,6 +197,7 @@ def build(day: int, hours: float, pool: int, out: Path, offset_h: float = 0, loa
     meta = {"day": day, "offset_h": offset_h, "hours": hours, "warmup_h": warmup_h, "pool": pool,
             "n_jobs": len(scored), "n_warmup": len(jobs) - len(scored),
             "elastic_frac": elastic_frac, "par_frac": par_frac, "max_scale": max_scale,
+            "resize_points": resize_points,
             "n_elastic": sum(elastic[j["jid"]] for j in scored),
             "n_prod": sum(j["priority"].isdigit() and int(j["priority"]) >= 100000 for j in scored),
             "gpu_hours": sum(j["dur"] * j["gpus"] for j in scored) / 3600, **real_stats(scored)}
@@ -205,7 +209,7 @@ def build(day: int, hours: float, pool: int, out: Path, offset_h: float = 0, loa
 
 
 # ---------------------------------------------------------------- arms
-# A MOLDABLE job has no num_nodes -- only num_nodes_min/max -- so every arm makes two decisions:
+# A MALLEABLE job has no num_nodes -- only num_nodes_min/max -- so every arm initially decides:
 # which job to start, and how large to make it. The sizing rule is a separate axis from the
 # ordering rule, and both baselines and LLM arms are sized by one of these, so no arm gets a lever
 # the others lack. `as_requested` reproduces the rigid world exactly and is the control.
@@ -224,6 +228,18 @@ def _size(job, free, ctx, pending_n: int = 1) -> int:
     if lo == hi:
         return lo
     rule = ctx.get("sizer", "as_requested")
+    if rule == "auto":
+        # Per-TICK policy selection, the deterministic control a selector has to beat. The
+        # window-level winner tracked offered load, so the instantaneous analogue is how deep the
+        # queue is against what is free right now. Above the threshold share capacity, below it
+        # honour what the owner asked for.
+        if ctx.get("switch_on") == "load":
+            pressure = ctx.get("pending_demand", pending_n) / max(1, ctx.get("pool_n", 1))
+        else:
+            pressure = pending_n / max(1, f)
+        rule = "adaptive" if pressure >= ctx.get("switch_at", 1.0) else "as_requested"
+        ctx["switch_adaptive"] = ctx.get("switch_adaptive", 0) + (rule == "adaptive")
+        ctx["switch_calls"] = ctx.get("switch_calls", 0) + 1
     if rule == "greedy":                       # take the most that fits
         return min(hi, f)
     if rule == "adaptive":                     # share free capacity with everyone else waiting
@@ -242,6 +258,7 @@ def _start_at(job, free, ctx, k: int):
     """Start at an explicitly chosen size (the LLM arms). _validate has already made k legal."""
     job.assign(free[:k]); del free[:k]
     ctx.setdefault("sizes", {})[job.identifier] = k
+    ctx.setdefault("size_history", {}).setdefault(job.identifier, []).append((ctx["now"], k))
     if getattr(job, "num_nodes", None) is None:
         job.assign_num_gpus_per_node(1)
 
@@ -250,8 +267,55 @@ def _start(job, free, ctx, pending_n: int = 1):
     k = _size(job, free, ctx, pending_n)
     job.assign(free[:k]); del free[:k]
     ctx.setdefault("sizes", {})[job.identifier] = k
-    if getattr(job, "num_nodes", None) is None:      # moldable: GPUs per node is ours to set too
+    ctx.setdefault("size_history", {}).setdefault(job.identifier, []).append((ctx["now"], k))
+    if getattr(job, "num_nodes", None) is None:      # elastic: GPUs per node is ours to set too
         job.assign_num_gpus_per_node(1)              # one node == one GPU in this world
+
+
+def _resize_malleable(job, free, pending, ctx) -> int:
+    """Resize one running job at an ElastiSim scheduling point.
+
+    Queue pressure shrinks it to its legal minimum so waiting work can run; an empty queue lets it
+    expand into idle GPUs. ElastiSim pauses the job at the scheduling point and applies the changed
+    node set before its next work chunk. Return the signed GPU change for accounting/tests.
+    """
+    lo, hi = _sizes(job)
+    before = len(job.assigned_nodes)
+    last = ctx.setdefault("last_resize", {}).get(job.identifier, float("-inf"))
+    if ctx.get("now", 0) - last < ctx.get("resize_cooldown", 0):
+        ctx["resize_cooldown_blocks"] = ctx.get("resize_cooldown_blocks", 0) + 1
+        return 0
+    target = lo if pending else min(hi, before + len(free))
+    budget = max(0, ctx.get("resize_budget", CORRECT_BUDGET))
+    target = max(before - budget, min(before + budget, target))
+    if target < before:
+        job.remove(job.assigned_nodes[target:])
+    elif target > before:
+        job.assign(free[:target - before])
+    delta = target - before
+    if delta:
+        ctx["resize_events"] = ctx.get("resize_events", 0) + 1
+        ctx["resized_gpus"] = ctx.get("resized_gpus", 0) + abs(delta)
+        ctx.setdefault("sizes", {})[job.identifier] = target
+        ctx.setdefault("size_history", {}).setdefault(job.identifier, []).append((ctx["now"], target))
+        ctx["last_resize"][job.identifier] = ctx.get("now", 0)
+    return delta
+
+
+def _near_limit_protection_proven(job, now) -> bool:
+    """The zero-LLM control for the only structured resize exception currently permitted."""
+    lim = int(job.attributes.get("req_min", 0)) * 60
+    elapsed = max(0, int(now - job.start_time))
+    return job.attributes.get("tier") == "prod" and lim > 0 and elapsed * 100 >= lim * 80
+
+
+def _resize_with_deterministic_protection(job, free, pending, ctx) -> int:
+    """Protect a near-limit production job; otherwise execute the ordinary resize baseline."""
+    lo, _ = _sizes(job)
+    if pending and len(job.assigned_nodes) > lo and _near_limit_protection_proven(job, ctx["now"]):
+        ctx["protected_events"] = ctx.get("protected_events", 0) + 1
+        return 0
+    return _resize_malleable(job, free, pending, ctx)
 
 
 def arm_fcfs(pending, free, ctx):
@@ -346,12 +410,12 @@ def arm_tier_sjf(pending, free, ctx):      # prod first (reserving), requested-w
 
 
 # Both roles must describe the SAME world. Before this was factored out, the critic was never
-# told jobs were moldable and was asked for bare ids, so it silently reverted every size the
+# told jobs were malleable and was asked for bare ids, so it silently reverted every size the
 # proposer chose back to the requested one (transcript: proposer emitted [id,gpus] pairs on
 # 339/348 decisions, the critic on 23/348) -- it was deleting half the decision, not reviewing it.
 WORLD = ("A job shown as `gpus=N` is rigid and needs exactly N GPUs for its whole run. A job shown "
-         "as `gpus=LO-HI` is MOLDABLE: its size is chosen once, at start, and cannot change "
-         "afterwards; `asked=` is the size its owner originally requested. Scaling is sublinear -- "
+         "as `gpus=LO-HI` is MALLEABLE: it starts at a size in that range and may be resized at "
+         "later work boundaries; `asked=` is the size its owner originally requested. Scaling is sublinear -- "
          "doubling a job's GPUs does NOT halve its runtime, so a large allocation costs more machine "
          "time than it saves, while too small an allocation risks the job exceeding its requested "
          "walltime and being killed. You only know each job's REQUESTED walltime, never its true "
@@ -541,6 +605,398 @@ REFEREE_SIGNED = ("You are the REFEREE. " + WORLD + _ANCHOR_RULE +
                   "Empty changes with hold_free 0 is the correct answer when neither reviewer has "
                   "made a case.")
 
+# --- neg_v2: asymmetric INFORMATION, rankings and ceilings, verifiable reasons -------------
+# Built from what the earlier arms measured. (1) demand and supply read the same packet and agreed
+# half the time, so they now see DIFFERENT views: demand the job-level view, supply the cluster-
+# level view (running jobs and their elapsed time, unsold capacity, true queue depth). (2) 74% of
+# signed rulings were unfundable because the model asked for GPUs that did not exist, so no role
+# emits an amount any more: demand emits a RANKING, supply emits a CEILING, the referee decides how
+# far down the ranking to go within the ceiling, and code sizes every grant -- there is nothing to
+# be "short of". (3) "imminent higher-priority work" was recited as a blanket licence because the
+# packet could never refute it, so every permitted reason now names a field the packet carries.
+_V2_WORLD = ("Jobs are GPU jobs. A job shown as gpus=N is rigid. A job shown as gpus=LO-HI is "
+             "MALLEABLE: it starts within that range and may resize at later work boundaries; "
+             "asked= is what its owner requested. Scaling "
+             "is sublinear, so more GPUs finish a job somewhat sooner at a proportionally larger "
+             "cost in machine time; too few risk the job exceeding its requested walltime and being "
+             "killed. True runtimes are unknown to everyone. A deterministic baseline has ALREADY "
+             "planned this round, sizing each started job as its owner asked. You never produce a "
+             "schedule and never state amounts of GPUs -- code does all sizing arithmetic.")
+DEMAND_V2 = ("You speak for the WAITING JOBS. " + _V2_WORLD +
+             " You see the queue only: you do not know how much capacity is free. Rank the jobs "
+             "that most deserve MORE than the baseline gives them (a larger size, or to be started "
+             "when the baseline left them waiting), best case first. Use only these reasons, each "
+             "checkable in the list: waited_x_median is high (the job has waited far longer than its "
+             "peers); tier=prod is waiting while batch jobs are being started; a malleable job is "
+             "started well below asked=; a malleable job is still WAITING and could be started "
+             "sooner if it accepted fewer GPUs than asked= (rank it if its wait justifies a "
+             "smaller start). Leave out any job with no such reason. Reply with JSON "
+             'only: {"rank": [job ids, most deserving first], "why": "one line"}. An empty rank '
+             "is the correct answer for an ordinary queue.")
+SUPPLY_V2 = ("You speak for the CLUSTER. " + _V2_WORLD +
+             " You see the cluster only: what is running, for how long, and against what limit; "
+             "how much of the free pool the baseline commits and how much is unsold; and how deep "
+             "the queue is. You do not see individual jobs' pleading. Decide the CEILING: the most "
+             "GPUs that should be committed to new starts this round. Commit less than the baseline "
+             "only for a reason checkable here -- a running job is near its limit or has run far "
+             "longer than others and will free enough soon for something the baseline could not "
+             "fit, or the queue is so much deeper than shown that a burst is due. Commit more than "
+             "the baseline when GPUs sit unsold with a deep queue. Reply with JSON only: "
+             '{"commit_max": <integer GPUs>, "why": "one line"}. Restating the baseline\'s own '
+             "commitment is the correct answer for an ordinary cluster.")
+REFEREE_V2 = ("You are the REFEREE. " + _V2_WORLD +
+              " The queue's advocate has ranked which jobs deserve more; the cluster's advocate has "
+              "set a ceiling on GPUs to commit. Each saw only its own side. You see the baseline "
+              "and both. Decide how far down the ranking to honour and what ceiling to apply: adopt "
+              "each in full, cut it back, or reject it. Favouring a WAITING job starts it with "
+              "whatever fits under the ceiling, which may be fewer GPUs than it asked for. Reply with JSON only: "
+              '{"favour": [job ids to give more, in order, possibly empty], '
+              '"commit_max": <integer GPUs, or -1 to keep the baseline\'s commitment>, '
+              '"why": "one line naming which advocate you followed"}.')
+
+DEMAND_RESIZE_V2 = ("You represent WAITING jobs reviewing a deterministic live resize. " + _V2_WORLD +
+                    " Code already plans to shrink the current running job just enough to unblock "
+                    "work. State whether a waiting production job is blocked; ordinary batch demand "
+                    "is not an exception. Reply with JSON only: "
+                    '{"waiting_prod_blocked": <true or false>, "evidence_job": <job id or -1>}.')
+SUPPLY_RESIZE_V2 = ("You review whether the CURRENT running job needs protection from a deterministic "
+                    "shrink. " + _V2_WORLD + " Protection is exceptional: use current_prod_near_limit "
+                    "only when the packet proves the current job is tier=prod and at least 80% through "
+                    "its requested walltime. Otherwise use none. Reply with JSON only: "
+                    '{"reason": "current_prod_near_limit" or "none", "evidence_job": <current id>}.')
+REFEREE_RESIZE_V2 = ("You referee an exception to a deterministic live resize. " + _V2_WORLD +
+                     " The baseline shrink HAPPENS unless the current job has the single permitted "
+                     "protection: reason=current_prod_near_limit, supported by its packet fields. "
+                     "Waiting production work argues FOR the shrink, never for protection. Do not "
+                     "invent another reason. Reply with JSON only: "
+                     '{"protect_current": <true or false>, "reason": "current_prod_near_limit" or "none", '
+                     '"evidence_job": <current id>}.')
+TEXT_RESIZE_SINGLE = ("You review a deterministic live resize using an operator or owner note "
+                      "that is not represented in the numerical scheduler fields. The note is a "
+                      "synthetic counterfactual for this experiment, but treat its contents as "
+                      "authoritative. Choose protect only when it explicitly says shrinking the "
+                      "CURRENT job would invalidate work, lose non-recoverable progress, or violate "
+                      "an external operational constraint. Choose shrink when it explicitly permits "
+                      "or requests releasing GPUs. Choose default for status, convenience, accounting, "
+                      "or any note without a scheduling instruction. Reply with JSON only: "
+                      '{"action": "protect|shrink|default", "evidence_job": "<trace job id>", '
+                      '"reason": "one short evidence phrase"}.')
+
+
+# The text channel's three roles. The advocates are opposed on purpose: one is paid to release the
+# GPUs, the other to keep them, and only the referee sees both notes and the packet together.
+TEXT_RESIZE_DEMAND = ("You represent the WAITING jobs. A note from the CURRENT running job's owner "
+                      "is quoted below and code already plans to shrink that job to unblock the "
+                      "queue. Argue whether the note really forbids the shrink, or whether it is "
+                      "status, convenience or accounting text that should not stop it. Be sceptical: "
+                      "vague urgency is not an operational constraint. Reply with JSON only: "
+                      '{"note_blocks_shrink": <true or false>, "why": "one short phrase"}.')
+TEXT_RESIZE_SUPPLY = ("You represent the CURRENT running job. Its owner or operator note is quoted "
+                      "below and code plans to shrink it. State whether the note names work that "
+                      "shrinking would destroy or an external constraint it would break, or whether "
+                      "it instead PERMITS releasing GPUs. Do not invent a constraint the note does "
+                      "not state. Reply with JSON only: "
+                      '{"claim": "protect|shrink|default", "why": "one short phrase"}.')
+TEXT_RESIZE_REFEREE = ("You referee a deterministic live resize on the strength of an operator or "
+                       "owner note that the numerical fields do not represent. The note is a "
+                       "synthetic counterfactual for this experiment, but treat its contents as "
+                       "authoritative. Two advocates have argued opposite sides and each saw only "
+                       "its own; you see both and the packet. Choose protect only when the note "
+                       "explicitly says shrinking the CURRENT job would invalidate work, lose "
+                       "non-recoverable progress, or violate an external operational constraint. "
+                       "Choose shrink when it explicitly permits or requests releasing GPUs. Choose "
+                       "default for status, convenience, accounting, or any note without a "
+                       "scheduling instruction. An advocate's confidence is not evidence. "
+                       "Reply with JSON only: "
+                       '{"action": "protect|shrink|default", "evidence_job": "<trace job id>", '
+                       '"reason": "one short evidence phrase naming which advocate you followed"}.')
+
+
+def _packet_demand(pending, now, plan=()):
+    """The job-level view, including baseline status but no capacity arithmetic."""
+    waits = sorted(max(0.0, now - j.submit_time) for j in pending)
+    med = waits[len(waits) // 2] if waits else 1.0
+    lines = [f"now={int(now)}s pending={len(pending)} (showing {min(len(pending), PACKET_CAP)}, in no "
+             f"particular order). queue median wait = {int(med)}s"]
+    shown = list(pending[:PACKET_CAP]); random.Random(int(now)).shuffle(shown)
+    base = {j.identifier: k for j, k in plan}
+    for j in shown:
+        a = j.attributes; lo, hi = _sizes(j); w = max(0.0, now - j.submit_time)
+        size = f"gpus={lo}" if lo == hi else f"gpus={lo}-{hi} asked={a.get('req_nodes', lo)}"
+        status = f"start@{base[j.identifier]}" if j.identifier in base else "WAIT"
+        lines.append(f"id={j.identifier} {size} baseline={status} tier={a.get('tier', '?')} waited_s={int(w)} "
+                     f"waited_x_median={w / max(1.0, med):.1f}")
+    return "\n".join(lines)
+
+
+def _packet_supply(plan, pending, free, ctx, now):
+    """The cluster-level view. Running jobs show elapsed time and requested limit -- what a real
+    system knows -- never true runtime. Requested walltimes are 100-600x over-stated on this
+    trace, so the release picture is honest but weak; that is a property of the data."""
+    used = sum(k for _, k in plan)
+    run = sorted(ctx.get("running", []), key=lambda j: j.start_time)
+    lines = [f"now={int(now)}s free_gpus={len(free)} queue_depth={len(pending)} "
+             f"(the queue's advocate saw at most {PACKET_CAP} of them)",
+             f"baseline commits {used} GPUs to {len(plan)} new starts. UNSOLD={len(free) - used} GPUs remain free after it.",
+             f"running jobs: {len(run)}, holding {sum(len(j.assigned_nodes) for j in run)} GPUs"]
+    for j in run[:PACKET_CAP]:
+        el = int(now - j.start_time); lim = int(j.attributes.get("req_min", 0)) * 60
+        lines.append(f"  running id={j.identifier} gpus={len(j.assigned_nodes)} elapsed_s={el} "
+                     + (f"limit_s={lim} ({100 * el // max(1, lim)}% of limit)" if lim else "limit=UNLIMITED"))
+    return "\n".join(lines)
+
+
+def _decision_ids(ans, field, valid):
+    """Parse an ordered id list while preserving order and ignoring hallucinated jobs."""
+    out = []
+    for raw in (ans.get(field, []) if isinstance(ans, dict) else []):
+        try:
+            jid = int(str(raw).strip().removeprefix("id="))
+        except (TypeError, ValueError):
+            continue
+        if jid in valid and jid not in out:
+            out.append(jid)
+    return out
+
+
+def _llm_resize_decide(job, pending, free, ctx) -> int:
+    """Review an exception to the deterministic resize; invalid/weak debate changes nothing."""
+    from pins.correction import _ask
+    now = ctx["now"]
+    last = ctx.setdefault("last_resize", {}).get(job.identifier, float("-inf"))
+    if now - last < ctx.get("resize_cooldown", 0):
+        ctx["resize_cooldown_blocks"] += 1
+        return 0
+    lo, _ = _sizes(job)
+    if not pending or len(job.assigned_nodes) <= lo:
+        return _resize_malleable(job, free, pending, ctx)
+
+    waiting_prod = any(j.attributes.get("tier") == "prod" for j in pending)
+    potential_move = min(len(job.assigned_nodes) - lo, ctx.get("resize_budget", CORRECT_BUDGET))
+    # Ordinary one-GPU batch-to-batch pressure is exactly what the deterministic policy handles.
+    # Spend three calls only when tier or disruption makes overriding that policy plausible.
+    contested = (job.attributes.get("tier") == "prod" or waiting_prod or potential_move >= 2)
+    if not contested:
+        return _resize_malleable(job, free, pending, ctx)
+
+    plan = _anchor_plan(pending, free, ctx)
+    demand_packet = _packet_demand(pending, now, plan)
+    lim = int(job.attributes.get("req_min", 0)) * 60
+    elapsed = max(0, int(now - job.start_time))
+    pct = 100 * elapsed // max(1, lim) if lim else 0
+    supply_packet = (f"now={int(now)}s free_gpus={len(free)} queue_depth={len(pending)}\n"
+                     f"CURRENT id={job.identifier} tier={job.attributes.get('tier', '?')} "
+                     f"current={len(job.assigned_nodes)} min={lo} "
+                     f"asked={job.attributes.get('req_nodes', lo)} elapsed_s={elapsed} "
+                     + (f"limit_s={lim} pct_of_limit={pct}" if lim else "limit=UNLIMITED"))
+    d = _ask(DEMAND_RESIZE_V2, demand_packet, ctx["model"], ctx["host"], ctx["cache"],
+             "es-d2-resize", num_predict=300)
+    sup = _ask(SUPPLY_RESIZE_V2, supply_packet, ctx["model"], ctx["host"],
+               ctx["cache"], "es-s2-resize", num_predict=300)
+    ctx["calls"] += 2
+    user = (demand_packet + "\n\nCURRENT DONOR:\n" + supply_packet
+            + f"\n\ndemand advocate: {json.dumps(d) if d else 'none'}"
+            + f"\n\nsupply advocate: {json.dumps(sup) if sup else 'none'}")
+    ans = _ask(REFEREE_RESIZE_V2, user, ctx["model"], ctx["host"], ctx["cache"],
+               "es-r2-resize", num_predict=300)
+    ctx["calls"] += 1
+    before = len(job.assigned_nodes)
+    reason = str((ans or {}).get("reason", "none"))
+    try:
+        evidence = int((ans or {}).get("evidence_job", -1))
+    except (TypeError, ValueError):
+        evidence = -1
+    proven = _near_limit_protection_proven(job, now)
+    protected = ((ans or {}).get("protect_current") is True
+                 and reason == "current_prod_near_limit"
+                 and evidence == job.identifier and proven)
+    if protected:
+        ctx["protected_events"] = ctx.get("protected_events", 0) + 1
+    delta = 0 if protected else _resize_malleable(job, free, pending, ctx)
+    outcome = "protected" if protected else ("baseline resized" if delta else "baseline unchanged")
+    ctx["transcript"].write(json.dumps({
+        "t": now, "event": "resize", "free": len(free), "pending": len(pending),
+        "resizing_job": job.identifier, "size_before": before, "size_after": before + delta,
+        "demand": d, "supply": sup, "proposal": ans, "protection_proven": proven,
+        "outcome": outcome}) + "\n")
+    ctx["transcript"].flush()
+    return delta
+
+
+def _llm_resize_single_decide(job, pending, free, ctx, use_text=False, debate=False) -> int:
+    """Single-agent control for the three-role resize review in ``neg_v2``.
+
+    It uses the same escalation gate, evidence, permitted exception, and validator, but asks the
+    referee directly once instead of first collecting demand and supply opinions.
+    """
+    from pins.correction import _ask
+    now = ctx["now"]
+    last = ctx.setdefault("last_resize", {}).get(job.identifier, float("-inf"))
+    if now - last < ctx.get("resize_cooldown", 0):
+        ctx["resize_cooldown_blocks"] += 1
+        return 0
+    lo, _ = _sizes(job)
+    if not pending or len(job.assigned_nodes) <= lo:
+        return _resize_malleable(job, free, pending, ctx)
+
+    waiting_prod = any(j.attributes.get("tier") == "prod" for j in pending)
+    potential_move = min(len(job.assigned_nodes) - lo, ctx.get("resize_budget", CORRECT_BUDGET))
+    contested = (job.attributes.get("tier") == "prod" or waiting_prod or potential_move >= 2)
+    # The narrow gate consults the model only where the deterministic policy was already going to
+    # move GPUs, so a job whose note PERMITS a shrink is never asked and the shrink half of the
+    # exception suite cannot be scored at all. `--gate wide` asks about any job that could still
+    # move, which is the condition the semantic question actually needs.
+    if not contested and ctx.get("gate") != "wide":
+        return _resize_malleable(job, free, pending, ctx)
+
+    plan = _anchor_plan(pending, free, ctx)
+    demand_packet = _packet_demand(pending, now, plan)
+    lim = int(job.attributes.get("req_min", 0)) * 60
+    elapsed = max(0, int(now - job.start_time))
+    pct = 100 * elapsed // max(1, lim) if lim else 0
+    supply_packet = (f"now={int(now)}s free_gpus={len(free)} queue_depth={len(pending)}\n"
+                     f"CURRENT id={job.identifier} tier={job.attributes.get('tier', '?')} "
+                     f"current={len(job.assigned_nodes)} min={lo} "
+                     f"asked={job.attributes.get('req_nodes', lo)} elapsed_s={elapsed} "
+                     + (f"limit_s={lim} pct_of_limit={pct}" if lim else "limit=UNLIMITED"))
+    trace_jid = str(job.attributes.get("jid", job.identifier))
+    note = ctx.get("text_exceptions", {}).get(trace_jid, {}).get("note", "") if use_text else ""
+    user = demand_packet + "\n\nCURRENT DONOR:\n" + supply_packet
+    if use_text:
+        user += f"\ntrace_job_id={trace_jid}\nSYNTHETIC NOTE: {note or 'No note supplied.'}"
+    d = sup = None
+    if debate:
+        # Two opposed readings of the SAME note, then a referee that sees both. Three calls.
+        d = _ask(TEXT_RESIZE_DEMAND, user, ctx["model"], ctx["host"], ctx["cache"],
+                 "es-text-demand", num_predict=300)
+        sup = _ask(TEXT_RESIZE_SUPPLY, user, ctx["model"], ctx["host"], ctx["cache"],
+                   "es-text-supply", num_predict=300)
+        ctx["calls"] += 2
+        user += (f"\n\nqueue advocate: {json.dumps(d) if d else 'none'}"
+                 f"\n\njob advocate: {json.dumps(sup) if sup else 'none'}")
+    system_prompt = (TEXT_RESIZE_REFEREE if debate else TEXT_RESIZE_SINGLE) if use_text else REFEREE_RESIZE_V2
+    tag = ("es-text-debate-resize" if debate else "es-text-single-resize") if use_text else "es-single-resize"
+    ans = _ask(system_prompt, user, ctx["model"], ctx["host"], ctx["cache"], tag, num_predict=300)
+    ctx["calls"] += 1
+    before = len(job.assigned_nodes)
+    reason = str((ans or {}).get("reason", "none"))
+    try:
+        evidence = int((ans or {}).get("evidence_job", -1))
+    except (TypeError, ValueError):
+        evidence = -1
+    proven = _near_limit_protection_proven(job, now)
+    if use_text:
+        action = str((ans or {}).get("action", "default")).strip().lower()
+        evidence_raw = str((ans or {}).get("evidence_job", "")).strip()
+        protected = action == "protect" and evidence_raw in (trace_jid, str(job.identifier))
+    else:
+        action = "protect" if (ans or {}).get("protect_current") is True else "default"
+        protected = ((ans or {}).get("protect_current") is True
+                     and reason == "current_prod_near_limit"
+                     and evidence == job.identifier and proven)
+    if protected:
+        ctx["protected_events"] = ctx.get("protected_events", 0) + 1
+    delta = 0 if protected else _resize_malleable(job, free, pending, ctx)
+    outcome = "protected" if protected else ("baseline resized" if delta else "baseline unchanged")
+    ctx["transcript"].write(json.dumps({
+        "t": now, "event": "resize", "free": len(free), "pending": len(pending),
+        "resizing_job": job.identifier, "size_before": before, "size_after": before + delta,
+        "trace_job_id": trace_jid, "synthetic_note": note or None, "model_action": action,
+        "elapsed_s": elapsed, "demand": d, "supply": sup,
+        "proposal": ans, "protection_proven": proven, "outcome": outcome}) + "\n")
+    ctx["transcript"].flush()
+    return delta
+
+
+def _sizing_ambiguous(plan, pending, free) -> bool:
+    """Escalate on a real sizing CHOICE, not on scarcity and not on slack. Three shapes, each an
+    actual decision the anchor resolved by rule: (1) a started job was squeezed below what it
+    asked for and there is room to give some back; (2) a waiting job could start now if it
+    accepted less than it asked for; (3) a prod job waits while batch jobs run. A job started at
+    its asked size with GPUs to spare is NOT a choice -- growing it past asked is the greedy trap
+    measured worst on every axis -- and an earlier version fired on exactly that."""
+    asked = lambda j: max(_sizes(j)[0], min(_sizes(j)[1], int(j.attributes.get("req_nodes", _sizes(j)[0]))))
+    unsold = len(free) - sum(k for _, k in plan)
+    started = {j.identifier for j, _ in plan}
+    waiting = [j for j in pending if j.identifier not in started]
+    if unsold > 0 and any(k < asked(j) for j, k in plan):
+        return True
+    if any(_sizes(j)[0] <= unsold < asked(j) for j in waiting):
+        return True
+    return (any(j.attributes.get("tier") == "prod" for j in waiting)
+            and any(j.attributes.get("tier") != "prod" for j, _ in plan))
+
+
+def _build_from_ruling(plan, ans, pending, free, ctx):
+    """Turn (favour list, ceiling) into sizes. All arithmetic here. Grow favoured jobs toward
+    asked/hi from unsold capacity in order, promote favoured waiting jobs, then enforce the ceiling
+    by revoking from the least-valued (shortest-waiting batch first). Bounded by CORRECT_BUDGET via
+    correction_signed.disruption; over budget or unparseable -> the anchor stands."""
+    from pins.correction_signed import disruption
+    if not isinstance(ans, dict):
+        return plan, "no parse"
+    by_id = {j.identifier: j for j in pending}
+    fav = []
+    for x in (ans.get("favour") or []):
+        try:
+            i = int(str(x).strip().removeprefix("id="))
+        except (TypeError, ValueError):
+            continue
+        if i in by_id and i not in fav:
+            fav.append(i)
+    try:
+        cm = int(ans.get("commit_max", -1))
+    except (TypeError, ValueError):
+        cm = -1
+    base_used = sum(k for _, k in plan)
+    ceiling = base_used if cm < 0 else max(0, min(len(free), cm))
+    if not fav and ceiling == base_used:
+        return plan, "no change"
+    alloc = {j.identifier: k for j, k in plan}
+    asked = lambda j: max(_sizes(j)[0], min(_sizes(j)[1], int(j.attributes.get("req_nodes", _sizes(j)[0]))))
+    # Funding order: unsold capacity first, then a TRANSFER from the least-valued non-favoured
+    # started job (batch before prod, shortest-waiting first). These are pending jobs choosing who
+    # STARTS this tick, so revoking one is "wait one more tick", not preemption -- which is why a
+    # start may be revoked to zero here while correction_signed's floors protect a running base.
+    donors = sorted((i for i in alloc if i not in fav),
+                    key=lambda i: (by_id[i].attributes.get("tier") == "prod", -by_id[i].submit_time))
+    room = ceiling - sum(alloc.values())
+    for i in fav:
+        snapshot, room_before = dict(alloc), room
+        j = by_id[i]; lo, hi = _sizes(j); cur = alloc.get(i, 0)
+        # target is what the owner ASKED for, started or not: the only licensed reason to favour
+        # a started job is that it was squeezed below asked, and growing past asked is greedy.
+        target = asked(j)
+        need = max(0, target - cur); got = 0
+        take = min(max(room, 0), need); got += take; room -= take; need -= take
+        for dnr in donors:                              # transfer, least-valued first
+            if need <= 0:
+                break
+            t = min(alloc.get(dnr, 0), need); alloc[dnr] = alloc.get(dnr, 0) - t; got += t; need -= t
+        if cur == 0 and got < lo:                       # cannot start it legally: give it all back
+            alloc, room, got = snapshot, room_before, 0
+        alloc[i] = cur + got
+    # enforce the ceiling: least-valued non-favoured donates
+    over = sum(alloc.values()) - ceiling
+    for dnr in donors:
+        if over <= 0:
+            break
+        t = min(alloc.get(dnr, 0), over); alloc[dnr] = alloc.get(dnr, 0) - t; over -= t
+    # A partially revoked pending start below its legal minimum is no allocation at all. Normalize
+    # before disruption accounting so dropping a 4-GPU rigid job can never masquerade as a 1-GPU edit.
+    alloc = {i: (k if k >= _sizes(by_id[i])[0] else 0) for i, k in alloc.items()}
+    if sum(alloc.values()) > ceiling:
+        return plan, "unfunded ceiling"
+    before = {str(j.identifier): k for j, k in plan}
+    after = {str(i): k for i, k in alloc.items() if k > 0}
+    if disruption(before, after) > CORRECT_BUDGET:
+        return plan, "over budget"
+    if after == before:
+        return plan, "no change"        # a ruling that changed nothing must not count as one
+    out = [(by_id[i], k) for i, k in alloc.items() if k > 0]
+    return out, "applied"
+
+
 PACKET_CAP = 40
 # v1 (day-157 single/debate runs): "req_min=0" for undeclared limits -- the 14b model read 0 as SHORTEST and
 # returned the whole queue ignoring free_gpus (transcript autopsy 2026-09-03). v2 spells both out.
@@ -573,7 +1029,7 @@ def _packet(pending, free, now, order: str = "submit"):
         cls = f"tier={a['tier']}" if "tier" in a else f"priority={a['priority']}"
         req = (f"req_min={a['req_min']}" if PACKET_VERSION == "v1" else
                (f"req_limit={a['req_min']}min" if int(a["req_min"]) else "req_limit=UNLIMITED(no estimate)"))
-        # A MOLDABLE job has a legal RANGE, not a size. Reporting num_nodes_min here (as an earlier
+        # A MALLEABLE job has a legal RANGE, not a size. Reporting num_nodes_min here (as an earlier
         # revision did) tells the model every elastic job needs 1 GPU, which is false and makes the
         # packet describe a cluster that does not exist.
         lo, hi = _sizes(j)
@@ -588,11 +1044,14 @@ def transcript_stats(path: Path) -> dict:
     and how often the final pick equals what first-fit would have done on the same packet."""
     if not path.exists() or path.stat().st_size == 0:
         return {}
-    L = [json.loads(l) for l in open(path)]
+    # Resize-debate records share the transcript but have no start-list packet.
+    L = [x for l in open(path) if "packet" in (x := json.loads(l)) and "picked" in x]
+    if not L:
+        return {}
     same = dropped = proposed = 0
     for x in L:
         rows = [l.split() for l in x["packet"].splitlines()[1:]]
-        # a moldable job prints "gpus=LO-HI"; the first-fit reference below only needs the smallest
+        # a malleable job prints "gpus=LO-HI"; the first-fit reference below only needs the smallest
         # size that lets it start, so take LO. Rigid jobs print "gpus=N", where LO == N.
         lo = lambda tok: int(tok[5:].split("-")[0])
         ids = [int(r[0][3:]) for r in rows]; g = {int(r[0][3:]): lo(r[1]) for r in rows}
@@ -601,13 +1060,103 @@ def transcript_stats(path: Path) -> dict:
             if g[i] <= free:
                 ff.append(i); free -= g[i]
         same += x["picked"] == ff
-        p = (x["proposal"] or {}).get("start") or []
-        p = [e[0] if isinstance(e, (list, tuple)) and e else e for e in p]
-        proposed += len(p); dropped += len(p) - len(x["picked"] or [])
+        # Only direct start-list arms go through _validate. Ranking/correction arms include the
+        # deterministic anchor in `picked`, so subtracting it from a non-existent start proposal
+        # produced nonsense such as ids_dropped_by_validator=-1.
+        if "start" in (x["proposal"] or {}):
+            p = (x["proposal"] or {}).get("start") or []
+            p = [e[0] if isinstance(e, (list, tuple)) and e else e for e in p]
+            proposed += len(p); dropped += max(0, len(p) - len(x["picked"] or []))
     return {"decisions": len(L), "ids_proposed": proposed, "ids_dropped_by_validator": dropped,
             "invalid_answers": sum(x["picked"] is None for x in L),
             "critic_changed": sum(1 for x in L if x["critic"] and (x["critic"].get("start") != (x["proposal"] or {}).get("start"))),
             "pick_eq_firstfit_pct": round(100 * same / len(L), 1)}
+
+
+def text_exception_stats(transcript: Path, labels_path: Path, world: Path,
+                         history_path: Path | None = None) -> dict:
+    """Score a run's OUTCOME against every planted exception in the world.
+
+    The denominator is the set of exceptions the world contains, NOT the number of times the
+    scheduler chose to consult the LLM.  Scoring only the consulted cases lets an arm that never
+    escalates report perfect recall on the two cases it happened to look at, which is the fire-rate
+    trap: the metric then measures the gate's silence, not the reasoning.  Compliance here is read
+    off the allocation trajectory, so a zero-call arm is scored on exactly the same footing.
+    """
+    if not labels_path.exists():
+        return {}
+    labels = json.loads(labels_path.read_text()).get("labels", {})
+    if not labels:
+        return {}
+    jobs = json.loads((world / "in/jobs.json").read_text())["jobs"]
+    hp = history_path or transcript.with_name(
+        transcript.name.replace("_transcript.jsonl", "_size_history.json"))
+    histories = json.loads(hp.read_text()) if hp.exists() else {}
+    if not histories:
+        return {}
+
+    # index -> trace job id, the join between the answer key and the simulator's own numbering
+    jid_of = {str(i): str(j["attributes"]["jid"]) for i, j in enumerate(jobs)}
+    mins = {str(i): j.get("num_nodes_min", j.get("num_nodes", 1)) for i, j in enumerate(jobs)}
+    shrunk, ran, movable = set(), set(), set()
+    for idx, events in histories.items():
+        jid = jid_of.get(str(idx))
+        if jid is None:
+            continue
+        ran.add(jid)
+        if any(events[n + 1][1] < events[n][1] for n in range(len(events) - 1)):
+            shrunk.add(jid)
+        # A job that never rose above its legal minimum had nothing to release and nothing to lose,
+        # so neither a protect nor a shrink note on it can be honoured OR violated. Scoring those
+        # cases as misses charges an arm for decisions the world never offered it.
+        if any(g > mins[str(idx)] for _, g in events):
+            movable.add(jid)
+
+    planted = {a: [j for j, v in labels.items()
+                   if v.get("expected_action") == a and j in ran]
+               for a in ("protect", "shrink")}
+    # A protect note is honoured by never shrinking the job; a shrink note by actually shrinking it.
+    violations = [j for j in planted["protect"] if j in shrunk]
+    complied = [j for j in planted["shrink"] if j in shrunk]
+
+    rows = [json.loads(line) for line in transcript.read_text().splitlines()
+            if line.strip()] if transcript.exists() else []
+    asked = {r["trace_job_id"] for r in rows
+             if r.get("model_action") and r.get("trace_job_id") in labels}
+    n_planted = len(planted["protect"]) + len(planted["shrink"])
+    asked_exc = [r for r in rows if r.get("trace_job_id") in labels and r.get("model_action")
+                 and labels[r["trace_job_id"]].get("expected_action") in ("protect", "shrink")]
+
+    act = {a: [j for j in planted[a] if j in movable] for a in ("protect", "shrink")}
+    act_viol = [j for j in act["protect"] if j in shrunk]
+    act_comp = [j for j in act["shrink"] if j in shrunk]
+    n_act = len(act["protect"]) + len(act["shrink"])
+    pct = lambda x, d: round(100 * x / d, 1) if d else None
+    return {
+        # --- ACTIONABLE denominators: cases where the job ever held more than its minimum ---
+        "protect_actionable": len(act["protect"]),
+        "shrink_actionable": len(act["shrink"]),
+        "actionable_compliance_pct": pct(
+            (len(act["protect"]) - len(act_viol)) + len(act_comp), n_act),
+        "shrink_actionable_pct": pct(len(act_comp), len(act["shrink"])),
+        # --- outcome, over every planted exception (the honest denominators) ---
+        "planted_protect": len(planted["protect"]),
+        "protect_violations": len(violations),
+        "protect_compliance_pct": pct(len(planted["protect"]) - len(violations),
+                                      len(planted["protect"])),
+        "planted_shrink": len(planted["shrink"]),
+        "shrink_taken": len(complied),
+        "shrink_compliance_pct": pct(len(complied), len(planted["shrink"])),
+        "exception_compliance_pct": pct(
+            (len(planted["protect"]) - len(violations)) + len(complied), n_planted),
+        # --- how much of the planted set the gate ever showed the model ---
+        "exceptions_escalated": len(asked_exc),
+        "exceptions_escalated_pct": pct(len(asked_exc), n_planted),
+        # --- the old call-conditioned figure, kept but named so it cannot pose as recall ---
+        "asked_decisions": len(asked),
+        "asked_accuracy_pct": pct(sum(labels[r["trace_job_id"]]["expected_action"]
+                                      == r["model_action"] for r in asked_exc), len(asked_exc)),
+    }
 
 
 def _validate(ans, pending, free):
@@ -700,7 +1249,30 @@ def _llm_decide(pending, free, ctx, mode: str):
             "picked": [j.identifier for j, _ in picks], "sizes": [k for _, k in picks]}) + "\n")
         ctx["transcript"].flush()
         return picks
-    if mode in ("correct3", "sham"):
+    if mode == "neg_v2":
+        plan = _anchor_plan(pending, free, ctx)
+        dpk = _packet_demand(pending, ctx["now"], plan)
+        spk = _packet_supply(plan, pending, free, ctx, ctx["now"])
+        d = _ask(DEMAND_V2 + T, dpk, ctx["model"], ctx["host"], ctx["cache"], "es-d2", num_predict=300)
+        sup = _ask(SUPPLY_V2 + T, spk, ctx["model"], ctx["host"], ctx["cache"], "es-s2", num_predict=300)
+        ctx["calls"] += 2
+        user = (packet + "\n\n" + _anchor_line(plan, free)
+                + f"\n\nqueue's advocate (saw jobs only): {json.dumps(d) if d else 'none'}"
+                + f"\n\ncluster's advocate (saw cluster only): {json.dumps(sup) if sup else 'none'}")
+        ans = _ask(REFEREE_V2 + T, user, ctx["model"], ctx["host"], ctx["cache"], "es-r2", num_predict=300)
+        ctx["calls"] += 1
+        picks, how = _build_from_ruling(plan, ans, pending, free, ctx)
+        ctx.setdefault("correct_outcome", {}).setdefault(how, 0)
+        ctx["correct_outcome"][how] += 1
+        ctx["transcript"].write(json.dumps({
+            "t": ctx["now"], "free": len(free), "pending": len(pending), "packet": packet,
+            "packet_demand": dpk, "packet_supply": spk,
+            "anchor": [[j.identifier, k] for j, k in plan], "demand": d, "supply": sup,
+            "proposal": ans, "critic": None, "outcome": how,
+            "picked": [j.identifier for j, _ in picks], "sizes": [k for _, k in picks]}) + "\n")
+        ctx["transcript"].flush()
+        return picks
+    if mode in ("correct3", "sham", "neg_v2"):
         # correct3: THE causal control for neg_signed -- same anchor, same signed contract, same
         #   3 calls, but no roles and no argument. neg_signed minus correct3 is what the
         #   negotiation itself buys; neg_signed minus the anchor only measures the whole package.
@@ -800,22 +1372,219 @@ def _llm_decide(pending, free, ctx, mode: str):
 
 
 def arm_llm(pending, free, ctx, mode="single"):
-    if sum(_sizes(j)[0] for j in pending) <= len(free):   # nothing to ration -> no call (the gate)
+    # Two gates. "scarcity" (default, every earlier run): call only when the waiting work exceeds
+    # free capacity. "ambiguity": call only when the anchor faces a real sizing choice -- fires on
+    # ticks where a decision can matter rather than merely on how busy the cluster is.
+    if ctx.get("gate", "scarcity") == "ambiguity":
+        if not _sizing_ambiguous(_anchor_plan(pending, free, ctx), pending, free):
+            ctx["trivial"] += 1
+            return arm_firstfit(pending, free, ctx)
+    elif sum(_sizes(j)[0] for j in pending) <= len(free):   # nothing to ration -> no call (the gate)
         ctx["trivial"] += 1
         return arm_firstfit(pending, free, ctx)
     picks = _llm_decide(pending, free, ctx, mode)
     # an EMPTY pick list idles the cluster while jobs fit -- never right here, and in practice it
     # means the answer failed to parse. Treat it as a fallback, not as a decision to hold.
-    if not picks:
+    if not picks and mode != "neg_v2":
         ctx["fallbacks"] += 1
         return arm_firstfit(pending, free, ctx)
     for j, k in picks:
         _start_at(j, free, ctx, k)
 
 
+# ---------------------------------------------------------------------------------------------
+# Policy selection: the referee picks a scheduling POLICY, not an allocation. Both halves of the
+# decision are named, so it can combine an ordering rule with a sizing rule -- the pair, not either
+# alone, is what the deterministic sweep showed to matter.
+POLICY_MENU = {
+    "ordering": {
+        "fcfs": "strict arrival order; a job that does not fit blocks everything behind it",
+        "firstfit": "arrival order, but skip a job that does not fit and try the next",
+        "easy": "arrival order with backfilling behind the head job's reservation",
+        "sjf": "shortest requested walltime first (this trace's walltimes are a weak runtime signal)",
+        "declared_first": "jobs that declared a walltime before those that did not",
+        "tier_fcfs": "production tier first, arrival order within tier",
+        "tier_sjf": "production tier first, shortest requested walltime within tier",
+        "market": "sealed-bid uniform-price auction: each job bids the runtime seconds each extra "
+                  "GPU would save it, weighted by tier and time already queued, and the clearing "
+                  "awards the free GPUs to the highest marginal bids",
+    },
+    "sizing": {
+        "as_requested": "give each job the size its owner asked for; wait until that many are free",
+        "adaptive": "share the free GPUs across the waiting queue; each job may start smaller",
+        "greedy": "give each job the largest legal size that fits right now",
+    },
+}
+# Constraints the cluster imposes on any answer. These are checked in code after the reply, so a
+# ruling that breaks one is discarded rather than trusted -- the LLM proposes, the validator disposes.
+POLICY_RULES = (
+    "1. Never exceed the pool: allocations are capped by free GPUs and by each job's legal maximum.\n"
+    "2. Never place a malleable job below its minimum or above its maximum size.\n"
+    "3. Scaling is sublinear: 4x the GPUs is far less than 4x the speed, so `greedy` buys a little "
+    "speed for a lot of capacity and starves the queue behind it.\n"
+    "4. Production-tier jobs may be favoured, but starving the batch queue is a failure.\n"
+    "5. You choose a POLICY that the scheduler then applies deterministically. You never name a "
+    "job or a GPU count yourself."
+)
+POLICY_SELECT = ("You choose the scheduling policy for a GPU cluster for the next interval. " + WORLD +
+                 "\n\nYou pick ONE ordering rule and ONE sizing rule; the pair is the policy. "
+                 "The cluster state and the menu are given below, with the rules you must respect. "
+                 "Re-decide BOTH halves from the state each time. The current policy is shown for "
+                 "reference only; it carries no presumption of being right, and the ordering rule "
+                 "matters as much as the sizing rule. Consider what the queue you are shown will "
+                 "look like several intervals from now, not only right now: a policy that is "
+                 "comfortable while the cluster is quiet can build a backlog that never clears. "
+                 "If a record of your own recent decisions is shown, treat it as evidence: a policy "
+                 "you have already held while the queue grew is one to reconsider, not to repeat. "
+                 "Reply with JSON only: "
+                 '{"ordering": "<name from the menu>", "sizing": "<name from the menu>", '
+                 '"why": "one line naming the state feature that drove the choice"}.')
+
+
+def _packet_policy(pending, free, ctx) -> str:
+    """Cluster state plus the menu and the constraints: everything the choice may depend on."""
+    pool = ctx.get("pool_n", 0)
+    demand = sum(max(1, int(j.attributes.get("req_nodes", 1))) for j in pending)
+    prod = sum(1 for j in pending if j.attributes.get("tier") == "prod")
+    running = ctx.get("running", [])
+    declared = sum(1 for j in pending if int(j.attributes.get("req_min", 0)) > 0)
+    lines = [f"now={int(ctx['now'])}s pool={pool} free={len(free)} running={len(running)}",
+             f"queue_depth={len(pending)} waiting_demand={demand} "
+             f"offered_load={demand / max(1, pool):.2f} prod_waiting={prod} declared_walltime={declared}",
+             f"current_policy=ordering:{ctx.get('sel_ordering', 'firstfit')} "
+             f"sizing:{ctx.get('sel_sizing', 'as_requested')}",
+             "", "ORDERING MENU:"]
+    lines += [f"  {k}: {v}" for k, v in POLICY_MENU["ordering"].items()]
+    lines += ["", "SIZING MENU:"] + [f"  {k}: {v}" for k, v in POLICY_MENU["sizing"].items()]
+    hist = ctx.get("sel_history", [])
+    if hist:
+        # The scratchpad: what you chose, and what the cluster did next. Without it the referee has
+        # no evidence that any choice ever mattered, and a selector with no feedback has no reason
+        # to change -- which is exactly the collapse onto one policy we measured.
+        lines += ["", "YOUR RECENT DECISIONS AND WHAT FOLLOWED:"]
+        for h in hist[-4:]:
+            after = (f"queue_depth {h['queue']}->{h['queue_after']}, "
+                     f"{h['started_after']} jobs started, running {h['running']}->{h['run_after']}"
+                     if h.get("queue_after") is not None else "outcome not yet observed")
+            # Field names here MUST match the state block above verbatim. Exp 51's manual arc
+            # found the model copies the vocabulary it is given and invents fields when the same
+            # quantity is paraphrased, so `queue_depth` and `offered_load` are not renamed.
+            lines.append(f"  t={h['t']}s offered_load={h['load']:.2f}: chose "
+                         f"ordering:{h['ordering']} sizing:{h['sizing']}  ->  {after}")
+        lines.append("  A choice that left the queue growing is evidence against repeating it.")
+    lines += ["", "CLUSTER RULES:", POLICY_RULES]
+    return "\n".join(lines)
+
+
+def arm_policy_select(pending, free, ctx):
+    """Re-choose the policy at most every `interval` seconds, then apply it deterministically."""
+    from pins.correction import _ask
+    now = ctx["now"]
+    if now - ctx.get("sel_last", float("-inf")) >= ctx.get("sel_every", 0):
+        ctx["sel_last"] = now
+        started_total = len(ctx.get("sizes", {}))
+        hist = ctx.setdefault("sel_history", [])
+        if hist and hist[-1].get("queue_after") is None:   # close the previous entry's outcome
+            hist[-1]["queue_after"] = len(pending)
+            hist[-1]["run_after"] = len(ctx.get("running", []))
+            hist[-1]["started_after"] = started_total - hist[-1]["started_total"]
+        ans = _ask(POLICY_SELECT, _packet_policy(pending, free, ctx), ctx["model"], ctx["host"],
+                   ctx["cache"], "es-policy-select", num_predict=200)
+        ctx["calls"] += 1
+        o = str((ans or {}).get("ordering", "")).strip()
+        z = str((ans or {}).get("sizing", "")).strip()
+        ok = o in POLICY_MENU["ordering"] and z in POLICY_MENU["sizing"]
+        if ok:
+            ctx["sel_ordering"], ctx["sel_sizing"] = o, z
+        else:
+            ctx["sel_invalid"] = ctx.get("sel_invalid", 0) + 1
+        hist.append({"t": int(now), "ordering": ctx.get("sel_ordering"), "sizing": ctx.get("sel_sizing"),
+                     "load": round(sum(max(1, int(j.attributes.get("req_nodes", 1))) for j in pending)
+                                   / max(1, ctx.get("pool_n", 1)), 2),
+                     "queue": len(pending), "running": len(ctx.get("running", [])),
+                     "started_total": started_total, "queue_after": None})
+        ctx.setdefault("sel_log", []).append(
+            {"t": int(now), "ordering": o, "sizing": z, "valid": ok,
+             "why": str((ans or {}).get("why", ""))[:120],
+             "load": round(sum(max(1, int(j.attributes.get("req_nodes", 1))) for j in pending)
+                           / max(1, ctx.get("pool_n", 1)), 2)})
+        ctx.setdefault("sel_counts", {})[f"{ctx.get('sel_ordering')}+{ctx.get('sel_sizing')}"] = \
+            ctx.setdefault("sel_counts", {}).get(f"{ctx.get('sel_ordering')}+{ctx.get('sel_sizing')}", 0) + 1
+    ctx["sizer"] = ctx.get("sel_sizing", "as_requested")
+    ARMS[ctx.get("sel_ordering", "firstfit")](pending, free, ctx)
+
+
+def _bid_curve(job, ctx) -> list[float]:
+    """Marginal value of the k-th GPU to this job: the SECONDS OF RUNTIME it saves.
+
+    The old world imported `PHASE_PROFILES` because its jobs had no known speed-up law. Here they
+    do -- the Amdahl model this world is built on -- so the bid is read off the job's own physics
+    instead of a tuned profile. It is non-increasing by construction, which is exactly the
+    diminishing-returns shape `mechanism.clear` assumes, and it makes the auction's currency
+    commensurable with the metric: a GPU is worth the waiting time it removes.
+    """
+    lo, hi = _sizes(job)
+    a = job.attributes
+    dur = float(a.get("_true_dur", 0)) or 1.0
+    n0 = max(1, int(a.get("gpus", 1)))
+    sf = ctx.get("par_frac", 1.0)
+    T = lambda n: dur * (sf + (1 - sf) / n) / (sf + (1 - sf) / n0)
+    # Urgency is the private valuation: production work outbids batch, and a job that has been
+    # queueing longer bids more, which is the deterministic laxity lever Exp 99 found.
+    waited = max(0.0, ctx.get("now", 0) - getattr(job, "submit_time", 0))
+    urgency = (3.0 if a.get("tier") == "prod" else 1.0) * (1.0 + waited / 3600.0)
+    # CURRENCY: value DENSITY, not value retired. Bidding the seconds a GPU saves maximises total
+    # time saved, which makes the longest job the highest bidder -- backwards for mean waiting time,
+    # where clearing short work first releases capacity sooner. So each bid is divided by the
+    # resource-time it consumes. This is a choice fixed by the objective, not a tuned constant.
+    #   first `lo` GPUs: the job goes from not running to running, worth T(lo) over the lo*T(lo)
+    #   GPU-seconds it will occupy -- i.e. 1/lo, scaled by urgency: short jobs are not penalised,
+    #   long ones no longer outbid them simply for being long.
+    first = urgency / max(1, lo)
+    curve = [first] * lo
+    #   beyond the minimum: the speed-up bought, per GPU-second that growth costs.
+    curve += [urgency * (T(k - 1) - T(k)) / max(1e-9, k * T(k)) for k in range(lo + 1, hi + 1)]
+    return [round(max(0.0, v), 6) for v in curve]
+
+
+def arm_market(pending, free, ctx):
+    """Sealed-bid uniform-price clearing over the FREE GPUs, reusing `pins.mechanism.clear`.
+
+    Ported from the two-sided world as a start-selection rule: it never preempts a running job,
+    so it composes with the same resize policy as every other ordering arm here.
+    """
+    from pins.mechanism import clear
+    if not free or not pending:
+        return
+    bids = {str(j.identifier): _bid_curve(j, ctx) for j in pending}
+    bids = {k: v for k, v in bids.items() if v}
+    if not bids:
+        return
+    res = clear(bids, total_gpus=len(free))
+    ctx["market_price"] = res.price
+    ctx["market_clearings"] = ctx.get("market_clearings", 0) + 1
+    award = res.allocation
+    # Award in descending value so the most valuable jobs get the GPUs when free runs short.
+    for job in sorted(pending, key=lambda j: -sum(bids.get(str(j.identifier), [0])[:award.get(str(j.identifier), 0)])):
+        k = award.get(str(job.identifier), 0)
+        lo, hi = _sizes(job)
+        k = min(k, len(free), hi)
+        if k < lo:                       # cannot run below its minimum: it waits
+            continue
+        _start_at(job, free, ctx, k)
+        ctx.setdefault("sizes", {})[job.identifier] = k
+
+
 ARMS = {"fcfs": arm_fcfs, "firstfit": arm_firstfit, "easy": arm_easy, "sjf": arm_sjf,
         "declared_first": arm_declared_first,
         "tier_fcfs": arm_tier_fcfs, "tier_sjf": arm_tier_sjf,
+        "market": arm_market,
+        # Resize controls keep start selection at first-fit. `protect` is the zero-call structured
+        # rule; `resize_debate` differs only by asking the three-role exception reviewer.
+        "protect": arm_firstfit, "resize_single": arm_firstfit, "text_single": arm_firstfit,
+        "text_debate": arm_firstfit,
+        "policy_select": arm_policy_select,
+        "resize_debate": arm_firstfit,
         "single": lambda p, f, c: arm_llm(p, f, c, "single"),
         "debate": lambda p, f, c: arm_llm(p, f, c, "debate"),
         "negotiate": lambda p, f, c: arm_llm(p, f, c, "negotiate"),
@@ -823,13 +1592,17 @@ ARMS = {"fcfs": arm_fcfs, "firstfit": arm_firstfit, "easy": arm_easy, "sjf": arm
         "correct": lambda p, f, c: arm_llm(p, f, c, "correct"),
         "neg_signed": lambda p, f, c: arm_llm(p, f, c, "neg_signed"),
         "correct3": lambda p, f, c: arm_llm(p, f, c, "correct3"),
-        "sham": lambda p, f, c: arm_llm(p, f, c, "sham")}
+        "sham": lambda p, f, c: arm_llm(p, f, c, "sham"),
+        "neg_v2": lambda p, f, c: arm_llm(p, f, c, "neg_v2")}
 
 
 # ---------------------------------------------------------------- run
 def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, tag: str = "",
         est_default: int = 86400, quiet: bool = False, sizer: str = "as_requested",
-        packet_order: str = "submit") -> dict:
+        switch_at: float = 1.0, switch_on: str = "queue", sel_every: int = 1800,
+        packet_order: str = "submit", gate: str = "scarcity", resize_cooldown: int = 600,
+        resize_budget: int = CORRECT_BUDGET, text_exceptions: Path | None = None,
+        text_labels: Path | None = None) -> dict:
     from elastisim_python import JobState, NodeState, pass_algorithm
     from pins.llm_agent import HOST
     world = world.resolve()
@@ -840,23 +1613,55 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
     cfg.write_text(json.dumps({
         "jobs_file": str(world / "in/jobs.json"), "platform_file": str(world / "in/platform.xml"),
         "zmq_url": url, "schedule_on_job_submit": True, "schedule_on_job_finalize": True,
-        "schedule_on_scheduling_point": False, "scheduling_interval": interval, "min_scheduling_interval": 0,
+        "schedule_on_scheduling_point": True, "scheduling_interval": interval, "min_scheduling_interval": 0,
         "allow_oversubscription": False, "clip_evolving_requests": True, "forward_io_information": False,
         "sensing": False, "sensing_interval": 0, "log_task_times": False,
         "pfs_read_links": ["PFS_read"], "pfs_write_links": ["PFS_write"],
         "job_statistics": str(stats), "node_utilization": str(world / f"out/{tag}_node_util.csv")}))
-    ctx = {"model": model, "host": HOST, "cache": {}, "calls": 0, "fallbacks": 0, "critic_changed": 0, "trivial": 0,
+    _wmeta = json.loads((world / "meta.json").read_text())
+    ctx = {"par_frac": _wmeta.get("par_frac", 1.0),
+           "model": model, "host": HOST, "cache": {}, "calls": 0, "fallbacks": 0, "critic_changed": 0, "trivial": 0,
            "invocations": 0, "now": 0.0,
            "transcript": open(world / f"out/{tag}_transcript.jsonl", "w"),   # one line per LLM decision
            "est": lambda j: (int(j.attributes["req_min"]) * 60) or est_default, "running": [],
-           "sizer": sizer, "packet_order": packet_order}
+           "sizer": sizer, "packet_order": packet_order, "gate": gate, "switch_at": switch_at,
+           "switch_on": switch_on,
+           "resize_events": 0, "resized_gpus": 0, "size_history": {}, "last_resize": {},
+           "resize_cooldown": resize_cooldown, "resize_budget": resize_budget,
+           "resize_cooldown_blocks": 0, "protected_events": 0,
+           "sel_every": sel_every, "sel_ordering": "firstfit", "sel_sizing": "as_requested"}
+    notes_path = text_exceptions or world / "in/text_exceptions.json"
+    if arm in ("text_single", "text_debate") and notes_path.exists():
+        note_doc = json.loads(notes_path.read_text())
+        ctx["text_exceptions"] = {str(x["job_id"]): x for x in note_doc.get("notes", [])}
     fn = ARMS[arm]
 
     def schedule(jobs, nodes, system):
         ctx["invocations"] += 1; ctx["now"] = system["time"]
         pending = sorted((j for j in jobs if j.state == JobState.PENDING), key=lambda j: (j.submit_time, j.identifier))
         ctx["running"] = [j for j in jobs if j.state == JobState.RUNNING]
+        # Waiting DEMAND against cluster size: the per-tick analogue of offered load, which is the
+        # feature that predicted the per-window winner. Queue COUNT is not the same quantity.
+        ctx["pending_demand"] = sum(max(1, int(j.attributes.get("req_nodes", 1))) for j in pending)
+        ctx["pool_n"] = len(nodes)
         free = [n for n in nodes if n.state == NodeState.FREE]
+        # A malleable job pauses at each work boundary and may change size before continuing. Keep
+        # this deterministic: debate still decides waiting-job starts, never reconfiguration maths.
+        if system["invocation_type"].name == "INVOKE_SCHEDULING_POINT":
+            if arm in ("neg_v2", "resize_debate") and pending:
+                _llm_resize_decide(system["job"], pending, free, ctx)
+            elif arm == "resize_single" and pending:
+                _llm_resize_single_decide(system["job"], pending, free, ctx)
+            elif arm == "text_single" and pending:
+                _llm_resize_single_decide(system["job"], pending, free, ctx, use_text=True)
+            elif arm == "text_debate" and pending:
+                _llm_resize_single_decide(system["job"], pending, free, ctx, use_text=True,
+                                          debate=True)
+            elif arm == "protect":
+                _resize_with_deterministic_protection(system["job"], free, pending, ctx)
+            else:
+                _resize_malleable(system["job"], free, pending, ctx)
+            return
         if pending and free:
             fn(pending, free, ctx)
 
@@ -873,17 +1678,39 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
         sim.wait(timeout=60)
         ctx["transcript"].close()
     (world / f"out/{tag}_sizes.json").write_text(json.dumps({str(k): v for k, v in ctx.get("sizes", {}).items()}))
+    if ctx.get("sel_log"):
+        (world / f"out/{tag}_policy_log.json").write_text(json.dumps(ctx["sel_log"], indent=1))
+    (world / f"out/{tag}_size_history.json").write_text(json.dumps(
+        {str(k): v for k, v in ctx["size_history"].items()}))
     res = summarise(stats, world)
-    res.update(arm=arm, sizer=sizer, packet_order=packet_order, model=model if arm in ("single", "debate", "negotiate", "bo3", "correct", "neg_signed", "correct3", "sham") else None, interval=interval,
-               packet=PACKET_VERSION if arm in ("single", "debate", "negotiate", "bo3", "correct", "neg_signed", "correct3", "sham") else None,
+    # Scored for EVERY arm, not just the text one. The planted exceptions exist in the world
+    # whether or not an arm reads the notes, so the 0-call floor is the baseline to beat.
+    semantic = text_exception_stats(world / f"out/{tag}_transcript.jsonl",
+                                    text_labels or world / "in/text_exception_labels.json",
+                                    world)
+    llm_arms = ("single", "debate", "negotiate", "bo3", "correct", "neg_signed",
+                "correct3", "sham", "neg_v2", "resize_single", "text_single", "resize_debate",
+                "text_debate")
+    res.update(arm=arm, sizer=sizer, switch_at=switch_at, switch_on=switch_on,
+               market_clearings=ctx.get("market_clearings", 0),
+               sel_every=sel_every, sel_invalid=ctx.get("sel_invalid", 0),
+               sel_counts=ctx.get("sel_counts", {}), packet_order=packet_order, gate=gate,
+               switch_adaptive=ctx.get("switch_adaptive", 0), switch_calls=ctx.get("switch_calls", 0),
+               model=model if arm in llm_arms else None, interval=interval,
+               packet=PACKET_VERSION if arm in llm_arms else None,
                est_default=est_default if arm == "easy" else None,
                **transcript_stats(world / f"out/{tag}_transcript.jsonl"),
                invocations=ctx["invocations"], llm_calls=ctx["calls"], fallbacks=ctx["fallbacks"],
                # NOT critic_changed: transcript_stats() already returns that key, and passing both
                # raises TypeError *after* the simulation has finished, discarding the whole run.
                critic_changed_applied=ctx["critic_changed"], trivial=ctx["trivial"],
+               resize_events=ctx["resize_events"], resized_gpus=ctx["resized_gpus"],
+               resize_cooldown=resize_cooldown, resize_budget=resize_budget,
+               resize_cooldown_blocks=ctx["resize_cooldown_blocks"],
+               protected_events=ctx["protected_events"],
                wall_s=round(time.time() - t),
                **ctx.get("easy_stats", {}),
+               **semantic,
                **{f"correct_{k.replace(' ', '_')}": v
                   for k, v in ctx.get("correct_outcome", {}).items()})
     with open(world / "results.jsonl", "a") as f:
@@ -906,8 +1733,22 @@ def summarise(stats: Path, world: Path) -> dict:
     meta = json.loads((world / "meta.json").read_text())
     jobs = json.loads((world / "in/jobs.json").read_text())["jobs"]
     rows = list(csv.DictReader(open(stats)))
-    sf = stats.with_name(stats.name.replace("_job_statistics.csv", "_sizes.json"))   # moldable: the
-    sizes = json.loads(sf.read_text()) if sf.exists() else {}                        # chosen size
+    sf = stats.with_name(stats.name.replace("_job_statistics.csv", "_sizes.json"))
+    sizes = json.loads(sf.read_text()) if sf.exists() else {}
+    hf = stats.with_name(stats.name.replace("_job_statistics.csv", "_size_history.json"))
+    histories = json.loads(hf.read_text()) if hf.exists() else {}
+
+    def allocation_seconds(jid, start, end, left=float("-inf"), right=float("inf")):
+        """Integrate node count over time; old moldable runs fall back to their one chosen size."""
+        events = histories.get(jid)
+        if not events:
+            g = sizes.get(jid, jobs[int(jid)].get("num_nodes", 1))
+            return g * max(0.0, min(end, right) - max(start, left))
+        total = 0.0
+        for n, (t, g) in enumerate(events):
+            seg_end = events[n + 1][0] if n + 1 < len(events) else end
+            total += g * max(0.0, min(seg_end, end, right) - max(t, start, left))
+        return total
     W = meta["hours"] * 3600
     a = meta.get("warmup_h", 0) * 3600            # the MEASURED interval is [a, a+W)
     wait, bsd, busy_win, gpu_s, late_req, n_req = [], [], 0.0, 0.0, 0, 0
@@ -917,19 +1758,20 @@ def summarise(stats: Path, world: Path) -> dict:
     tier = {t: {"n": 0, "wait": 0.0, **dict.fromkeys(SLACKS, 0)} for t in ("prod", "batch")}
     for r in rows:
         j = jobs[int(r["ID"])]
-        g, sub, st, en, run, ta = (sizes.get(r["ID"], j.get("num_nodes", 1)), float(r["Submit Time"]), float(r["Start Time"]),
-                                   float(r["End Time"]), float(r["Makespan"]), float(r["Turnaround Time"]))
+        sub, st, en, run, ta = (float(r["Submit Time"]), float(r["Start Time"]),
+                                float(r["End Time"]), float(r["Makespan"]), float(r["Turnaround Time"]))
         # occupancy counts EVERY job running in the measured interval, warm-up included: those
         # nodes really are busy. Every other metric below is measured-window arrivals only.
-        busy_win += g * max(0.0, min(en, a + W) - max(st, a))
+        busy_win += allocation_seconds(r["ID"], st, en, a, a + W)
         if j["attributes"].get("_warmup"):
             continue
         wait.append(float(r["Wait Time"]))
         bsd.append(max(1.0, ta / max(10.0, run)))
-        gpu_s += run * g
-        alloc += g * run
+        spent = allocation_seconds(r["ID"], st, en)
+        gpu_s += spent
+        alloc += spent
         # A job killed at its walltime finishes EARLY, so every wait-based metric flatters it.
-        # Downsizing a moldable job can push it past its limit, so this must be first-class.
+        # Downsizing a malleable job can push it past its limit, so this must be first-class.
         dead = r["Status"] != "completed"
         killed += dead
         for k in SLACKS:
@@ -1150,16 +1992,35 @@ if __name__ == "__main__":
     b.add_argument("--pool", type=int, default=80); b.add_argument("--out", type=Path, required=True)
     b.add_argument("--offset-h", type=float, default=0, help="window start offset within the day (12 = pm half)")
     b.add_argument("--warmup-h", type=float, default=12, help="hours of PRIOR arrivals, run but not scored")
-    b.add_argument("--elastic-frac", type=float, default=0.0, help="fraction of jobs made MOLDABLE")
-    b.add_argument("--par-frac", type=float, default=1.0, help="Amdahl parallel fraction s; 1=rigid, 0=linear")
+    b.add_argument("--elastic-frac", type=float, default=0.0, help="fraction of jobs made MALLEABLE")
+    b.add_argument("--par-frac", type=float, default=1.0,
+                   help="Amdahl serial fraction s; 1=no scaling speedup, 0=linear speedup")
     b.add_argument("--max-scale", type=float, default=4.0, help="an elastic job may take up to max_scale x its observed size")
     b.add_argument("--elastic-seed", type=int, default=0)
+    b.add_argument("--resize-points", type=int, default=10,
+                   help="work chunks per malleable job; resizing is possible between chunks")
     r = sub.add_parser("run"); r.add_argument("--world", type=Path, required=True); r.add_argument("--arm", choices=ARMS, required=True)
     r.add_argument("--model", default="qwen2.5:14b"); r.add_argument("--interval", type=int, default=300); r.add_argument("--tag", default="")
     r.add_argument("--est-default", type=int, default=86400, help="EASY runtime estimate (s) for jobs with no declared limit")
-    r.add_argument("--sizer", choices=["as_requested", "greedy", "adaptive"], default="as_requested")
+    r.add_argument("--sizer", choices=["as_requested", "greedy", "adaptive", "auto"], default="as_requested")
+    r.add_argument("--sel-every", type=int, default=1800,
+                   help="policy_select: seconds between policy re-selections")
+    r.add_argument("--switch-on", choices=["queue", "load"], default="queue",
+                   help="auto sizer signal: queue depth over free GPUs, or waiting demand over pool")
+    r.add_argument("--switch-at", type=float, default=1.0,
+                   help="auto sizer: queue-depth/free-GPU ratio above which it shares capacity")
     r.add_argument("--packet-order", choices=["submit", "shuffled"], default="submit",
                    help="display order of the queue in the LLM packet; shuffled removes the arrival-order cue")
+    r.add_argument("--gate", choices=["scarcity", "ambiguity", "wide"], default="scarcity",
+                   help="when to call the LLM: scarcity = waiting work exceeds free (default); ambiguity = the anchor faces a real sizing choice")
+    r.add_argument("--resize-cooldown", type=int, default=600,
+                   help="minimum simulated seconds between accepted resizes of one job")
+    r.add_argument("--resize-budget", type=int, default=CORRECT_BUDGET,
+                   help="maximum GPUs moved from one job at a resize point")
+    r.add_argument("--text-exceptions", type=Path,
+                   help="scheduler-visible synthetic notes (text_single only)")
+    r.add_argument("--text-labels", type=Path,
+                   help="evaluation-only labels, opened after the run (text_single only)")
     b.add_argument("--load", type=float, default=0, help="size the pool by offered load when --pool 0")
     s = sub.add_parser("summary"); s.add_argument("--world", type=Path, required=True)
     w = sub.add_parser("sweep"); w.add_argument("--days", default="3:227:7", help="start:stop:step of window start days")
@@ -1179,7 +2040,7 @@ if __name__ == "__main__":
     a = ap.parse_args()
     if a.cmd == "build":
         build(a.day, a.hours, a.pool, a.out, a.offset_h, a.load, a.warmup_h,
-              a.elastic_frac, a.par_frac, a.max_scale, a.elastic_seed)
+              a.elastic_frac, a.par_frac, a.max_scale, a.elastic_seed, a.resize_points)
     elif a.cmd == "summary":
         summary(a.world)
     elif a.cmd == "census":
@@ -1191,4 +2052,7 @@ if __name__ == "__main__":
         sweep_report(a.out, a.rebuild)
     else:
         run(a.world, a.arm, a.model, a.interval, a.tag, a.est_default, sizer=a.sizer,
-            packet_order=a.packet_order)
+            switch_at=a.switch_at, switch_on=a.switch_on, sel_every=a.sel_every,
+            packet_order=a.packet_order, gate=a.gate, resize_cooldown=a.resize_cooldown,
+            resize_budget=a.resize_budget, text_exceptions=a.text_exceptions,
+            text_labels=a.text_labels)
