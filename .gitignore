@@ -41,3 +41,14 @@ pins/*.done
 
 # graphify build artifacts (rebuilds in ~12s via `graphify update .`)
 graphify-out/
+
+# ElastiSim run trees (2026-09-04): worlds + per-arm outputs, 341 MB and growing. Rebuildable
+# from `elastisim_bench build` + the seeds in the run's meta.json; the numbers live in
+# research_progress.md. Committing them repeats the exp99 incident that made a branch unpushable.
+runs/
+# exp92 rebase results: 18 MB each, same policy as the other large result blobs
+pins/results_exp92_rebase.json
+pins/results_exp92_rebase_sat.json
+# LaTeX build artifacts for the Japanese plan document at the repo root
+研究計画書.aux
+研究計画書.log
