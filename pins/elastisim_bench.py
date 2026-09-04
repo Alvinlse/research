@@ -475,6 +475,46 @@ def _apply_correction(plan, ans, pending, free):
     return out, "applied"
 
 
+# --- combined arm: negotiation that emits a CORRECTION, not an allocation --------------------
+# This is pins/correction_signed.py's winning shape ported to the elastic world: two reviewers
+# with opposed interests argue, a referee rules, and the ruling is a signed EDIT to a
+# deterministic plan rather than a plan of its own. It answers the multi-agent question (unlike
+# `correct`, which is single-agent) while keeping the property `negotiate` lacks -- an unusable
+# ruling leaves the anchor standing, so the arm cannot finish worse than its baseline.
+# Each role is told it does NOT produce an allocation, and that the anchor's ordinary sizing is
+# already correct: an advocate should speak only where it has a reason the sizer could not see.
+_ANCHOR_RULE = (" A deterministic scheduler has ALREADY chosen which jobs to start and how large "
+                "to make each one, sizing each job as its owner requested. That baseline is "
+                "competent. Ordinary urgency, an ordinary size and ordinary scarcity are ALREADY "
+                "in it and are NOT reasons to change anything. You do NOT produce a schedule.")
+DEMAND_SIGNED = ("You are the DEMAND-side reviewer, speaking for the waiting jobs. " + WORLD +
+                 _ANCHOR_RULE +
+                 " Your only question is: which jobs should get MORE than the baseline gave them, "
+                 "or LESS (possibly nothing)? Answer non-zero only with a reason the sizer could "
+                 "not see -- a job sized so small it risks exceeding its requested walltime, a job "
+                 "that has waited far longer than its peers, or a job given more than sublinear "
+                 "scaling can repay. Reply with JSON only: "
+                 '{"changes": {"<job id>": <signed integer GPUs>}, "why": "one line"}. '
+                 "An empty changes object is the correct answer for an ordinary queue.")
+SUPPLY_SIGNED = ("You are the SUPPLY-side reviewer, speaking for the cluster. " + WORLD +
+                 _ANCHOR_RULE +
+                 " Your only question is: must some capacity be left UNALLOCATED this round, and "
+                 "how much? Answer non-zero only when holding capacity back is worth more than "
+                 "using it now -- imminent higher-priority work, or allocations so oversized that "
+                 "sublinear scaling wastes the machine. Keeping devices BUSY is explicitly not "
+                 "your goal; completing work cheaply is. Reply with JSON only: "
+                 '{"hold_free": <0 or a positive integer>, "why": "one line"}. '
+                 "0 is the correct answer for an ordinary queue.")
+REFEREE_SIGNED = ("You are the REFEREE. " + WORLD + _ANCHOR_RULE +
+                  " Two reviewers have proposed changes to the baseline: one speaks for the "
+                  "waiting jobs, one for the cluster. Both may overstate. You decide only how much "
+                  "of what they proposed is justified -- you may adopt a change in full, shrink it, "
+                  "or reject it. Reply with JSON only: "
+                  '{"changes": {"<job id>": <signed integer GPUs>}, '
+                  '"hold_free": <integer, 0 if none>, "why": "one line"}. '
+                  "Empty changes with hold_free 0 is the correct answer when neither reviewer has "
+                  "made a case.")
+
 PACKET_CAP = 40
 # v1 (day-157 single/debate runs): "req_min=0" for undeclared limits -- the 14b model read 0 as SHORTEST and
 # returned the whole queue ignoring free_gpus (transcript autopsy 2026-09-03). v2 spells both out.
@@ -610,6 +650,30 @@ def _llm_decide(pending, free, ctx, mode: str):
             "sizes": None if picks is None else [k for _, k in picks]}) + "\n")
         ctx["transcript"].flush()
         return picks
+    if mode == "neg_signed":
+        # negotiation that emits a CORRECTION: demand and supply argue about the deterministic
+        # plan, the referee rules, and apply_signed funds the ruling. A rejected ruling leaves
+        # the anchor standing, so the arm cannot finish worse than its baseline.
+        plan = _anchor_plan(pending, free, ctx)
+        shown = "; ".join(f"job {j.identifier} -> {k} GPU" for j, k in plan[:PACKET_CAP]) or "nothing"
+        base = packet + f"\n\nthe deterministic baseline for this moment: {shown}"
+        d = _ask(DEMAND_SIGNED + T, base, ctx["model"], ctx["host"], ctx["cache"], "es-dsigned", num_predict=300)
+        sup = _ask(SUPPLY_SIGNED + T, base, ctx["model"], ctx["host"], ctx["cache"], "es-ssigned", num_predict=300)
+        ctx["calls"] += 2
+        user = (base + f"\n\ndemand-side reviewer proposes: {json.dumps(d) if d else 'none'}"
+                     + f"\n\nsupply-side reviewer proposes: {json.dumps(sup) if sup else 'none'}")
+        ans = _ask(REFEREE_SIGNED + T, user, ctx["model"], ctx["host"], ctx["cache"], "es-rsigned", num_predict=300)
+        ctx["calls"] += 1
+        picks, how = _apply_correction(plan, ans, pending, free)
+        ctx.setdefault("correct_outcome", {}).setdefault(how, 0)
+        ctx["correct_outcome"][how] += 1
+        ctx["transcript"].write(json.dumps({
+            "t": ctx["now"], "free": len(free), "pending": len(pending), "packet": packet,
+            "anchor": [[j.identifier, k] for j, k in plan], "demand": d, "supply": sup,
+            "proposal": ans, "critic": None, "outcome": how,
+            "picked": [j.identifier for j, _ in picks], "sizes": [k for _, k in picks]}) + "\n")
+        ctx["transcript"].flush()
+        return picks
     if mode == "correct":
         plan = _anchor_plan(pending, free, ctx)
         shown = "; ".join(f"job {j.identifier} -> {k} GPU" for j, k in plan[:PACKET_CAP]) or "nothing"
@@ -694,7 +758,8 @@ ARMS = {"fcfs": arm_fcfs, "firstfit": arm_firstfit, "easy": arm_easy, "sjf": arm
         "debate": lambda p, f, c: arm_llm(p, f, c, "debate"),
         "negotiate": lambda p, f, c: arm_llm(p, f, c, "negotiate"),
         "bo3": lambda p, f, c: arm_llm(p, f, c, "bo3"),
-        "correct": lambda p, f, c: arm_llm(p, f, c, "correct")}
+        "correct": lambda p, f, c: arm_llm(p, f, c, "correct"),
+        "neg_signed": lambda p, f, c: arm_llm(p, f, c, "neg_signed")}
 
 
 # ---------------------------------------------------------------- run
@@ -745,8 +810,8 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
         ctx["transcript"].close()
     (world / f"out/{tag}_sizes.json").write_text(json.dumps({str(k): v for k, v in ctx.get("sizes", {}).items()}))
     res = summarise(stats, world)
-    res.update(arm=arm, sizer=sizer, packet_order=packet_order, model=model if arm in ("single", "debate", "negotiate", "bo3", "correct") else None, interval=interval,
-               packet=PACKET_VERSION if arm in ("single", "debate", "negotiate", "bo3", "correct") else None,
+    res.update(arm=arm, sizer=sizer, packet_order=packet_order, model=model if arm in ("single", "debate", "negotiate", "bo3", "correct", "neg_signed") else None, interval=interval,
+               packet=PACKET_VERSION if arm in ("single", "debate", "negotiate", "bo3", "correct", "neg_signed") else None,
                est_default=est_default if arm == "easy" else None,
                **transcript_stats(world / f"out/{tag}_transcript.jsonl"),
                invocations=ctx["invocations"], llm_calls=ctx["calls"], fallbacks=ctx["fallbacks"],
