@@ -391,7 +391,16 @@ now measured.
 \label{sec:threats}
 
 Tier, deadline, and urgency are a synthetic recipe over a real trace; the replay world never
-preempts base allocations, so we make no free-malleability claims. The text-exception suite is
+preempts base allocations, so we make no free-malleability claims. That rigidity also bounds
+what \emph{any} efficiency claim here can demonstrate, and we can now say by how much. When no
+job can be resized, the GPU-seconds a workload consumes are fixed: a scheduler chooses only
+\emph{when} work runs, never how much of it there is, so utilisation is close to a conserved
+quantity. Replaying the MIT Supercloud GPU trace through a malleability-aware batch simulator
+\cite{elastisim} in the same rigid mode, five schedulers on one window differed by at most
+$1.3$ points of occupancy, and the idle capacity any ordering rule could still recover was
+$0.2\%$. Claim~(1) is therefore established in a regime where the achievable efficiency spread
+is structurally small; it should be read as ``the market is not beaten on efficiency here,''
+not as evidence that reasoning cannot improve efficiency on an elastic workload. The text-exception suite is
 authored, not sampled from operations, and its ground-truth predicates are
 single-annotator \todo{replace with rater-agreement number}; the rigid-arm floor is an
 inclusion criterion by design. The headline debate result is one model family at one scale
@@ -412,6 +421,18 @@ gated architecture delivers that capability at exactly zero cost where the text 
 open frontier is a workload that actually carries operator text, on which the
 efficiency-neutral capability should convert into a measurable service-quality gain.
 
+A second frontier is \emph{elasticity}, and it is the one our own negative efficiency result
+argues for. AI training and inference jobs are not rigid: they scale across devices, so a
+scheduler on such a workload decides not only which job runs but how large it is. That second
+decision does not exist in any of the replays above, which is precisely why efficiency is
+near-conserved in them. Restoring it changes the problem rather than the tuning: on a
+moldable replay of Supercloud under Amdahl scaling, the sizing rule alone moves mean waiting
+time by an order of magnitude, and the rule that maximises occupancy is the worst of the three
+we tried --- it converts the cluster into busy-ness without converting it into completed work.
+We regard sizing under uncertainty, not ordering, as the decision on which a reasoning layer
+should next be asked to earn its cost \todo{fold in the powered elastic run when it lands;
+current elastic numbers are a single window and directional only}.
+
 \begin{thebibliography}{11}
 \bibitem{llmsched} \todo{LLM-Driven Adaptive Cloud Resource Scheduling: Bridging Reasoning
 Intelligence with Optimization Guarantees. IEEE OJ-CS, 2026 — exact citation}
@@ -425,6 +446,8 @@ Syst.}, vol.~35, no.~9, pp.~1551--1564, 2024.
 \bibitem{alibaba2020} Q.~Weng et al., ``MLaaS in the wild: workload analysis and scheduling
 in large-scale heterogeneous GPU clusters,'' NSDI, 2022 (cluster-trace-gpu-v2020).
 \bibitem{easy} D.~Lifka, ``The ANL/IBM SP scheduling system,'' JSSPP, 1995.
+\bibitem{elastisim} T.~\"Ozden, T.~Beringer, A.~Mazaheri, H.~M.~Fard, and F.~Wolf,
+``ElastiSim: a batch-system simulator for malleable workloads,'' ICPP, 2022, pp.~1--11.
 \bibitem{du2024debate} Y.~Du, S.~Li, A.~Torralba, J.~B.~Tenenbaum, and I.~Mordatch,
 ``Improving factuality and reasoning in language models through multiagent debate,'' ICML,
 2024, pp.~11733--11763.
