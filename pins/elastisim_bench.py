@@ -700,6 +700,43 @@ def _llm_decide(pending, free, ctx, mode: str):
             "picked": [j.identifier for j, _ in picks], "sizes": [k for _, k in picks]}) + "\n")
         ctx["transcript"].flush()
         return picks
+    if mode in ("correct3", "sham"):
+        # correct3: THE causal control for neg_signed -- same anchor, same signed contract, same
+        #   3 calls, but no roles and no argument. neg_signed minus correct3 is what the
+        #   negotiation itself buys; neg_signed minus the anchor only measures the whole package.
+        # sham: neg_signed's referee with the advocates' proposals replaced by empty ones. If it
+        #   performs the same, the advocates contributed nothing and the arm is a 1-call
+        #   correction paying for 3.
+        plan = _anchor_plan(pending, free, ctx)
+        base = packet + "\n\n" + _anchor_line(plan, free)
+        if mode == "sham":
+            user = (base + "\n\ndemand-side reviewer proposes: none"
+                         + "\n\nsupply-side reviewer proposes: none")
+            ans = _ask(REFEREE_SIGNED + T, user, ctx["model"], ctx["host"], ctx["cache"],
+                       "es-sham", num_predict=300)
+            ctx["calls"] += 3        # charged the same 3 calls, so the budget comparison is honest
+            cands = [ans]
+        else:
+            cands = [_ask(CORRECTOR + T, base, ctx["model"], ctx["host"], ctx["cache"],
+                          f"es-c3-{k}", num_predict=300, temperature=0.8) for k in range(3)]
+            ctx["calls"] += 3
+        # deterministic aggregation: the modal funded outcome, ties broken by sample order
+        outs = []
+        for a in cands:
+            pk, how = _apply_correction(plan, a, pending, free)
+            outs.append((tuple(sorted((j.identifier, n) for j, n in pk)), pk, how))
+        from collections import Counter
+        win = Counter(o[0] for o in outs).most_common(1)[0][0]
+        picks, how = next((o[1], o[2]) for o in outs if o[0] == win)
+        ctx.setdefault("correct_outcome", {}).setdefault(how, 0)
+        ctx["correct_outcome"][how] += 1
+        ctx["transcript"].write(json.dumps({
+            "t": ctx["now"], "free": len(free), "pending": len(pending), "packet": packet,
+            "anchor": [[j.identifier, k] for j, k in plan], "proposal": cands[0], "critic": None,
+            "n_samples": len(cands), "outcome": how,
+            "picked": [j.identifier for j, _ in picks], "sizes": [k for _, k in picks]}) + "\n")
+        ctx["transcript"].flush()
+        return picks
     if mode == "correct":
         plan = _anchor_plan(pending, free, ctx)
         user = packet + "\n\n" + _anchor_line(plan, free)
@@ -784,7 +821,9 @@ ARMS = {"fcfs": arm_fcfs, "firstfit": arm_firstfit, "easy": arm_easy, "sjf": arm
         "negotiate": lambda p, f, c: arm_llm(p, f, c, "negotiate"),
         "bo3": lambda p, f, c: arm_llm(p, f, c, "bo3"),
         "correct": lambda p, f, c: arm_llm(p, f, c, "correct"),
-        "neg_signed": lambda p, f, c: arm_llm(p, f, c, "neg_signed")}
+        "neg_signed": lambda p, f, c: arm_llm(p, f, c, "neg_signed"),
+        "correct3": lambda p, f, c: arm_llm(p, f, c, "correct3"),
+        "sham": lambda p, f, c: arm_llm(p, f, c, "sham")}
 
 
 # ---------------------------------------------------------------- run
@@ -835,8 +874,8 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
         ctx["transcript"].close()
     (world / f"out/{tag}_sizes.json").write_text(json.dumps({str(k): v for k, v in ctx.get("sizes", {}).items()}))
     res = summarise(stats, world)
-    res.update(arm=arm, sizer=sizer, packet_order=packet_order, model=model if arm in ("single", "debate", "negotiate", "bo3", "correct", "neg_signed") else None, interval=interval,
-               packet=PACKET_VERSION if arm in ("single", "debate", "negotiate", "bo3", "correct", "neg_signed") else None,
+    res.update(arm=arm, sizer=sizer, packet_order=packet_order, model=model if arm in ("single", "debate", "negotiate", "bo3", "correct", "neg_signed", "correct3", "sham") else None, interval=interval,
+               packet=PACKET_VERSION if arm in ("single", "debate", "negotiate", "bo3", "correct", "neg_signed", "correct3", "sham") else None,
                est_default=est_default if arm == "easy" else None,
                **transcript_stats(world / f"out/{tag}_transcript.jsonl"),
                invocations=ctx["invocations"], llm_calls=ctx["calls"], fallbacks=ctx["fallbacks"],
