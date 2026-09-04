@@ -345,19 +345,34 @@ def arm_tier_sjf(pending, free, ctx):      # prod first (reserving), requested-w
     _prod_reserving(sorted(pending, key=key), free, ctx)
 
 
-SYSTEM = ("You are the batch scheduler of a GPU cluster. A job shown as `gpus=N` is rigid and needs "
-          "exactly N GPUs for its whole run. A job shown as `gpus=LO-HI` is MOLDABLE: you choose its "
-          "size once, at start, and it cannot change afterwards; `asked=` is the size its owner "
-          "originally requested. Scaling is sublinear -- doubling a job's GPUs does NOT halve its "
-          "runtime, so a large allocation costs more machine time than it saves, while too small an "
-          "allocation risks the job exceeding its requested walltime and being killed. You only know "
-          "each job's REQUESTED walltime, never its true runtime. Goal: minimise mean waiting time "
-          "and bounded slowdown without wasting GPU-hours. Reply with JSON only: "
-          "{\"start\": [[job id, gpus to give it], ...] in start order, \"why\": \"one line\"}. "
-          "A bare job id means: use `asked`.")
-CRITIC = ("You are a second scheduler reviewing a colleague's start list for the same queue. Check "
-          "it fits free_gpus, does not starve long-waiting jobs, and does not leave GPUs idle when a "
-          "job fits. Return the FINAL list as JSON only: {\"start\": [job ids], \"why\": \"one line\"}.")
+# Both roles must describe the SAME world. Before this was factored out, the critic was never
+# told jobs were moldable and was asked for bare ids, so it silently reverted every size the
+# proposer chose back to the requested one (transcript: proposer emitted [id,gpus] pairs on
+# 339/348 decisions, the critic on 23/348) -- it was deleting half the decision, not reviewing it.
+WORLD = ("A job shown as `gpus=N` is rigid and needs exactly N GPUs for its whole run. A job shown "
+         "as `gpus=LO-HI` is MOLDABLE: its size is chosen once, at start, and cannot change "
+         "afterwards; `asked=` is the size its owner originally requested. Scaling is sublinear -- "
+         "doubling a job's GPUs does NOT halve its runtime, so a large allocation costs more machine "
+         "time than it saves, while too small an allocation risks the job exceeding its requested "
+         "walltime and being killed. You only know each job's REQUESTED walltime, never its true "
+         "runtime.")
+REPLY = ("Reply with JSON only: {\"start\": [[job id, gpus to give it], ...] in start order, "
+         "\"why\": \"one line\"}. A bare job id means: use `asked`.")
+
+SYSTEM = ("You are the batch scheduler of a GPU cluster. " + WORLD +
+          " Goal: minimise mean waiting time and bounded slowdown without wasting GPU-hours. " + REPLY)
+# The critic is NOT asked to re-check capacity or idle GPUs: the validator already enforces both,
+# and asking for them drags the answer back toward plain first-fit (measured: debate matched
+# first-fit on 17.2% of decisions against a single model's 5.1%). It is asked for the judgements a
+# second opinion can actually add -- sizing, and who is being made to wait.
+CRITIC = ("You are a second scheduler reviewing a colleague's start list for the same queue. " +
+          WORLD +
+          " Feasibility is already guaranteed by a downstream validator, so do NOT spend your answer "
+          "re-checking that the list fits. Judge instead: (a) is each job's SIZE right -- would a "
+          "smaller allocation serve the queue better, or is one so small it risks a walltime kill; "
+          "(b) is any long-waiting or high-priority job being passed over. Keep the colleague's list "
+          "where it is sound and change only what you can justify; if you would change nothing, "
+          "return it unchanged. " + REPLY)
 TIER_NOTE = (" Jobs carry tier=prod (operator-granted high-priority QoS, must not be starved) or tier=batch; "
              "protect prod jobs' waiting time first, then optimise the rest.")
 PACKET_CAP = 40
@@ -552,7 +567,10 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
                est_default=est_default if arm == "easy" else None,
                **transcript_stats(world / f"out/{tag}_transcript.jsonl"),
                invocations=ctx["invocations"], llm_calls=ctx["calls"], fallbacks=ctx["fallbacks"],
-               critic_changed=ctx["critic_changed"], trivial=ctx["trivial"], wall_s=round(time.time() - t),
+               # NOT critic_changed: transcript_stats() already returns that key, and passing both
+               # raises TypeError *after* the simulation has finished, discarding the whole run.
+               critic_changed_applied=ctx["critic_changed"], trivial=ctx["trivial"],
+               wall_s=round(time.time() - t),
                **ctx.get("easy_stats", {}))
     with open(world / "results.jsonl", "a") as f:
         f.write(json.dumps(res) + "\n")
