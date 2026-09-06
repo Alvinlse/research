@@ -1,0 +1,82 @@
+{
+ "weights": "balanced",
+ "eps": 0.05,
+ "seed": 20260906,
+ "n_states": 589,
+ "catastrophic_arms": [
+  "resize_conservative+greedy"
+ ],
+ "counts": {
+  "train": 407,
+  "val": 88,
+  "test": 94
+ },
+ "windows": {
+  "train": [
+   "d104h18",
+   "d122h18",
+   "d124h15",
+   "d127h2",
+   "d135h15",
+   "d138h15",
+   "d139h23",
+   "d147h11",
+   "d148h15",
+   "d156h2",
+   "d162h8",
+   "d166h18",
+   "d16h17",
+   "d171h16",
+   "d173h7",
+   "d182h18",
+   "d18h6",
+   "d197h20",
+   "d19h15",
+   "d220h5",
+   "d230h6",
+   "d232h0",
+   "d233h16",
+   "d2h19",
+   "d40h16",
+   "d41h16",
+   "d45h7",
+   "d45h8",
+   "d4h5",
+   "d60h22",
+   "d61h7",
+   "d66h18",
+   "d84h16",
+   "d85h16",
+   "d87h2",
+   "d90h17",
+   "d93h21",
+   "d9h22"
+  ],
+  "val": [
+   "d176h13",
+   "d181h9",
+   "d191h23",
+   "d30h5",
+   "d44h0",
+   "d67h22",
+   "d95h21",
+   "d9h8"
+  ],
+  "test": [
+   "d131h10",
+   "d150h3",
+   "d214h11",
+   "d33h2",
+   "d45h1",
+   "d76h10",
+   "d84h1",
+   "d92h9"
+  ]
+ },
+ "leak_rows": 0,
+ "majority_target": [
+  "fairness+adaptive",
+  185
+ ],
+ "near_tie_frac": 0.733
+}

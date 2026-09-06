@@ -1,0 +1,157 @@
+{
+ "n": 94,
+ "split": "test",
+ "catastrophic_arms": [
+  "resize_conservative+greedy"
+ ],
+ "majority": "fairness+adaptive",
+ "arms": {
+  "zero_shot": {
+   "parse_fail": 0,
+   "picks": {
+    "least_laxity+adaptive": 91,
+    "resize_conservative+adaptive": 3
+   },
+   "regret_full": {
+    "mean": 0.0757,
+    "p50": 0.0335,
+    "p90": 0.1912,
+    "max": 0.5252,
+    "eps1": 0.415,
+    "eps5": 0.564,
+    "off_menu": 0
+   },
+   "regret_safe": {
+    "mean": 0.0752,
+    "p50": 0.0335,
+    "p90": 0.1912,
+    "max": 0.5252,
+    "eps1": 0.415,
+    "eps5": 0.564,
+    "off_menu": 0
+   },
+   "catastrophe_rate": 0.0
+  },
+  "finetuned": {
+   "parse_fail": 0,
+   "picks": {
+    "fairness+adaptive": 91,
+    "resize_conservative+as_requested": 3
+   },
+   "regret_full": {
+    "mean": 0.4168,
+    "p50": 0.0859,
+    "p90": 1.8972,
+    "max": 3.0902,
+    "eps1": 0.181,
+    "eps5": 0.298,
+    "off_menu": 0
+   },
+   "regret_safe": {
+    "mean": 0.4163,
+    "p50": 0.0859,
+    "p90": 1.8972,
+    "max": 3.0902,
+    "eps1": 0.181,
+    "eps5": 0.298,
+    "off_menu": 0
+   },
+   "catastrophe_rate": 0.0
+  },
+  "majority_constant": {
+   "regret_full": {
+    "mean": 0.4213,
+    "p50": 0.089,
+    "p90": 1.8972,
+    "max": 3.0902,
+    "eps1": 0.16,
+    "eps5": 0.287,
+    "off_menu": 0
+   },
+   "regret_safe": {
+    "mean": 0.4208,
+    "p50": 0.0871,
+    "p90": 1.8972,
+    "max": 3.0902,
+    "eps1": 0.16,
+    "eps5": 0.287,
+    "off_menu": 0
+   },
+   "catastrophe_rate": 0.0
+  },
+  "random_menu": {
+   "regret_full": {
+    "mean": 0.7645,
+    "p50": 0.1201,
+    "p90": 2.82,
+    "max": 5.7018,
+    "eps1": 0.149,
+    "eps5": 0.255,
+    "off_menu": 0
+   },
+   "regret_safe": {
+    "mean": 0.485,
+    "p50": 0.1056,
+    "p90": 1.6084,
+    "max": 3.907,
+    "eps1": 0.149,
+    "eps5": 0.255,
+    "off_menu": 9
+   },
+   "catastrophe_rate": 0.064
+  },
+  "random_safe_menu": {
+   "regret_full": {
+    "mean": 0.4639,
+    "p50": 0.1182,
+    "p90": 1.2722,
+    "max": 3.8299,
+    "eps1": 0.117,
+    "eps5": 0.223,
+    "off_menu": 0
+   },
+   "regret_safe": {
+    "mean": 0.5899,
+    "p50": 0.1091,
+    "p90": 2.2434,
+    "max": 5.5319,
+    "eps1": 0.138,
+    "eps5": 0.287,
+    "off_menu": 0
+   },
+   "catastrophe_rate": 0.0
+  },
+  "best_fixed_on_train": {
+   "regret_full": {
+    "mean": 0.4213,
+    "p50": 0.089,
+    "p90": 1.8972,
+    "max": 3.0902,
+    "eps1": 0.16,
+    "eps5": 0.287,
+    "off_menu": 0
+   },
+   "regret_safe": {
+    "mean": 0.4208,
+    "p50": 0.0871,
+    "p90": 1.8972,
+    "max": 3.0902,
+    "eps1": 0.16,
+    "eps5": 0.287,
+    "off_menu": 0
+   },
+   "catastrophe_rate": 0.0
+  },
+  "rollout_selector_ceiling": {
+   "regret_full": {
+    "mean": 0.0,
+    "p50": 0.0,
+    "p90": 0.0,
+    "max": 0.0,
+    "eps1": 1.0,
+    "eps5": 1.0,
+    "off_menu": 0
+   }
+  }
+ }
+}
