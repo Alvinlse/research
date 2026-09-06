@@ -195,7 +195,9 @@ def main() -> None:
     (a.out / f"done.{a.shard}").write_text("1")
     print(f"shard {a.shard} COMPLETE", flush=True)
 
-    states = collate(a.out) if a.collate else []
+    if not a.collate:       # a plain worker tick must NOT touch states.json: writing the empty
+        return              # list here would clobber a finished collation with "[]"
+    states = collate(a.out)
     (a.out / "states.json").write_text(json.dumps(states, indent=1))
     if states:
         gaps = sorted(s["gap"] for s in states)

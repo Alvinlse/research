@@ -68,7 +68,20 @@ re-collate with no simulator time.
 Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_019aA1e1dJTRw9vxqMyXiXu8
 MSG
-  git push origin elastisim && echo "PUSHED OK"
-  crontab -l | grep -v sweep_labels_tick | crontab -   # stop ticking once it is done
-  echo "=== DONE $(date -Is)"
+  # Retry, and rebase in case the branch moved while the sweep was running. Cron is only torn
+  # down on a CONFIRMED push -- otherwise the next tick re-enters here and tries again, because a
+  # finished sweep that never reached GitHub is the one failure that would waste the whole night.
+  pushed=0
+  for attempt in 1 2 3; do
+      git pull --rebase --quiet origin elastisim 2>&1
+      if git push origin elastisim 2>&1; then echo "PUSHED OK (attempt $attempt)"; pushed=1; break; fi
+      sleep 30
+  done
+  if [ "$pushed" = "1" ]; then
+      crontab -l | grep -v sweep_labels_tick | crontab -   # stop ticking once it is done
+      echo "=== DONE $(date -Is)"
+  else
+      rm -f "$OUT/.finalised"    # let the next tick retry the whole finalisation
+      echo "=== PUSH FAILED, will retry next tick $(date -Is)"
+  fi
 } >> "$OUT/finalise.log" 2>&1
