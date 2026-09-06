@@ -409,6 +409,81 @@ def arm_tier_sjf(pending, free, ctx):      # prod first (reserving), requested-w
     _prod_reserving(sorted(pending, key=key), free, ctx)
 
 
+def arm_least_laxity(pending, free, ctx):
+    """Least-laxity-first on ESTIMATED work: slack = deadline - now - work still to do, where the
+    deadline is submit + slack_mult x the estimate. True runtime is the SLA metric's oracle input
+    (see SLACKS) and must not leak into an ordering rule, so the estimate is the requested walltime
+    and, for jobs that declare none, ctx['est_default'] -- the same stand-in arm_easy's shadow time
+    uses. Ordering only: sizing stays whatever ctx['sizer'] says, as in every other ordering arm."""
+    now, mult = ctx["now"], ctx.get("slack_mult", 10)
+    def laxity(j):
+        est = (int(j.attributes.get("req_min", 0)) * 60) or ctx.get("est_default", 86400)
+        return (j.submit_time + mult * est) - now - est
+    arm_firstfit(sorted(pending, key=lambda j: (laxity(j), j.submit_time)), free, ctx)
+
+
+def arm_fairness(pending, free, ctx):
+    """Fair-share by AGEING: the user whose queued work has waited longest goes first.
+
+    The first version ranked by GPUs currently held (textbook max-min share) and was measured
+    dead: `jain_user_gpu` sits at ~0.22 for every ordering arm, because per-user GPU-seconds are
+    fixed by the trace and ordering moves only WHEN a user is served, never how much they get --
+    the same invariance that pins `util_win` at 0.725 across the library. A policy that cannot
+    move any scored quantity can never be the argmax of any state, so it would be unselectable.
+    Per-user WAIT does move (0.23-0.85 across the library), so that is what this ranks on.
+    """
+    now = ctx["now"]
+    waited: dict = {}
+    for j in pending:
+        u = j.attributes.get("user")
+        waited[u] = waited.get(u, 0.0) + max(0.0, now - j.submit_time)
+    key = lambda j: (-waited.get(j.attributes.get("user"), 0.0), j.submit_time)
+    arm_firstfit(sorted(pending, key=key), free, ctx)
+
+
+def arm_resize_conservative(pending, free, ctx):
+    """Admit into FREE capacity only and never disturb a running job.
+
+    Start selection is plain first-fit; the whole content of this policy is the guardrail, and the
+    guardrail cannot live here. ElastiSim delivers a resize as its own INVOKE_SCHEDULING_POINT
+    invocation which returns before any ordering arm is called, so a flag set in this function is
+    never read. `_active_ordering` is consulted at that branch instead."""
+    arm_firstfit(pending, free, ctx)
+
+
+def _active_ordering(arm: str, ctx: dict) -> str:
+    """The ordering actually in force, which is not the arm name when a selector chose it."""
+    if arm == "scripted":
+        sched = ctx.get("schedule") or []
+        cur = max((e for e in sched if e.get("t", 0) <= ctx["now"]),
+                  key=lambda e: e.get("t", 0), default=None)
+        return (cur or {}).get("ordering", "firstfit")
+    if arm in ("policy_select", "rule_synth"):
+        return ctx.get("sel_ordering", "firstfit")
+    return arm
+
+
+def arm_scripted(pending, free, ctx):
+    """Replay a FROZEN (t, ordering, sizing) schedule; the latest entry with t <= now wins.
+
+    One arm covers three needs, which is why it is worth having at all: a single entry at t=0 runs
+    a fixed policy, a two-entry schedule produces the counterfactual rollout a policy label is
+    argmaxed over (baseline until t, candidate afterwards), and a full log of a referee's choices
+    replays that referee without calling the model again."""
+    sched = ctx.get("schedule") or [{"t": 0, "ordering": "firstfit", "sizing": "as_requested"}]
+    cur = max((e for e in sched if e.get("t", 0) <= ctx["now"]),
+              key=lambda e: e.get("t", 0), default=sched[0])
+    ctx["sizer"] = cur.get("sizing", "as_requested")
+    # The packet reports current_policy from these, so a scripted run must keep them truthful --
+    # otherwise every dumped state claims firstfit no matter what the schedule actually ran.
+    ctx["sel_ordering"] = cur.get("ordering", "firstfit")
+    ctx["sel_sizing"] = ctx["sizer"]
+    k = f"{cur.get('ordering')}+{cur.get('sizing')}"
+    counts = ctx.setdefault("sel_counts", {})
+    counts[k] = counts.get(k, 0) + 1
+    ARMS[cur.get("ordering", "firstfit")](pending, free, ctx)
+
+
 # Both roles must describe the SAME world. Before this was factored out, the critic was never
 # told jobs were malleable and was asked for bare ids, so it silently reverted every size the
 # proposer chose back to the requested one (transcript: proposer emitted [id,gpus] pairs on
@@ -1397,17 +1472,18 @@ def arm_llm(pending, free, ctx, mode="single"):
 # decision are named, so it can combine an ordering rule with a sizing rule -- the pair, not either
 # alone, is what the deterministic sweep showed to matter.
 POLICY_MENU = {
+    # The action space the referee selects over. It is deliberately NOT every arm in ARMS: these
+    # five orderings are the policy library, and firstfit stays implemented as the neutral baseline
+    # a counterfactual rollout runs before its switch point, without being selectable itself.
     "ordering": {
-        "fcfs": "strict arrival order; a job that does not fit blocks everything behind it",
-        "firstfit": "arrival order, but skip a job that does not fit and try the next",
-        "easy": "arrival order with backfilling behind the head job's reservation",
-        "sjf": "shortest requested walltime first (this trace's walltimes are a weak runtime signal)",
-        "declared_first": "jobs that declared a walltime before those that did not",
-        "tier_fcfs": "production tier first, arrival order within tier",
-        "tier_sjf": "production tier first, shortest requested walltime within tier",
         "market": "sealed-bid uniform-price auction: each job bids the runtime seconds each extra "
                   "GPU would save it, weighted by tier and time already queued, and the clearing "
                   "awards the free GPUs to the highest marginal bids",
+        "least_laxity": "least slack first, slack being the time left before a job's deadline "
+                        "minus the work it still has to do, both from its REQUESTED walltime",
+        "fairness": "max-min share across users: whoever currently holds the fewest GPUs goes first",
+        "tier_sjf": "production tier first, shortest requested walltime within tier",
+        "resize_conservative": "admit only into free GPUs and never resize a running job",
     },
     "sizing": {
         "as_requested": "give each job the size its owner asked for; wait until that many are free",
@@ -1745,6 +1821,10 @@ ARMS = {"fcfs": arm_fcfs, "firstfit": arm_firstfit, "easy": arm_easy, "sjf": arm
         "declared_first": arm_declared_first,
         "tier_fcfs": arm_tier_fcfs, "tier_sjf": arm_tier_sjf,
         "market": arm_market,
+        # The five-policy library the referee selects over, plus the schedule replayer that runs
+        # the counterfactual rollouts those selections are labelled from.
+        "least_laxity": arm_least_laxity, "fairness": arm_fairness,
+        "resize_conservative": arm_resize_conservative, "scripted": arm_scripted,
         # Resize controls keep start selection at first-fit. `protect` is the zero-call structured
         # rule; `resize_debate` differs only by asking the three-role exception reviewer.
         "protect": arm_firstfit, "resize_single": arm_firstfit, "text_single": arm_firstfit,
@@ -1770,7 +1850,9 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
         rule: Path | None = None, rule_out: Path | None = None,
         packet_order: str = "submit", gate: str = "scarcity", resize_cooldown: int = 600,
         resize_budget: int = CORRECT_BUDGET, text_exceptions: Path | None = None,
-        text_labels: Path | None = None) -> dict:
+        text_labels: Path | None = None, policy_schedule: Path | None = None,
+        slack_mult: float = 10.0, packet_every: int = 0,
+        packet_out: Path | None = None) -> dict:
     from elastisim_python import JobState, NodeState, pass_algorithm
     from pins.llm_agent import HOST
     world = world.resolve()
@@ -1798,6 +1880,10 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
            "resize_cooldown": resize_cooldown, "resize_budget": resize_budget,
            "resize_cooldown_blocks": 0, "protected_events": 0,
            "sel_every": sel_every, "sel_ordering": "firstfit", "sel_sizing": "as_requested",
+           "slack_mult": slack_mult,
+           "packet_every": packet_every,
+           "packet_f": open(packet_out, "w") if packet_out else None,
+           "schedule": json.loads(policy_schedule.read_text()) if policy_schedule else None,
            "rule": json.loads(rule.read_text()) if rule else None}
     notes_path = text_exceptions or world / "in/text_exceptions.json"
     if arm in ("text_single", "text_debate") and notes_path.exists():
@@ -1838,9 +1924,16 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
                                           debate=True)
             elif arm == "protect":
                 _resize_with_deterministic_protection(system["job"], free, pending, ctx)
+            elif _active_ordering(arm, ctx) == "resize_conservative":
+                ctx["freeze_blocks"] = ctx.get("freeze_blocks", 0) + 1
             else:
                 _resize_malleable(system["job"], free, pending, ctx)
             return
+        if ctx["packet_f"] and pending and ctx["now"] - ctx.get("packet_last", -1e18) >= ctx["packet_every"]:
+            ctx["packet_last"] = ctx["now"]
+            ctx["packet_f"].write(json.dumps({"t": int(ctx["now"]), "queue_depth": len(pending),
+                                              "free": len(free),
+                                              "packet": _packet_policy(pending, free, ctx)}) + "\n")
         if pending and free:
             fn(pending, free, ctx)
 
@@ -1943,6 +2036,8 @@ def summarise(stats: Path, world: Path) -> dict:
     killed = 0
     alloc = 0.0        # GPU-seconds the scheduler SPENT: a decision once jobs are moldable
     tier = {t: {"n": 0, "wait": 0.0, **dict.fromkeys(SLACKS, 0)} for t in ("prod", "batch")}
+    by_user: dict[str, list[float]] = {}
+    user_gpu_s: dict[str, float] = {}
     for r in rows:
         j = jobs[int(r["ID"])]
         sub, st, en, run, ta = (float(r["Submit Time"]), float(r["Start Time"]),
@@ -1963,6 +2058,9 @@ def summarise(stats: Path, world: Path) -> dict:
         killed += dead
         for k in SLACKS:
             late[k] += dead or ta > k * run
+        u = j["attributes"].get("user")
+        by_user.setdefault(u, []).append(wait[-1])
+        user_gpu_s[u] = user_gpu_s.get(u, 0.0) + spent
         t = tier.get(j["attributes"].get("tier"))
         if t is not None:
             t["n"] += 1; t["wait"] += wait[-1]
@@ -1974,6 +2072,18 @@ def summarise(stats: Path, world: Path) -> dict:
     scored = [r for r in rows if not jobs[int(r["ID"])]["attributes"].get("_warmup")]
     if not scored:
         return {"n": 0}
+    # Jain fairness over per-user MEAN wait, on the native (anonymised) Slurm user id. 1.0 is
+    # perfectly equal treatment, 1/n_users the worst. Reported as a metric in its own right, and
+    # needed as a reward term: arm_fairness optimises exactly this, so a reward blind to it would
+    # make that policy unselectable by construction.
+    _jain = lambda xs: (sum(xs) ** 2 / (len(xs) * sum(x * x for x in xs))) if xs and any(xs) else 1.0
+    mw = [statistics.mean(v) for v in by_user.values() if v]
+    jain = _jain(mw)
+    # Two DIFFERENT fairness questions, and the policies disagree on them: max-min share equalises
+    # who holds GPUs, which is `jain_user_gpu`, and that is NOT the same as equalising how long
+    # each user waits. Measured here rather than assumed -- arm_fairness scores WORST on the wait
+    # index, so using only that one as the reward's fairness term would make it unselectable.
+    jain_gpu = _jain(sorted(user_gpu_s.values()))
     span = max(float(r["End Time"]) for r in scored) - min(float(r["Submit Time"]) for r in scored)
     wait.sort()
     return {"n": len(scored), "completed": sum(r["Status"] == "completed" for r in scored),
@@ -1986,6 +2096,7 @@ def summarise(stats: Path, world: Path) -> dict:
             "mean_wait_s": round(statistics.mean(wait)), "p50_wait_s": round(wait[len(wait) // 2]),
             "p90_wait_s": round(wait[int(0.9 * (len(wait) - 1))]), "max_wait_s": round(wait[-1]),
             "mean_bsd": round(statistics.mean(bsd), 2), "span_h": round(span / 3600, 1),
+            "jain_user_wait": round(jain, 4), "jain_user_gpu": round(jain_gpu, 4), "n_users": len(mw),
             **{f"{name}_{m}": v for name, t in tier.items() if t["n"] for m, v in
                [("n", t["n"]), ("mean_wait_s", round(t["wait"] / t["n"]))]
                + [(f"sla{k}_viol_pct", round(100 * t[k] / t["n"], 1)) for k in SLACKS]}}
@@ -2210,6 +2321,13 @@ if __name__ == "__main__":
                    help="scheduler-visible synthetic notes (text_single only)")
     r.add_argument("--text-labels", type=Path,
                    help="evaluation-only labels, opened after the run (text_single only)")
+    r.add_argument("--policy-schedule", type=Path,
+                   help="scripted arm: JSON list of {t, ordering, sizing}; latest t <= now wins")
+    r.add_argument("--packet-every", type=int, default=0,
+                   help="dump the referee-visible packet every N simulated seconds (0 = off)")
+    r.add_argument("--packet-out", type=Path, help="destination for --packet-every dumps")
+    r.add_argument("--slack-mult", type=float, default=10.0,
+                   help="least_laxity: deadline = submit + slack_mult x estimated runtime")
     b.add_argument("--load", type=float, default=0, help="size the pool by offered load when --pool 0")
     s = sub.add_parser("summary"); s.add_argument("--world", type=Path, required=True)
     w = sub.add_parser("sweep"); w.add_argument("--days", default="3:227:7", help="start:stop:step of window start days")
@@ -2245,4 +2363,5 @@ if __name__ == "__main__":
             rule=a.rule, rule_out=a.rule_out,
             packet_order=a.packet_order, gate=a.gate, resize_cooldown=a.resize_cooldown,
             resize_budget=a.resize_budget, text_exceptions=a.text_exceptions,
-            text_labels=a.text_labels)
+            text_labels=a.text_labels, policy_schedule=a.policy_schedule, slack_mult=a.slack_mult,
+            packet_every=a.packet_every, packet_out=a.packet_out)
