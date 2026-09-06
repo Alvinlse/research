@@ -106,7 +106,11 @@ def label_world(world: Path, out: Path, every: int, keep: int, done: set,
             key = f"{world.name}|{ep['t']}|{o}|{z}"
             if key in done:
                 continue
-            sched = out / "_sched.json"
+            # PER-SHARD scratch path. One shared `_sched.json` is a race: shards run concurrently,
+            # so one worker overwrites the file while another is reading it and the reader dies on
+            # `JSONDecodeError: Extra data`. Windows are disjoint across shards, so every other
+            # per-world path is already safe; this was the only shared one.
+            sched = out / f"_sched.{shard}.json"
             sched.write_text(json.dumps([{"t": 0, **BASELINE},
                                          {"t": ep["t"], "ordering": o, "sizing": z}]))
             r = run(world, "scripted", tag="lbl", quiet=True, policy_schedule=sched)
