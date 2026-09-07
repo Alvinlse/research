@@ -44,7 +44,15 @@ class Packets(Dataset):
         n_prompt = len(self.tok(prompt, truncation=True, max_length=MAXLEN)["input_ids"])
         labels = [-100] * min(n_prompt, len(ids)) + ids[min(n_prompt, len(ids)):]
         # A near-tie is a weak teaching signal, not a wrong one: squash rather than drop.
-        w = self.min_weight + (1 - self.min_weight) * min(1.0, r.get("margin", 0) / 0.2)
+        # RELATIVE margin, not absolute. Raw margin scales with the window's reward spread, so
+        # loaded windows -- where every policy is within ~2% of the others and nothing can be won --
+        # were getting the LARGEST weights, while idle windows, which hold ~30% of the available
+        # gain, were being trained at the floor. Dividing by the state's own spread makes the weight
+        # mean "how decisive is this choice", independent of how hard the window is.
+        rv = list(r.get("rewards", {}).values())
+        spread = (max(rv) - min(rv)) if rv else 0.0
+        rel = r.get("margin", 0) / spread if spread > 1e-9 else 0.0
+        w = self.min_weight + (1 - self.min_weight) * min(1.0, rel / 0.05)
         return {"input_ids": ids, "labels": labels, "weight": w}
 
 

@@ -1,0 +1,6 @@
+model            regret     eps5 invalid  picks
+qwen2.5:0.5b     1.0315    0.011      94  {'INVALID': 94}
+qwen2.5:1.5b     0.2182    0.149       0  {'least_laxity+as_requested': 94}
+qwen2.5:3b       0.0757    0.553       0  {'least_laxity+adaptive': 94}
+qwen2.5:7b       0.0805    0.574       0  {'least_laxity+adaptive': 87, 'market+adaptive': 7}
+qwen2.5:14b      0.2498    0.457       0  {'market+adaptive': 59, 'least_laxity+adaptive': 31, 'fairness+adaptive': 4}

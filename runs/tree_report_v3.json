@@ -1,0 +1,136 @@
+{
+ "n_test": 94,
+ "catastrophic": [
+  "resize_conservative+greedy"
+ ],
+ "arms": {
+  "best_fixed_on_fold": {
+   "cv_regret_safe": 0.1185,
+   "cv_folds": [
+    0.0635,
+    0.2106,
+    0.0541,
+    0.17,
+    0.094
+   ]
+  },
+  "tree": {
+   "cv_regret_safe": 0.2629,
+   "cv_folds": [
+    0.2757,
+    0.3142,
+    0.1292,
+    0.4234,
+    0.1723
+   ],
+   "test_regret_safe": 0.4429,
+   "eps5": 0.298,
+   "n_distinct_picks": 12,
+   "picks": {
+    "market+as_requested": 3,
+    "market+adaptive": 7,
+    "least_laxity+as_requested": 8,
+    "least_laxity+adaptive": 13,
+    "least_laxity+greedy": 2,
+    "fairness+as_requested": 4,
+    "fairness+adaptive": 28,
+    "fairness+greedy": 11,
+    "tier_sjf+as_requested": 3,
+    "tier_sjf+adaptive": 8,
+    "resize_conservative+as_requested": 5,
+    "resize_conservative+adaptive": 2
+   },
+   "ci95": [
+    0.0871,
+    1.1069
+   ],
+   "delta_vs_best_fixed": 0.022,
+   "delta_vs_best_fixed_ci95": [
+    -0.0031,
+    0.0485
+   ]
+  },
+  "tree_scaled": {
+   "cv_regret_safe": 0.4852,
+   "cv_folds": [
+    0.4122,
+    0.8798,
+    0.1793,
+    0.4765,
+    0.4782
+   ],
+   "test_regret_safe": 0.4837,
+   "eps5": 0.447,
+   "n_distinct_picks": 11,
+   "picks": {
+    "market+adaptive": 3,
+    "least_laxity+as_requested": 2,
+    "least_laxity+adaptive": 7,
+    "least_laxity+greedy": 4,
+    "fairness+adaptive": 17,
+    "fairness+greedy": 4,
+    "tier_sjf+as_requested": 1,
+    "tier_sjf+adaptive": 1,
+    "tier_sjf+greedy": 3,
+    "resize_conservative+as_requested": 35,
+    "resize_conservative+adaptive": 17
+   },
+   "ci95": [
+    0.0842,
+    1.1315
+   ],
+   "delta_vs_best_fixed": 0.0629,
+   "delta_vs_best_fixed_ci95": [
+    -0.0392,
+    0.1754
+   ]
+  },
+  "ridge": {
+   "cv_regret_safe": 0.233,
+   "cv_folds": [
+    0.0925,
+    0.5875,
+    0.0885,
+    0.2952,
+    0.1013
+   ],
+   "test_regret_safe": 0.446,
+   "eps5": 0.255,
+   "n_distinct_picks": 8,
+   "picks": {
+    "market+adaptive": 7,
+    "market+greedy": 2,
+    "least_laxity+adaptive": 12,
+    "fairness+as_requested": 17,
+    "fairness+adaptive": 43,
+    "fairness+greedy": 9,
+    "tier_sjf+adaptive": 1,
+    "resize_conservative+as_requested": 3
+   },
+   "ci95": [
+    0.0852,
+    1.0902
+   ],
+   "delta_vs_best_fixed": 0.0252,
+   "delta_vs_best_fixed_ci95": [
+    -0.0056,
+    0.0648
+   ]
+  },
+  "best_fixed_on_train_val": {
+   "policy": "fairness+adaptive",
+   "test_regret_safe": 0.4208,
+   "eps5": 0.287,
+   "picks": {
+    "fairness+adaptive": 94
+   }
+  },
+  "argmax_majority_train": {
+   "test_regret_safe": 0.8472,
+   "eps5": 0.394,
+   "picks": {
+    "resize_conservative+as_requested": 94
+   }
+  }
+ }
+}

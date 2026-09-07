@@ -33,8 +33,16 @@ from pins.elastisim_bench import POLICY_MENU
 ACTIONS = [f"{o}+{z}" for o in POLICY_MENU["ordering"] for z in POLICY_MENU["sizing"]]
 ORDERINGS = list(POLICY_MENU["ordering"])
 SIZINGS = list(POLICY_MENU["sizing"])
+# Everything the enriched packet exposes. The first ten are the original cluster scalars; the
+# rest are the job-level distribution summaries. They were being written into the packet but never
+# parsed here, so every earlier tree/learning-curve result saw only the first ten.
 NUM = ["now", "pool", "free", "running", "queue_depth", "waiting_demand",
-       "queue_pressure", "arrival_load_1h", "prod_waiting", "declared_walltime"]
+       "queue_pressure", "arrival_load_1h", "prod_waiting", "declared_walltime",
+       "wait_s_p50", "wait_s_p90", "wait_s_max", "waiting_users",
+       "asked_gpus_p50", "asked_gpus_p90", "asked_gpus_max", "malleable_waiting",
+       "walltime_s_p50", "walltime_s_p90", "walltime_s_max",
+       "laxity_s_min", "laxity_s_p50", "negative_laxity_waiting",
+       "running_age_s_p50", "running_age_s_p90", "running_age_s_max", "running_prod"]
 
 
 def features(packet: str) -> list[float]:
@@ -69,7 +77,7 @@ def regret(Y: np.ndarray, pick: np.ndarray, menu_idx: list[int]) -> np.ndarray:
     return best - got
 
 
-def fit_predict(Xtr, Ytr, Xte, kind: str):
+def fit_predict(Xtr, Ytr, Xte, kind: str, scale: bool = False):
     """One regressor per action on the per-state-CENTRED reward.
 
     Centring matters: raw reward is dominated by how hard the window is, which is shared by all 15
@@ -77,6 +85,13 @@ def fit_predict(Xtr, Ytr, Xte, kind: str):
     exactly the contrast the decision turns on.
     """
     Yc = Ytr - Ytr.mean(1, keepdims=True)
+    if scale:
+        # Centring alone removes how HARD a window is, but not how much is at STAKE in it. Loaded
+        # windows have large reward spreads and idle ones small, so squared error still spends the
+        # model's capacity on the loaded regime -- which is exactly where every policy is nearly
+        # equivalent (2.4% of wait) and nothing can be won. Scaling each state to unit spread makes
+        # every state contribute equally, so the idle regime (30% of wait available) is visible.
+        Yc = Yc / np.maximum(Yc.std(1, keepdims=True), 1e-9)
     P = np.zeros((len(Xte), len(ACTIONS)))
     for j in range(len(ACTIONS)):
         if kind == "tree":
@@ -124,10 +139,10 @@ def main() -> None:
         "cv_regret_safe": round(float(np.mean(fixed_folds)), 4),
         "cv_folds": [round(x, 4) for x in fixed_folds],
     }
-    for kind in ("tree", "ridge"):
+    for kind, scale in (("tree", False), ("tree_scaled", True), ("ridge", False)):
         rs = []
         for tr_i, te_i in cv.split(X, Y, g):
-            P = fit_predict(X[tr_i], Y[tr_i], X[te_i], kind)
+            P = fit_predict(X[tr_i], Y[tr_i], X[te_i], kind.replace("_scaled",""), scale)
             pick = np.array([safe_idx[int(np.argmax(P[i, safe_idx]))] for i in range(len(te_i))])
             rs.append(regret(Y[te_i], pick, safe_idx).mean())
         report["arms"].setdefault(kind, {})["cv_regret_safe"] = round(float(np.mean(rs)), 4)
@@ -143,8 +158,8 @@ def main() -> None:
         "eps5": round(float((fixed_test <= 0.05).mean()), 3),
         "picks": {ACTIONS[fixed_tv]: len(Yte)},
     }
-    for kind in ("tree", "ridge"):
-        P = fit_predict(X, Y, Xte, kind)
+    for kind, scale in (("tree", False), ("tree_scaled", True), ("ridge", False)):
+        P = fit_predict(X, Y, Xte, kind.replace("_scaled",""), scale)
         pick = np.array([safe_idx[int(np.argmax(P[i, safe_idx]))] for i in range(len(Xte))])
         r = regret(Yte, pick, safe_idx)
         d = report["arms"][kind]
