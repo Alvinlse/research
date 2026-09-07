@@ -97,11 +97,16 @@ def main() -> None:
     majority = collections.Counter(r["target"] for r in train).most_common(1)[0][0]
     print(f"{len(rows)} {a.split} states | catastrophic={cat} | majority baseline={majority}")
 
+    # Draw the random baselines ONCE per state. `regret()` and the catastrophe count each call the
+    # strategy, so a live rng.choice() returned a different action to each metric -- which is how
+    # random_safe_menu came out with regret_safe > regret_full, an impossibility for a fixed pick.
     rng = random.Random(0)
+    fixed_rand = {(r["window"], r["t"]): rng.choice(ACTIONS) for r in rows}
+    fixed_rand_safe = {(r["window"], r["t"]): rng.choice(safe) for r in rows}
     strategies = {
         "majority_constant": lambda r: majority,
-        "random_menu": lambda r: rng.choice(ACTIONS),
-        "random_safe_menu": lambda r: rng.choice(safe),
+        "random_menu": lambda r: fixed_rand[(r["window"], r["t"])],
+        "random_safe_menu": lambda r: fixed_rand_safe[(r["window"], r["t"])],
         # The best SINGLE fixed action chosen on TRAIN -- the honest "best fixed policy" baseline,
         # since choosing it on test would be peeking.
         "best_fixed_on_train": lambda r, b=max(
