@@ -99,7 +99,7 @@ def epochs_for(world: Path, out: Path, every: int, keep: int,
 
 def label_world(world: Path, out: Path, every: int, keep: int, done: set,
                 lo: float, hi: float, shard: int = 0, budget: list | None = None,
-                decision_horizon: int = 0) -> int:
+                decision_horizon: int = 0, perjob: bool = False) -> int:
     """`budget` is a one-element list acting as a mutable counter: this invocation stops once it
     hits zero, so a chunk always ends well inside the login node's ~12-15 CPU-min reaper window
     instead of being killed mid-rollout."""
@@ -128,6 +128,13 @@ def label_world(world: Path, out: Path, every: int, keep: int, done: set,
                 schedule.append({"t": ep["t"] + decision_horizon, **BASELINE})
             sched.write_text(json.dumps(schedule))
             r = run(world, "scripted", tag="lbl", quiet=True, policy_schedule=sched)
+            if perjob:
+                # The window-level summary discards the one thing a PER-JOB selector needs: how
+                # each job fared under this policy. The simulator wrote it; keep it before the
+                # next rollout's identical tag overwrites the file. Compact arrays, warm-up jobs
+                # dropped, no oracle fields -- the true runtime is the job's own outcome here and
+                # is the label, never a feature.
+                _capture_perjob(world, out / f"perjob.{shard}.jsonl", key, ep["t"], o, z)
             with open(sink, "a") as f:
                 # Raw metric names are kept VERBATIM so `reward()` can re-score a stored row
                 # directly; renaming them here is what would silently make collate() score zeros.
@@ -153,6 +160,22 @@ def _all_rollout_lines(out: Path) -> list[str]:
     for f in sorted(out.glob("rollouts.*.jsonl")):
         lines += f.read_text().splitlines()
     return lines
+
+
+def _capture_perjob(world: Path, sink: Path, key: str, t: int, o: str, z: str) -> None:
+    import csv
+    jobs = json.loads((world / "in/jobs.json").read_text())["jobs"]
+    rows = []
+    with open(world / "out/lbl_job_statistics.csv") as f:
+        for r in csv.DictReader(f):
+            j = jobs[int(r["ID"])]
+            if j["attributes"].get("_warmup"):
+                continue
+            rows.append([int(r["ID"]), round(float(r["Wait Time"])), round(float(r["Turnaround Time"])),
+                         round(float(r["Makespan"])), int(r["Status"] == "completed")])
+    with open(sink, "a") as f:
+        f.write(json.dumps({"key": key, "window": world.name, "t": t, "ordering": o, "sizing": z,
+                            "cols": ["id", "wait", "ta", "run", "ok"], "jobs": rows}) + "\n")
 
 
 def collate(out: Path) -> list[dict]:
@@ -196,6 +219,8 @@ def main() -> None:
     ap.add_argument("--max-rollouts", type=int, default=0,
                     help="stop after N new rollouts this invocation (0 = unbounded)")
     ap.add_argument("--collate", action="store_true", help="write states.json and the summary")
+    ap.add_argument("--perjob", action="store_true",
+                    help="also keep every job's own outcome per rollout (perjob.<shard>.jsonl)")
     a = ap.parse_args()
     globals()["WEIGHTS"] = OPERATING_POINTS[a.weights]
     print(f"operating point {a.weights}: {WEIGHTS}")
@@ -211,7 +236,7 @@ def main() -> None:
     budget = [a.max_rollouts] if a.max_rollouts else None
     for i, w in enumerate(mine, 1):
         n = label_world(w, a.out, a.every, a.epochs, done, a.lo, a.hi, a.shard, budget,
-                        a.decision_horizon)
+                        a.decision_horizon, a.perjob)
         print(f"[shard {a.shard}] [{i}/{len(mine)}] {w.name}: +{n} rollouts", flush=True)
         if budget is not None and budget[0] <= 0:
             print("chunk budget spent; exiting for the next tick to resume", flush=True)
