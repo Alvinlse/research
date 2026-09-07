@@ -114,6 +114,16 @@ def main() -> None:
 
     # Grouped CV on train+val: the honest estimate of how this generalises to an unseen WINDOW.
     cv = GroupKFold(n_splits=min(5, len(set(g))))
+    fixed_folds = []
+    for tr_i, te_i in cv.split(X, Y, g):
+        fixed = max(safe_idx,
+                    key=lambda j: float(Y[tr_i, j].sum()))
+        fixed_folds.append(float(regret(
+            Y[te_i], np.full(len(te_i), fixed), safe_idx).mean()))
+    report["arms"]["best_fixed_on_fold"] = {
+        "cv_regret_safe": round(float(np.mean(fixed_folds)), 4),
+        "cv_folds": [round(x, 4) for x in fixed_folds],
+    }
     for kind in ("tree", "ridge"):
         rs = []
         for tr_i, te_i in cv.split(X, Y, g):
@@ -123,7 +133,16 @@ def main() -> None:
         report["arms"].setdefault(kind, {})["cv_regret_safe"] = round(float(np.mean(rs)), 4)
         report["arms"][kind]["cv_folds"] = [round(float(x), 4) for x in rs]
 
-    # Held-out test, same split the LLM was scored on.
+    # Held-out test, same split the LLM was scored on. Validation is legitimately
+    # available here, so the paired fixed comparator is selected on train+val.
+    fixed_tv = max(safe_idx, key=lambda j: float(Y[:, j].sum()))
+    fixed_test = regret(Yte, np.full(len(Yte), fixed_tv), safe_idx)
+    report["arms"]["best_fixed_on_train_val"] = {
+        "policy": ACTIONS[fixed_tv],
+        "test_regret_safe": round(float(fixed_test.mean()), 4),
+        "eps5": round(float((fixed_test <= 0.05).mean()), 3),
+        "picks": {ACTIONS[fixed_tv]: len(Yte)},
+    }
     for kind in ("tree", "ridge"):
         P = fit_predict(X, Y, Xte, kind)
         pick = np.array([safe_idx[int(np.argmax(P[i, safe_idx]))] for i in range(len(Xte))])
@@ -142,9 +161,21 @@ def main() -> None:
             idx = np.concatenate([np.where(gte == w)[0] for w in pick_w])
             bs.append(r[idx].mean())
         d["ci95"] = [round(float(np.percentile(bs, 2.5)), 4), round(float(np.percentile(bs, 97.5)), 4)]
+        delta = r - fixed_test
+        bs_delta = []
+        for _ in range(a.boot):
+            pick_w = rng.choice(wins, len(wins), replace=True)
+            idx = np.concatenate([np.where(gte == w)[0] for w in pick_w])
+            bs_delta.append(delta[idx].mean())
+        d["delta_vs_best_fixed"] = round(float(delta.mean()), 4)
+        d["delta_vs_best_fixed_ci95"] = [
+            round(float(np.percentile(bs_delta, 2.5)), 4),
+            round(float(np.percentile(bs_delta, 97.5)), 4)]
 
-    # Same-metric reference points, recomputed here so the comparison is apples to apples.
-    for name, idx in (("majority_train", ACTIONS.index(
+    # Raw-argmax majority is a label-frequency diagnostic, not the reward-optimal
+    # fixed policy above. Name it explicitly so the two baselines cannot be
+    # mistaken for one another in the paper table.
+    for name, idx in (("argmax_majority_train", ACTIONS.index(
             max(set(ACTIONS), key=lambda x: (Ytr.argmax(1) == ACTIONS.index(x)).sum()))),):
         r = regret(Yte, np.full(len(Yte), idx), safe_idx)
         report["arms"][name] = {"test_regret_safe": round(float(r.mean()), 4),
@@ -155,8 +186,9 @@ def main() -> None:
     print(f"\n{'arm':<18} {'cv_regret':>10} {'test_regret':>12} {'95% CI':>18} {'eps5':>7} {'picks':>6}")
     for k, v in report["arms"].items():
         print(f"{k:<18} {v.get('cv_regret_safe', float('nan')):>10.4f} "
-              f"{v['test_regret_safe']:>12.4f} "
-              f"{str(v.get('ci95', '-')):>18} {v['eps5']:>7.3f} {v.get('n_distinct_picks', 1):>6}")
+              f"{v.get('test_regret_safe', float('nan')):>12.4f} "
+              f"{str(v.get('ci95', '-')):>18} {v.get('eps5', float('nan')):>7.3f} "
+              f"{v.get('n_distinct_picks', 1):>6}")
     print(f"\nreport -> {a.out}")
 
 

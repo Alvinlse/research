@@ -71,7 +71,11 @@ class WeightedTrainer(Trainer):
             ignore_index=-100, reduction="none").view(labels.shape)
         mask = (labels != -100).float()
         per_seq = (ll * mask).sum(1) / mask.sum(1).clamp(min=1)
-        loss = (per_seq * w.to(per_seq.device)).sum() / w.sum().clamp(min=1e-6)
+        # Scale each example's loss by its margin WITHOUT dividing by that example's own weight.
+        # The previous form, (per_seq*w).sum()/w.sum(), cancels exactly at batch size 1 -- which is
+        # the configured batch size -- so the margin weighting was algebraically a no-op and near
+        # ties were trained at full strength anyway.
+        loss = (per_seq * w.to(per_seq.device)).mean()
         return (loss, out) if return_outputs else loss
 
 
@@ -86,6 +90,7 @@ def main() -> None:
     tok = AutoTokenizer.from_pretrained(BASE)
     tok.pad_token = tok.pad_token or tok.eos_token
     train = Packets(a.data / "train.jsonl", tok)
+    val = Packets(a.data / "val.jsonl", tok)
     if a.limit:
         train.rows = train.rows[:a.limit]
     print(f"training rows: {len(train)}", flush=True)
@@ -104,9 +109,13 @@ def main() -> None:
         # a cosine schedule a 1-step run decays the LR to ~0 before the only optimiser step -- the
         # LoRA B matrices then stay at their zero init and the adapter is a silent no-op.
         learning_rate=1e-4, lr_scheduler_type="cosine", warmup_steps=5,
-        logging_steps=5, save_steps=20, save_total_limit=3,   # frequent: the reaper is the reason
-        bf16=True, report_to=[], remove_unused_columns=False, gradient_checkpointing=True)
+        logging_steps=5, eval_strategy="steps", eval_steps=20,
+        save_steps=20, save_total_limit=3,                    # frequent: the reaper is the reason
+        load_best_model_at_end=True, metric_for_best_model="eval_loss",
+        greater_is_better=False, bf16=True, report_to=[], remove_unused_columns=False,
+        gradient_checkpointing=True)
     tr = WeightedTrainer(model=model, args=args, train_dataset=train,
+                         eval_dataset=val,
                          data_collator=lambda b: collate(b, tok.pad_token_id))
     ck = list(a.out.glob("checkpoint-*"))
     resume = bool(ck)

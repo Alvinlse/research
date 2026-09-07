@@ -1481,7 +1481,8 @@ POLICY_MENU = {
                   "awards the free GPUs to the highest marginal bids",
         "least_laxity": "least slack first, slack being the time left before a job's deadline "
                         "minus the work it still has to do, both from its REQUESTED walltime",
-        "fairness": "max-min share across users: whoever currently holds the fewest GPUs goes first",
+        "fairness": "ageing fair-share across users: the user whose queued work has waited "
+                    "longest goes first",
         "tier_sjf": "production tier first, shortest requested walltime within tier",
         "resize_conservative": "admit only into free GPUs and never resize a running job",
     },
@@ -1490,6 +1491,15 @@ POLICY_MENU = {
         "adaptive": "share the free GPUs across the waiting queue; each job may start smaller",
         "greedy": "give each job the largest legal size that fits right now",
     },
+}
+# This pair is structurally unsafe under sustained load: greedy fills every
+# legal slot while resize_conservative refuses to release any running capacity.
+# It remains in counterfactual sweeps as an auditable negative control, but an
+# online referee may not select it. Safety is declared from the mechanism, not
+# inferred from validation/test rewards.
+POLICY_UNSAFE = {
+    "resize_conservative+greedy":
+        "greedy fills capacity while resize_conservative prevents its release",
 }
 # Constraints the cluster imposes on any answer. These are checked in code after the reply, so a
 # ruling that breaks one is discarded rather than trusted -- the LLM proposes, the validator disposes.
@@ -1500,7 +1510,9 @@ POLICY_RULES = (
     "speed for a lot of capacity and starves the queue behind it.\n"
     "4. Production-tier jobs may be favoured, but starving the batch queue is a failure.\n"
     "5. You choose a POLICY that the scheduler then applies deterministically. You never name a "
-    "job or a GPU count yourself."
+    "job or a GPU count yourself.\n"
+    "6. `resize_conservative` and `greedy` may not be selected together: that pair can fill the "
+    "pool and then refuse to release capacity."
 )
 POLICY_SELECT = ("You choose the scheduling policy for a GPU cluster for the next interval. " + WORLD +
                  "\n\nYou pick ONE ordering rule and ONE sizing rule; the pair is the policy. "
@@ -1515,6 +1527,37 @@ POLICY_SELECT = ("You choose the scheduling policy for a GPU cluster for the nex
                  "Reply with JSON only: "
                  '{"ordering": "<name from the menu>", "sizing": "<name from the menu>", '
                  '"why": "one line naming the state feature that drove the choice"}.')
+
+POLICY_DEMAND_REVIEW = (
+    "You are the DEMAND-side reviewer for a GPU scheduler. You do not allocate GPUs. "
+    "Read the queue-side state and recommend one named ordering rule and one named sizing rule "
+    "that protect waiting time, slowdown, and production service. Ground the recommendation in "
+    "fields that are present; do not invent future arrivals or true runtimes. Reply with JSON only: "
+    '{"ordering": "<menu name>", "sizing": "<menu name>", '
+    '"statement": "one sentence citing the demand evidence"}.')
+
+POLICY_SUPPLY_REVIEW = (
+    "You are the SUPPLY-side reviewer for a GPU scheduler. You do not allocate GPUs. "
+    "Read the cluster-side state and recommend one named ordering rule and one named sizing rule "
+    "that avoid waste, unsafe saturation, and unfair capacity use. Ground the recommendation in "
+    "fields that are present; do not invent future arrivals or true runtimes. Reply with JSON only: "
+    '{"ordering": "<menu name>", "sizing": "<menu name>", '
+    '"statement": "one sentence citing the supply evidence"}.')
+
+POLICY_NEUTRAL_REVIEW = (
+    "You are a neutral reviewer of a GPU scheduling-policy choice. You do not allocate GPUs. "
+    "Balance waiting time, bounded slowdown, SLA, resize cost, and fairness using only the supplied "
+    "state. Recommend one named ordering rule and one named sizing rule. Reply with JSON only: "
+    '{"ordering": "<menu name>", "sizing": "<menu name>", '
+    '"statement": "one sentence citing the decisive state evidence"}.')
+
+POLICY_REVIEW_REFEREE = (
+    "You are the REFEREE selecting a GPU scheduling policy. Two reviewers supplied statements, "
+    "not allocations. Read the complete state and both statements, reject unsupported advocacy, "
+    "and select one ordering and one sizing rule from the menu. Deterministic code will execute the "
+    "policy; never name jobs or GPU counts. Reply with JSON only: "
+    '{"ordering": "<menu name>", "sizing": "<menu name>", '
+    '"why": "one sentence naming the evidence and reviewer followed"}.')
 
 
 
@@ -1537,6 +1580,64 @@ def _load_fields(pending, ctx) -> dict:
             "arrival_load": recent / pool}
 
 
+def _policy_quantiles(values) -> tuple[float, float, float]:
+    """Median, p90 and max for compact, online-computable state summaries."""
+    xs = sorted(float(x) for x in values)
+    if not xs:
+        return 0.0, 0.0, 0.0
+    at = lambda p: xs[round(p * (len(xs) - 1))]
+    return at(0.5), at(0.9), xs[-1]
+
+
+def _policy_observations(pending, ctx) -> dict:
+    """Richer non-oracle evidence for the advocates and the single-call control.
+
+    The old packet reduced the queue to counts. Policy outcomes also depend on
+    the distribution of waits, requested sizes, declared limits and running-job
+    ages. Every field below is available to an online scheduler; true duration
+    and the trace's real wait remain excluded.
+    """
+    now = float(ctx.get("now", 0))
+    waits = [max(0.0, now - float(j.submit_time)) for j in pending]
+    asks = [max(1, int(j.attributes.get("req_nodes", 1))) for j in pending]
+    limits = [60 * int(j.attributes.get("req_min", 0)) for j in pending
+              if int(j.attributes.get("req_min", 0)) > 0]
+    default_est = ctx.get("est_default") or 86400
+    slack_mult = ctx.get("slack_mult", 10)
+    laxities = sorted(
+        (float(j.submit_time) + slack_mult *
+         ((int(j.attributes.get("req_min", 0)) * 60) or default_est)) - now -
+        ((int(j.attributes.get("req_min", 0)) * 60) or default_est)
+        for j in pending)
+    running = ctx.get("running", [])
+    ages = [max(0.0, now - float(j.start_time)) for j in running]
+    w50, w90, wmax = _policy_quantiles(waits)
+    a50, a90, amax = _policy_quantiles(asks)
+    l50, l90, lmax = _policy_quantiles(limits)
+    r50, r90, rmax = _policy_quantiles(ages)
+    return {
+        "wait_s_p50": w50, "wait_s_p90": w90, "wait_s_max": wmax,
+        "asked_gpus_p50": a50, "asked_gpus_p90": a90, "asked_gpus_max": amax,
+        "walltime_s_p50": l50, "walltime_s_p90": l90, "walltime_s_max": lmax,
+        "laxity_s_min": laxities[0] if laxities else 0.0,
+        "laxity_s_p50": laxities[round(0.5 * (len(laxities) - 1))] if laxities else 0.0,
+        "negative_laxity_waiting": sum(x < 0 for x in laxities),
+        "malleable_waiting": sum(_sizes(j)[0] != _sizes(j)[1] for j in pending),
+        "waiting_users": len({str(j.attributes.get("user", "")) for j in pending}),
+        "running_age_s_p50": r50, "running_age_s_p90": r90, "running_age_s_max": rmax,
+        "running_prod": sum(j.attributes.get("tier") == "prod" for j in running),
+    }
+
+
+def _policy_menu_lines() -> list[str]:
+    lines = ["ORDERING MENU:"]
+    lines += [f"  {k}: {v}" for k, v in POLICY_MENU["ordering"].items()]
+    lines += ["", "SIZING MENU:"]
+    lines += [f"  {k}: {v}" for k, v in POLICY_MENU["sizing"].items()]
+    lines += ["", "CLUSTER RULES:", POLICY_RULES]
+    return lines
+
+
 def _packet_policy(pending, free, ctx) -> str:
     """Cluster state plus the menu and the constraints: everything the choice may depend on."""
     pool = ctx.get("pool_n", 0)
@@ -1544,16 +1645,27 @@ def _packet_policy(pending, free, ctx) -> str:
     prod = sum(1 for j in pending if j.attributes.get("tier") == "prod")
     running = ctx.get("running", [])
     declared = sum(1 for j in pending if int(j.attributes.get("req_min", 0)) > 0)
+    ob = _policy_observations(pending, ctx)
     lines = [f"now={int(ctx['now'])}s pool={pool} free={len(free)} running={len(running)}",
              f"queue_depth={len(pending)} waiting_demand={demand} "
              f"queue_pressure={_load_fields(pending, ctx)['queue_pressure']:.2f} "
              f"arrival_load_1h={_load_fields(pending, ctx)['arrival_load']:.2f} "
              f"prod_waiting={prod} declared_walltime={declared}",
+             f"wait_s_p50={ob['wait_s_p50']:.0f} wait_s_p90={ob['wait_s_p90']:.0f} "
+             f"wait_s_max={ob['wait_s_max']:.0f} waiting_users={ob['waiting_users']}",
+             f"asked_gpus_p50={ob['asked_gpus_p50']:.0f} "
+             f"asked_gpus_p90={ob['asked_gpus_p90']:.0f} asked_gpus_max={ob['asked_gpus_max']:.0f} "
+             f"malleable_waiting={ob['malleable_waiting']}",
+             f"walltime_s_p50={ob['walltime_s_p50']:.0f} "
+             f"walltime_s_p90={ob['walltime_s_p90']:.0f} walltime_s_max={ob['walltime_s_max']:.0f}",
+             f"laxity_s_min={ob['laxity_s_min']:.0f} laxity_s_p50={ob['laxity_s_p50']:.0f} "
+             f"negative_laxity_waiting={ob['negative_laxity_waiting']}",
+             f"running_age_s_p50={ob['running_age_s_p50']:.0f} "
+             f"running_age_s_p90={ob['running_age_s_p90']:.0f} "
+             f"running_age_s_max={ob['running_age_s_max']:.0f} running_prod={ob['running_prod']}",
              f"current_policy=ordering:{ctx.get('sel_ordering', 'firstfit')} "
-             f"sizing:{ctx.get('sel_sizing', 'as_requested')}",
-             "", "ORDERING MENU:"]
-    lines += [f"  {k}: {v}" for k, v in POLICY_MENU["ordering"].items()]
-    lines += ["", "SIZING MENU:"] + [f"  {k}: {v}" for k, v in POLICY_MENU["sizing"].items()]
+             f"sizing:{ctx.get('sel_sizing', 'as_requested')}", ""]
+    lines += _policy_menu_lines()
     hist = ctx.get("sel_history", [])
     if hist:
         # The scratchpad: what you chose, and what the cluster did next. Without it the referee has
@@ -1570,46 +1682,176 @@ def _packet_policy(pending, free, ctx) -> str:
             lines.append(f"  t={h['t']}s offered_load={h['load']:.2f}: chose "
                          f"ordering:{h['ordering']} sizing:{h['sizing']}  ->  {after}")
         lines.append("  A choice that left the queue growing is evidence against repeating it.")
-    lines += ["", "CLUSTER RULES:", POLICY_RULES]
     return "\n".join(lines)
 
 
-def arm_policy_select(pending, free, ctx):
-    """Re-choose the policy at most every `interval` seconds, then apply it deterministically."""
-    from pins.correction import _ask
+def _packet_policy_demand(pending, ctx) -> str:
+    ob = _policy_observations(pending, ctx)
+    lf = _load_fields(pending, ctx)
+    lines = ["DEMAND VIEW:",
+             f"now={int(ctx['now'])}s queue_depth={len(pending)} "
+             f"waiting_demand={sum(max(1, int(j.attributes.get('req_nodes', 1))) for j in pending)} "
+             f"queue_pressure={lf['queue_pressure']:.2f}",
+             f"prod_waiting={sum(j.attributes.get('tier') == 'prod' for j in pending)} "
+             f"waiting_users={ob['waiting_users']} malleable_waiting={ob['malleable_waiting']}",
+             f"wait_s_p50={ob['wait_s_p50']:.0f} wait_s_p90={ob['wait_s_p90']:.0f} "
+             f"wait_s_max={ob['wait_s_max']:.0f}",
+             f"asked_gpus_p50={ob['asked_gpus_p50']:.0f} "
+             f"asked_gpus_p90={ob['asked_gpus_p90']:.0f} asked_gpus_max={ob['asked_gpus_max']:.0f}",
+             f"walltime_s_p50={ob['walltime_s_p50']:.0f} "
+             f"walltime_s_p90={ob['walltime_s_p90']:.0f} walltime_s_max={ob['walltime_s_max']:.0f}",
+             f"laxity_s_min={ob['laxity_s_min']:.0f} laxity_s_p50={ob['laxity_s_p50']:.0f} "
+             f"negative_laxity_waiting={ob['negative_laxity_waiting']}", ""]
+    return "\n".join(lines + _policy_menu_lines())
+
+
+def _packet_policy_supply(pending, free, ctx) -> str:
+    ob = _policy_observations(pending, ctx)
+    lf = _load_fields(pending, ctx)
+    lines = ["SUPPLY VIEW:",
+             f"now={int(ctx['now'])}s pool={ctx.get('pool_n', 0)} free={len(free)} "
+             f"running={len(ctx.get('running', []))} queue_depth={len(pending)}",
+             f"queue_pressure={lf['queue_pressure']:.2f} arrival_load_1h={lf['arrival_load']:.2f} "
+             f"running_prod={ob['running_prod']}",
+             f"running_age_s_p50={ob['running_age_s_p50']:.0f} "
+             f"running_age_s_p90={ob['running_age_s_p90']:.0f} "
+             f"running_age_s_max={ob['running_age_s_max']:.0f}",
+             f"current_policy=ordering:{ctx.get('sel_ordering', 'firstfit')} "
+             f"sizing:{ctx.get('sel_sizing', 'as_requested')}", ""]
+    return "\n".join(lines + _policy_menu_lines())
+
+
+def _policy_answer(ans) -> tuple[str, str] | None:
+    """Validate a referee answer without repairing or silently remapping it."""
+    if not isinstance(ans, dict):
+        return None
+    o, z = str(ans.get("ordering", "")).strip(), str(ans.get("sizing", "")).strip()
+    if o not in POLICY_MENU["ordering"] or z not in POLICY_MENU["sizing"]:
+        return None
+    if f"{o}+{z}" in POLICY_UNSAFE:
+        return None
+    return o, z
+
+
+def _policy_begin(pending, ctx) -> int | None:
+    """Open one selection epoch and close the previous epoch's observable outcome."""
     now = ctx["now"]
-    if now - ctx.get("sel_last", float("-inf")) >= ctx.get("sel_every", 0):
-        ctx["sel_last"] = now
-        started_total = len(ctx.get("sizes", {}))
-        hist = ctx.setdefault("sel_history", [])
-        if hist and hist[-1].get("queue_after") is None:   # close the previous entry's outcome
-            hist[-1]["queue_after"] = len(pending)
-            hist[-1]["run_after"] = len(ctx.get("running", []))
-            hist[-1]["started_after"] = started_total - hist[-1]["started_total"]
+    if now - ctx.get("sel_last", float("-inf")) < ctx.get("sel_every", 0):
+        return None
+    ctx["sel_last"] = now
+    started_total = len(ctx.get("sizes", {}))
+    hist = ctx.setdefault("sel_history", [])
+    if hist and hist[-1].get("queue_after") is None:
+        hist[-1]["queue_after"] = len(pending)
+        hist[-1]["run_after"] = len(ctx.get("running", []))
+        hist[-1]["started_after"] = started_total - hist[-1]["started_total"]
+    return started_total
+
+
+def _policy_record(pending, ctx, started_total: int, ans, mode: str, **extra) -> None:
+    """Commit one valid policy choice, or preserve the prior safe fallback."""
+    pair = _policy_answer(ans)
+    if pair:
+        ctx["sel_ordering"], ctx["sel_sizing"] = pair
+    else:
+        ctx["sel_invalid"] = ctx.get("sel_invalid", 0) + 1
+    now = ctx["now"]
+    load = round(sum(max(1, int(j.attributes.get("req_nodes", 1))) for j in pending)
+                 / max(1, ctx.get("pool_n", 1)), 2)
+    ctx.setdefault("sel_history", []).append(
+        {"t": int(now), "ordering": ctx.get("sel_ordering"), "sizing": ctx.get("sel_sizing"),
+         "load": load, "queue": len(pending), "running": len(ctx.get("running", [])),
+         "started_total": started_total, "queue_after": None})
+    raw_o = str((ans or {}).get("ordering", "")) if isinstance(ans, dict) else ""
+    raw_z = str((ans or {}).get("sizing", "")) if isinstance(ans, dict) else ""
+    row = {"t": int(now), "mode": mode, "ordering": raw_o, "sizing": raw_z,
+           "valid": pair is not None, "why": str((ans or {}).get("why", ""))[:200]
+           if isinstance(ans, dict) else "", "load": load, **extra}
+    ctx.setdefault("sel_log", []).append(row)
+    key = f"{ctx.get('sel_ordering')}+{ctx.get('sel_sizing')}"
+    ctx.setdefault("sel_counts", {})[key] = ctx.setdefault("sel_counts", {}).get(key, 0) + 1
+
+
+def _policy_execute(pending, free, ctx) -> None:
+    ctx["sizer"] = ctx.get("sel_sizing", "as_requested")
+    ARMS[ctx.get("sel_ordering", "firstfit")](pending, free, ctx)
+
+
+def arm_policy_select(pending, free, ctx):
+    """One-call referee baseline, followed by deterministic policy execution."""
+    from pins.correction import _ask
+    started_total = _policy_begin(pending, ctx)
+    if started_total is not None:
         ans = _ask(POLICY_SELECT, _packet_policy(pending, free, ctx), ctx["model"], ctx["host"],
                    ctx["cache"], "es-policy-select", num_predict=200)
         ctx["calls"] += 1
-        o = str((ans or {}).get("ordering", "")).strip()
-        z = str((ans or {}).get("sizing", "")).strip()
-        ok = o in POLICY_MENU["ordering"] and z in POLICY_MENU["sizing"]
-        if ok:
-            ctx["sel_ordering"], ctx["sel_sizing"] = o, z
+        _policy_record(pending, ctx, started_total, ans, "single")
+    _policy_execute(pending, free, ctx)
+
+
+def arm_policy_bo3(pending, free, ctx):
+    """Budget-matched single-prompt control: three samples and a majority vote."""
+    from collections import Counter
+    from pins.correction import _ask
+    started_total = _policy_begin(pending, ctx)
+    if started_total is not None:
+        packet, samples, valid = _packet_policy(pending, free, ctx), [], []
+        for i in range(3):
+            ans = _ask(POLICY_SELECT, packet, ctx["model"], ctx["host"], ctx["cache"],
+                       f"es-policy-bo3-{i}", num_predict=200, temperature=0.8)
+            ctx["calls"] += 1
+            samples.append(ans)
+            if (pair := _policy_answer(ans)) is not None:
+                valid.append(pair)
+        winner = Counter(valid).most_common(1)[0][0] if valid else None
+        ans = ({"ordering": winner[0], "sizing": winner[1], "why": "majority of three samples"}
+               if winner else None)
+        _policy_record(pending, ctx, started_total, ans, "bo3", samples=samples)
+    _policy_execute(pending, free, ctx)
+
+
+def _arm_policy_reviewed(pending, free, ctx, opposed: bool) -> None:
+    """Two written reviews followed by a referee; all allocation stays in code."""
+    from pins.correction import _ask
+    started_total = _policy_begin(pending, ctx)
+    if started_total is not None:
+        complete = _packet_policy(pending, free, ctx)
+        if opposed:
+            left_prompt, left_packet, left_tag = \
+                POLICY_DEMAND_REVIEW, _packet_policy_demand(pending, ctx), "es-policy-demand"
+            right_prompt, right_packet, right_tag = \
+                POLICY_SUPPLY_REVIEW, _packet_policy_supply(pending, free, ctx), "es-policy-supply"
+            mode, left_name, right_name = "opposed", "demand", "supply"
         else:
-            ctx["sel_invalid"] = ctx.get("sel_invalid", 0) + 1
-        hist.append({"t": int(now), "ordering": ctx.get("sel_ordering"), "sizing": ctx.get("sel_sizing"),
-                     "load": round(sum(max(1, int(j.attributes.get("req_nodes", 1))) for j in pending)
-                                   / max(1, ctx.get("pool_n", 1)), 2),
-                     "queue": len(pending), "running": len(ctx.get("running", [])),
-                     "started_total": started_total, "queue_after": None})
-        ctx.setdefault("sel_log", []).append(
-            {"t": int(now), "ordering": o, "sizing": z, "valid": ok,
-             "why": str((ans or {}).get("why", ""))[:120],
-             "load": round(sum(max(1, int(j.attributes.get("req_nodes", 1))) for j in pending)
-                           / max(1, ctx.get("pool_n", 1)), 2)})
-        ctx.setdefault("sel_counts", {})[f"{ctx.get('sel_ordering')}+{ctx.get('sel_sizing')}"] = \
-            ctx.setdefault("sel_counts", {}).get(f"{ctx.get('sel_ordering')}+{ctx.get('sel_sizing')}", 0) + 1
-    ctx["sizer"] = ctx.get("sel_sizing", "as_requested")
-    ARMS[ctx.get("sel_ordering", "firstfit")](pending, free, ctx)
+            left_prompt = right_prompt = POLICY_NEUTRAL_REVIEW
+            left_packet = right_packet = complete
+            left_tag, right_tag = "es-policy-neutral-a", "es-policy-neutral-b"
+            mode, left_name, right_name = "symmetric", "reviewer_a", "reviewer_b"
+        left = _ask(left_prompt, left_packet, ctx["model"], ctx["host"], ctx["cache"],
+                    left_tag, num_predict=200)
+        right = _ask(right_prompt, right_packet, ctx["model"], ctx["host"], ctx["cache"],
+                     right_tag, num_predict=200)
+        ctx["calls"] += 2
+        left_text = json.dumps(left) if left is not None else "none"
+        right_text = json.dumps(right) if right is not None else "none"
+        referee_packet = (complete + f"\n\n{left_name.upper()} STATEMENT:\n{left_text}" +
+                          f"\n\n{right_name.upper()} STATEMENT:\n{right_text}")
+        ans = _ask(POLICY_REVIEW_REFEREE, referee_packet, ctx["model"], ctx["host"],
+                   ctx["cache"], f"es-policy-referee-{mode}", num_predict=200)
+        ctx["calls"] += 1
+        _policy_record(pending, ctx, started_total, ans, mode,
+                       **{left_name: left, right_name: right})
+    _policy_execute(pending, free, ctx)
+
+
+def arm_policy_negotiate(pending, free, ctx):
+    """Demand statement + supply statement -> constrained policy referee."""
+    _arm_policy_reviewed(pending, free, ctx, opposed=True)
+
+
+def arm_policy_symmetric(pending, free, ctx):
+    """Matched three-call control with two neutral rather than opposed reviews."""
+    _arm_policy_reviewed(pending, free, ctx, opposed=False)
 
 
 def _bid_curve(job, ctx) -> list[float]:
@@ -1830,6 +2072,9 @@ ARMS = {"fcfs": arm_fcfs, "firstfit": arm_firstfit, "easy": arm_easy, "sjf": arm
         "protect": arm_firstfit, "resize_single": arm_firstfit, "text_single": arm_firstfit,
         "text_debate": arm_firstfit,
         "policy_select": arm_policy_select,
+        "policy_bo3": arm_policy_bo3,
+        "policy_symmetric": arm_policy_symmetric,
+        "policy_negotiate": arm_policy_negotiate,
         "rule_synth": arm_rule_synth,
         "resize_debate": arm_firstfit,
         "single": lambda p, f, c: arm_llm(p, f, c, "single"),
@@ -1968,7 +2213,8 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
                                     world)
     llm_arms = ("single", "debate", "negotiate", "bo3", "correct", "neg_signed",
                 "correct3", "sham", "neg_v2", "resize_single", "text_single", "resize_debate",
-                "text_debate", "policy_select", "rule_synth")
+                "text_debate", "policy_select", "policy_bo3", "policy_symmetric",
+                "policy_negotiate", "rule_synth")
     res.update(arm=arm, sizer=sizer, switch_at=switch_at, switch_on=switch_on,
                rule_frozen=bool(rule), rule_invalid=ctx.get("rule_invalid"),
                rule_fires=ctx.get("rule_fires", {}),

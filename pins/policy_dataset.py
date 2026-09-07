@@ -21,10 +21,26 @@ import json
 import random
 from pathlib import Path
 
-from pins.elastisim_bench import POLICY_MENU, POLICY_SELECT
+from pins.elastisim_bench import POLICY_MENU, POLICY_SELECT, POLICY_UNSAFE
 from pins.policy_labels import OPERATING_POINTS, reward
 
 EPS = 0.05          # actions within this of the best are treated as equivalent
+
+
+def split_windows(states: list[dict], seed: int) -> dict[str, str]:
+    """Assign complete windows before fitting any dataset-level statistic.
+
+    Target canonicalisation used to run before this split, which let held-out
+    epsilon bands affect the action popularity used to construct training
+    targets.  Keeping this small helper pure also gives the leakage check a
+    direct seam to test.
+    """
+    wins = sorted({s["window"] for s in states})
+    random.Random(seed).shuffle(wins)
+    n_test = max(1, round(0.15 * len(wins)))
+    return {**{w: "test" for w in wins[:n_test]},
+            **{w: "val" for w in wins[n_test:2 * n_test]},
+            **{w: "train" for w in wins[2 * n_test:]}}
 
 
 def load_states(labels: Path, weights: dict) -> list[dict]:
@@ -34,14 +50,15 @@ def load_states(labels: Path, weights: dict) -> list[dict]:
         for line in f.read_text().splitlines():
             if line.strip():
                 r = json.loads(line)
-                by[(r["window"], r["t"])][f"{r['ordering']}+{r['sizing']}"] = r
+                by[(r["window"], r["t"], int(r.get("decision_horizon", 0)))][
+                    f"{r['ordering']}+{r['sizing']}"] = r
     n_actions = len(POLICY_MENU["ordering"]) * len(POLICY_MENU["sizing"])
     out = []
-    for (win, t), v in sorted(by.items()):
+    for (win, t, horizon), v in sorted(by.items()):
         if len(v) < n_actions:            # a chunk was interrupted part-way through this state
             continue
         sc = {a: reward(r, weights) for a, r in v.items()}
-        out.append({"window": win, "t": t, "rewards": sc})
+        out.append({"window": win, "t": t, "decision_horizon": horizon, "rewards": sc})
     return out
 
 
@@ -85,7 +102,9 @@ def build_row(s: dict, packet: str, popularity: collections.Counter) -> dict:
                 {"ordering": o, "sizing": z,
                  "why": "selected from the menu for this cluster state"})},
         ],
-        "window": s["window"], "t": s["t"], "rewards": {k: round(v, 5) for k, v in sc.items()},
+        "window": s["window"], "t": s["t"],
+        "decision_horizon": int(s.get("decision_horizon", 0)),
+        "rewards": {k: round(v, 5) for k, v in sc.items()},
         "argmax": max(sc, key=sc.get), "target": target,
         "margin": round(best_r - order[1], 5), "band_size": len(band),
         "best_r": round(best_r, 5),
@@ -112,17 +131,18 @@ def main() -> None:
                 packets[(win, j["t"])] = j["packet"]
     states = [s for s in states if (s["window"], s["t"]) in packets]
 
-    popularity = canonical_targets(states)
-    catastrophic = catastrophic_arms(states)
+    # Split by WINDOW *before* learning even apparently harmless corpus-level
+    # quantities. Consecutive epochs share a trajectory, and held-out reward
+    # bands must not influence which representative labels the training set.
+    split = split_windows(states, a.seed)
+    train_states = [s for s in states if split[s["window"]] == "train"]
+    popularity = canonical_targets(train_states)
 
-    # Split by WINDOW. Consecutive epochs inside one window share a trajectory and are strongly
-    # correlated, so an epoch-level split would leak the answer across the boundary.
-    wins = sorted({s["window"] for s in states})
-    random.Random(a.seed).shuffle(wins)
-    n_test = max(1, round(0.15 * len(wins)))
-    split = {**{w_: "test" for w_ in wins[:n_test]},
-             **{w_: "val" for w_ in wins[n_test:2 * n_test]},
-             **{w_: "train" for w_ in wins[2 * n_test:]}}
+    # Safety is a property of the mechanism, not a statistic fitted on the
+    # test set. Keep the training-only observed diagnostic so the declaration
+    # remains auditable without allowing held-out outcomes to define the menu.
+    catastrophic = sorted(POLICY_UNSAFE)
+    observed_worst_train = catastrophic_arms(train_states)
 
     rows: dict = {"train": [], "val": [], "test": []}
     for s in states:
@@ -135,13 +155,19 @@ def main() -> None:
                for rs in rows.values() for r in rs)
     meta = {"weights": a.weights, "eps": EPS, "seed": a.seed,
             "n_states": len(states), "catastrophic_arms": catastrophic,
+            "unsafe_policy_source": "mechanism_semantics",
+            "observed_majority_worst_train": observed_worst_train,
+            "target_popularity_source": "train_only",
             "counts": {k: len(v) for k, v in rows.items()},
             "windows": {k: sorted({r["window"] for r in v}) for k, v in rows.items()},
             "leak_rows": leak,
             "majority_target": collections.Counter(
                 r["target"] for r in rows["train"]).most_common(1)[0] if rows["train"] else None,
             "near_tie_frac": round(sum(r["margin"] < EPS for rs in rows.values() for r in rs)
-                                   / max(1, len(states)), 3)}
+                                   / max(1, len(states)), 3),
+            "near_tie_frac_by_split": {
+                k: round(sum(r["margin"] < EPS for r in rs) / max(1, len(rs)), 3)
+                for k, rs in rows.items()}}
     (a.out / "meta.json").write_text(json.dumps(meta, indent=1))
     print(json.dumps(meta, indent=1))
     assert leak == 0, "ORACLE LEAK: a packet contains a true-runtime field"

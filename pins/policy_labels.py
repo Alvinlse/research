@@ -1,10 +1,11 @@
 """Counterfactual policy labels: for each sampled state, what every policy in the menu would do.
 
 The teacher is the simulator. At a sampled epoch `t` the baseline policy has been running since
-`t=0`; each candidate `(ordering, sizing)` then takes over for the rest of the window and the
-outcome is scored. The reward vector over all candidates is the label, and its argmax is the
-supervised target. True runtime is used freely HERE -- inside the teacher -- and never reaches the
-packet the referee reads, which is the whole point of distilling a privileged teacher.
+`t=0`; each candidate `(ordering, sizing)` takes over either for a configured decision interval or,
+for legacy experiments, for the rest of the window. The reward vector over all candidates is the
+label, and its argmax is the supervised target. True runtime is used freely HERE -- inside the
+teacher -- and never reaches the packet the referee reads, which is the whole point of distilling
+a privileged teacher.
 
 Cost is what makes this feasible: one window replays in ~2 s, so K x epochs x windows rollouts is
 hours, not weeks, and no simulator snapshot/restore is needed. Because the login node reaps a
@@ -78,7 +79,9 @@ def epochs_for(world: Path, out: Path, every: int, keep: int,
     it that way in the write-up.
     """
     pk = out / f"{world.name}_packets.jsonl"
-    if not pk.exists():
+    # A killed simulator can create the packet path before writing its first row. Treating mere
+    # existence as a completed probe then silently produces an empty dataset on every retry.
+    if not pk.exists() or pk.stat().st_size == 0:
         sched = out / f"{world.name}_baseline.json"
         sched.write_text(json.dumps([{"t": 0, **BASELINE}]))
         run(world, "scripted", tag="lbl_probe", quiet=True, policy_schedule=sched,
@@ -95,7 +98,8 @@ def epochs_for(world: Path, out: Path, every: int, keep: int,
 
 
 def label_world(world: Path, out: Path, every: int, keep: int, done: set,
-                lo: float, hi: float, shard: int = 0, budget: list | None = None) -> int:
+                lo: float, hi: float, shard: int = 0, budget: list | None = None,
+                decision_horizon: int = 0) -> int:
     """`budget` is a one-element list acting as a mutable counter: this invocation stops once it
     hits zero, so a chunk always ends well inside the login node's ~12-15 CPU-min reaper window
     instead of being killed mid-rollout."""
@@ -103,7 +107,10 @@ def label_world(world: Path, out: Path, every: int, keep: int, done: set,
     acts, n_new = actions(), 0
     for ep in epochs_for(world, out, every, keep, lo, hi):
         for o, z in acts:
-            key = f"{world.name}|{ep['t']}|{o}|{z}"
+            # Keep legacy keys stable for the rest-of-window experiment, while
+            # preventing interval labels from being mistaken for those rows.
+            suffix = f"|h{decision_horizon}" if decision_horizon else ""
+            key = f"{world.name}|{ep['t']}|{o}|{z}{suffix}"
             if key in done:
                 continue
             # PER-SHARD scratch path. One shared `_sched.json` is a race: shards run concurrently,
@@ -111,13 +118,21 @@ def label_world(world: Path, out: Path, every: int, keep: int, done: set,
             # `JSONDecodeError: Extra data`. Windows are disjoint across shards, so every other
             # per-world path is already safe; this was the only shared one.
             sched = out / f"_sched.{shard}.json"
-            sched.write_text(json.dumps([{"t": 0, **BASELINE},
-                                         {"t": ep["t"], "ordering": o, "sizing": z}]))
+            schedule = [{"t": 0, **BASELINE},
+                        {"t": ep["t"], "ordering": o, "sizing": z}]
+            if decision_horizon:
+                # One action interval followed by the SAME continuation policy
+                # for every candidate. Effects caused during the interval remain
+                # in the simulated state, as a proper finite-horizon Q target
+                # requires, but the candidate is not silently held all day.
+                schedule.append({"t": ep["t"] + decision_horizon, **BASELINE})
+            sched.write_text(json.dumps(schedule))
             r = run(world, "scripted", tag="lbl", quiet=True, policy_schedule=sched)
             with open(sink, "a") as f:
                 # Raw metric names are kept VERBATIM so `reward()` can re-score a stored row
                 # directly; renaming them here is what would silently make collate() score zeros.
                 f.write(json.dumps({"key": key, "window": world.name, "t": ep["t"],
+                                    "decision_horizon": decision_horizon,
                                     "ordering": o, "sizing": z, "R": round(reward(r), 6),
                                     **{k: r.get(k) for k in
                                        ("n", "sla10_viol_pct", "mean_bsd", "mean_wait_s",
@@ -150,13 +165,15 @@ def collate(out: Path) -> list[dict]:
         if not line.strip():
             continue
         r = json.loads(line)
-        by.setdefault((r["window"], r["t"]), {})[f"{r['ordering']}+{r['sizing']}"] = reward(r)
+        by.setdefault((r["window"], r["t"], int(r.get("decision_horizon", 0))), {})[
+            f"{r['ordering']}+{r['sizing']}"] = reward(r)
     states = []
-    for (win, t), vec in sorted(by.items()):
+    for (win, t, horizon), vec in sorted(by.items()):
         if len(vec) < len(actions()):          # a chunk was interrupted mid-state
             continue
         best = max(vec, key=vec.get)
-        states.append({"window": win, "t": t, "rewards": vec, "best": best,
+        states.append({"window": win, "t": t, "decision_horizon": horizon,
+                       "rewards": vec, "best": best,
                        "gap": round(max(vec.values()) - min(vec.values()), 6)})
     return states
 
@@ -171,6 +188,9 @@ def main() -> None:
     ap.add_argument("--lo", type=float, default=0.05, help="earliest switch point, window fraction")
     ap.add_argument("--hi", type=float, default=0.60, help="latest switch point, window fraction")
     ap.add_argument("--weights", choices=sorted(OPERATING_POINTS), default="balanced")
+    ap.add_argument("--decision-horizon", type=int, default=0,
+                    help="seconds to apply the candidate before returning to the common baseline; "
+                         "0 preserves the legacy rest-of-window target")
     ap.add_argument("--shard", type=int, default=0, help="this worker's index")
     ap.add_argument("--shards", type=int, default=1, help="number of workers; windows are split N-ways")
     ap.add_argument("--max-rollouts", type=int, default=0,
@@ -190,7 +210,8 @@ def main() -> None:
     mine = worlds[a.shard::a.shards]
     budget = [a.max_rollouts] if a.max_rollouts else None
     for i, w in enumerate(mine, 1):
-        n = label_world(w, a.out, a.every, a.epochs, done, a.lo, a.hi, a.shard, budget)
+        n = label_world(w, a.out, a.every, a.epochs, done, a.lo, a.hi, a.shard, budget,
+                        a.decision_horizon)
         print(f"[shard {a.shard}] [{i}/{len(mine)}] {w.name}: +{n} rollouts", flush=True)
         if budget is not None and budget[0] <= 0:
             print("chunk budget spent; exiting for the next tick to resume", flush=True)

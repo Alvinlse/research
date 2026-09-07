@@ -103,17 +103,18 @@ def main() -> None:
     rng = random.Random(0)
     fixed_rand = {(r["window"], r["t"]): rng.choice(ACTIONS) for r in rows}
     fixed_rand_safe = {(r["window"], r["t"]): rng.choice(safe) for r in rows}
+    best_fixed = max(ACTIONS, key=lambda x: sum(t["rewards"].get(x, -9e9) for t in train))
     strategies = {
         "majority_constant": lambda r: majority,
         "random_menu": lambda r: fixed_rand[(r["window"], r["t"])],
         "random_safe_menu": lambda r: fixed_rand_safe[(r["window"], r["t"])],
         # The best SINGLE fixed action chosen on TRAIN -- the honest "best fixed policy" baseline,
         # since choosing it on test would be peeking.
-        "best_fixed_on_train": lambda r, b=max(
-            ACTIONS, key=lambda x: sum(t["rewards"].get(x, -9e9) for t in train)): b,
+        "best_fixed_on_train": lambda r, b=best_fixed: b,
     }
     report = {"n": len(rows), "split": a.split, "catastrophic_arms": cat,
-              "majority": majority, "arms": {}}
+              "majority": majority, "best_fixed_policy": best_fixed,
+              "test_windows": sorted({r["window"] for r in rows}), "arms": {}}
 
     if not a.skip_llm:
         for name, lora in (("zero_shot", None), ("finetuned", a.lora if a.lora.exists() else None)):
@@ -125,6 +126,11 @@ def main() -> None:
                 idx={id(x): i for i, x in enumerate(rows)}: p[idx[id(r)]]
             report["arms"].setdefault(name, {})["parse_fail"] = picks.count("UNPARSEABLE")
             report["arms"][name]["picks"] = dict(collections.Counter(picks).most_common(8))
+            # Preserve the window pairing. Aggregate pick counts hid that the
+            # first apparent model gap was carried by one test window.
+            report["arms"][name]["decisions"] = [
+                {"window": r["window"], "t": r["t"], "policy": p}
+                for r, p in zip(rows, picks)]
             del model
             import torch, gc; gc.collect(); torch.cuda.empty_cache()
 
