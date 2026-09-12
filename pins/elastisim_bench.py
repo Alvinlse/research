@@ -240,6 +240,13 @@ def _size(job, free, ctx, pending_n: int = 1) -> int:
         rule = "adaptive" if pressure >= ctx.get("switch_at", 1.0) else "as_requested"
         ctx["switch_adaptive"] = ctx.get("switch_adaptive", 0) + (rule == "adaptive")
         ctx["switch_calls"] = ctx.get("switch_calls", 0) + 1
+    if rule == "by_size":
+        # Exp 101 (`runs/perjob_verdict.md`): job SIZE is the only per-job axis the counterfactual
+        # labels separate -- tier and queue state do not change the best sizing anywhere. A job that
+        # asked for one GPU gets what it asked for; anything larger shares the free pool. ponytail:
+        # two buckets, because the labels' third bucket (>8 GPUs, 37 jobs in the whole trace) chose
+        # the same action as the second. This is a 0-token FLOOR, never an action the referee picks.
+        rule = "as_requested" if int(job.attributes.get("req_nodes", lo)) <= 1 else "adaptive"
     if rule == "greedy":                       # take the most that fits
         return min(hi, f)
     if rule == "adaptive":                     # share free capacity with everyone else waiting
@@ -1501,6 +1508,16 @@ POLICY_UNSAFE = {
     "resize_conservative+greedy":
         "greedy fills capacity while resize_conservative prevents its release",
 }
+# The 2x2's policy-family factor. Both families are the SAME SIZE -- one ordering x three sizings --
+# so a market-vs-non-market contrast is not confounded by how many actions the referee may choose
+# between. `fairness` and `tier_sjf` stay implemented as fixed baselines, not menu entries. An
+# unset family means the whole library, which is what every experiment before this one selected over.
+POLICY_FAMILY = {"mkt": ["market"], "nm": ["least_laxity"]}
+
+
+def _family_orderings(ctx=None) -> list[str]:
+    """Orderings the referee may select from under this run's family restriction."""
+    return POLICY_FAMILY.get((ctx or {}).get("family") or "", list(POLICY_MENU["ordering"]))
 # Constraints the cluster imposes on any answer. These are checked in code after the reply, so a
 # ruling that breaks one is discarded rather than trusted -- the LLM proposes, the validator disposes.
 POLICY_RULES = (
@@ -1629,9 +1646,10 @@ def _policy_observations(pending, ctx) -> dict:
     }
 
 
-def _policy_menu_lines() -> list[str]:
+def _policy_menu_lines(ctx=None) -> list[str]:
+    allowed = _family_orderings(ctx)
     lines = ["ORDERING MENU:"]
-    lines += [f"  {k}: {v}" for k, v in POLICY_MENU["ordering"].items()]
+    lines += [f"  {k}: {v}" for k, v in POLICY_MENU["ordering"].items() if k in allowed]
     lines += ["", "SIZING MENU:"]
     lines += [f"  {k}: {v}" for k, v in POLICY_MENU["sizing"].items()]
     lines += ["", "CLUSTER RULES:", POLICY_RULES]
@@ -1665,7 +1683,7 @@ def _packet_policy(pending, free, ctx) -> str:
              f"running_age_s_max={ob['running_age_s_max']:.0f} running_prod={ob['running_prod']}",
              f"current_policy=ordering:{ctx.get('sel_ordering', 'firstfit')} "
              f"sizing:{ctx.get('sel_sizing', 'as_requested')}", ""]
-    lines += _policy_menu_lines()
+    lines += _policy_menu_lines(ctx)
     hist = ctx.get("sel_history", [])
     if hist:
         # The scratchpad: what you chose, and what the cluster did next. Without it the referee has
@@ -1702,7 +1720,7 @@ def _packet_policy_demand(pending, ctx) -> str:
              f"walltime_s_p90={ob['walltime_s_p90']:.0f} walltime_s_max={ob['walltime_s_max']:.0f}",
              f"laxity_s_min={ob['laxity_s_min']:.0f} laxity_s_p50={ob['laxity_s_p50']:.0f} "
              f"negative_laxity_waiting={ob['negative_laxity_waiting']}", ""]
-    return "\n".join(lines + _policy_menu_lines())
+    return "\n".join(lines + _policy_menu_lines(ctx))
 
 
 def _packet_policy_supply(pending, free, ctx) -> str:
@@ -1718,15 +1736,20 @@ def _packet_policy_supply(pending, free, ctx) -> str:
              f"running_age_s_max={ob['running_age_s_max']:.0f}",
              f"current_policy=ordering:{ctx.get('sel_ordering', 'firstfit')} "
              f"sizing:{ctx.get('sel_sizing', 'as_requested')}", ""]
-    return "\n".join(lines + _policy_menu_lines())
+    return "\n".join(lines + _policy_menu_lines(ctx))
 
 
-def _policy_answer(ans) -> tuple[str, str] | None:
-    """Validate a referee answer without repairing or silently remapping it."""
+def _policy_answer(ans, ctx=None) -> tuple[str, str] | None:
+    """Validate a referee answer without repairing or silently remapping it.
+
+    An ordering outside this run's family is rejected the same way an invented one is: counted as
+    an invalid reply, never quietly remapped into the family."""
     if not isinstance(ans, dict):
         return None
     o, z = str(ans.get("ordering", "")).strip(), str(ans.get("sizing", "")).strip()
     if o not in POLICY_MENU["ordering"] or z not in POLICY_MENU["sizing"]:
+        return None
+    if o not in _family_orderings(ctx):
         return None
     if f"{o}+{z}" in POLICY_UNSAFE:
         return None
@@ -1750,7 +1773,7 @@ def _policy_begin(pending, ctx) -> int | None:
 
 def _policy_record(pending, ctx, started_total: int, ans, mode: str, **extra) -> None:
     """Commit one valid policy choice, or preserve the prior safe fallback."""
-    pair = _policy_answer(ans)
+    pair = _policy_answer(ans, ctx)
     if pair:
         ctx["sel_ordering"], ctx["sel_sizing"] = pair
     else:
@@ -1801,7 +1824,7 @@ def arm_policy_bo3(pending, free, ctx):
                        f"es-policy-bo3-{i}", num_predict=200, temperature=0.8)
             ctx["calls"] += 1
             samples.append(ans)
-            if (pair := _policy_answer(ans)) is not None:
+            if (pair := _policy_answer(ans, ctx)) is not None:
                 valid.append(pair)
         winner = Counter(valid).most_common(1)[0][0] if valid else None
         ans = ({"ordering": winner[0], "sizing": winner[1], "why": "majority of three samples"}
@@ -2096,7 +2119,7 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
         packet_order: str = "submit", gate: str = "scarcity", resize_cooldown: int = 600,
         resize_budget: int = CORRECT_BUDGET, text_exceptions: Path | None = None,
         text_labels: Path | None = None, policy_schedule: Path | None = None,
-        slack_mult: float = 10.0, packet_every: int = 0,
+        slack_mult: float = 10.0, packet_every: int = 0, family: str = "",
         packet_out: Path | None = None) -> dict:
     from elastisim_python import JobState, NodeState, pass_algorithm
     from pins.llm_agent import HOST
@@ -2124,7 +2147,10 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
            "resize_events": 0, "resized_gpus": 0, "size_history": {}, "last_resize": {},
            "resize_cooldown": resize_cooldown, "resize_budget": resize_budget,
            "resize_cooldown_blocks": 0, "protected_events": 0,
-           "sel_every": sel_every, "sel_ordering": "firstfit", "sel_sizing": "as_requested",
+           # The pre-selection fallback must be INSIDE the family, or an invalid reply in the
+           # market arm silently schedules a non-market ordering and the contrast is confounded.
+           "sel_every": sel_every, "sel_sizing": "as_requested", "family": family,
+           "sel_ordering": _family_orderings({"family": family})[0] if family else "firstfit",
            "slack_mult": slack_mult,
            "packet_every": packet_every,
            "packet_f": open(packet_out, "w") if packet_out else None,
@@ -2215,7 +2241,7 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
                 "correct3", "sham", "neg_v2", "resize_single", "text_single", "resize_debate",
                 "text_debate", "policy_select", "policy_bo3", "policy_symmetric",
                 "policy_negotiate", "rule_synth")
-    res.update(arm=arm, sizer=sizer, switch_at=switch_at, switch_on=switch_on,
+    res.update(arm=arm, sizer=sizer, switch_at=switch_at, switch_on=switch_on, family=family,
                rule_frozen=bool(rule), rule_invalid=ctx.get("rule_invalid"),
                rule_fires=ctx.get("rule_fires", {}),
                market_clearings=ctx.get("market_clearings", 0),
@@ -2546,7 +2572,10 @@ if __name__ == "__main__":
     r = sub.add_parser("run"); r.add_argument("--world", type=Path, required=True); r.add_argument("--arm", choices=ARMS, required=True)
     r.add_argument("--model", default="qwen2.5:14b"); r.add_argument("--interval", type=int, default=300); r.add_argument("--tag", default="")
     r.add_argument("--est-default", type=int, default=86400, help="EASY runtime estimate (s) for jobs with no declared limit")
-    r.add_argument("--sizer", choices=["as_requested", "greedy", "adaptive", "auto"], default="as_requested")
+    r.add_argument("--sizer", choices=["as_requested", "greedy", "adaptive", "auto", "by_size"], default="as_requested")
+    r.add_argument("--family", choices=sorted(POLICY_FAMILY), default="",
+                   help="restrict the referee's ordering menu to one policy family (the 2x2 factor); "
+                        "unset = the whole five-ordering library")
     r.add_argument("--rule", type=Path, help="rule_synth: execute this FROZEN rule instead of writing one")
     r.add_argument("--rule-out", type=Path, help="rule_synth: save the synthesised rule here")
     r.add_argument("--sel-every", type=int, default=1800,
@@ -2610,4 +2639,4 @@ if __name__ == "__main__":
             packet_order=a.packet_order, gate=a.gate, resize_cooldown=a.resize_cooldown,
             resize_budget=a.resize_budget, text_exceptions=a.text_exceptions,
             text_labels=a.text_labels, policy_schedule=a.policy_schedule, slack_mult=a.slack_mult,
-            packet_every=a.packet_every, packet_out=a.packet_out)
+            family=a.family, packet_every=a.packet_every, packet_out=a.packet_out)

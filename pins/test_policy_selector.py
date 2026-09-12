@@ -178,6 +178,84 @@ def test_interval_teacher_returns_to_common_continuation() -> None:
         assert row["decision_horizon"] == 1800 and row["key"].endswith("|h1800")
 
 
+def test_policy_family_is_matched_size_and_gates_both_menu_and_answer() -> None:
+    """The 2x2's family factor: same number of actions on each side, and no silent remapping."""
+    sizes = {f: len(o) * len(bench.POLICY_MENU["sizing"]) for f, o in bench.POLICY_FAMILY.items()}
+    assert len(set(sizes.values())) == 1, sizes          # RQ1 must not be a menu-size contrast
+    mkt, nm = {"family": "mkt"}, {"family": "nm"}
+    assert bench._family_orderings(mkt) == ["market"]
+    assert bench._family_orderings() == list(bench.POLICY_MENU["ordering"])   # unset = full library
+    menu = "\n".join(bench._policy_menu_lines(mkt))
+    assert "market:" in menu and "least_laxity:" not in menu and "fairness:" not in menu
+    # an off-family ordering is rejected, exactly like an invented one -- never remapped
+    assert bench._policy_answer({"ordering": "fairness", "sizing": "adaptive"}, mkt) is None
+    assert bench._policy_answer({"ordering": "market", "sizing": "adaptive"}, nm) is None
+    assert bench._policy_answer({"ordering": "market", "sizing": "adaptive"}, mkt) == \
+        ("market", "adaptive")
+    # and the pre-selection fallback is INSIDE the family, or the contrast leaks
+    for fam, orderings in bench.POLICY_FAMILY.items():
+        assert bench._family_orderings({"family": fam})[0] in orderings
+
+
+def test_by_size_sizer_is_per_job_and_leaves_other_sizers_alone() -> None:
+    """Exp 101's 0-token floor: one sizing rule per job, keyed on what the job asked for."""
+    small, large = Job("small"), Job("large")
+    small.attributes["req_nodes"] = 1
+    large.attributes["req_nodes"] = 4
+    free = [object()] * 4
+    ctx = context() | {"sizer": "by_size"}
+    assert bench._size(small, free, ctx, pending_n=2) == 1          # as_requested
+    assert bench._size(large, free, ctx, pending_n=2) == 2          # adaptive: shares the free pool
+    # the same two jobs under one global sizer are sized identically, which is the contrast
+    for rule, want in (("as_requested", (1, 4)), ("greedy", (4, 4))):
+        got = tuple(bench._size(j, free, context() | {"sizer": rule}, 2) for j in (small, large))
+        assert got == want, (rule, got)
+
+
+def test_every_sizer_respects_capacity_and_malleable_bounds() -> None:
+    """Phase-4 invariants, checked on the one function every arm's allocation goes through."""
+    for rule in ("as_requested", "adaptive", "greedy", "by_size", "auto"):
+        for lo, hi, asked in ((1, 4, 2), (2, 2, 2), (1, 8, 6), (3, 5, 1)):
+            for f in range(0, 9):
+                job = Job()
+                job.num_nodes_min, job.num_nodes_max = lo, hi
+                job.attributes["req_nodes"] = asked
+                for pending_n in (1, 3):
+                    k = bench._size(job, [object()] * f, context() | {"sizer": rule}, pending_n)
+                    assert k >= 0, (rule, lo, hi, f, k)
+                    assert k <= f, (rule, lo, hi, f, k)              # never exceeds free capacity
+                    if k:
+                        assert lo <= k <= hi, (rule, lo, hi, f, k)   # malleable bounds hold
+                    elif lo <= f and rule in ("adaptive", "greedy"):
+                        # `as_requested` waits for the exact size by design, and `auto`/`by_size`
+                        # may resolve to it, so only the two sharing rules must always start a job
+                        # that fits at its minimum.
+                        raise AssertionError(f"{rule} refused a startable job: {lo}<={f}")
+
+
+def test_start_at_allocates_once_and_consumes_exactly_k() -> None:
+    class Node:
+        pass
+
+    class Assignable(Job):
+        def __init__(self):
+            super().__init__()
+            self.assigned = None
+
+        def assign(self, nodes):
+            assert self.assigned is None, "a job was allocated twice"
+            self.assigned = list(nodes)
+
+        def assign_num_gpus_per_node(self, n):
+            self.gpus_per_node = n
+
+    job, free, ctx = Assignable(), [Node() for _ in range(5)], context()
+    bench._start_at(job, free, ctx, 3)
+    assert len(job.assigned) == 3 and len(free) == 2        # the nodes really left the free pool
+    assert ctx["sizes"][job.identifier] == 3
+    assert not set(map(id, job.assigned)) & set(map(id, free))
+
+
 def main() -> None:
     tests = [v for k, v in sorted(globals().items()) if k.startswith("test_")]
     print(f"running {len(tests)} policy-selector tests")
