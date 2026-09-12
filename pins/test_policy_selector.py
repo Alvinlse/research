@@ -23,11 +23,12 @@ class Job:
         self.num_nodes = None
         self.num_nodes_min = 1
         self.num_nodes_max = 4
-        self.attributes = {"req_nodes": 2, "req_min": 60, "tier": tier, "user": "u0"}
+        self.attributes = {"jid": jid, "req_nodes": 2, "req_min": 60, "tier": tier,
+                           "user": "u0", "deadline_s": submit + 7200}
 
 
 def context() -> dict:
-    return {"now": 3600.0, "sel_every": 0, "sel_ordering": "market",
+    return {"now": 3600.0, "sel_every": 0, "sel_ordering": "auction_wait",
             "sel_sizing": "as_requested", "sizes": {}, "running": [], "pool_n": 8,
             "arrivals": [], "model": "mock", "host": "mock", "cache": {}, "calls": 0}
 
@@ -55,9 +56,10 @@ def test_train_statistics_do_not_read_test_rewards() -> None:
 def test_opposed_reviews_reach_referee_and_code_executes_choice() -> None:
     calls = []
     replies = iter([
-        {"ordering": "least_laxity", "sizing": "adaptive", "statement": "long waits"},
-        {"ordering": "market", "sizing": "as_requested", "statement": "capacity is tight"},
-        {"ordering": "least_laxity", "sizing": "adaptive", "why": "demand evidence"},
+        {"ordering": "least_laxity", "default_sizing": "adaptive", "statement": "long waits"},
+        {"ordering": "auction_wait", "default_sizing": "as_requested", "statement": "capacity is tight"},
+        {"ordering": "least_laxity", "default_sizing": "adaptive",
+         "job_sizing": {"j0": "rcon"}, "why": "demand evidence"},
     ])
 
     def fake_ask(system, user, *args, **kwargs):
@@ -81,31 +83,33 @@ def test_opposed_reviews_reach_referee_and_code_executes_choice() -> None:
     assert "SUPPLY STATEMENT" in referee_input and "capacity is tight" in referee_input
     assert (ctx["sel_ordering"], ctx["sel_sizing"]) == ("least_laxity", "adaptive")
     assert executed == ["adaptive"]
+    assert ctx["job_sizing"] == {"j0": "rcon"}
     assert ctx["sel_log"][0]["mode"] == "opposed"
 
 
 def test_invalid_referee_answer_preserves_safe_previous_policy() -> None:
     executed = []
-    old = bench.ARMS["market"]
-    bench.ARMS["market"] = lambda pending, free, ctx: executed.append(ctx["sizer"])
+    old = bench.ARMS["auction_wait"]
+    bench.ARMS["auction_wait"] = lambda pending, free, ctx: executed.append(ctx["sizer"])
     try:
         ctx = context()
         replies = iter([{}, {}, {"ordering": "resize_conservative", "sizing": "greedy"}])
         with patch("pins.correction._ask", side_effect=lambda *a, **k: next(replies)):
             bench.arm_policy_negotiate([Job()], [object()] * 4, ctx)
     finally:
-        bench.ARMS["market"] = old
+        bench.ARMS["auction_wait"] = old
     assert ctx["sel_invalid"] == 1
-    assert (ctx["sel_ordering"], ctx["sel_sizing"]) == ("market", "as_requested")
+    assert (ctx["sel_ordering"], ctx["sel_sizing"]) == ("auction_wait", "as_requested")
     assert executed == ["as_requested"]
 
 
 def test_symmetric_control_has_matched_three_call_budget() -> None:
     calls = []
     replies = iter([
-        {"ordering": "fairness", "sizing": "adaptive", "statement": "review A"},
-        {"ordering": "fairness", "sizing": "adaptive", "statement": "review B"},
-        {"ordering": "fairness", "sizing": "adaptive", "why": "both reviewers"},
+        {"ordering": "fairness", "default_sizing": "adaptive", "statement": "review A"},
+        {"ordering": "fairness", "default_sizing": "adaptive", "statement": "review B"},
+        {"ordering": "fairness", "default_sizing": "adaptive", "job_sizing": {},
+         "why": "both reviewers"},
     ])
     old = bench.ARMS["fairness"]
     bench.ARMS["fairness"] = lambda *args: None
@@ -124,21 +128,21 @@ def test_symmetric_control_has_matched_three_call_budget() -> None:
 
 def test_bo3_matches_three_call_budget_and_votes() -> None:
     replies = iter([
-        {"ordering": "market", "sizing": "adaptive"},
-        {"ordering": "fairness", "sizing": "adaptive"},
-        {"ordering": "market", "sizing": "adaptive"},
+        {"ordering": "auction_wait", "default_sizing": "adaptive"},
+        {"ordering": "fairness", "default_sizing": "adaptive"},
+        {"ordering": "auction_wait", "default_sizing": "adaptive"},
     ])
     executed = []
-    old = bench.ARMS["market"]
-    bench.ARMS["market"] = lambda pending, free, ctx: executed.append(ctx["sizer"])
+    old = bench.ARMS["auction_wait"]
+    bench.ARMS["auction_wait"] = lambda pending, free, ctx: executed.append(ctx["sizer"])
     try:
         ctx = context()
         with patch("pins.correction._ask", side_effect=lambda *a, **k: next(replies)):
             bench.arm_policy_bo3([Job()], [object()] * 4, ctx)
     finally:
-        bench.ARMS["market"] = old
+        bench.ARMS["auction_wait"] = old
     assert ctx["calls"] == 3
-    assert (ctx["sel_ordering"], ctx["sel_sizing"]) == ("market", "adaptive")
+    assert (ctx["sel_ordering"], ctx["sel_sizing"]) == ("auction_wait", "adaptive")
     assert executed == ["adaptive"]
 
 
@@ -148,7 +152,7 @@ def test_packet_is_richer_without_oracle_fields() -> None:
                   "laxity_s_min", "negative_laxity_waiting"):
         assert field in packet, field
     assert "_true_dur" not in packet and "_real_wait" not in packet
-    assert "user whose queued work has waited longest" in packet
+    assert "per-user waiting-service deficit" in packet
 
 
 def test_interval_teacher_returns_to_common_continuation() -> None:
@@ -180,18 +184,18 @@ def test_interval_teacher_returns_to_common_continuation() -> None:
 
 def test_policy_family_is_matched_size_and_gates_both_menu_and_answer() -> None:
     """The 2x2's family factor: same number of actions on each side, and no silent remapping."""
-    sizes = {f: len(o) * len(bench.POLICY_MENU["sizing"]) for f, o in bench.POLICY_FAMILY.items()}
+    sizes = {f: len(o) * len(bench.SELECTOR_MENU["sizing"]) for f, o in bench.POLICY_FAMILY.items()}
     assert len(set(sizes.values())) == 1, sizes          # RQ1 must not be a menu-size contrast
     mkt, nm = {"family": "mkt"}, {"family": "nm"}
-    assert bench._family_orderings(mkt) == ["market"]
-    assert bench._family_orderings() == list(bench.POLICY_MENU["ordering"])   # unset = full library
+    assert bench._family_orderings(mkt) == bench.POLICY_FAMILY["mkt"]
+    assert bench._family_orderings() == list(bench.SELECTOR_MENU["ordering"])
     menu = "\n".join(bench._policy_menu_lines(mkt))
-    assert "market:" in menu and "least_laxity:" not in menu and "fairness:" not in menu
+    assert "auction_wait:" in menu and "  least_laxity:" not in menu and "  fairness:" not in menu
     # an off-family ordering is rejected, exactly like an invented one -- never remapped
     assert bench._policy_answer({"ordering": "fairness", "sizing": "adaptive"}, mkt) is None
-    assert bench._policy_answer({"ordering": "market", "sizing": "adaptive"}, nm) is None
-    assert bench._policy_answer({"ordering": "market", "sizing": "adaptive"}, mkt) == \
-        ("market", "adaptive")
+    assert bench._policy_answer({"ordering": "auction_wait", "default_sizing": "adaptive"}, nm) is None
+    assert bench._policy_answer({"ordering": "auction_wait", "default_sizing": "adaptive"}, mkt) == \
+        ("auction_wait", "adaptive")
     # and the pre-selection fallback is INSIDE the family, or the contrast leaks
     for fam, orderings in bench.POLICY_FAMILY.items():
         assert bench._family_orderings({"family": fam})[0] in orderings
@@ -212,9 +216,36 @@ def test_by_size_sizer_is_per_job_and_leaves_other_sizers_alone() -> None:
         assert got == want, (rule, got)
 
 
+def test_referee_job_actions_are_strict_and_drive_sizing() -> None:
+    small, large = Job("small"), Job("large")
+    pending = [small, large]
+    ctx = context()
+    answer = {"ordering": "least_laxity", "default_sizing": "as_requested",
+              "job_sizing": {"large": "adaptive"}}
+    actions = bench._materialise_job_sizing(answer, pending, ctx)
+    assert actions == {"large": "adaptive", "small": "as_requested"}
+    ctx["job_sizing"] = actions
+    assert bench._size(small, [object()] * 4, ctx, 2) == 2
+    assert bench._size(large, [object()] * 4, ctx, 2) == 2
+    bad = answer | {"job_sizing": {"not-visible": "greedy"}}
+    assert bench._materialise_job_sizing(bad, pending, ctx) is None
+
+
+def test_auction_bid_does_not_depend_on_oracle_runtime() -> None:
+    job = Job()
+    ctx = context() | {"par_frac": 0.7, "market_objective": "deadline"}
+    job.attributes["_true_dur"] = 1
+    first = bench._bid_curve(job, ctx)
+    job.attributes["_true_dur"] = 10 ** 9
+    assert bench._bid_curve(job, ctx) == first
+    for objective in ("wait", "deadline", "fairness", "priority"):
+        curve = bench._bid_curve(job, ctx | {"market_objective": objective})
+        assert all(a >= b for a, b in zip(curve, curve[1:])), (objective, curve)
+
+
 def test_every_sizer_respects_capacity_and_malleable_bounds() -> None:
     """Phase-4 invariants, checked on the one function every arm's allocation goes through."""
-    for rule in ("as_requested", "adaptive", "greedy", "by_size", "auto"):
+    for rule in ("as_requested", "adaptive", "greedy", "rcon", "by_size", "auto"):
         for lo, hi, asked in ((1, 4, 2), (2, 2, 2), (1, 8, 6), (3, 5, 1)):
             for f in range(0, 9):
                 job = Job()

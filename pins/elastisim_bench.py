@@ -55,14 +55,17 @@ def _trace_rows() -> tuple[dict, ...]:
                 su, s, e, tl = (int(r["time_submit"]), int(r["time_start"]),
                                 int(r["time_end"]), int(r["timelimit"]))
                 el = int(r["time_eligible"] or 0)
+                gpu_count = int(tres[GPU_TRES])
             except ValueError:
                 continue
-            if su <= 0 or s <= 0 or e <= s:
+            if su <= 0 or s <= 0 or e <= s or gpu_count <= 0:
                 continue
             # arrival = Slurm eligible time (after holds/dependencies), not submit: 6.2% of GPU jobs were
             # held, and a held job is not the scheduler's wait. real_wait is measured the same way.
             arr = min(max(el, su), s)
-            rows.append(dict(jid=r["id_job"], submit=arr, dur=e - s, gpus=int(tres[GPU_TRES]),
+            rows.append(dict(jid=r["id_job"], submit=arr, observed_submit=su,
+                             observed_eligible=el, observed_start=s, observed_end=e,
+                             dur=e - s, gpus=gpu_count,
                              timelimit_min=0 if tl in TIMELIMIT_SENTINELS else tl,
                              priority=r["priority"], partition=r["partition"], user=r["id_user"],
                              real_wait=s - arr, real_wait_from_submit=s - su))
@@ -108,7 +111,8 @@ def real_stats(jobs: list[dict]) -> dict:
 
 def build(day: int, hours: float, pool: int, out: Path, offset_h: float = 0, load: float = 0.0,
           warmup_h: float = 0, elastic_frac: float = 0.0, par_frac: float = 1.0,
-          max_scale: float = 4.0, elastic_seed: int = 0, resize_points: int = 10) -> dict:
+          max_scale: float = 4.0, elastic_seed: int = 0, resize_points: int = 10,
+          deadline_alpha: float = 1.0, deadline_default_s: int = 86400) -> dict:
     """pool=0 with load>0 sizes the pool by offered load (exploratory path only: it makes load an
     OUTPUT, so windows cannot be stratified by it). The measured design passes a fixed pool and
     lets each window's own demand set its load. Meta describes the MEASURED window, not the warm-up."""
@@ -116,6 +120,10 @@ def build(day: int, hours: float, pool: int, out: Path, offset_h: float = 0, loa
     (out / "in").mkdir(parents=True, exist_ok=True)
     (out / "out").mkdir(exist_ok=True)
     jobs = load_window(day, hours, offset_h, warmup_h)
+    excluded_over_capacity = 0
+    if pool > 0:
+        excluded_over_capacity = sum(j["gpus"] > pool for j in jobs)
+        jobs = [j for j in jobs if 0 < j["gpus"] <= pool]
     scored = [j for j in jobs if not j["warmup"]]
     if not scored:
         return {}
@@ -167,6 +175,11 @@ def build(day: int, hours: float, pool: int, out: Path, offset_h: float = 0, loa
                        # class (9.1% of GPU jobs) -> that bit is the tier; the raw number is not shown to arms
                        "tier": "prod" if int(j["priority"] or 0) >= 100000 else "batch",
                        "priority": j["priority"], "partition": j["partition"], "user": j["user"],
+                       # Frozen synthetic deadline. Missing requested walltimes use one stated site
+                       # default; this value is generated once with the world and shared by all arms.
+                       "deadline_s": j["submit"] + deadline_alpha *
+                                     ((j["timelimit_min"] * 60) or deadline_default_s),
+                       "deadline_estimate_s": (j["timelimit_min"] * 60) or deadline_default_s,
                        "_warmup": int(j["warmup"]),  # scoring-only: no arm ever reads it.
                        # int, not bool: ElastiSim's attribute mapper rejects bool (Utility.cpp:159)
                        "_true_dur": j["dur"], "_real_wait": j["real_wait"]}}
@@ -197,7 +210,9 @@ def build(day: int, hours: float, pool: int, out: Path, offset_h: float = 0, loa
     meta = {"day": day, "offset_h": offset_h, "hours": hours, "warmup_h": warmup_h, "pool": pool,
             "n_jobs": len(scored), "n_warmup": len(jobs) - len(scored),
             "elastic_frac": elastic_frac, "par_frac": par_frac, "max_scale": max_scale,
-            "resize_points": resize_points,
+            "resize_points": resize_points, "excluded_over_capacity": excluded_over_capacity,
+            "elastic_seed": elastic_seed,
+            "deadline_alpha": deadline_alpha, "deadline_default_s": deadline_default_s,
             "n_elastic": sum(elastic[j["jid"]] for j in scored),
             "n_prod": sum(j["priority"].isdigit() and int(j["priority"]) >= 100000 for j in scored),
             "gpu_hours": sum(j["dur"] * j["gpus"] for j in scored) / 3600, **real_stats(scored)}
@@ -219,6 +234,17 @@ def _sizes(job):
     return (n, n) if n is not None else (job.num_nodes_min, job.num_nodes_max)
 
 
+def _job_key(job) -> str:
+    """Stable trace job id used in prompts and per-job action maps."""
+    return str(job.attributes.get("jid", job.identifier))
+
+
+def _job_sizing_rule(job, ctx) -> str:
+    """Resolve the current per-job action, falling back to the interval default."""
+    return ctx.get("job_sizing", {}).get(
+        _job_key(job), ctx.get("sizer", ctx.get("sel_sizing", "as_requested")))
+
+
 def _size(job, free, ctx, pending_n: int = 1) -> int:
     """Nodes to give this job right now, 0 if it cannot start. Rigid jobs are unaffected."""
     lo, hi = _sizes(job)
@@ -227,7 +253,7 @@ def _size(job, free, ctx, pending_n: int = 1) -> int:
         return 0
     if lo == hi:
         return lo
-    rule = ctx.get("sizer", "as_requested")
+    rule = _job_sizing_rule(job, ctx)
     if rule == "auto":
         # Per-TICK policy selection, the deterministic control a selector has to beat. The
         # window-level winner tracked offered load, so the instantaneous analogue is how deep the
@@ -251,6 +277,10 @@ def _size(job, free, ctx, pending_n: int = 1) -> int:
         return min(hi, f)
     if rule == "adaptive":                     # share free capacity with everyone else waiting
         return max(lo, min(hi, f, f // max(1, pending_n)))
+    if rule == "rcon":
+        # Conservative admission starts at the requested size. Its thresholded behaviour matters
+        # at later scheduling points, where an actual resize benefit can be estimated.
+        rule = "as_requested"
     # as_requested: demand exactly the size it really ran at, and WAIT if it is not free -- this is
     # the control, so it must behave identically to the rigid world (see the runtime==trace check).
     req = max(lo, min(hi, int(job.attributes.get("req_nodes", lo))))
@@ -282,9 +312,9 @@ def _start(job, free, ctx, pending_n: int = 1):
 def _resize_malleable(job, free, pending, ctx) -> int:
     """Resize one running job at an ElastiSim scheduling point.
 
-    Queue pressure shrinks it to its legal minimum so waiting work can run; an empty queue lets it
-    expand into idle GPUs. ElastiSim pauses the job at the scheduling point and applies the changed
-    node set before its next work chunk. Return the signed GPU change for accounting/tests.
+    The referee's per-job sizing action controls both admission and every later scheduling point.
+    RCON uses a fixed, pre-registered benefit threshold; it is not the former
+    ``resize_conservative`` ordering label. Return the signed GPU change for accounting/tests.
     """
     lo, hi = _sizes(job)
     before = len(job.assigned_nodes)
@@ -292,7 +322,33 @@ def _resize_malleable(job, free, pending, ctx) -> int:
     if ctx.get("now", 0) - last < ctx.get("resize_cooldown", 0):
         ctx["resize_cooldown_blocks"] = ctx.get("resize_cooldown_blocks", 0) + 1
         return 0
-    target = lo if pending else min(hi, before + len(free))
+    action = _job_sizing_rule(job, ctx)
+    requested = max(lo, min(hi, int(job.attributes.get("req_nodes", lo))))
+    if action == "greedy":
+        target = min(hi, before + len(free))
+    elif action == "adaptive":
+        target = lo if pending else requested
+    elif action == "rcon":
+        candidate = lo if pending else requested
+        # Observable benefit proxy, in seconds. Releasing a GPU is valuable in proportion to the
+        # longest current wait, but the extra estimated runtime caused by shrinking is charged.
+        # Growing is valued by its estimated runtime saving. No true trace duration is read.
+        est = (int(job.attributes.get("req_min", 0)) * 60) or ctx.get("est_default", 86400)
+        sf = float(ctx.get("par_frac", 1.0))
+        runtime = lambda n: est * (sf + (1 - sf) / max(1, n)) / (sf + (1 - sf) / requested)
+        if candidate < before:
+            max_wait = max((ctx.get("now", 0) - j.submit_time for j in pending), default=0.0)
+            benefit = (before - candidate) * max_wait - max(0.0, runtime(candidate) - runtime(before))
+        else:
+            benefit = max(0.0, runtime(before) - runtime(candidate))
+        threshold = float(ctx.get("rcon_threshold_s", 300.0))
+        if benefit < threshold:
+            ctx["rcon_blocks"] = ctx.get("rcon_blocks", 0) + 1
+            return 0
+        target = candidate
+    else:                                       # REQ / as_requested
+        action = "as_requested"
+        target = requested
     budget = max(0, ctx.get("resize_budget", CORRECT_BUDGET))
     target = max(before - budget, min(before + budget, target))
     if target < before:
@@ -306,6 +362,11 @@ def _resize_malleable(job, free, pending, ctx) -> int:
         ctx.setdefault("sizes", {})[job.identifier] = target
         ctx.setdefault("size_history", {}).setdefault(job.identifier, []).append((ctx["now"], target))
         ctx["last_resize"][job.identifier] = ctx.get("now", 0)
+        ctx.setdefault("resize_log", []).append({
+            "t": int(ctx.get("now", 0)), "job_id": _job_key(job),
+            "old_gpus": before, "new_gpus": target, "sizing_action": action,
+            "trigger": "malleable_scheduling_point",
+        })
     return delta
 
 
@@ -417,16 +478,17 @@ def arm_tier_sjf(pending, free, ctx):      # prod first (reserving), requested-w
 
 
 def arm_least_laxity(pending, free, ctx):
-    """Least-laxity-first on ESTIMATED work: slack = deadline - now - work still to do, where the
-    deadline is submit + slack_mult x the estimate. True runtime is the SLA metric's oracle input
-    (see SLACKS) and must not leak into an ordering rule, so the estimate is the requested walltime
-    and, for jobs that declare none, ctx['est_default'] -- the same stand-in arm_easy's shadow time
-    uses. Ordering only: sizing stays whatever ctx['sizer'] says, as in every other ordering arm."""
-    now, mult = ctx["now"], ctx.get("slack_mult", 10)
+    """Least-laxity-first using the deadline frozen into each canonical job record.
+
+    Remaining work is estimated from requested walltime (or the frozen site default), never from
+    trace runtime. Thus the policy and evaluator use the same due date without leaking outcomes.
+    """
+    now, mult = ctx["now"], ctx.get("slack_mult", 1)
     def laxity(j):
         est = (int(j.attributes.get("req_min", 0)) * 60) or ctx.get("est_default", 86400)
-        return (j.submit_time + mult * est) - now - est
-    arm_firstfit(sorted(pending, key=lambda j: (laxity(j), j.submit_time)), free, ctx)
+        deadline = float(j.attributes.get("deadline_s", j.submit_time + mult * est))
+        return deadline - now - est
+    arm_firstfit(sorted(pending, key=lambda j: (laxity(j), j.submit_time, j.identifier)), free, ctx)
 
 
 def arm_fairness(pending, free, ctx):
@@ -1499,6 +1561,27 @@ POLICY_MENU = {
         "greedy": "give each job the largest legal size that fits right now",
     },
 }
+# Core 2x2 selector space.  The two families contain the same number of global policies, so RQ1
+# cannot be explained by one referee merely having more choices.  The market policies share one
+# tested uniform-price clearing mechanism and differ only in their observable valuation objective.
+SELECTOR_MENU = {
+    "ordering": {
+        "fcfs": "submission order with deterministic job-id tie breaking",
+        "least_laxity": "smallest remaining laxity using the frozen synthetic deadline",
+        "fairness": "largest accumulated per-user waiting-service deficit first",
+        "tier_fcfs": "production tier first, then submission order",
+        "auction_wait": "uniform-price auction valuing time already queued",
+        "auction_deadline": "uniform-price auction valuing deadline pressure",
+        "auction_fairness": "uniform-price auction valuing per-user waiting-service deficit",
+        "auction_priority": "uniform-price auction valuing production priority",
+    },
+    "sizing": {
+        "as_requested": "REQ: target the requested GPU count when feasible",
+        "adaptive": "ADAPT: shrink under queue pressure to increase concurrency",
+        "greedy": "GREEDY: expand toward the legal maximum when GPUs are free",
+        "rcon": "RCON: resize only when estimated benefit exceeds the fixed threshold",
+    },
+}
 # This pair is structurally unsafe under sustained load: greedy fills every
 # legal slot while resize_conservative refuses to release any running capacity.
 # It remains in counterfactual sweeps as an auditable negative control, but an
@@ -1508,16 +1591,17 @@ POLICY_UNSAFE = {
     "resize_conservative+greedy":
         "greedy fills capacity while resize_conservative prevents its release",
 }
-# The 2x2's policy-family factor. Both families are the SAME SIZE -- one ordering x three sizings --
-# so a market-vs-non-market contrast is not confounded by how many actions the referee may choose
-# between. `fairness` and `tier_sjf` stay implemented as fixed baselines, not menu entries. An
-# unset family means the whole library, which is what every experiment before this one selected over.
-POLICY_FAMILY = {"mkt": ["market"], "nm": ["least_laxity"]}
+# The 2x2's policy-family factor. Both families expose four orderings and the same four sizing
+# actions, so market-vs-non-market is not confounded by menu size.
+POLICY_FAMILY = {
+    "nm": ["fcfs", "least_laxity", "fairness", "tier_fcfs"],
+    "mkt": ["auction_wait", "auction_deadline", "auction_fairness", "auction_priority"],
+}
 
 
 def _family_orderings(ctx=None) -> list[str]:
     """Orderings the referee may select from under this run's family restriction."""
-    return POLICY_FAMILY.get((ctx or {}).get("family") or "", list(POLICY_MENU["ordering"]))
+    return POLICY_FAMILY.get((ctx or {}).get("family") or "", list(SELECTOR_MENU["ordering"]))
 # Constraints the cluster imposes on any answer. These are checked in code after the reply, so a
 # ruling that breaks one is discarded rather than trusted -- the LLM proposes, the validator disposes.
 POLICY_RULES = (
@@ -1526,10 +1610,10 @@ POLICY_RULES = (
     "3. Scaling is sublinear: 4x the GPUs is far less than 4x the speed, so `greedy` buys a little "
     "speed for a lot of capacity and starves the queue behind it.\n"
     "4. Production-tier jobs may be favoured, but starving the batch queue is a failure.\n"
-    "5. You choose a POLICY that the scheduler then applies deterministically. You never name a "
-    "job or a GPU count yourself.\n"
-    "6. `resize_conservative` and `greedy` may not be selected together: that pair can fill the "
-    "pool and then refuse to release capacity."
+    "5. Choose one global ordering policy. For sizing, choose only named categorical actions; "
+    "deterministic code computes every GPU count.\n"
+    "6. `job_sizing` may override the default only for job IDs shown in ACTIONABLE JOBS. Jobs "
+    "without an override receive `default_sizing`."
 )
 POLICY_SELECT = ("You choose the scheduling policy for a GPU cluster for the next interval. " + WORLD +
                  "\n\nYou pick ONE ordering rule and ONE sizing rule; the pair is the policy. "
@@ -1542,38 +1626,43 @@ POLICY_SELECT = ("You choose the scheduling policy for a GPU cluster for the nex
                  "If a record of your own recent decisions is shown, treat it as evidence: a policy "
                  "you have already held while the queue grew is one to reconsider, not to repeat. "
                  "Reply with JSON only: "
-                 '{"ordering": "<name from the menu>", "sizing": "<name from the menu>", '
-                 '"why": "one line naming the state feature that drove the choice"}.')
+                 '{"ordering": "<ordering menu name>", "default_sizing": "<sizing menu name>", '
+                 '"job_sizing": {"<shown job id>": "<sizing menu name>"}, '
+                 '"why": "one line naming the state feature that drove the choice"}. '
+                 "Use an empty job_sizing object when no shown job needs an exception.")
 
 POLICY_DEMAND_REVIEW = (
-    "You are the DEMAND-side reviewer for a GPU scheduler. You do not allocate GPUs. "
-    "Read the queue-side state and recommend one named ordering rule and one named sizing rule "
-    "that protect waiting time, slowdown, and production service. Ground the recommendation in "
-    "fields that are present; do not invent future arrivals or true runtimes. Reply with JSON only: "
-    '{"ordering": "<menu name>", "sizing": "<menu name>", '
-    '"statement": "one sentence citing the demand evidence"}.')
+    "You are the DEMAND-side analyst for a GPU scheduler. You may only assess the queue; do not "
+    "choose a policy, sizing action, allocation, or GPU count. Identify deadline pressure, urgent "
+    "jobs, jobs likely to benefit from scaling, and shrink-tolerant jobs using only supplied fields. "
+    "Do not invent future arrivals or true runtimes. Reply with JSON only: "
+    '{"urgent_jobs": ["<shown job id>"], "scale_benefit_jobs": ["<shown job id>"], '
+    '"shrink_tolerant_jobs": ["<shown job id>"], '
+    '"analysis": "one sentence citing the demand evidence"}.')
 
 POLICY_SUPPLY_REVIEW = (
-    "You are the SUPPLY-side reviewer for a GPU scheduler. You do not allocate GPUs. "
-    "Read the cluster-side state and recommend one named ordering rule and one named sizing rule "
-    "that avoid waste, unsafe saturation, and unfair capacity use. Ground the recommendation in "
-    "fields that are present; do not invent future arrivals or true runtimes. Reply with JSON only: "
-    '{"ordering": "<menu name>", "sizing": "<menu name>", '
-    '"statement": "one sentence citing the supply evidence"}.')
+    "You are the SUPPLY-side analyst for a GPU scheduler. You may only assess capacity; do not "
+    "choose a policy, sizing action, allocation, or GPU count. Assess scarcity, queue pressure, "
+    "resize-cost concerns, fragmentation, and fairness using only supplied fields. Do not invent "
+    "future arrivals or true runtimes. Reply with JSON only: "
+    '{"scarcity": "low|medium|high", "resize_cost_concern": "low|medium|high", '
+    '"fairness_risk": "low|medium|high", '
+    '"analysis": "one sentence citing the supply evidence"}.')
 
 POLICY_NEUTRAL_REVIEW = (
     "You are a neutral reviewer of a GPU scheduling-policy choice. You do not allocate GPUs. "
     "Balance waiting time, bounded slowdown, SLA, resize cost, and fairness using only the supplied "
     "state. Recommend one named ordering rule and one named sizing rule. Reply with JSON only: "
-    '{"ordering": "<menu name>", "sizing": "<menu name>", '
+    '{"ordering": "<menu name>", "default_sizing": "<menu name>", '
     '"statement": "one sentence citing the decisive state evidence"}.')
 
 POLICY_REVIEW_REFEREE = (
     "You are the REFEREE selecting a GPU scheduling policy. Two reviewers supplied statements, "
     "not allocations. Read the complete state and both statements, reject unsupported advocacy, "
     "and select one ordering and one sizing rule from the menu. Deterministic code will execute the "
-    "policy; never name jobs or GPU counts. Reply with JSON only: "
-    '{"ordering": "<menu name>", "sizing": "<menu name>", '
+    "policy and categorical per-job sizing actions; never emit GPU counts. Reply with JSON only: "
+    '{"ordering": "<menu name>", "default_sizing": "<menu name>", '
+    '"job_sizing": {"<shown job id>": "<sizing menu name>"}, '
     '"why": "one sentence naming the evidence and reviewer followed"}.')
 
 
@@ -1620,10 +1709,11 @@ def _policy_observations(pending, ctx) -> dict:
     limits = [60 * int(j.attributes.get("req_min", 0)) for j in pending
               if int(j.attributes.get("req_min", 0)) > 0]
     default_est = ctx.get("est_default") or 86400
-    slack_mult = ctx.get("slack_mult", 10)
+    slack_mult = ctx.get("slack_mult", 1)
     laxities = sorted(
-        (float(j.submit_time) + slack_mult *
-         ((int(j.attributes.get("req_min", 0)) * 60) or default_est)) - now -
+        float(j.attributes.get(
+            "deadline_s", float(j.submit_time) + slack_mult *
+            ((int(j.attributes.get("req_min", 0)) * 60) or default_est))) - now -
         ((int(j.attributes.get("req_min", 0)) * 60) or default_est)
         for j in pending)
     running = ctx.get("running", [])
@@ -1649,10 +1739,32 @@ def _policy_observations(pending, ctx) -> dict:
 def _policy_menu_lines(ctx=None) -> list[str]:
     allowed = _family_orderings(ctx)
     lines = ["ORDERING MENU:"]
-    lines += [f"  {k}: {v}" for k, v in POLICY_MENU["ordering"].items() if k in allowed]
+    lines += [f"  {k}: {v}" for k, v in SELECTOR_MENU["ordering"].items() if k in allowed]
     lines += ["", "SIZING MENU:"]
-    lines += [f"  {k}: {v}" for k, v in POLICY_MENU["sizing"].items()]
+    lines += [f"  {k}: {v}" for k, v in SELECTOR_MENU["sizing"].items()]
     lines += ["", "CLUSTER RULES:", POLICY_RULES]
+    return lines
+
+
+def _actionable_job_lines(pending, ctx, limit: int = 60) -> list[str]:
+    """Compact observable records for jobs eligible for categorical sizing overrides."""
+    now = float(ctx.get("now", 0))
+    pending_set = {_job_key(j) for j in pending}
+    active = list(pending) + list(ctx.get("running", []))
+    lines = ["ACTIONABLE JOBS (unlisted jobs use default_sizing):"]
+    for j in active[:limit]:
+        lo, hi = _sizes(j)
+        est = (int(j.attributes.get("req_min", 0)) * 60) or ctx.get("est_default", 86400)
+        deadline = float(j.attributes.get("deadline_s", j.submit_time + est))
+        status = "pending" if _job_key(j) in pending_set else "running"
+        age = max(0.0, now - (j.submit_time if status == "pending" else j.start_time))
+        remaining = est if status == "pending" else max(0.0, est - age)
+        lines.append(
+            f"  id={_job_key(j)} status={status} tier={j.attributes.get('tier', 'batch')} "
+            f"asked={j.attributes.get('req_nodes', lo)} bounds={lo}-{hi} age_s={age:.0f} "
+            f"deadline_in_s={deadline-now:.0f} est_remaining_s={remaining:.0f}")
+    if len(active) > limit:
+        lines.append(f"  ... {len(active) - limit} more active jobs; apply default_sizing")
     return lines
 
 
@@ -1684,6 +1796,7 @@ def _packet_policy(pending, free, ctx) -> str:
              f"current_policy=ordering:{ctx.get('sel_ordering', 'firstfit')} "
              f"sizing:{ctx.get('sel_sizing', 'as_requested')}", ""]
     lines += _policy_menu_lines(ctx)
+    lines += [""] + _actionable_job_lines(pending, ctx)
     hist = ctx.get("sel_history", [])
     if hist:
         # The scratchpad: what you chose, and what the cluster did next. Without it the referee has
@@ -1720,7 +1833,7 @@ def _packet_policy_demand(pending, ctx) -> str:
              f"walltime_s_p90={ob['walltime_s_p90']:.0f} walltime_s_max={ob['walltime_s_max']:.0f}",
              f"laxity_s_min={ob['laxity_s_min']:.0f} laxity_s_p50={ob['laxity_s_p50']:.0f} "
              f"negative_laxity_waiting={ob['negative_laxity_waiting']}", ""]
-    return "\n".join(lines + _policy_menu_lines(ctx))
+    return "\n".join(lines + _policy_menu_lines(ctx) + [""] + _actionable_job_lines(pending, ctx))
 
 
 def _packet_policy_supply(pending, free, ctx) -> str:
@@ -1736,7 +1849,7 @@ def _packet_policy_supply(pending, free, ctx) -> str:
              f"running_age_s_max={ob['running_age_s_max']:.0f}",
              f"current_policy=ordering:{ctx.get('sel_ordering', 'firstfit')} "
              f"sizing:{ctx.get('sel_sizing', 'as_requested')}", ""]
-    return "\n".join(lines + _policy_menu_lines(ctx))
+    return "\n".join(lines + _policy_menu_lines(ctx) + [""] + _actionable_job_lines(pending, ctx))
 
 
 def _policy_answer(ans, ctx=None) -> tuple[str, str] | None:
@@ -1746,14 +1859,35 @@ def _policy_answer(ans, ctx=None) -> tuple[str, str] | None:
     an invalid reply, never quietly remapped into the family."""
     if not isinstance(ans, dict):
         return None
-    o, z = str(ans.get("ordering", "")).strip(), str(ans.get("sizing", "")).strip()
-    if o not in POLICY_MENU["ordering"] or z not in POLICY_MENU["sizing"]:
+    o = str(ans.get("ordering", "")).strip()
+    # `sizing` remains a read-only compatibility alias for historical transcripts. New prompts
+    # and all core runs emit `default_sizing`.
+    z = str(ans.get("default_sizing", ans.get("sizing", ""))).strip()
+    if o not in SELECTOR_MENU["ordering"] or z not in SELECTOR_MENU["sizing"]:
         return None
     if o not in _family_orderings(ctx):
         return None
-    if f"{o}+{z}" in POLICY_UNSAFE:
-        return None
     return o, z
+
+
+def _materialise_job_sizing(ans, pending, ctx) -> dict[str, str] | None:
+    """Validate overrides and expand them to one action for every active job.
+
+    Unknown IDs invalidate the response instead of being silently discarded. This preserves a
+    strict boundary while allowing the JSON to stay bounded: the default covers jobs not listed.
+    """
+    pair = _policy_answer(ans, ctx)
+    if pair is None:
+        return None
+    raw = ans.get("job_sizing", {}) if isinstance(ans, dict) else {}
+    if not isinstance(raw, dict):
+        return None
+    active = {_job_key(j) for j in list(pending) + list(ctx.get("running", []))}
+    visible = {_job_key(j) for j in (list(pending) + list(ctx.get("running", [])))[:60]}
+    overrides = {str(k): str(v).strip() for k, v in raw.items()}
+    if any(k not in visible or v not in SELECTOR_MENU["sizing"] for k, v in overrides.items()):
+        return None
+    return {jid: overrides.get(jid, pair[1]) for jid in sorted(active)}
 
 
 def _policy_begin(pending, ctx) -> int | None:
@@ -1774,10 +1908,14 @@ def _policy_begin(pending, ctx) -> int | None:
 def _policy_record(pending, ctx, started_total: int, ans, mode: str, **extra) -> None:
     """Commit one valid policy choice, or preserve the prior safe fallback."""
     pair = _policy_answer(ans, ctx)
-    if pair:
+    actions = _materialise_job_sizing(ans, pending, ctx) if pair else None
+    if pair and actions is not None:
         ctx["sel_ordering"], ctx["sel_sizing"] = pair
+        ctx["job_sizing"] = actions
     else:
+        pair = None
         ctx["sel_invalid"] = ctx.get("sel_invalid", 0) + 1
+        ctx["fallbacks"] = ctx.get("fallbacks", 0) + 1
     now = ctx["now"]
     load = round(sum(max(1, int(j.attributes.get("req_nodes", 1))) for j in pending)
                  / max(1, ctx.get("pool_n", 1)), 2)
@@ -1786,8 +1924,10 @@ def _policy_record(pending, ctx, started_total: int, ans, mode: str, **extra) ->
          "load": load, "queue": len(pending), "running": len(ctx.get("running", [])),
          "started_total": started_total, "queue_after": None})
     raw_o = str((ans or {}).get("ordering", "")) if isinstance(ans, dict) else ""
-    raw_z = str((ans or {}).get("sizing", "")) if isinstance(ans, dict) else ""
-    row = {"t": int(now), "mode": mode, "ordering": raw_o, "sizing": raw_z,
+    raw_z = str((ans or {}).get("default_sizing", (ans or {}).get("sizing", ""))) \
+        if isinstance(ans, dict) else ""
+    row = {"t": int(now), "mode": mode, "ordering": raw_o, "default_sizing": raw_z,
+           "job_sizing": actions if pair else None,
            "valid": pair is not None, "why": str((ans or {}).get("why", ""))[:200]
            if isinstance(ans, dict) else "", "load": load, **extra}
     ctx.setdefault("sel_log", []).append(row)
@@ -1806,7 +1946,9 @@ def arm_policy_select(pending, free, ctx):
     started_total = _policy_begin(pending, ctx)
     if started_total is not None:
         ans = _ask(POLICY_SELECT, _packet_policy(pending, free, ctx), ctx["model"], ctx["host"],
-                   ctx["cache"], "es-policy-select", num_predict=200)
+                   ctx["cache"], "es-policy-select", num_predict=ctx.get("num_predict", 400),
+                   temperature=ctx.get("temperature", 0), seed=ctx.get("llm_seed"),
+                   audit=ctx.setdefault("llm_audit", []))
         ctx["calls"] += 1
         _policy_record(pending, ctx, started_total, ans, "single")
     _policy_execute(pending, free, ctx)
@@ -1821,13 +1963,16 @@ def arm_policy_bo3(pending, free, ctx):
         packet, samples, valid = _packet_policy(pending, free, ctx), [], []
         for i in range(3):
             ans = _ask(POLICY_SELECT, packet, ctx["model"], ctx["host"], ctx["cache"],
-                       f"es-policy-bo3-{i}", num_predict=200, temperature=0.8)
+                       f"es-policy-bo3-{i}", num_predict=ctx.get("num_predict", 400),
+                       temperature=0.8, seed=(ctx.get("llm_seed") or 0) + i,
+                       audit=ctx.setdefault("llm_audit", []))
             ctx["calls"] += 1
             samples.append(ans)
             if (pair := _policy_answer(ans, ctx)) is not None:
                 valid.append(pair)
         winner = Counter(valid).most_common(1)[0][0] if valid else None
-        ans = ({"ordering": winner[0], "sizing": winner[1], "why": "majority of three samples"}
+        ans = ({"ordering": winner[0], "default_sizing": winner[1], "job_sizing": {},
+                "why": "majority of three samples"}
                if winner else None)
         _policy_record(pending, ctx, started_total, ans, "bo3", samples=samples)
     _policy_execute(pending, free, ctx)
@@ -1851,16 +1996,23 @@ def _arm_policy_reviewed(pending, free, ctx, opposed: bool) -> None:
             left_tag, right_tag = "es-policy-neutral-a", "es-policy-neutral-b"
             mode, left_name, right_name = "symmetric", "reviewer_a", "reviewer_b"
         left = _ask(left_prompt, left_packet, ctx["model"], ctx["host"], ctx["cache"],
-                    left_tag, num_predict=200)
+                    left_tag, num_predict=ctx.get("num_predict", 400),
+                    temperature=ctx.get("temperature", 0), seed=ctx.get("llm_seed"),
+                    audit=ctx.setdefault("llm_audit", []))
         right = _ask(right_prompt, right_packet, ctx["model"], ctx["host"], ctx["cache"],
-                     right_tag, num_predict=200)
+                     right_tag, num_predict=ctx.get("num_predict", 400),
+                     temperature=ctx.get("temperature", 0), seed=ctx.get("llm_seed"),
+                     audit=ctx.setdefault("llm_audit", []))
         ctx["calls"] += 2
         left_text = json.dumps(left) if left is not None else "none"
         right_text = json.dumps(right) if right is not None else "none"
         referee_packet = (complete + f"\n\n{left_name.upper()} STATEMENT:\n{left_text}" +
                           f"\n\n{right_name.upper()} STATEMENT:\n{right_text}")
         ans = _ask(POLICY_REVIEW_REFEREE, referee_packet, ctx["model"], ctx["host"],
-                   ctx["cache"], f"es-policy-referee-{mode}", num_predict=200)
+                   ctx["cache"], f"es-policy-referee-{mode}",
+                   num_predict=ctx.get("num_predict", 400),
+                   temperature=ctx.get("temperature", 0), seed=ctx.get("llm_seed"),
+                   audit=ctx.setdefault("llm_audit", []))
         ctx["calls"] += 1
         _policy_record(pending, ctx, started_total, ans, mode,
                        **{left_name: left, right_name: right})
@@ -1878,24 +2030,33 @@ def arm_policy_symmetric(pending, free, ctx):
 
 
 def _bid_curve(job, ctx) -> list[float]:
-    """Marginal value of the k-th GPU to this job: the SECONDS OF RUNTIME it saves.
+    """Observable, non-increasing marginal value curve for one auction policy.
 
     The old world imported `PHASE_PROFILES` because its jobs had no known speed-up law. Here they
     do -- the Amdahl model this world is built on -- so the bid is read off the job's own physics
     instead of a tuned profile. It is non-increasing by construction, which is exactly the
     diminishing-returns shape `mechanism.clear` assumes, and it makes the auction's currency
-    commensurable with the metric: a GPU is worth the waiting time it removes.
+    commensurable with the metric. Trace runtime is deliberately absent: the normalized Amdahl
+    ratio contains all sizing information needed by this density bid.
     """
     lo, hi = _sizes(job)
     a = job.attributes
-    dur = float(a.get("_true_dur", 0)) or 1.0
-    n0 = max(1, int(a.get("gpus", 1)))
+    n0 = max(1, int(a.get("req_nodes", 1)))
     sf = ctx.get("par_frac", 1.0)
-    T = lambda n: dur * (sf + (1 - sf) / n) / (sf + (1 - sf) / n0)
-    # Urgency is the private valuation: production work outbids batch, and a job that has been
-    # queueing longer bids more, which is the deterministic laxity lever Exp 99 found.
+    T = lambda n: (sf + (1 - sf) / n) / (sf + (1 - sf) / n0)
     waited = max(0.0, ctx.get("now", 0) - getattr(job, "submit_time", 0))
-    urgency = (3.0 if a.get("tier") == "prod" else 1.0) * (1.0 + waited / 3600.0)
+    objective = ctx.get("market_objective", "wait")
+    if objective == "deadline":
+        est = (int(a.get("req_min", 0)) * 60) or ctx.get("est_default", 86400)
+        deadline = float(a.get("deadline_s", job.submit_time + est))
+        slack = deadline - ctx.get("now", 0) - est
+        urgency = 1.0 + max(0.0, -slack) / max(1.0, est) + est / max(60.0, slack + est)
+    elif objective == "fairness":
+        urgency = 1.0 + ctx.get("market_user_wait", {}).get(a.get("user"), 0.0) / 3600.0
+    elif objective == "priority":
+        urgency = 3.0 if a.get("tier") == "prod" else 1.0
+    else:
+        urgency = 1.0 + waited / 3600.0
     # CURRENCY: value DENSITY, not value retired. Bidding the seconds a GPU saves maximises total
     # time saved, which makes the longest job the highest bidder -- backwards for mean waiting time,
     # where clearing short work first releases capacity sooner. So each bid is divided by the
@@ -1919,6 +2080,11 @@ def arm_market(pending, free, ctx):
     from pins.mechanism import clear
     if not free or not pending:
         return
+    ctx["market_user_wait"] = {}
+    for job in pending:
+        u = job.attributes.get("user")
+        ctx["market_user_wait"][u] = ctx["market_user_wait"].get(u, 0.0) + \
+            max(0.0, ctx.get("now", 0) - job.submit_time)
     bids = {str(j.identifier): _bid_curve(j, ctx) for j in pending}
     bids = {k: v for k, v in bids.items() if v}
     if not bids:
@@ -1934,11 +2100,33 @@ def arm_market(pending, free, ctx):
     # not the 24 distinct pairs it advertised. `_start` routes through `_size`, restoring the
     # ordering-by-sizing factorisation that makes the arms comparable.
     ranked = sorted((j for j in pending if award.get(str(j.identifier), 0) >= _sizes(j)[0]),
-                    key=lambda j: -sum(bids.get(str(j.identifier), [0])[:award.get(str(j.identifier), 0)]))
+                    key=lambda j: (-sum(bids.get(str(j.identifier), [0])[
+                        :award.get(str(j.identifier), 0)]), j.submit_time, j.identifier))
     for job in ranked:
         if not _fit(job, free, ctx, len(pending)):
             continue                     # cannot be sized from what is free: it waits
         _start(job, free, ctx, len(pending))
+
+
+def _auction_objective(pending, free, ctx, objective: str) -> None:
+    ctx["market_objective"] = objective
+    arm_market(pending, free, ctx)
+
+
+def arm_auction_wait(pending, free, ctx):
+    _auction_objective(pending, free, ctx, "wait")
+
+
+def arm_auction_deadline(pending, free, ctx):
+    _auction_objective(pending, free, ctx, "deadline")
+
+
+def arm_auction_fairness(pending, free, ctx):
+    _auction_objective(pending, free, ctx, "fairness")
+
+
+def arm_auction_priority(pending, free, ctx):
+    _auction_objective(pending, free, ctx, "priority")
 
 
 # ---------------------------------------------------------------------------------------------
@@ -2086,6 +2274,8 @@ ARMS = {"fcfs": arm_fcfs, "firstfit": arm_firstfit, "easy": arm_easy, "sjf": arm
         "declared_first": arm_declared_first,
         "tier_fcfs": arm_tier_fcfs, "tier_sjf": arm_tier_sjf,
         "market": arm_market,
+        "auction_wait": arm_auction_wait, "auction_deadline": arm_auction_deadline,
+        "auction_fairness": arm_auction_fairness, "auction_priority": arm_auction_priority,
         # The five-policy library the referee selects over, plus the schedule replayer that runs
         # the counterfactual rollouts those selections are labelled from.
         "least_laxity": arm_least_laxity, "fairness": arm_fairness,
@@ -2119,8 +2309,9 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
         packet_order: str = "submit", gate: str = "scarcity", resize_cooldown: int = 600,
         resize_budget: int = CORRECT_BUDGET, text_exceptions: Path | None = None,
         text_labels: Path | None = None, policy_schedule: Path | None = None,
-        slack_mult: float = 10.0, packet_every: int = 0, family: str = "",
-        packet_out: Path | None = None) -> dict:
+        slack_mult: float = 1.0, packet_every: int = 0, family: str = "",
+        packet_out: Path | None = None, temperature: float = 0.0, llm_seed: int = 0,
+        num_predict: int = 400, rcon_threshold_s: float = 300.0) -> dict:
     from elastisim_python import JobState, NodeState, pass_algorithm
     from pins.llm_agent import HOST, take_tokens
     take_tokens()          # clear the meter so this run is billed only for its own inference
@@ -2138,8 +2329,10 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
         "pfs_read_links": ["PFS_read"], "pfs_write_links": ["PFS_write"],
         "job_statistics": str(stats), "node_utilization": str(world / f"out/{tag}_node_util.csv")}))
     _wmeta = json.loads((world / "meta.json").read_text())
-    ctx = {"par_frac": _wmeta.get("par_frac", 1.0),
+    ctx = {"par_frac": _wmeta.get("par_frac", 1.0), "est_default": est_default,
            "model": model, "host": HOST, "cache": {}, "calls": 0, "fallbacks": 0, "critic_changed": 0, "trivial": 0,
+           "temperature": temperature, "llm_seed": llm_seed, "num_predict": num_predict,
+           "llm_audit": [],
            "invocations": 0, "now": 0.0,
            "transcript": open(world / f"out/{tag}_transcript.jsonl", "w"),   # one line per LLM decision
            "est": lambda j: (int(j.attributes["req_min"]) * 60) or est_default, "running": [],
@@ -2148,6 +2341,7 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
            "resize_events": 0, "resized_gpus": 0, "size_history": {}, "last_resize": {},
            "resize_cooldown": resize_cooldown, "resize_budget": resize_budget,
            "resize_cooldown_blocks": 0, "protected_events": 0,
+           "rcon_threshold_s": rcon_threshold_s, "rcon_blocks": 0, "resize_log": [],
            # The pre-selection fallback must be INSIDE the family, or an invalid reply in the
            # market arm silently schedules a non-market ordering and the contrast is confounded.
            "sel_every": sel_every, "sel_sizing": "as_requested", "family": family,
@@ -2162,6 +2356,24 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
         note_doc = json.loads(notes_path.read_text())
         ctx["text_exceptions"] = {str(x["job_id"]): x for x in note_doc.get("notes", [])}
     fn = ARMS[arm]
+
+    def assert_invariants(jobs, nodes) -> None:
+        """Hard feasibility checks shared by every arm at every scheduler invocation."""
+        owners = []
+        for job in jobs:
+            assigned = list(getattr(job, "assigned_nodes", []) or [])
+            # ElastiSim keeps the just-finished assignment in the Python mirror until after the
+            # completion callback, even though those nodes are already offered as free. Exclude
+            # that simulator-owned transitional record from simultaneous-ownership accounting.
+            if getattr(job.state, "name", "").startswith("COMPLETED"):
+                continue
+            if assigned:
+                lo, hi = _sizes(job)
+                assert lo <= len(assigned) <= hi, \
+                    f"job {_job_key(job)} allocation {len(assigned)} outside [{lo},{hi}]"
+                owners.extend(id(n) for n in assigned)
+        assert len(owners) <= len(nodes), f"allocated {len(owners)} GPUs from pool {len(nodes)}"
+        assert len(owners) == len(set(owners)), "one GPU was allocated to multiple active jobs"
 
     def schedule(jobs, nodes, system):
         ctx["invocations"] += 1; ctx["now"] = system["time"]
@@ -2200,6 +2412,7 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
                 ctx["freeze_blocks"] = ctx.get("freeze_blocks", 0) + 1
             else:
                 _resize_malleable(system["job"], free, pending, ctx)
+            assert_invariants(jobs, nodes)
             return
         if ctx["packet_f"] and pending and ctx["now"] - ctx.get("packet_last", -1e18) >= ctx["packet_every"]:
             ctx["packet_last"] = ctx["now"]
@@ -2208,6 +2421,7 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
                                               "packet": _packet_policy(pending, free, ctx)}) + "\n")
         if pending and free:
             fn(pending, free, ctx)
+        assert_invariants(jobs, nodes)
 
     env = {**os.environ, "LD_LIBRARY_PATH": str(ES_ROOT / "env/lib")}
     log = open(world / f"out/{tag}_sim.log", "w")
@@ -2219,8 +2433,15 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
     try:
         pass_algorithm(schedule, url)
     finally:
-        sim.wait(timeout=60)
+        try:
+            sim.wait(timeout=60)
+        except subprocess.TimeoutExpired:
+            sim.terminate()
+            sim.wait(timeout=10)
         ctx["transcript"].close()
+        if ctx.get("packet_f"):
+            ctx["packet_f"].close()
+        log.close()
     (world / f"out/{tag}_sizes.json").write_text(json.dumps({str(k): v for k, v in ctx.get("sizes", {}).items()}))
     if ctx.get("rule") is not None:
         (world / f"out/{tag}_rule.json").write_text(json.dumps(
@@ -2230,6 +2451,10 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
             rule_out.write_text(json.dumps(ctx["rule"], indent=1))
     if ctx.get("sel_log"):
         (world / f"out/{tag}_policy_log.json").write_text(json.dumps(ctx["sel_log"], indent=1))
+    (world / f"out/{tag}_llm_audit.jsonl").write_text(
+        "".join(json.dumps(x) + "\n" for x in ctx["llm_audit"]))
+    (world / f"out/{tag}_resize_log.jsonl").write_text(
+        "".join(json.dumps(x) + "\n" for x in ctx["resize_log"]))
     (world / f"out/{tag}_size_history.json").write_text(json.dumps(
         {str(k): v for k, v in ctx["size_history"].items()}))
     res = summarise(stats, world)
@@ -2254,13 +2479,20 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
                est_default=est_default if arm == "easy" else None,
                **transcript_stats(world / f"out/{tag}_transcript.jsonl"),
                invocations=ctx["invocations"], llm_calls=ctx["calls"], fallbacks=ctx["fallbacks"],
+               llm_malformed=sum(bool(x.get("malformed")) for x in ctx["llm_audit"]),
+               llm_errors=sum(bool(x.get("error")) for x in ctx["llm_audit"]),
                # NOT critic_changed: transcript_stats() already returns that key, and passing both
                # raises TypeError *after* the simulation has finished, discarding the whole run.
                critic_changed_applied=ctx["critic_changed"], trivial=ctx["trivial"],
                resize_events=ctx["resize_events"], resized_gpus=ctx["resized_gpus"],
                resize_cooldown=resize_cooldown, resize_budget=resize_budget,
                resize_cooldown_blocks=ctx["resize_cooldown_blocks"],
+               resize_overhead_s=0.0, resize_overhead_mode="not_modelled",
+               rcon_threshold_s=rcon_threshold_s, rcon_blocks=ctx["rcon_blocks"],
                protected_events=ctx["protected_events"],
+               temperature=temperature if arm in llm_arms else None,
+               llm_seed=llm_seed if arm in llm_arms else None,
+               num_predict=num_predict if arm in llm_arms else None,
                wall_s=round(time.time() - t),
                # The inference bill, which was being metered and then thrown away. `metered_client`
                # counts every _ask through it, so take_tokens() at both ends of the run attributes
@@ -2307,9 +2539,26 @@ def summarise(stats: Path, world: Path) -> dict:
             seg_end = events[n + 1][0] if n + 1 < len(events) else end
             total += g * max(0.0, min(seg_end, end, right) - max(t, start, left))
         return total
+
+    def useful_seconds(jid, start, end, left=float("-inf"), right=float("inf")):
+        """Integrate effective Amdahl throughput, not raw occupied GPU count."""
+        job_spec = jobs[int(jid)]
+        elastic = job_spec.get("type") == "malleable"
+        serial = float(meta.get("par_frac", 1.0))
+        effective = lambda g: (1.0 / (serial + (1.0 - serial) / max(1, g))) if elastic else g
+        events = histories.get(jid)
+        if not events:
+            g = sizes.get(jid, job_spec.get("num_nodes", 1))
+            return effective(g) * max(0.0, min(end, right) - max(start, left))
+        total = 0.0
+        for n, (t, g) in enumerate(events):
+            seg_end = events[n + 1][0] if n + 1 < len(events) else end
+            total += effective(g) * max(0.0, min(seg_end, end, right) - max(t, start, left))
+        return total
     W = meta["hours"] * 3600
     a = meta.get("warmup_h", 0) * 3600            # the MEASURED interval is [a, a+W)
-    wait, bsd, busy_win, gpu_s, late_req, n_req = [], [], 0.0, 0.0, 0, 0
+    wait, bsd, busy_win, useful_win, gpu_s, late_req, n_req = [], [], 0.0, 0.0, 0.0, 0, 0
+    deadline_late = 0
     late = dict.fromkeys(SLACKS, 0)
     killed = 0
     alloc = 0.0        # GPU-seconds the scheduler SPENT: a decision once jobs are moldable
@@ -2323,6 +2572,7 @@ def summarise(stats: Path, world: Path) -> dict:
         # occupancy counts EVERY job running in the measured interval, warm-up included: those
         # nodes really are busy. Every other metric below is measured-window arrivals only.
         busy_win += allocation_seconds(r["ID"], st, en, a, a + W)
+        useful_win += useful_seconds(r["ID"], st, en, a, a + W)
         if j["attributes"].get("_warmup"):
             continue
         wait.append(float(r["Wait Time"]))
@@ -2334,6 +2584,8 @@ def summarise(stats: Path, world: Path) -> dict:
         # Downsizing a malleable job can push it past its limit, so this must be first-class.
         dead = r["Status"] != "completed"
         killed += dead
+        deadline = float(j["attributes"].get("deadline_s", float("inf")))
+        deadline_late += dead or en > deadline
         for k in SLACKS:
             late[k] += dead or ta > k * run
         u = j["attributes"].get("user")
@@ -2368,9 +2620,12 @@ def summarise(stats: Path, world: Path) -> dict:
             "n_warmup": len(rows) - len(scored),
             "killed_pct": round(100 * killed / len(scored), 1),
             "alloc_gpu_h": round(alloc / 3600, 1),
+            "deadline_viol_pct": round(100 * deadline_late / len(scored), 1),
             **{f"sla{k}_viol_pct": round(100 * late[k] / len(scored), 1) for k in SLACKS},
             "ta_over_req_limit_pct": round(100 * late_req / max(1, n_req), 1), "n_with_req_limit": n_req,
-            "util_win": round(busy_win / (meta["pool"] * W), 3), "util_span": round(gpu_s / (meta["pool"] * span), 3),
+            "util_win": round(busy_win / (meta["pool"] * W), 3),
+            "useful_util_win": round(useful_win / (meta["pool"] * W), 3),
+            "util_span": round(gpu_s / (meta["pool"] * span), 3),
             "mean_wait_s": round(statistics.mean(wait)), "p50_wait_s": round(wait[len(wait) // 2]),
             "p90_wait_s": round(wait[int(0.9 * (len(wait) - 1))]), "max_wait_s": round(wait[-1]),
             "mean_bsd": round(statistics.mean(bsd), 2), "span_h": round(span / 3600, 1),
@@ -2575,10 +2830,14 @@ if __name__ == "__main__":
     b.add_argument("--elastic-seed", type=int, default=0)
     b.add_argument("--resize-points", type=int, default=10,
                    help="work chunks per malleable job; resizing is possible between chunks")
+    b.add_argument("--deadline-alpha", type=float, default=1.0,
+                   help="synthetic deadline = submit + alpha * requested-runtime estimate")
+    b.add_argument("--deadline-default-s", type=int, default=86400,
+                   help="requested-runtime estimate when the trace has no walltime")
     r = sub.add_parser("run"); r.add_argument("--world", type=Path, required=True); r.add_argument("--arm", choices=ARMS, required=True)
     r.add_argument("--model", default="qwen2.5:14b"); r.add_argument("--interval", type=int, default=300); r.add_argument("--tag", default="")
     r.add_argument("--est-default", type=int, default=86400, help="EASY runtime estimate (s) for jobs with no declared limit")
-    r.add_argument("--sizer", choices=["as_requested", "greedy", "adaptive", "auto", "by_size"], default="as_requested")
+    r.add_argument("--sizer", choices=["as_requested", "greedy", "adaptive", "rcon", "auto", "by_size"], default="as_requested")
     r.add_argument("--family", choices=sorted(POLICY_FAMILY), default="",
                    help="restrict the referee's ordering menu to one policy family (the 2x2 factor); "
                         "unset = the whole five-ordering library")
@@ -2607,8 +2866,12 @@ if __name__ == "__main__":
     r.add_argument("--packet-every", type=int, default=0,
                    help="dump the referee-visible packet every N simulated seconds (0 = off)")
     r.add_argument("--packet-out", type=Path, help="destination for --packet-every dumps")
-    r.add_argument("--slack-mult", type=float, default=10.0,
+    r.add_argument("--slack-mult", type=float, default=1.0,
                    help="least_laxity: deadline = submit + slack_mult x estimated runtime")
+    r.add_argument("--temperature", type=float, default=0.0)
+    r.add_argument("--llm-seed", type=int, default=0)
+    r.add_argument("--num-predict", type=int, default=400)
+    r.add_argument("--rcon-threshold-s", type=float, default=300.0)
     b.add_argument("--load", type=float, default=0, help="size the pool by offered load when --pool 0")
     s = sub.add_parser("summary"); s.add_argument("--world", type=Path, required=True)
     w = sub.add_parser("sweep"); w.add_argument("--days", default="3:227:7", help="start:stop:step of window start days")
@@ -2628,7 +2891,8 @@ if __name__ == "__main__":
     a = ap.parse_args()
     if a.cmd == "build":
         build(a.day, a.hours, a.pool, a.out, a.offset_h, a.load, a.warmup_h,
-              a.elastic_frac, a.par_frac, a.max_scale, a.elastic_seed, a.resize_points)
+              a.elastic_frac, a.par_frac, a.max_scale, a.elastic_seed, a.resize_points,
+              a.deadline_alpha, a.deadline_default_s)
     elif a.cmd == "summary":
         summary(a.world)
     elif a.cmd == "census":
@@ -2645,4 +2909,6 @@ if __name__ == "__main__":
             packet_order=a.packet_order, gate=a.gate, resize_cooldown=a.resize_cooldown,
             resize_budget=a.resize_budget, text_exceptions=a.text_exceptions,
             text_labels=a.text_labels, policy_schedule=a.policy_schedule, slack_mult=a.slack_mult,
-            family=a.family, packet_every=a.packet_every, packet_out=a.packet_out)
+            family=a.family, packet_every=a.packet_every, packet_out=a.packet_out,
+            temperature=a.temperature, llm_seed=a.llm_seed, num_predict=a.num_predict,
+            rcon_threshold_s=a.rcon_threshold_s)

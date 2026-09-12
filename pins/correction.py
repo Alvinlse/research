@@ -34,6 +34,8 @@ Two design decisions worth stating, because they are where this could go wrong:
 """
 from __future__ import annotations
 
+import time
+
 from pins.llm_agent import CTX_OPT, DEFAULT_MODEL, HOST, _parse, metered_client
 
 SYSTEM_DEMAND_CTX = (
@@ -126,7 +128,8 @@ def _ask_api(system: str, user: str, model: str, max_tokens: int, temperature: f
 
 def _ask(system: str, user: str, model: str, host: str, cache: dict, tag: str,
          num_predict: int = 200, think: bool | None = None,
-         temperature: float = 0) -> dict | None:
+         temperature: float = 0, seed: int | None = None,
+         audit: list[dict] | None = None) -> dict | None:
     """Defaults are Exp 77's exactly, so those tiers keep replaying byte-identically.
 
     `num_predict`/`think` exist for hybrid reasoners: with thinking on, deepseek-r1 and qwen3
@@ -137,29 +140,47 @@ def _ask(system: str, user: str, model: str, host: str, cache: dict, tag: str,
     `temperature` defaults to 0 (every existing tier is unaffected). Exp 88 raises it for the
     self-consistency control ONLY: at temperature 0 the sampler is deterministic, so drawing K
     samples of one prompt returns K identical answers and best-of-N is impossible to build.
-    Note the cache key does NOT include temperature -- callers drawing multiple samples must
-    vary `tag` per sample, which Exp 88 does.
+    Temperature and seed are part of the cache key.  This makes repeated seeded experiment arms
+    replayable without allowing an earlier decoding configuration to contaminate a later one.
     """
-    key = f"{PROMPT_VERSION}|{tag}|{user}|{model}"
+    key = f"{PROMPT_VERSION}|{tag}|{user}|{model}|t={temperature}|seed={seed}"
     if key in cache:
+        if audit is not None:
+            audit.append({"tag": tag, "model": model, "temperature": temperature, "seed": seed,
+                          "num_predict": num_predict, "system": system, "user": user,
+                          "raw": None, "parsed": cache[key], "cache_hit": True, "error": None,
+                          "malformed": False, "wall_s": 0.0})
         return cache[key]
+    raw = None
+    error = None
+    started = time.monotonic()
     try:
         if model.startswith(("claude-", "gpt-")):
-            out = _parse(_ask_api(system, user, model, num_predict, temperature))
+            raw = _ask_api(system, user, model, num_predict, temperature)
+            out = _parse(raw)
         else:
             from pins.referee import _HYBRID
             client = metered_client(host)
             kw = {"think": think} if (think is not None and _HYBRID(model)) else {}
             resp = client.chat(model=model, format="json", **kw,
                                options={"temperature": temperature, "num_predict": num_predict,
+                                        **({"seed": seed} if seed is not None else {}),
                                         **CTX_OPT},
                                messages=[{"role": "system", "content": system},
                                          {"role": "user", "content": user}])
-            out = _parse(resp.message.content)
+            raw = resp.message.content
+            out = _parse(raw)
     except Exception as e:
         print(f"  ! {tag} fallback: {type(e).__name__}: {e}")
+        error = f"{type(e).__name__}: {e}"
         out = None
     cache[key] = out
+    if audit is not None:
+        audit.append({"tag": tag, "model": model, "temperature": temperature, "seed": seed,
+                      "num_predict": num_predict, "system": system, "user": user,
+                      "raw": raw, "parsed": out, "cache_hit": False, "error": error,
+                      "malformed": out is None and error is None,
+                      "wall_s": round(time.monotonic() - started, 6)})
     return out
 
 
