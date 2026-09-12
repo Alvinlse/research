@@ -43,6 +43,7 @@
 | 16 | **Nothing in the system serves deadline laxity.** Once tier and tightness are drawn independently, no reasoning arm protects the tightest-laxity tercile in either law, and under sat the referee makes it significantly *worse* (+6.9 ± 5.1\*); the market's tight-tercile effect is identical seed-for-seed across both worlds, i.e. label-independent. Motivates least-laxity grant ordering (`two_sided_sim.py:454` still orders by frozen bid) | **Exp 96** | solid (negative, n=32, both laws) |
 | 12 | The round-2 54-scene suite was **insensitive**, not merely negative: text-blind baselines (ILP 30/54, rule 31/54) scored within noise of every LLM arm, min p=0.238 across ~30 tests. Round 3's text-dependent design drops the rigid floor to 0/31 — the instrument was replaced, not the hypothesis re-shopped | Exp 65–67 → 79–83 | solid (methodology) |
 | 17 | **A second pass with cross-talk beats one call whether or not the reviewers are opposed** — opposed 43/81 and symmetric 41/81 both beat `single-pkt` 28/81 (p=0.0015, p=0.0044), confirmed on the blind r4 stratum. But **opposed vs symmetric is UNRESOLVED, not equivalent**: b=4 c=2, McNemar p=0.6875, and TOST **fails at the pre-registered ±5** (CI [−2.74, +5.25]) as well as ±3. Only 6 discordant pairs — the instrument cannot separate them. `CLAUDE.md`'s founding "symmetric objectives are theater" assumption stays **open**; it is not measured false | **Exp 100** | inconclusive (underpowered, n=81, m=6) — do not cite as equivalence |
+| 18 | **Grain, not intelligence, is what the window-level selector was missing — and two thirds of the grain does not exist.** Per-job labels put the ceilings at fixed 1.0599 → per-state 0.9079 → per-job 0.6148; only **34%** of the job-level gain is collectible by a per-state choice, the rest being zero-sum redistribution (`sum_j d[p,j] = 0` by construction). The implementable slice is sizing, and a **3-bucket static rule keyed on job size** captures 89% of the per-state *oracle* on cost and beats it on wait (11,514 s vs 11,669 s) at zero tokens. Regret is a tail: top 10% of jobs hold 77% of it | **Exp 101** (+ `runs/headroom_verdict.md`) | moderate — ceilings are exact, the rule is **assembled from homogeneous rollouts and in-sample**; composability run pending, and scored on the reward's job terms, not the submission's deadline metric |
 
 **Open / next**, roughly by value:
 
@@ -3497,3 +3498,62 @@ Power, not more arms. At b+c=6 the discordant rate is ~7%; separating opposed fr
 resolved: it would speak to *this authored suite and this architecture*, and would still not
 separate second-pass from role diversity, cross-talk from independent reconsideration, or repeated
 calls to one model from genuinely distinct agents holding private information.
+
+## Experiment 101 — PER-JOB GRAIN: the window selector was not blind, two thirds of the headroom does not exist (2026-09-12)
+
+**Date:** 2026-09-12. **Data:** `runs/labels_perjob` (sweep committed `3bd6ae8`, 2026-09-07) —
+8,835 rollouts over 589 states x 15 policies x 54 windows, each rollout keeping **every job's own**
+wait/turnaround/runtime/status. **Analysis:** `pins/perjob_analyse.py` → `runs/perjob_report.json`,
+verdict `runs/perjob_verdict.md`. Predecessor: `runs/headroom_verdict.md` (2026-09-07), which closed
+per-**epoch** selection negative — a tree loses to the best fixed policy 0/5 folds under balanced,
+throughput, wait-only and SLA-only objectives alike.
+
+**The question this data exists to answer.** The window-level selector chose one policy per state,
+so it was scored on a window average over jobs the policies treat very differently. If the loss was
+one of GRAIN rather than of learning, a per-job assigner should have headroom the selector could not
+see.
+
+**Instrument check.** Per-job waits reproduce every window summary exactly (0 mismatches, and the
+simulator is deterministic), all 589 states carry all 15 policies, and every policy sees an
+identical job set. Costs are the balanced reward's own job-level terms, so `mean_j cost_j` equals
+the window reward minus its two window-level terms; nothing is re-weighted.
+
+```
+                                         cost     wait      sla10    bsd     gain
+fixed  (best single policy, pooled)     1.0599   12625 s    7.44%   4.80       —
+state  (best policy per state)          0.9079   11669 s    6.21%   4.04   -14.3%
+group  (best per state x job group)     0.7525    9429 s    5.40%   3.51   -29.0%
+job    (best per state x job)           0.6148    7143 s    4.98%   3.09   -42.0%
+```
+
+**Verdict: the grain is real and mostly unreachable.** Of the job-level gain, a per-state choice
+already collects **34%**; the remaining **66% is redistribution**. Writing each state's matrix as
+`cost[p,j] = m[p] + d[p,j]`, the deviations satisfy `sum_j d[p,j] = 0` by construction, and their
+per-job minimum (−0.79) dwarfs the common-mode spread (−0.37): one job's earlier start is another
+job's later one. Per-job regret of the best fixed policy is a tail, not a broad loss — 71% of
+155,331 jobs are hurt at all, but the top 10% hold **77%** of the regret and the top 1% hold 21%.
+Only job SIZE separates (group ceiling 0.7989 vs tier 0.8659, queue state 0.8860); the elasticity
+axis is inert by construction, every holdout job being elastic.
+
+**The one implementable slice, and a 0-token rule.** Ordering is global by nature; sizing is applied
+per job at placement. Restricted to that family: `fixed 1.0599 | state 0.9079 | static rule 0.9250 |
+per-group 0.8193 | per-job 0.8105`, and on wait `12625 | 11669 | 11514 | 10447 | 10289` seconds. The
+static rule is three buckets and no model — `gpus=1 → as_requested`, `2-8 → adaptive`,
+`>8 → adaptive` — under a global `least_laxity` ordering. **Tier does not change it anywhere and
+neither does queue state.** It captures 89% of what the per-state *oracle* collects on cost and
+beats that oracle outright on wait, at zero tokens, because it is heterogeneous and the oracle
+cannot be. This is the fifth 0-token deterministic result in the log (cf. claims 1, 9, Exp 63, 99).
+
+**Three caveats, all load-bearing.** (1) **Not composable** — every rollout applies one policy to
+the whole cluster, so the static-rule numbers are *assembled* from homogeneous rollouts and a real
+per-job-sizer run is the test; if it disagrees, this estimate is what is wrong. (2) **In-sample** —
+fitted on the 54 windows it is scored on; needs a window-held-out refit. (3) **Not the submission's
+objective** — this scores the balanced reward's job terms, while the paper's primary metric is the
+deadline violation rate. The excluded window-level terms (fairness, resize churn) are **54%** of
+total cost and flip the per-state argmax on **49%** of states, so the "best fixed = fairness+adaptive"
+ranking above is an artifact of this cost and must not be quoted as a baseline.
+
+**Where it lands in the submission plan.** Phase 3 (the per-job sizing action set) and Phase 9 (a
+0-token floor). It is *not* a 2x2 arm: the factors there are reasoning structure and policy family,
+and per-job sizing sits inside the action space of every arm. Per the plan's own priorities this is
+priority 4, so it stops here.
