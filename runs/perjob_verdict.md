@@ -45,3 +45,45 @@ CAVEATS, all load-bearing:
    primary metric is the deadline violation rate. The excluded window-level terms (fairness, resize
    churn) are 54% of the total cost and flip the per-state argmax on 49% of states, so do NOT quote
    "best fixed = fairness+adaptive" as a baseline — that ranking is an artifact of this cost.
+
+---
+
+# COMPOSABILITY TEST (2026-09-12): the assembled number does not survive. Caveat 1 fired.
+
+Driver `pins/run_frozen.py`, rows `runs/frozen_sizer/rows.jsonl`: all 55 frozen windows, three cells,
+paired, whole-window runs from t=0. `by_size` is the rule above, implemented as `--sizer by_size`.
+
+```
+cell                          n    wait_s  p90_wait   sla10   bsd    util   d wait vs as_requested
+least_laxity+as_requested    55     12268     29343    7.46   4.85   0.798            +0
+least_laxity+adaptive        55     12251     25482    6.45   4.18   0.819           -18
+least_laxity+by_size         55     12141     25186    6.34   4.25   0.810          -127
+```
+
+The labels predicted **-3083 s** of mean wait for this exact pair. The simulator measures **-127 s**,
+4% of it, with a **median of 0** and only 25 of 55 windows improving. Against the right comparator --
+plain `adaptive`, the better homogeneous rule -- the per-job rule is worth **-110 s on a 12,268 s
+baseline (<1%)**, consistently (34/55 windows) but trivially. The heterogeneous-sizing branch is a
+near-null, not an 89%-of-oracle win.
+
+**Why the assembly lied.** Reading job j's wait out of the `as_requested` run when j is small and out
+of the `adaptive` run when j is large takes each job's outcome from a schedule the other jobs were
+not in. The jobs that win under one sizing and those that win under the other cannot both win in one
+run. Mechanically the rule is also mostly a no-op: 11,115 of 13,281 scored jobs (84%) ask for a
+single GPU, so `by_size` IS `as_requested` for most of the trace, which is why the median window
+moves by exactly zero.
+
+**What the labels DO predict correctly.** Homogeneous policies, at the earliest switch point where
+the choice holds for ~95% of the window: labels say `adaptive` beats `as_requested` by 207 s, the
+simulator says 18 s -- both a tie, same sign. So the label sweep is sound for the question it was
+built for (one policy for the whole cluster) and unsound only for assemblies across rollouts.
+
+**Status of the four ceilings above:** the `fixed` and `state` rows are measured facts about
+homogeneous policies and stand. The `group` and `job` rows remain upper bounds, and this test shows
+the bound is **loose by more than an order of magnitude** where anyone tried to collect it. Treat
+them as evidence that per-job grain is not where the headroom is, which is the opposite of how a
+ceiling table is usually read.
+
+No inferential test is reported. No pre-registration pins a test, scoring rule or sidedness for this
+comparison, and `.claude/agents/pins-analyst.md` forbids inventing one; the paired distribution above
+is descriptive. A confirmatory run needs the axes pinned first.

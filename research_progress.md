@@ -43,7 +43,7 @@
 | 16 | **Nothing in the system serves deadline laxity.** Once tier and tightness are drawn independently, no reasoning arm protects the tightest-laxity tercile in either law, and under sat the referee makes it significantly *worse* (+6.9 ± 5.1\*); the market's tight-tercile effect is identical seed-for-seed across both worlds, i.e. label-independent. Motivates least-laxity grant ordering (`two_sided_sim.py:454` still orders by frozen bid) | **Exp 96** | solid (negative, n=32, both laws) |
 | 12 | The round-2 54-scene suite was **insensitive**, not merely negative: text-blind baselines (ILP 30/54, rule 31/54) scored within noise of every LLM arm, min p=0.238 across ~30 tests. Round 3's text-dependent design drops the rigid floor to 0/31 — the instrument was replaced, not the hypothesis re-shopped | Exp 65–67 → 79–83 | solid (methodology) |
 | 17 | **A second pass with cross-talk beats one call whether or not the reviewers are opposed** — opposed 43/81 and symmetric 41/81 both beat `single-pkt` 28/81 (p=0.0015, p=0.0044), confirmed on the blind r4 stratum. But **opposed vs symmetric is UNRESOLVED, not equivalent**: b=4 c=2, McNemar p=0.6875, and TOST **fails at the pre-registered ±5** (CI [−2.74, +5.25]) as well as ±3. Only 6 discordant pairs — the instrument cannot separate them. `CLAUDE.md`'s founding "symmetric objectives are theater" assumption stays **open**; it is not measured false | **Exp 100** | inconclusive (underpowered, n=81, m=6) — do not cite as equivalence |
-| 18 | **Grain, not intelligence, is what the window-level selector was missing — and two thirds of the grain does not exist.** Per-job labels put the ceilings at fixed 1.0599 → per-state 0.9079 → per-job 0.6148; only **34%** of the job-level gain is collectible by a per-state choice, the rest being zero-sum redistribution (`sum_j d[p,j] = 0` by construction). The implementable slice is sizing, and a **3-bucket static rule keyed on job size** captures 89% of the per-state *oracle* on cost and beats it on wait (11,514 s vs 11,669 s) at zero tokens. Regret is a tail: top 10% of jobs hold 77% of it | **Exp 101** (+ `runs/headroom_verdict.md`) | moderate — ceilings are exact, the rule is **assembled from homogeneous rollouts and in-sample**; composability run pending, and scored on the reward's job terms, not the submission's deadline metric |
+| 18 | **Grain, not intelligence, is what the window-level selector was missing — and two thirds of the grain does not exist.** Per-job labels put the ceilings at fixed 1.0599 → per-state 0.9079 → per-job 0.6148; only **34%** of the job-level gain is collectible by a per-state choice, the rest being zero-sum redistribution (`sum_j d[p,j] = 0` by construction). The implementable slice is sizing, and a **3-bucket static rule keyed on job size** captures 89% of the per-state *oracle* on cost and beats it on wait (11,514 s vs 11,669 s) at zero tokens. Regret is a tail: top 10% of jobs hold 77% of it | **Exp 101** (+ `runs/headroom_verdict.md`) | **qualified 2026-09-12 — the rule's win did NOT survive its composability run.** Predicted −3083 s mean wait, measured **−127 s** (median 0, 25/55 windows) and only −110 s against plain `adaptive`, because 84% of jobs ask for one GPU so the rule is mostly a no-op. The ceilings stand as facts about homogeneous policies; the per-job rows are upper bounds now known to be loose by >10x. Labels DO track the sim for homogeneous policies (−207 s predicted vs −18 s measured) |
 
 **Open / next**, roughly by value:
 
@@ -3557,3 +3557,35 @@ ranking above is an artifact of this cost and must not be quoted as a baseline.
 0-token floor). It is *not* a 2x2 arm: the factors there are reasoning structure and policy family,
 and per-job sizing sits inside the action space of every arm. Per the plan's own priorities this is
 priority 4, so it stops here.
+
+### Exp 101b — THE COMPOSABILITY RUN: the assembled rule is worth 4% of its assembled number (2026-09-12)
+
+**Driver:** `pins/run_frozen.py` (new; every arm reads the frozen windows from `pins/frozen_2x2.json`,
+so the pairing is a property of the driver, not of the commands). **Rows:**
+`runs/frozen_sizer/rows.jsonl` — 55 windows x 3 cells, paired, whole-window runs from t=0.
+
+```
+cell                          n    wait_s  p90_wait   sla10   bsd    util   d wait vs as_requested
+least_laxity+as_requested    55     12268     29343    7.46   4.85   0.798            +0
+least_laxity+adaptive        55     12251     25482    6.45   4.18   0.819           -18
+least_laxity+by_size         55     12141     25186    6.34   4.25   0.810          -127
+```
+
+**The labels predicted −3083 s for this exact pair; the simulator measures −127 s** — 4% of it, with
+a median of exactly 0 and only 25 of 55 windows improving. Against the better homogeneous comparator
+(`adaptive`) the per-job rule is worth −110 s on a 12,268 s baseline, consistently (34/55) but
+trivially. **The heterogeneous-sizing branch is a near-null.**
+
+**Why the assembly lied, and what it means for the rest of the label track.** Taking job j's wait
+from the `as_requested` rollout when j is small and from the `adaptive` rollout when j is large reads
+each job's outcome out of a schedule the other jobs were never in. Mechanically the rule is also
+mostly a no-op: 11,115 of 13,281 scored jobs (84%) ask for one GPU, so `by_size` *is* `as_requested`
+for most of the trace. **The label sweep itself is vindicated for the question it was built for:** at
+the earliest switch point, where the choice holds for ~95% of the window, the labels put `adaptive`
+207 s ahead of `as_requested` and the simulator puts it 18 s ahead — same sign, both a tie. The sweep
+is sound for homogeneous policies and unsound only for assemblies across rollouts, which is exactly
+the caveat that was written down before the run.
+
+**No inferential test is reported.** No pre-registration pins a test, scoring rule or sidedness here,
+and the analyst rule forbids inventing one; the paired distribution is descriptive. Pin the axes
+first if this is ever worth a confirmatory run — on this effect size it is not.
