@@ -14,6 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 import statistics
+import time
 from pathlib import Path
 
 from pins.elastisim_bench import run
@@ -21,7 +22,12 @@ from pins.elastisim_bench import run
 CONFIG = Path(__file__).with_name("frozen_2x2.json")
 METRICS = ("mean_wait_s", "p90_wait_s", "sla10_viol_pct", "sla5_viol_pct", "sla2_viol_pct",
            "mean_bsd", "util_win", "killed_pct", "jain_user_wait", "resize_events", "n",
-           "calls", "sel_invalid", "fallbacks")
+           # The cost side of the comparison, and what the arm actually chose. `llm_calls` counts
+           # decisions asked for, `tok_calls` counts requests that reached the model (the cache
+           # absorbs the difference), and sel_counts is the per-arm policy distribution the paper
+           # reports next to the outcome.
+           "llm_calls", "sel_invalid", "fallbacks", "sel_counts", "wall_s",
+           "tok_calls", "tok_prompt", "tok_completion", "tok_wall")
 
 
 def cells(spec: str) -> list[tuple[str, str, str]]:
@@ -45,6 +51,11 @@ def main() -> None:
     ap.add_argument("--model", default="qwen2.5:14b")
     ap.add_argument("--limit", type=int, default=0, help="stop after N windows per cell")
     ap.add_argument("--max-runs", type=int, default=0, help="stop after N runs this invocation")
+    ap.add_argument("--max-seconds", type=int, default=0,
+                    help="stop once this much wall time has gone, checked between runs. The useful "
+                         "bound for a cron tick: a deterministic cell takes ~6 s and an LLM cell "
+                         "~150-400 s, so a fixed run count either throttles the cheap cells or "
+                         "lets a tick run for hours")
     ap.add_argument("--labelled-only", action="store_true",
                     help="restrict to the 54 windows that carry counterfactual labels")
     ap.add_argument("--report", action="store_true", help="summarise what is already on disk")
@@ -62,7 +73,7 @@ def main() -> None:
     if a.limit:
         windows = windows[:a.limit]
     done = {(r["window"], r["arm"], r["sizer"], r["family"]) for r in rows}
-    n = 0
+    n, t0 = 0, time.monotonic()
     for arm, sizer, family in cells(a.cells):
         for w in windows:
             if (w, arm, sizer, family) in done:
@@ -80,6 +91,10 @@ def main() -> None:
                   f"util {res.get('util_win')}", flush=True)
             if a.max_runs and n >= a.max_runs:
                 print(f"chunk budget spent after {n} runs", flush=True)
+                return report(rows)
+            if a.max_seconds and time.monotonic() - t0 >= a.max_seconds:
+                print(f"chunk time spent after {n} runs, "
+                      f"{time.monotonic() - t0:.0f}s", flush=True)
                 return report(rows)
     report(rows)
 

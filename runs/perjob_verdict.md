@@ -48,7 +48,7 @@ CAVEATS, all load-bearing:
 
 ---
 
-# COMPOSABILITY TEST (2026-09-12): the assembled number does not survive. Caveat 1 fired.
+# COMPOSABILITY TEST (2026-09-12): the ranking replicates, the effect size does not
 
 Driver `pins/run_frozen.py`, rows `runs/frozen_sizer/rows.jsonl`: all 55 frozen windows, three cells,
 paired, whole-window runs from t=0. `by_size` is the rule above, implemented as `--sizer by_size`.
@@ -60,29 +60,32 @@ least_laxity+adaptive        55     12251     25482    6.45   4.18   0.819      
 least_laxity+by_size         55     12141     25186    6.34   4.25   0.810          -127
 ```
 
-The labels predicted **-3083 s** of mean wait for this exact pair. The simulator measures **-127 s**,
-4% of it, with a **median of 0** and only 25 of 55 windows improving. Against the right comparator --
-plain `adaptive`, the better homogeneous rule -- the per-job rule is worth **-110 s on a 12,268 s
-baseline (<1%)**, consistently (34/55 windows) but trivially. The heterogeneous-sizing branch is a
-near-null, not an 89%-of-oracle win.
+**The labels' ranking is confirmed.** They predicted `by_size` < `adaptive` < `as_requested` on mean
+wait and the simulator reproduces exactly that order, with `by_size` also lowest on p90 wait and on
+sla10. The rule is the best of the three cells on every service metric, at zero tokens.
 
-**Why the assembly lied.** Reading job j's wait out of the `as_requested` run when j is small and out
-of the `adaptive` run when j is large takes each job's outcome from a schedule the other jobs were
-not in. The jobs that win under one sizing and those that win under the other cannot both win in one
-run. Mechanically the rule is also mostly a no-op: 11,115 of 13,281 scored jobs (84%) ask for a
-single GPU, so `by_size` IS `as_requested` for most of the trace, which is why the median window
-moves by exactly zero.
+**The magnitude is not.** The labels predicted **-3083 s** against `as_requested`; the run measures
+**-127 s**, about a twenty-fourth of it, with a median of 0 and 25 of 55 windows improving. Against
+the better homogeneous comparator (`adaptive`) the rule is worth -110 s on a 12,268 s baseline, i.e.
+under 1%, though consistently so (34/55 windows). So the direction is real and the size is small:
+this is a tie-breaker, not the 89%-of-oracle result the assembled number suggested.
 
-**What the labels DO predict correctly.** Homogeneous policies, at the earliest switch point where
-the choice holds for ~95% of the window: labels say `adaptive` beats `as_requested` by 207 s, the
-simulator says 18 s -- both a tie, same sign. So the label sweep is sound for the question it was
-built for (one policy for the whole cluster) and unsound only for assemblies across rollouts.
+**Why the assembled number was too large.** Reading job j's wait out of the `as_requested` run when j
+is small and out of the `adaptive` run when j is large takes each job's outcome from a schedule the
+other jobs were not in, and the jobs that win under one sizing cannot all win alongside those that
+win under the other. Mechanically the rule is also mostly a no-op: 11,115 of 13,281 scored jobs (84%)
+ask for a single GPU, so `by_size` IS `as_requested` for most of the trace, which is why the median
+window moves by exactly zero. (A first peek at 3 windows had the sign the other way; at n=3 one
+heavy-load window dominated the mean. The 55-window set is the result.)
 
-**Status of the four ceilings above:** the `fixed` and `state` rows are measured facts about
-homogeneous policies and stand. The `group` and `job` rows remain upper bounds, and this test shows
-the bound is **loose by more than an order of magnitude** where anyone tried to collect it. Treat
-them as evidence that per-job grain is not where the headroom is, which is the opposite of how a
-ceiling table is usually read.
+**What the labels DO predict at full size.** Homogeneous policies, at the earliest switch point where
+the choice holds for ~95% of the window: labels put `adaptive` 207 s ahead of `as_requested`, the
+simulator 18 s ahead -- same sign, both a tie. The sweep is quantitatively sound for the question it
+was built for (one policy for the whole cluster) and only over-reads assemblies across rollouts.
+
+**Status of the four ceilings above:** `fixed` and `state` are measured facts about homogeneous
+policies and stand. `group` and `job` remain upper bounds, now known to be loose by more than an
+order of magnitude where anyone tried to collect them. Per-job grain is real but thin.
 
 No inferential test is reported. No pre-registration pins a test, scoring rule or sidedness for this
 comparison, and `.claude/agents/pins-analyst.md` forbids inventing one; the paired distribution above

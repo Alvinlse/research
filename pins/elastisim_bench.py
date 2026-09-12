@@ -2122,7 +2122,8 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
         slack_mult: float = 10.0, packet_every: int = 0, family: str = "",
         packet_out: Path | None = None) -> dict:
     from elastisim_python import JobState, NodeState, pass_algorithm
-    from pins.llm_agent import HOST
+    from pins.llm_agent import HOST, take_tokens
+    take_tokens()          # clear the meter so this run is billed only for its own inference
     world = world.resolve()
     tag = tag or arm
     stats = world / f"out/{tag}_job_statistics.csv"
@@ -2261,6 +2262,11 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
                resize_cooldown_blocks=ctx["resize_cooldown_blocks"],
                protected_events=ctx["protected_events"],
                wall_s=round(time.time() - t),
+               # The inference bill, which was being metered and then thrown away. `metered_client`
+               # counts every _ask through it, so take_tokens() at both ends of the run attributes
+               # the tokens to THIS run even when several runs share one process (run_frozen does).
+               **{f"tok_{k}": (round(v, 1) if isinstance(v, float) else v)
+                  for k, v in take_tokens().items()},
                **ctx.get("easy_stats", {}),
                **semantic,
                **{f"correct_{k.replace(' ', '_')}": v
