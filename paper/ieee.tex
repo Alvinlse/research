@@ -17,9 +17,8 @@
 
 \begin{document}
 
-\title{Sizing, Not Ordering: Trace-Driven Evaluation of\\
-Elastic GPU Scheduling and the Limits of\\
-LLM Policy Selection}
+\title{Can Multi-LLM Reasoning Improve Decision-Making?\\
+Evidence from Elastic GPU Cluster Scheduling}
 
 \author{\IEEEauthorblockN{Lay Kim Seng}
 \IEEEauthorblockA{Cyberscience Center, Tohoku University\\
@@ -45,13 +44,17 @@ auction valuations only pricing a job's deadline pressure matters, $8.6$ against
 The advantage of auction pricing over queue ordering is concentrated in one overloaded window of
 eleven, where violations fall from $91.0\%$ to $21.6\%$ while the median difference is zero.
 Counterfactual enumeration of every policy from sampled states bounds what any state-dependent
-selector could add at $2.03$ points for queue ordering and $0.07$ for auctions, with a median of
-zero, and a low-rank fine-tune does not approach even that bound. Reasoning earns its cost elsewhere:
-on an authored suite of operator-stated exceptions, which no public trace supplies, a debate between
-reviewers corrects a single model at an identical call budget. We conclude that the decision worth
-reasoning about in elastic GPU scheduling is sizing under runtime uncertainty during rare contention,
-not continuous policy selection, and that occupancy should be retired as a headline metric for
-elastic workloads.
+selector could add at $2.03$ points for queue ordering and $0.07$ for auctions, with a median of zero.
+Asked to select policies from that same observable state, a language model does not approach the
+bound: on held-out states an 8B model carries $8.70$ points of mean regret against the deterministic
+policy's $1.05$, and emits an illegal action on 11 of 24 states where deterministic code emits none.
+Low-rank fine-tuning changes nothing, at $8.78$ points and the same 11 failures, and role separation
+into demand and supply analysts does not help either. Reasoning earns its cost elsewhere: on an
+authored suite of operator-stated exceptions, which no public trace supplies, a debate between
+reviewers handles 43 of 81 cases against 29 for a single model at an identical call budget
+($p=0.0007$), while on control scenes with nothing to reason about every model arm is worse than the
+deterministic mechanism. We conclude that numeric rationing belongs to deterministic code, and that a
+language model belongs where the deciding fact reaches the scheduler as text.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -91,11 +94,16 @@ to three orders of magnitude.
 \S\ref{sec:antimetric}). Sizing moves service quality by an order of magnitude more than ordering
 does, and the highest-occupancy rule is the worst-service rule in every window we measure. We
 recommend reporting device-hours per unit of completed work instead.
-\item \textbf{What state-dependent policy selection can be worth} (\S\ref{sec:controls},
+\item \textbf{Language-model policy selection does not match deterministic code} (\S\ref{sec:controls},
 \S\ref{sec:oracle}). On held-out windows, queue-ordering rules are interchangeable while sizing and
 the auction's valuation are not, and the advantage of auction pricing is a single-window tail effect.
-Counterfactual enumeration bounds the remaining headroom at $2.03$ and $0.07$ points with a median of
-zero, and a low-rank fine-tune does not reach it.
+Counterfactual enumeration bounds the available headroom at $2.03$ and $0.07$ points with a median of
+zero, and neither a zero-shot model, a low-rank fine-tune, nor a demand--supply role split comes near
+it: eight times the deterministic policy's regret, and an illegal action on 11 of 24 held-out states.
+\item \textbf{Where a language model does belong} (\S\ref{sec:text}). When the deciding fact reaches
+the scheduler as operator text, which no public trace carries, a budget-matched debate handles 43 of
+81 authored exception cases against 29 for a single model, $p=0.0007$, with a blind replication and a
+control showing the same reasoning is harmful where there is nothing to reason about.
 \item \textbf{A protocol that makes such a comparison auditable} (\S\ref{sec:factorial-method}). The
 selector study is frozen before execution: workload-only window selection, a hashed manifest of
 trace, worlds, code and configuration, a fail-closed gate, and amendments recorded rather than
@@ -545,15 +553,51 @@ regret, and improvement over the best fixed training action.  This evaluation is
 offline: it determines whether the model learned the selector before another expensive closed-loop
 sweep is warranted.
 
-It did not.  The family-specific fixed floor has $1.05$ percentage points of mean regret, zero
-median regret, 75.0\% of states within 0.1 points of the oracle, and no invalid actions.  Qwen3-8B
-zero-shot has $8.70$ points of mean regret, 0.8 median regret, 45.8\% within 0.1 points, and 11/24
-invalid actions.  LoRA has $8.78$ points of mean regret, the same 0.8 median, 41.7\% within 0.1
-points, and the same 11/24 invalid count.  An initial reasoning-enabled decode was worse still
-(23/24 invalid zero-shot); both reported arms therefore use Qwen3's non-thinking template for the
-strict-JSON task.  Invalid outputs are conservatively assigned the worst candidate reward.  LoRA
-neither improves validity nor regret, and remains far behind the deterministic floor, so a costly
-closed-loop fine-tuned run is not warranted by this screening experiment.
+It did not.  Table~\ref{tab:llm-vs-code} places both model arms beside the deterministic policy on the
+same 24 held-out states.
+
+\begin{table}[t]
+\caption{Language-model selection against deterministic policy selection, on the 24 held-out states.
+Regret is the deadline-violation shortfall against the counterfactual best action in the same state;
+lower is better.  ``Near-optimal'' counts states within $0.1$ points of that action.}
+\label{tab:llm-vs-code}
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lrrrr}
+\toprule
+selector & mean regret & median & near-optimal & invalid \\
+\midrule
+deterministic policy (fixed per family) & $1.05$ & $0.0$ & $75.0\%$ & $0/24$ \\
+Qwen3-8B, zero-shot                     & $8.70$ & $0.8$ & $45.8\%$ & $11/24$ \\
+Qwen3-8B, LoRA fine-tuned               & $8.78$ & $0.8$ & $41.7\%$ & $11/24$ \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+Neither language-model arm is competitive.  Both carry roughly eight times the deterministic policy's
+regret, both leave a median state $0.8$ points short of the best available action where the
+deterministic policy leaves it exactly at the optimum, and both emit an unparseable or illegal action
+on 11 of 24 states, which the deterministic policy never does.  Fine-tuning moves nothing: mean regret
+is marginally worse than zero-shot, the median is identical, near-optimal states fall, and the invalid
+count is unchanged.  An initial reasoning-enabled decode was worse still, at 23 of 24 invalid, so both
+reported arms use the non-thinking template for this strict-JSON task; invalid outputs are
+conservatively scored as the worst candidate action.
+
+The closed-loop numbers agree with the offline screening.  On the validation split the single referee
+reaches $11.27\%$ deadline violations on the ordering family and $10.70\%$ on the auction family, and
+the role-separated referee $11.93\%$ on the ordering family, against $10.49\%$ and $9.87\%$ for the
+deterministic policies selected on that same split.  Those fixed policies were chosen on these
+windows, so this is not a held-out comparison and we do not test it; the held-out evidence is
+Table~\ref{tab:llm-vs-code}, and it points the same way.  Taken together, a small language model
+asked to choose scheduling policies from observable state --- zero-shot or fine-tuned, alone or split
+into demand and supply roles --- does not match a single well-chosen deterministic policy on this
+workload, and a closed-loop fine-tuned sweep is not warranted by this screening.
+
+This is a statement about the numeric rationing decision, not about language models in schedulers.
+The same deterministic policy that dominates here is helpless when the deciding fact is not in the
+numbers at all, which is the case we turn to next.
 
 \subsection{Where reasoning earns its cost: text exceptions}
 \label{sec:text}
@@ -653,18 +697,16 @@ carries operator text remains the prerequisite for testing the exception claim i
 \section{Future Work}
 \label{sec:future}
 
-\textbf{Selector against a fairly chosen fixed policy.}  The comparison this architecture ultimately
-has to win is against the best fixed configuration, and we defer it rather than assemble it from a
-half-finished split.  Three things make it worth doing properly.  The baseline must be chosen on
-validation and reported once on test, which we have already implemented; on our windows that
-discipline is nearly free, costing $0.05$ points in the non-market family and nothing in the market
-family relative to the configuration selectable with hindsight, so the eventual gap cannot be blamed
-on a weak control.  The comparison must be paired per window and read at the median as well as the
-mean, because \S\ref{sec:controls} shows a single overwhelmed window carrying a $6.6$-point mean
-difference.  And it should be reported next to the counterfactual ceiling of \S\ref{sec:oracle},
-since a selector can only be blamed for headroom that exists: where the oracle gain is zero, no
-selector of any kind can help, and the honest question becomes whether reasoning recovers the
-headroom that state-dependent selection actually has.
+\textbf{The closed-loop comparison on held-out windows.}  \S\ref{sec:oracle} settles the selection
+question offline, on held-out states, and the closed-loop validation numbers agree with it; what
+remains is the same comparison on the reserved split, which is executing.  Three properties make it
+sound and we have already implemented them.  The deterministic baseline is chosen on validation and
+reported once on the reserved split; on our windows that discipline is nearly free, costing $0.05$
+points for the ordering family and nothing for the auction family against the configuration selectable
+with hindsight, so no eventual gap can be blamed on a weak control.  The comparison is paired per
+window and read at the median as well as the mean, because \S\ref{sec:controls} shows a single
+overwhelmed window carrying a $6.6$-point mean difference.  And it belongs beside the counterfactual
+ceiling, since a selector can only be blamed for headroom that exists.
 
 \textbf{Selection regret rather than end-to-end outcome.}  Because most states are ties, end-to-end
 violation rates are an insensitive instrument for the architectural question.  Per-state regret
@@ -746,16 +788,17 @@ worst rule on every service axis we measure, because sublinear speed-up buys bus
 completed work.  For elastic workloads, device-hours per unit of completed work belongs in the
 headline and occupancy does not.
 
-Within that corrected frame, state-dependent policy selection has less to offer than its
-architectures assume.  On held-out windows the four queue-ordering rules are interchangeable to
-within $0.04$ points while sizing spans a factor of three, among auction valuations only deadline
-pressure matters, and the advantage of auction pricing over queue ordering is one overwhelmed window
-in eleven against a median of zero.  Counterfactual enumeration bounds what any selector could add at
-$2.03$ points for ordering and $0.07$ for auctions, with zero median gain, and a low-rank fine-tune
-reaches neither: its held-out regret is $8.78$ points against $8.70$ zero-shot and $1.05$ for the
-deterministic floor, with malformed output on eleven of twenty-four states.  The decision worth
-reasoning about is therefore sizing under runtime uncertainty during rare contention, not policy
-selection at every interval.
+Within that corrected frame, our title question has a clear answer for numeric rationing: no.  On
+held-out windows the four queue-ordering rules are interchangeable to within $0.04$ points while
+sizing spans a factor of three, among auction valuations only deadline pressure matters, and the
+advantage of auction pricing over queue ordering is one overwhelmed window in eleven against a median
+of zero.  Counterfactual enumeration bounds what any selector could add at $2.03$ points for ordering
+and $0.07$ for auctions, with zero median gain.  Asked to choose within that space, an 8B model
+carries $8.70$ points of held-out regret zero-shot and $8.78$ after low-rank fine-tuning, against
+$1.05$ for a single deterministic policy, and emits an illegal action on eleven of twenty-four states
+where the deterministic policy emits none.  Splitting the referee into demand and supply analysts does
+not recover the gap either.  Neither more reasoning structure nor supervision closes a gap this wide,
+because the decision being contested is arithmetic the code already performs correctly.
 
 Reasoning does earn its budget where the deciding fact is absent from the numbers: on authored
 operator exceptions, a debate between reviewers corrects a single model at an identical call budget.
