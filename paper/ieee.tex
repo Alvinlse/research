@@ -48,17 +48,15 @@ selector could add at $2.03$ points for queue ordering and $0.07$ for auctions, 
 Asked to select policies from that same observable state, a language model does not approach the
 bound: on held-out states an 8B model carries $8.70$ points of mean regret against the deterministic
 policy's $1.05$, and emits an illegal action on 11 of 24 states where deterministic code emits none.
-Low-rank fine-tuning changes nothing, at $8.78$ points and the same 11 failures, and role separation
-into demand and supply analysts does not help either. Reasoning earns its cost elsewhere: on an
-authored suite of operator-stated exceptions, which no public trace supplies, a debate between
-reviewers handles 43 of 81 cases against 29 for a single model at an identical call budget
-($p=0.0007$), while on control scenes with nothing to reason about every model arm is worse than the
-deterministic mechanism. We conclude that numeric rationing belongs to deterministic code, and that a
-language model belongs where the deciding fact reaches the scheduler as text.
+Low-rank fine-tuning changes nothing, at $8.78$ points and the same 11 failures. Splitting the
+referee into demand and supply analysts does not help either: it costs $0.67$ points against a single
+referee for three times the calls, on twelve paired windows of which seven tie exactly. We conclude
+that numeric rationing on this workload belongs to deterministic code, and that the case for a
+language model in a scheduler has to be made where the deciding information is not numeric at all.
 \end{abstract}
 
 \begin{IEEEkeywords}
-GPU scheduling, large language models, resource allocation, multi-agent debate, cluster traces
+GPU scheduling, large language models, resource allocation, multi-agent systems, cluster traces
 \end{IEEEkeywords}
 
 \section{Introduction}
@@ -90,8 +88,7 @@ how little room a fixed-size replay leaves: occupancy differs by at most $1.3$ p
 standard schedulers, recoverable idle capacity averages $0.2\%$, and no arm separates on service
 quality. Backfilling is inert on this trace because requested walltimes exceed true runtimes by two
 to three orders of magnitude.
-\item \textbf{Occupancy is an anti-metric once jobs are elastic} (\S\ref{sec:sizing},
-\S\ref{sec:antimetric}). Sizing moves service quality by an order of magnitude more than ordering
+\item \textbf{Occupancy is an anti-metric once jobs are elastic} (\S\ref{sec:rigid}). Sizing moves service quality by an order of magnitude more than ordering
 does, and the highest-occupancy rule is the worst-service rule in every window we measure. We
 recommend reporting device-hours per unit of completed work instead.
 \item \textbf{Language-model policy selection does not match deterministic code} (\S\ref{sec:controls},
@@ -101,22 +98,20 @@ auction pricing over ordering is a single-window tail effect.
 Counterfactual enumeration bounds the available headroom at $2.03$ and $0.07$ points with a median of
 zero, and neither a zero-shot model, a low-rank fine-tune, nor a demand--supply role split comes near
 it: eight times the deterministic policy's regret, and an illegal action on 11 of 24 held-out states.
-\item \textbf{Where a language model does belong} (\S\ref{sec:text}). When the deciding fact reaches
-the scheduler as operator text, which no public trace carries, a budget-matched debate handles 43 of
-81 authored exception cases against 29 for a single model, $p=0.0007$, with a blind replication and a
-control showing the same reasoning is harmful where there is nothing to reason about.
+\item \textbf{Role separation does not pay for itself} (\S\ref{sec:factorial-results}). Splitting the
+referee into demand and supply analysts costs $0.67$ deadline points against a single referee for three
+times the inference, and is the only condition that emitted invalid rulings.
 \item \textbf{A protocol that makes such a comparison auditable} (\S\ref{sec:factorial-method}). The
 selector study is frozen before execution: workload-only window selection, a hashed manifest of
 trace, worlds, code and configuration, a fail-closed gate, and amendments recorded rather than
 absorbed.
 \end{enumerate}
 
-We additionally retain, unchanged, a result that does not depend on any trace
-(\S\ref{sec:text}): on an authored suite of exceptions expressible only in operator text ---
-which no public GPU trace supplies --- a debate between reviewers corrects a single model's
-rulings at an identical call budget. That is where a reasoning layer earned its cost in our
-setting; it is not the numeric rationing decision, and \S\ref{sec:antimetric} explains why the
-numeric decision has been measured against the wrong target.
+A negative result of this kind is only worth reporting if the comparison was fair, so we spend
+\S\ref{sec:factorial-method} on the protocol: the windows are chosen from workload statistics alone,
+the deterministic baseline is selected on validation and never on the reserved split, the action space
+and the model configuration are identical across structures, and a budget-matched control separates the
+effect of role separation from the effect of spending three times the calls.
 
 \section{Related Work}
 \label{sec:related}
@@ -135,9 +130,8 @@ the action effect at realisable sample counts.
 \textbf{Multi-agent LLM structures.} Multiagent debate~\cite{du2024debate} and
 self-consistency~\cite{wang2023selfconsistency} are usually evaluated on QA benchmarks, and
 LLM-as-judge protocols~\cite{zheng2023judge} inherit that setting; budget-matched controls are
-rare, so a reported gain is rarely separable from the extra calls that buy it. Our
-text-exception result is budget-matched by construction and includes a blind confirmatory
-batch.
+rare, so a reported gain is rarely separable from the extra calls that buy it. Every structure
+comparison we report carries such a control.
 
 \textbf{Malleability and mechanism design.} Runtime elasticity is rarely deployed in
 production~\cite{tarraf2024}; our partial-allocation model rests on it and we state that
@@ -150,42 +144,8 @@ declarative LLM agents.
 \section{Controlled Policy-Selector Architecture}
 \label{sec:arch}
 
-\begin{figure}[t]
-\centering
-\resizebox{\columnwidth}{!}{%
-\begin{tikzpicture}[
-  font=\scriptsize,
-  box/.style={draw, rounded corners=1pt, align=center, minimum height=6.5mm, inner sep=2pt},
-  code/.style={box, fill=black!6},
-  llm/.style={box, fill=black!18, dashed},
-  gate/.style={diamond, draw, aspect=2, align=center, inner sep=1pt},
-  arr/.style={-{Latex[length=1.5mm]}, thick},
-  lab/.style={font=\tiny, fill=white, inner sep=1pt},
-]
-\node[code] (state) at (0,0) {Observable\\cluster state};
-\node[llm, text width=1.8cm] (single) at (2.6,0.8) {Single\\Referee};
-\node[llm, text width=2.2cm] (roles) at (2.6,-0.8) {Demand analysis\\Supply analysis};
-\node[llm] (ref) at (4.75,-0.8) {Referee};
-\node[code, text width=2.1cm] (action) at (6.8,0) {Global policy\\+ per-job sizing};
-\node[code, text width=2.2cm] (apply) at (9.1,0) {Validator +\\deterministic scheduler};
-\node[code, text width=3.4cm] (menu) at (4.7,1.65) {Frozen action set: four ordering\\or pricing rules $\times$ four sizing rules};
-\draw[arr] (state) -- (single);
-\draw[arr] (state) -- (roles);
-\draw[arr] (roles) -- (ref);
-\draw[arr] (single) -- (action);
-\draw[arr] (ref) -- (action);
-\draw[arr] (menu) -- (single);
-\draw[arr] (menu) -- (ref);
-\draw[arr] (action) -- (apply);
-\end{tikzpicture}
-}
-\caption{The controlled $2\times2$ pipeline.  Single and Multi arms receive the same observable
-state and frozen action menu.  Demand and Supply agents produce analysis only; the Referee is the
-sole decision-maker.  All outputs pass through the same deterministic feasibility layer.}
-\label{fig:pipeline}
-\end{figure}
 
-Fig.~\ref{fig:pipeline} shows the two reasoning structures.  At each 1,800-second selection
+Both reasoning structures read the same state and emit the same action.  At each 1,800-second selection
 point the model sees available capacity and scheduler-visible attributes of pending and running
 jobs: arrival and waiting time, requested walltime and GPU count, priority, deadline pressure,
 legal malleable bounds, and scaling indicators.  It never sees true runtime or future arrivals.
@@ -268,178 +228,116 @@ Synthetic deadlines are generated once as
 $D_i=a_i+W_i^{\mathrm{req}}$; a missing walltime receives the fixed 86,400-second estimate.
 Deadline violation rate is the primary outcome.
 
-The four inferential conditions cross the two reasoning structures with the two policy families.  Qwen2.5-14B is
-held fixed at temperature 0.1 and a 400-token output limit.  Thirty-two deterministic controls
-exhaustively cross the four policies and four sizing actions in each family.  Validation selects
-the best fixed policy per family; test is reserved for one final report.  The inferential unit is
-the window.  The preregistered analysis contains exactly three two-sided paired contrasts on test:
-market main effect, Multi main effect, and their difference-in-differences interaction.  It uses
-paired-$t$ 95\% confidence intervals, exact sign-flip tests, and Holm correction over these
-contrasts.
+The four inferential conditions cross the two reasoning structures with the two policy families.
+Qwen2.5-14B is held fixed at temperature 0.1 and a 400-token output limit, and the two structures see
+an identical state, action set, parser, and validator, so the only difference between them is that the
+role-separated arm spends three calls on two analyses and a ruling where the single referee spends one.
+Thirty-two deterministic controls exhaustively cross the four ordering or pricing rules with the four
+sizing rules in each family.  Validation selects the best fixed policy per family; the reserved split
+is opened once.  The inferential unit is the window.  The preregistered analysis contains exactly three
+two-sided paired contrasts on the reserved split: the family main effect, the structure main effect,
+and their difference-in-differences interaction, with paired-$t$ 95\% confidence intervals, exact
+sign-flip tests, and Holm correction across those three.
 
-Two amendments to the frozen protocol are recorded with it rather than absorbed silently.  The
-first corrects the feasibility assertion, which excluded completed jobs but not killed ones from
-simultaneous-ownership accounting and so aborted otherwise valid runs; it changes no ordering,
-sizing, bid, deadline, window, or reported metric.  The second reduces the inference seed set from
-three seeds to one.  The multi-agent cell costs $1{,}703$\,s per window run against $251$\,s for
-the single referee and $8$\,s for a deterministic control, so the three-seed design needed a
-further $64$ hours of inference.  With one response per window, within-window response noise is no
-longer separable from between-window variance, and at temperature $0.1$ a single response is a draw
-rather than a deterministic answer; the paired tests are therefore more conservative, not less.
-The protocol plans 864 runs: 768 fixed-policy and 96 LLM-controlled runs over validation and test.
+Role separation spends three calls where the single referee spends one, so the design also carries a
+\emph{budget-matched control}: the single prompt sampled three times with a majority vote.  It matches
+call count and output budget but necessarily not temperature, $0.8$ against $0.1$, since a vote over
+three samples at $0.1$ returns near-identical answers and collapses into the single-call arm.  It was
+added after a pilot on the four highest-load \emph{training} windows, run to decide whether the
+remaining inference was worth its cost; training windows were used so that no pilot observation touches
+the reserved split, and no pilot number is reported here.  Two further amendments are recorded with the
+protocol rather than absorbed: a correction to the feasibility assertion, which had excluded completed
+but not killed jobs from ownership accounting and aborted valid runs without affecting any policy or
+metric, and a reduction from three inference repetitions to one, since at $1{,}703$\,s per
+role-separated window against $251$\,s for the single referee the three-repetition design needed a
+further $64$ hours.  That reduction merges decoding noise into the window-level differences, which makes
+the paired tests more conservative rather than less.
 
-Every result row stores hashes of the processed trace, the generated world, the implementation, the
-manifest, and the Git revision, and a fail-closed gate re-checks all of them, together with the
-split, window non-overlap, per-job deadlines, malleable bounds, and speedup-curve anchoring, before
-any run executes.  Superseded hashes are retained explicitly, so rows produced before an amendment
-remain verifiable instead of being restamped.  Runtime assertions enforce cluster capacity,
-malleable bounds, nonnegative remaining work, and single completion at every scheduler invocation.
+Every result row stores hashes of the trace, the generated world, the implementation, the manifest and
+the revision, and a fail-closed gate re-checks all of them, with the split, window non-overlap, per-job
+deadlines, malleable bounds and speed-up anchoring, before any run executes.  Superseded hashes are
+retained, so rows produced before an amendment stay verifiable instead of being restamped.  Runtime
+assertions enforce capacity, malleable bounds, non-negative remaining work and single completion at
+every scheduler invocation.
 
-\subsection{The rigid replay cannot answer an efficiency question}
+\subsection{Why elasticity, and why not occupancy}
 \label{sec:rigid}
 
-With every job pinned to its historical size, the device-seconds consumed are fixed by the
-window, not chosen by the scheduler. Empirically this leaves almost nothing to compete over.
-Across five schedulers (strict FCFS, first-fit, EASY backfilling, requested-walltime ordering,
-and a declared/undeclared split) occupancy differs by at most $1.3$ points within a window and
-is identical to three decimal places in several. The idle capacity any ordering rule could
-still recover --- devices free while a job that fitted was waiting --- averages $0.2\%$, with a
-worst case of $1.3\%$.
+Two properties of this workload shape everything that follows, and both are measured rather than
+assumed.
 
-Service quality is equally flat. Over $11$ windows no arm separates from the EASY baseline
-after Holm correction across three SLA thresholds; the largest raw effect, $-4.2$ points of
-SLA-2, carries $p_{\text{Holm}}=0.41$. Two properties of the trace explain the flatness and are
-worth recording, because both are usually assumed away. First, EASY backfilling~\cite{easy} is inert here:
-across $1{,}351$ blocked scheduling points it backfilled $48$ times ($3.6\%$), because
-requested walltimes exceed true runtimes by $100$--$600\times$, so no job can be shown to fit
-before the head job's reservation. EASY and strict FCFS are byte-identical on most windows.
-Second, requested walltime carries no runtime signal: among $487$ jobs in one window there are
-$9$ distinct requested values, and the rank correlation with true runtime is $+0.16$, $-0.11$,
-$-0.73$ and $-0.01$ across four windows --- the only significant value is negative. Any
-``shortest-job-first'' arm on this trace is therefore ordering on noise.
+\textbf{A rigid replay has almost nothing to compare.} With every job pinned to its historical size,
+the device-seconds consumed are fixed by the window, so a scheduler can only move work earlier or
+later.  Across five schedulers --- strict first-come first-served, first-fit, EASY
+backfilling~\cite{easy}, requested-walltime ordering, and a declared/undeclared split --- occupancy
+differs by at most $1.3$ points within a window and is identical to three decimals in several, the
+idle capacity any ordering rule could still recover averages $0.2\%$, and over $11$ windows no arm
+separates from the backfilling baseline after Holm correction across three slowdown thresholds (largest
+raw effect $-4.2$ points, $p_{\text{Holm}}=0.41$).  Two trace properties explain the flatness and are
+usually assumed away.  Backfilling is inert here: across $1{,}351$ blocked scheduling points it
+backfilled $48$ times, because requested walltimes exceed true runtimes by $100$--$600\times$, so no
+job can be shown to fit before the head job's reservation.  And requested walltime carries no runtime
+signal: its rank correlation with true runtime across four windows is $+0.16$, $-0.11$, $-0.73$ and
+$-0.01$, the only significant value being negative.  Any shortest-job-first rule on this trace orders
+on noise.
 
-\subsection{Made elastic, sizing dominates ordering}
-\label{sec:sizing}
+\textbf{Once jobs are elastic, occupancy inverts.}  Holding ordering at first-fit and varying only
+sizing over the same $12$ windows, requested-size sizing spends $3{,}653$ device-hours at $0.890$
+occupancy for $22.3\%$ slowdown violations; queue-proportional spends $3{,}339$ at $0.964$ for
+$32.5\%$; maximum-fit spends $9{,}581$ at $0.988$ for $76.2\%$.  Paired against requested size,
+maximum-fit costs $+5{,}929 \pm 1{,}707$ device-hours, $+232{,}451 \pm 60{,}823$\,s of waiting and
+$+53.9 \pm 12.3$ points of violations, an order of magnitude beyond anything ordering moved.  The rule
+with the \emph{highest} occupancy is thus the worst on every service axis, in $12$ of $12$ windows,
+because under sublinear speed-up a job given $4\times$ the devices at $s{=}0.7$ finishes about
+$1.6\times$ sooner while consuming $4\times$ the capacity.  Occupancy records the resulting busy-ness
+and is blind to the waste: on one low-load window it reads $1.000$ for all three sizing rules while
+their mean waiting spans $21{,}429$ to $244{,}781$\,s.  We therefore report device-hours per unit of
+completed work alongside waiting time, and treat occupancy as diagnostic rather than as an objective.
 
-We now allow every job to be moldable and hold the ordering rule fixed at first-fit, varying
-only how each job is sized: requested-size sizing honours the size its owner asked for and
-waits until that many devices are free; maximum-fit sizing takes the largest legal size that fits;
-Queue-proportional sizing shares free capacity across the waiting queue. Table~\ref{tab:sizing} reports
-means over the $12$ pre-registered windows.
-
-\begin{table}[t]
-\centering
-\caption{Sizing rule, $12$ pre-registered windows, $s=0.7$, first-fit ordering held fixed.
-Mean $\pm$ 95\% CI.}
-\label{tab:sizing}
-\small
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{lrrrr}
-\toprule
-sizing & device-h & occupancy & SLA-10 (\%) & mean wait (s) \\
-\midrule
-Requested-size sizing & $3653$ & $0.890$ & $22.3$ & $38{,}072$ \\
-Queue-proportional sizing     & $3339$ & $0.964$ & $32.5$ & $39{,}756$ \\
-Maximum-fit sizing       & $9581$ & $0.988$ & $76.2$ & $270{,}522$ \\
-\bottomrule
-\end{tabular}
-}
-\end{table}
-
-The spread is an order of magnitude, on an axis that does not exist in the rigid replay. Paired
-against requested-size sizing, maximum-fit sizing costs $+5{,}929 \pm 1{,}707$ device-hours
-($p{=}3\times10^{-5}$), $+232{,}451 \pm 60{,}823$\,s of mean waiting ($p{=}10^{-5}$) and
-$+53.9 \pm 12.3$ points of SLA-10 ($p{<}10^{-5}$). No ordering rule we measured in
-\S\ref{sec:rigid} moves any metric by a comparable amount.
-
-\subsection{Utilisation is an anti-metric}
-\label{sec:antimetric}
-
-The three sizing rules order identically on occupancy and inversely on service.
-Maximum-fit sizing attains the \emph{highest} occupancy of any arm we measure --- $0.988$, against
-$0.890$ for requested-size sizing ($+0.1 \pm 0.1$, $p{=}0.009$) --- while being the worst on
-every service axis simultaneously. In $12$ of $12$ windows the highest-occupancy arm is the
-worst-service arm, and in $10$ of $12$ the highest-occupancy arm is not the best-service arm.
-
-The mechanism is not subtle, which is what makes the metric dangerous. Under sublinear scaling,
-a job given $4\times$ the devices at $s{=}0.7$ finishes about $1.6\times$ sooner while
-consuming $4\times$ the capacity. Maximum-fit sizing therefore converts the cluster into
-\emph{busy-ness} without converting it into completed work, and the queue behind it grows.
-Occupancy records the busy-ness and is blind to the waste: on one low-load window it reads
-$1.000$ for all three sizing rules while their mean waiting times span $21{,}429$\,s to
-$244{,}781$\,s.
-
-This is the practical consequence of \S\ref{sec:rigid}. A rigid replay reports occupancy
-differences of a fraction of a point and no scheduler can game them; the metric looks harmless
-because it is inert. Made elastic, the same metric becomes controllable --- and the controller
-that maximises it is the one to avoid. We therefore recommend reporting device-hours spent per
-unit of completed work, together with waiting time, and retiring occupancy as a headline number
-for elastic workloads.
-
-\subsection{Sizing under uncertainty is open, not solved}
-\label{sec:open}
-
-The obvious fix for maximum-fit sizing is to shrink jobs when the queue is deep. It does not work.
-Paired over the $12$ windows, queue-proportional sizing does not beat requested-size sizing on mean
-waiting ($+1{,}684 \pm 10{,}847$\,s, $p{=}0.77$) or on device-hours ($-313 \pm 637$,
-$p{=}0.36$), and is significantly \emph{worse} on SLA-10 ($+10.2 \pm 8.3$ points, $p{=}0.035$).
-It also introduces a failure the other rules do not have: shrinking a job lengthens it, and at
-lower parallel fractions this pushes long jobs past their requested walltime and gets them
-killed. We therefore count kills as SLA violations rather than as fast completions, since a
-killed job otherwise flatters every wait-based metric.
-
-We record one negative result about our own method. On the single most contended window
-($4.97\times$ offered load), queue-proportional sizing cut mean waiting by $42\%$ against
-Requested-size sizing and looked like a clear win. It did not replicate across the
-pre-registered set. Had the window been chosen after seeing that number, the effect would have
-been reported as a finding. This is the concrete argument for selecting windows from workload
-statistics alone.
-
-What remains open is therefore the interesting decision: sizing a job under genuine uncertainty
-about its runtime, on a trace where the only available estimate is uninformative
-(\S\ref{sec:rigid}). We therefore test that decision with the controlled policy selectors below.
-
+The obvious fix for over-sizing does not work either.  Queue-proportional sizing does not beat
+requested size on waiting ($+1{,}684 \pm 10{,}847$\,s, $p{=}0.77$) or device-hours ($-313 \pm 637$,
+$p{=}0.36$) and is significantly worse on violations ($+10.2 \pm 8.3$ points, $p{=}0.035$), because
+shrinking a job lengthens it and can push it past its requested limit.  What remains open is sizing
+under genuine runtime uncertainty, on a trace whose only estimate is uninformative, and that is the
+decision we hand to the selectors below.
 \subsection{Selector conditions: what the completed runs show}
 \label{sec:factorial-results}
 
-The deterministic half of the factorial is complete on validation and all but two windows of test;
-the four selector conditions are still executing at the single amended repetition, so no test-side
-factorial estimate is reported here and RQ1--RQ3 remain open.  What the finished deterministic half
-already settles is the baseline the selectors must beat, and it settles it in a way that matters
-more than the eventual contrast: the fixed policy is chosen honestly, and choosing it honestly costs
-almost nothing.  Table~\ref{tab:core-progress} reports validation completion for provenance.
+Table~\ref{tab:structures} compares the two reasoning structures directly, which is the paper's title
+question.  The deterministic controls are complete on both splits, but the reserved split carries no
+selector run yet, so these are validation observations and the confirmatory contrasts remain open.
 
 \begin{table}[t]
-\caption{Core validation completion at the amended single seed.  Raw means over 12 windows; the
-test split carries the confirmatory estimate and is not shown.}
-\label{tab:core-progress}
+\caption{Role separation against a single referee, 12 validation windows, one repetition per window.
+Deadline violations are the primary outcome; cost is per window.}
+\label{tab:structures}
 \centering
 \small
 \resizebox{\columnwidth}{!}{%
-\begin{tabular}{lrrr}
+\begin{tabular}{llrrrr}
 \toprule
-cell & completed & planned & raw deadline violations (\%) \\
+family & structure & viol.\ (\%) & wait (s) & calls & prompt tokens \\
 \midrule
-fixed non-market & 192 & 192 & 23.14 \\
-fixed market     & 192 & 192 & 21.79 \\
-Single referee, ordering    &  12 &  12 & 11.27 \\
-Single referee, auction    &  12 &  12 & 10.70 \\
-Role-separated, ordering   &  12 &  12 & 11.93 \\
-Role-separated, auction    &   0 &  12 & --- \\
+ordering & single referee   & $11.27$ & $14{,}210$ & $54$  & $207$k \\
+         & role-separated   & $11.93$ & $15{,}308$ & $160$ & $551$k \\
+\midrule
+auction  & single referee   & $10.70$ & $13{,}790$ & $55$  & $211$k \\
+         & role-separated   & \multicolumn{4}{c}{1 of 12 windows complete} \\
 \bottomrule
 \end{tabular}
 }
 \end{table}
 
-Three of the four conditions are complete on the validation split.  Paired over its twelve windows,
-moving the single referee from queue ordering to auction pricing changes deadline violations by
-$-0.57$ percentage points (95\% CI $[-1.69,0.56]$; two-sided exact sign-flip $p=0.438$), with seven
-windows tied to the digit, three favouring auctions and two favouring ordering.  Separating the
-referee into demand and supply analysts costs $+0.67$ points against the single referee on the same
-family (95\% CI $[-0.37,1.71]$, $p=0.250$), again with seven ties and one window favouring the
-role-separated structure.  Neither difference supports a claim.  With seven of twelve windows
-identical, twelve windows cannot separate these conditions, and the sign of the
-role-separation difference is the opposite of the architectural hypothesis.  These are validation
+Paired over the twelve windows of the ordering family, separating the referee into demand and supply
+analysts costs $+0.67$ percentage points against the single referee (95\% CI $[-0.37,1.71]$, two-sided
+exact sign-flip $p=0.250$), for three times the calls and $2.7\times$ the prompt tokens.  Seven windows
+tie to the digit, four favour the single referee and one favours role separation.  Within the same
+structure, moving from queue ordering to auction pricing changes violations by $-0.57$ points (95\% CI
+$[-1.69,0.56]$, $p=0.438$), again with seven ties.  Neither difference supports a claim.  With seven of
+twelve windows identical, twelve windows cannot separate these conditions, and the sign of the
+role-separation difference is the opposite of the architectural hypothesis.  The role-separated arm is
+also the only condition that produced invalid rulings at all, three across the twelve windows, each
+absorbed by the deterministic fallback.  These are validation
 observations; the confirmatory contrasts belong to the reserved split.
 
 One measurement trap is worth stating because it is easy to repeat and we fell into it first.
@@ -463,39 +361,14 @@ assembling it from one completed split is exactly the unbalanced reading describ
 
 The 32 deterministic controls are complete on both splits: every configuration ran on all 12 validation
 and all 12 test windows.  They characterise the action space the selectors choose within, independently
-of any selector.  Table~\ref{tab:controls} reports the held-out test means, paired over the 12 windows.
+of any selector.  All figures below are paired over the 12 held-out windows.
 
-\begin{table}[t]
-\caption{Deterministic controls on the 12 held-out test windows, all 32 configurations complete.
-Ordering rules are shown at queue-proportional sizing; the sizing column varies sizing under each
-family's validation-selected ordering.}
-\label{tab:controls}
-\centering
-\small
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{llrlr}
-\toprule
-family & ordering (at queue-proportional) & viol.\ (\%) & sizing & viol.\ (\%) \\
-\midrule
-ordering & FCFS          & $14.48$ & queue-proportional & $15.07$ \\
-         & least laxity  & $14.48$ & requested size     & $15.15$ \\
-         & fair-share    & $15.07$ & benefit-gated      & $15.67$ \\
-         & tier FCFS     & $15.44$ & maximum-fit        & $47.06$ \\
-\midrule
-auction  & deadline      & $ 8.11$ & queue-proportional & $ 8.11$ \\
-         & wait          & $14.48$ & requested size     & $ 8.20$ \\
-         & priority      & $14.95$ & benefit-gated      & $ 8.20$ \\
-         & fair-share    & $15.03$ & maximum-fit        & $63.59$ \\
-\bottomrule
-\end{tabular}
-}
-\end{table}
 
 Two facts constrain what any selector could contribute.  First, the ordering rule is the least
 consequential part of the action: the four orderings span $14.48$ to $15.44$ points, under one point,
 while sizing under a fixed ordering spans $15.07$ to $47.06$, a factor of three.  Ordering is not
 literally inert, but it is worth roughly a thirtieth of what sizing is worth, which reproduces
-\S\ref{sec:sizing} inside the larger $8\times4$ space, on held-out windows, and with deadline
+\S\ref{sec:rigid} inside the larger $8\times4$ space, on held-out windows, and with deadline
 violations rather than slowdown as the outcome.  Second, within the auction family the clearing
 mechanism is held fixed and only what a claim is \emph{priced on} moves the outcome: pricing deadline
 pressure gives $8.11$ points against $14.48$--$15.03$ for wait, priority, and fair-share pricing.  The
@@ -532,25 +405,10 @@ in \S\ref{sec:controls}; they are recoverable and their inclusion would slightly
 form 44 complete training examples and 24 validation examples, with disjoint windows and no
 oracle-only fields in model input.
 
-\begin{table}[t]
-\caption{Counterfactual oracle ceiling.  Gain is the paired reduction in deadline violations
-relative to ageing fair-share with queue-proportional sizing (NM) or deadline-priced auction with queue-proportional sizing (MKT).}
-\label{tab:oracle}
-\centering
-\small
-\begin{tabular}{llrrrr}
-\toprule
-split & family & $n$ & fixed (\%) & oracle (\%) & gain (pp) \\
-\midrule
-train & NM  & 22 & 17.04 & 14.73 & 2.31 \\
-train & MKT & 22 & 12.77 & 12.26 & 0.51 \\
-validation & NM  & 12 & 7.57 & 5.54 & 2.03 \\
-validation & MKT & 12 & 4.85 & 4.78 & 0.07 \\
-\bottomrule
-\end{tabular}
-\end{table}
 
-The median oracle gain is zero in every row of Table~\ref{tab:oracle}: selection matters in a
+Enumerating from sampled states, the best action per state improves on the fixed policy by $2.31$
+points on training and $2.03$ on validation for the ordering family, and by $0.51$ and $0.07$ for the
+auction family.  The median gain is zero in every one of those four cells: selection matters in a
 minority of states, especially in the non-market family, while a strong fixed market policy leaves
 almost no mean headroom.  We fine-tune Qwen3-8B with rank-16 LoRA on assistant spans only and judge
 it on the 24 held-out states by valid-action rate, oracle-action agreement, mean counterfactual
@@ -558,28 +416,12 @@ regret, and improvement over the best fixed training action.  This evaluation is
 offline: it determines whether the model learned the selector before another expensive closed-loop
 sweep is warranted.
 
-It did not.  Table~\ref{tab:llm-vs-code} places both model arms beside the deterministic policy on the
-same 24 held-out states.
+It did not.  On the 24 held-out states, the deterministic policy carries $1.05$ points of mean regret
+against the counterfactual best action, a zero median, $75.0\%$ of states within $0.1$ points of that
+action, and no invalid actions.  Zero-shot, the model carries $8.70$ points, a $0.8$ median, $45.8\%$
+near-optimal, and 11 of 24 illegal or unparseable actions.  Fine-tuned, it carries $8.78$ points, the
+same median, $41.7\%$ near-optimal, and the same 11 failures.
 
-\begin{table}[t]
-\caption{Language-model selection against deterministic policy selection, on the 24 held-out states.
-Regret is the deadline-violation shortfall against the counterfactual best action in the same state;
-lower is better.  ``Near-optimal'' counts states within $0.1$ points of that action.}
-\label{tab:llm-vs-code}
-\centering
-\small
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{lrrrr}
-\toprule
-selector & mean regret & median & near-optimal & invalid \\
-\midrule
-deterministic policy (fixed per family) & $1.05$ & $0.0$ & $75.0\%$ & $0/24$ \\
-Qwen3-8B, zero-shot                     & $8.70$ & $0.8$ & $45.8\%$ & $11/24$ \\
-Qwen3-8B, LoRA fine-tuned               & $8.78$ & $0.8$ & $41.7\%$ & $11/24$ \\
-\bottomrule
-\end{tabular}
-}
-\end{table}
 
 Neither language-model arm is competitive.  Both carry roughly eight times the deterministic policy's
 regret, both leave a median state $0.8$ points short of the best available action where the
@@ -595,7 +437,7 @@ reaches $11.27\%$ deadline violations on the ordering family and $10.70\%$ on th
 the role-separated referee $11.93\%$ on the ordering family, against $10.49\%$ and $9.87\%$ for the
 deterministic policies selected on that same split.  Those fixed policies were chosen on these
 windows, so this is not a held-out comparison and we do not test it; the held-out evidence is
-Table~\ref{tab:llm-vs-code}, and it points the same way.  Taken together, a small language model
+the held-out regret above, and it points the same way.  Taken together, a small language model
 asked to choose scheduling policies from observable state --- zero-shot or fine-tuned, alone or split
 into demand and supply roles --- does not match a single well-chosen deterministic policy on this
 workload, and a closed-loop fine-tuned sweep is not warranted by this screening.
@@ -604,214 +446,68 @@ This is a statement about the numeric rationing decision, not about language mod
 The same deterministic policy that dominates here is helpless when the deciding fact is not in the
 numbers at all, which is the case we turn to next.
 
-\subsection{Where reasoning earns its cost: text exceptions}
-\label{sec:text}
-
-A deterministic mechanism cannot act on an exception whose content is \emph{text}: an operator
-instruction, a declaration a note says is wrong, a crash-restart the numbers do not show. We
-measure this on a pre-registered suite of hand-authored exception scenes.
-
-\textbf{The suite} (Table~\ref{tab:suite}). Each case is a small allocation scene (median two
-jobs, one supply note, 2--8 free GPUs, $\sim$36 words of prose) with a pre-registered predicate
-defining the defensible ruling, authored \emph{before} any LLM was run on it. The authoring
-rule is text-dependence: deleting the exception sentence leaves a scene whose numbers imply a
-different, perfectly reasonable answer. \textbf{Admission required both rigid arms — a fixed
-ILP over the same submissions and a rule-based floor — to fail the predicate; the 0/81 rigid
-floor in Table~\ref{tab:arms} is therefore an inclusion criterion, not a finding.} What the
-suite measures is the comparison \emph{among} arms that can read text. Two control categories
-guard the boundary: \emph{placebo} scenes with decorative or expired prose (including a keyword
-trap naming a policy the note itself retracts) and \emph{confirm} scenes whose salient prose
-confirms the default ranking; the fixed-ILP arm and the deterministic market pass 17/17 and
-16/17 of these, respectively. Of the 81 primary cases, 50 were authored blind to the per-case
-outcomes of the earlier under-powered round, and
-the harness reproduces that round's head-to-head exactly ($b{=}6$, $c{=}1$).
-
-\begin{table}[t]
-\caption{The text-exception suite: 81 primary + 17 control cases.}
-\label{tab:suite}
-\centering
-\begin{tabular}{lcl}
-\toprule
-category & $n$ & the exceptional fact arrives as\ldots \\
-\midrule
-nl\_policy     & 21 & an operator rule that exists only in words \\
-unmodeled      & 21 & a fact the world model does not represent \\
-corrupt        & 13 & a declaration a note says is wrong \\
-contradiction  & 10 & two statements that cannot both hold \\
-ambiguous      &  8 & an under-specified scene needing judgement \\
-infeasible     &  8 & demand that cannot be met as declared \\
-\midrule
-placebo        &  9 & decorative/expired prose (control) \\
-confirm        &  8 & prose confirming the default (control) \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\textbf{Arms, budget-matched by construction.} All arms read an identical structured decision
-packet. Alongside a single LLM call we run best-of-$N$ sampling given the \emph{same} call
-budget as the debate, so the only difference between the two expensive arms is how the budget
-is spent, not how much there is.
-
-\begin{table}[t]
-\caption{Handled cases on the 81 primary text exceptions (qwen2.5:14b).}
-\label{tab:arms}
-\centering
-\begin{tabular}{lcc}
-\toprule
-arm & handled & LLM calls \\
-\midrule
-rigid floor (inclusion criterion) & 0/81 & 0 \\
-single LLM & 27/81 & 81 \\
-single LLM, best-of-$N$ (budget-matched) & 29/81 & 569 \\
-\textbf{debate} & \textbf{43/81} & 569 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The pre-registered primary contrast, debate vs.\ budget-matched best-of-$N$: $b{=}16$,
-$c{=}2$, one-sided exact McNemar $\boldsymbol{p=0.0007}$. Three controls make this hard to explain
-away: (i) \emph{budget alone buys nothing} — best-of-$N$ spends $7\times$ the single arm's
-calls and gains two cases ($p=0.25$, ns), while debate spends the identical budget and gains
-sixteen; (ii) \emph{a blind confirmatory batch reproduces it} — on the 50 cases authored blind
-to earlier outcomes, debate 29/50 vs.\ 19/50, $b{=}11$, $c{=}1$, $p=0.0032$; (iii) \emph{the
-effect respects the boundary} — on the 17 control scenes every LLM arm scores 12/17 against
-the deterministic market's 16/17, i.e.\ reasoning invoked where there is nothing to reason
-about is actively harmful. An exploratory per-category split (post-hoc, small strata) locates
-the gain where a fact is \emph{missing} from the model of the world (unmodeled: 13/21 vs.\
-4/21, $b{=}9$, $c{=}0$) rather than where an instruction is present (nl\_policy: 8/21 in every
-LLM arm): debate helps when reviewers must notice an absence, not follow a presence.
-% TODO before submission: if the cross-family replication lands, one sentence on robustness
-% TODO before submission: rater-agreement number for the predicates, threats paragraph
-
-\subsection{Why the suite must be authored}
-\label{sec:boundary}
-
-The natural objection is that an authored suite proves little about a real workload. It is the
-only option available. The Supercloud accounting log carries $29$ fields --- identifiers,
-timestamps, requested and allocated resources, partition, priority, exit state --- and not one
-of them is free text. No public GPU or HPC trace we surveyed --- including the other widely used GPU
-trace~\cite{alibaba2020} --- ships operator-authored exception text; what text exists in this domain is source code and logs, not scheduling rationale.
-
-This is the boundary, and it cuts both ways. A reasoning layer cannot demonstrate value on a
-channel the data does not contain, which is why \S\ref{sec:text} is measured on an authored
-suite rather than in simulation. It also means the numeric results of
-\S\ref{sec:rigid}--\S\ref{sec:open} are the whole of what this trace can adjudicate, and on
-those the decisive quantity is a sizing rule, not a reasoning step. Acquiring a workload that
-carries operator text remains the prerequisite for testing the exception claim in situ.
-
-\section{Future Work}
+\section{Future Work and Threats to Validity}
 \label{sec:future}
-
-\textbf{The closed-loop comparison on held-out windows.}  \S\ref{sec:oracle} settles the selection
-question offline, on held-out states, and the closed-loop validation numbers agree with it; what
-remains is the same comparison on the reserved split, which is executing.  Three properties make it
-sound and we have already implemented them.  The deterministic baseline is chosen on validation and
-reported once on the reserved split; on our windows that discipline is nearly free, costing $0.05$
-points for the ordering family and nothing for the auction family against the configuration selectable
-with hindsight, so no eventual gap can be blamed on a weak control.  The comparison is paired per
-window and read at the median as well as the mean, because \S\ref{sec:controls} shows a single
-overwhelmed window carrying a $6.6$-point mean difference.  And it belongs beside the counterfactual
-ceiling, since a selector can only be blamed for headroom that exists.
-
-\textbf{Selection regret rather than end-to-end outcome.}  Because most states are ties, end-to-end
-violation rates are an insensitive instrument for the architectural question.  Per-state regret
-against the counterfactual argmax separates a selector that picks a harmless equivalent from one that
-picks a damaging action, and it is measurable on the labels we already generate.  The same applies to
-the contended subset: a contention condition defined from observable state alone, such as queued
-minimum demand exceeding free capacity, partitions the windows without reference to which method won,
-and it is where the one-window effect above lives.
-
-\textbf{Recovering the discarded oracle states.}  Four training states were dropped under the
-superseded capacity assertion (\S\ref{sec:controls}) and can be relabelled, which would tighten the
-counterfactual bound slightly.
-
-\section{Threats to Validity}
 \label{sec:threats}
 
-\textbf{The factorial run is incomplete.} At the amended single repetition, three of the four selector
-conditions are complete on validation and the role-separated referee on auctions is absent; the 32 deterministic controls are complete on both
-splits, but no selector condition has finished on the reserved split.  Every
-selector number in this paper is therefore a validation-set observation, not the preregistered
-confirmatory analysis, and we make no market, Multi, or interaction claim.  Raw cell means cannot
-repair missing paired observations.  Reducing three seeds to one also merges response noise into the
-window-level differences, which widens every interval we would eventually report.
+\textbf{The reserved split is unfinished.}  Three of the four selector conditions are complete on
+validation and none on the reserved split, so every selector number here is a validation observation
+rather than the preregistered confirmatory analysis, and we claim no family, structure, or interaction
+effect.  Completing it is the immediate next step, together with two analyses the existing labels
+already support: per-state regret against the counterfactual best action, which separates a selector
+that picks a harmless equivalent from one that picks a damaging action, and a split on a contention
+condition defined from observable state alone, which is where the one-window effect of
+\S\ref{sec:controls} lives.  Reducing three repetitions to one also merges decoding noise into the
+window-level differences and widens any interval we would report.
 
-\textbf{The elasticity model is an assumption, and a swept one.} No trace records what a job
-would have done at a different size, so any elastic study must supply that counterfactual. We
-supply Amdahl's law anchored on the observed point, which reproduces each job's recorded runtime
-exactly at the size it really used, and we sweep the parallel fraction rather than fixing it:
-$s{=}1$ recovers the rigid replay at every size and $s{=}0$ gives linear speed-up. Our
-conclusions concern the \emph{shape} of the result across that sweep, not a single value.
-Real training jobs also pay a reconfiguration cost we do not model, which would penalise
-Maximum-fit sizing further; our claim that occupancy-maximising sizing is harmful is therefore
-conservative.
+\textbf{The elasticity model is an assumption, and a swept one.} No trace records what a job would
+have done at a different size, so any elastic study must supply that counterfactual.  We use Amdahl's
+law anchored on the observed point, which reproduces each job's recorded runtime exactly at the size it
+really used, and we sweep the parallel fraction rather than fixing it: $s{=}1$ recovers the rigid
+replay at every size, $s{=}0$ gives linear speed-up.  Our conclusions concern the shape of the result
+across that sweep.  Reconfiguration cost is not modelled, which flatters resize-heavy policies and
+makes our claim against occupancy-maximising sizing conservative; we report resize counts with zero
+modelled overhead explicitly.  One node is modelled as one device, so intra-node placement effects are
+absent.
 
-\textbf{One node is one GPU.} Supercloud's TX-GAIA nodes carry two V100s; we model the
-allocation unit as a device, so intra-node placement effects are absent.
+\textbf{The outcome metrics are synthetic and imperfect.}  The trace carries no deadline field, so
+deadlines are generated once from requested walltime and the primary result concerns that reproducible
+synthetic target, not production deadline compliance.  Slowdown-based violations are defined from true
+runtime, which no scheduler knows at submission, and their allowance scales with job length, so we
+report three thresholds and lead with waiting time and device-hours.
 
-\textbf{Elasticity differs across experiments.} The diagnostic sizing study
-(\S\ref{sec:sizing}) is moldable: size is chosen once at launch.  The core factorial is malleable
-at ten fixed resize points.  Neither setting models checkpoint, communication, or reconfiguration
-overhead, so resize-heavy policies receive an optimistic evaluation; we report resize counts and
-zero modeled overhead explicitly.
-
-\textbf{SLA-$k$ is an oracle metric and is length-biased.} It is defined from a job's true
-runtime, which no scheduler knows at submission, so no arm can target it; and because the
-allowance scales with the job, short jobs violate readily while the longest decile of jobs
-cannot violate at all within a $24$\,h window despite waiting longest. We therefore report
-$k \in \{2,5,10\}$ throughout and lead with waiting time and device-hours, which carry neither
-defect. The trace supplies no deadline field.  The core experiment therefore uses deadlines
-generated from requested walltime; its primary result concerns that reproducible synthetic SLA,
-not production deadline compliance.
-
-\textbf{The oracle dataset is small.} It contains 44 training and 24 validation states, and one
-training window is absent after reproducible capacity-invariant failures.  Counterfactual oracle
-performance is an upper bound under the simulator, not evidence that an online model can identify
-the action.  The LoRA comparison uses one training run and deterministic decoding; its failure is
-screening evidence against the present recipe, not proof that fine-tuning cannot work with more
-states, hyperparameter selection, or constrained decoding.  It is not a replacement for the frozen
-test split.
-
-\textbf{Twelve windows, one per stratum.} A difference confined to one cell cannot be separated
-from that particular window; the strata establish that a result is not confined to one corner
-of the load/priority space, not that a stratum causes it. \S\ref{sec:open} reports a case where
-this mattered.
-
-\textbf{Only completed GPU jobs are replayed}, so failed and cancelled work, non-GPU
-contention, and the cluster's background load are absent. LLM latency is hidden behind wait
-time by the gate in the design, but evaluation runs on the simulation clock.
+\textbf{The model evidence is narrow.}  The offline comparison rests on 24 held-out states and a single
+fine-tuning run, and the model there is an 8B model while the closed loop uses a 14B one, so the
+fine-tuning failure is screening evidence against this recipe rather than proof that supervision cannot
+work.  Counterfactual enumeration bounds what a selector could achieve under this simulator; it is not
+evidence that an online model could identify those actions.  Four training states dropped under the
+superseded capacity assertion remain to be relabelled.
 
 \section{Conclusion}
 
-How a trace-driven scheduling study handles job size decides what the study can find.  Replayed
-rigidly, the MIT Supercloud workload leaves standard schedulers separated by at most $1.3$ points of
-occupancy and by nothing at all on service quality, so efficiency comparisons drawn on it are
-comparisons of a conserved quantity.  Restoring elasticity makes the same metric controllable, and
-then maximising it is the wrong objective: the rule that fills the cluster most completely is the
-worst rule on every service axis we measure, because sublinear speed-up buys busy-ness rather than
-completed work.  For elastic workloads, device-hours per unit of completed work belongs in the
-headline and occupancy does not.
+How a trace-driven study handles job size decides what it can find.  Replayed rigidly, this workload
+leaves standard schedulers separated by at most $1.3$ points of occupancy and by nothing on service
+quality, so efficiency comparisons drawn on it compare a conserved quantity.  Restoring elasticity makes
+the metric controllable and then maximising it becomes the wrong objective, because the rule that fills
+the cluster most completely is the worst on every service axis.  For elastic workloads, device-hours per
+unit of completed work belongs in the headline and occupancy does not.
 
-Within that corrected frame, our title question has a clear answer for numeric rationing: no.  On
-twelve held-out windows the four queue-ordering rules span under one point while sizing spans a factor
-of three, among auction valuations only deadline pressure matters, and the advantage of auction pricing
-over queue ordering is one overwhelmed window in twelve against a median of zero.  Counterfactual enumeration bounds what any selector could add at $2.03$ points for ordering
-and $0.07$ for auctions, with zero median gain.  Asked to choose within that space, an 8B model
-carries $8.70$ points of held-out regret zero-shot and $8.78$ after low-rank fine-tuning, against
-$1.05$ for a single deterministic policy, and emits an illegal action on eleven of twenty-four states
-where the deterministic policy emits none.  Splitting the referee into demand and supply analysts does
-not recover the gap either.  Neither more reasoning structure nor supervision closes a gap this wide,
-because the decision being contested is arithmetic the code already performs correctly.
+Within that frame our title question has a clear answer for numeric rationing: no.  Counterfactual
+enumeration bounds what any state-dependent selector could add at $2.03$ points for ordering and $0.07$
+for auctions, with zero median gain.  Asked to choose in that space, an 8B model carries $8.70$ points
+of held-out regret zero-shot and $8.78$ after fine-tuning, against $1.05$ for one deterministic policy,
+and emits an illegal action on eleven of twenty-four states where the deterministic policy emits none.
+Splitting the referee into demand and supply analysts costs $0.67$ points for three times the inference.
+Neither structure nor supervision closes a gap this wide, because the contested decision is arithmetic
+the code already performs correctly.
 
-Reasoning does earn its budget where the deciding fact is absent from the numbers: on authored
-operator exceptions, a debate between reviewers corrects a single model at an identical call budget.
-No public GPU trace carries such text, which is both why that result required an authored suite and
-why it cannot be transferred to online rationing by assertion.  The engineering recommendation
-follows the evidence rather than the architecture: keep a validated deterministic default, count every
-malformed answer and fallback, and admit a language model only where a held-out regret test and a
-paired closed-loop comparison beat that default after inference cost.  Whether role separation clears
-that bar on the reserved split is the question our frozen protocol was built to answer, and it remains
-open.
+Where a language model might still earn its place is the case this workload cannot express: an exception
+whose content is text, such as an operator instruction or a declaration that a note contradicts.  The
+accounting log carries 29 fields and none is free text, and no public GPU trace we surveyed carries
+operator-authored rationale, so that case cannot be measured here at all.  We flag it as the open
+direction.  The recommendation follows the evidence rather than the architecture: keep a validated
+deterministic default, count every malformed answer and fallback, and admit a language model only where a
+held-out regret test and a paired closed-loop comparison beat that default after inference cost.
 
 \begin{thebibliography}{13}
 \bibitem{llmsched} G.~Ding, S.~Yang, H.~Lin, Z.~Chen, and J.~S.~Yang, ``LLM-driven adaptive cloud
