@@ -45,3 +45,24 @@ Frozen before any `core-2x2-v1` scheduler result is generated.
 `pins.verify_core_2x2` must validate hashes, split/non-overlap, build parameters, deadlines,
 malleable bounds, Amdahl anchoring, and provenance before the sweep can be armed. Legacy partial
 results are stored separately and are not eligible for this analysis.
+
+## Amendment 1 (2026-09-13): assertion-only fix re-frozen
+
+`assert_invariants` in `pins/elastisim_bench.py` excluded only `COMPLETED` jobs from
+simultaneous-ownership accounting. ElastiSim keeps a **killed** job's assignment in the Python
+mirror for its callback as well, while already offering those nodes as free, so a killed job could
+trip a false double-ownership assertion and abort an otherwise valid run. The fix adds `KILLED` to
+that exclusion.
+
+This touches the feasibility **checker** only. It changes no ordering, no sizing, no bid, no
+deadline, no window, no split and no reported metric, so results produced before and after it are
+directly comparable. It does not relax the checks that matter: allocations are still bounded by
+`[num_nodes_min, num_nodes_max]`, the pool is still a hard cap, and no GPU may be held by two
+**active** jobs.
+
+Because the gate hashes the implementation, that one-line change invalidated the frozen hash and
+`pins.verify_core_2x2` refused to run, which is the gate behaving correctly. The manifest's
+`implementation.sha256` is therefore re-frozen to the fixed code, and the superseded hash is kept in
+`implementation.accepted_sha256` so the 483 rows generated before the fix remain verifiable instead
+of being silently re-stamped. No design parameter was re-frozen: windows, trace, deadlines, build
+configuration, policy families, sizing actions, seeds and the analysis plan are unchanged.

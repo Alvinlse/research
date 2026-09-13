@@ -91,11 +91,17 @@ def verify(manifest_path: Path, worlds: Path, check_results: bool = False,
         if results is None:
             raise ValueError("results path required with check_results")
         manifest_hash = hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+        # Rows may predate a disclosed amendment (see core_2x2_prereg.md). Every accepted hash is
+        # listed in the manifest, so a superseded one still verifies while an UNlisted one -- code
+        # that was never frozen -- still fails. Re-stamping old rows would hide the amendment.
+        accepted = set(doc["implementation"].get("accepted_sha256", [])) | {actual_impl}
+        manifest_hashes = set(doc["implementation"].get("accepted_manifest_sha256", [])) | {manifest_hash}
         for line in results.read_text().splitlines():
             row = json.loads(line)
             assert row["experiment_id"] == doc["experiment_id"]
-            assert row["manifest_sha256"] == manifest_hash
-            assert row["implementation_sha256"] == actual_impl
+            assert row["manifest_sha256"] in manifest_hashes
+            assert row["implementation_sha256"] in accepted, \
+                f"row implementation {row['implementation_sha256'][:12]} was never frozen"
             assert row["processed_trace_sha256"] == doc["processed_trace"]["sha256"]
     return {"windows": len(windows), "jobs": checked_jobs, "implementation_sha256": actual_impl}
 

@@ -2362,10 +2362,10 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
         owners = []
         for job in jobs:
             assigned = list(getattr(job, "assigned_nodes", []) or [])
-            # ElastiSim keeps the just-finished assignment in the Python mirror until after the
-            # completion callback, even though those nodes are already offered as free. Exclude
-            # that simulator-owned transitional record from simultaneous-ownership accounting.
-            if getattr(job.state, "name", "").startswith("COMPLETED"):
+            # ElastiSim keeps a terminal job's assignment in the Python mirror for its completion
+            # or kill callback even though those nodes are already offered as free.  Exclude both
+            # terminal states from simultaneous-ownership accounting; active jobs remain checked.
+            if getattr(job.state, "name", "") in ("COMPLETED", "KILLED"):
                 continue
             if assigned:
                 lo, hi = _sizes(job)
