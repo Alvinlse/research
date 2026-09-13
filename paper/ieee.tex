@@ -1,6 +1,6 @@
 % IEEE workshop paper — controlled policy-selector study for malleable GPU scheduling.
 % Build: cd Research/paper && latexmk -pdf ieee.tex
-% 2026-09-13: aligned with the frozen core-2x2-v1 protocol.  Partial validation results
+% 2026-09-13: aligned with the frozen selector protocol.  Partial validation results
 % are labelled exploratory; no test-split or interaction claim is made.
 \documentclass[conference]{IEEEtran}
 \usepackage{graphicx}
@@ -17,39 +17,41 @@
 
 \begin{document}
 
-\title{Do Multi-LLM Referees Improve Malleable GPU Scheduling?\\
-A Controlled Market/Reasoning Factorial Study}
+\title{Sizing, Not Ordering: Trace-Driven Evaluation of\\
+Elastic GPU Scheduling and the Limits of\\
+LLM Policy Selection}
 
 \author{\IEEEauthorblockN{Lay Kim Seng}
 \IEEEauthorblockA{Cyberscience Center, Tohoku University\\
 lay.kim.seng.q4@dc.tohoku.ac.jp}
-\and
-\IEEEauthorblockN{\todo{co-authors / advisor}}
-\IEEEauthorblockA{~}}
+}  % co-authors to be added before submission
 
 \maketitle
 
 \begin{abstract}
-We study whether two commonly proposed additions to GPU scheduling --- market-based allocation
-and multi-LLM role separation --- improve decisions once jobs are allowed to resize.  The frozen
-experiment is a $2\times2$ factorial design: a Single Referee or Demand--Supply--Referee structure
-selects from either four non-market rules or four uniform-price auction valuations, together with
-one of four sizing actions.  Every cell uses the same Qwen2.5-14B model, parser, state, decoding
-budget, paired seeds, synthetic deadlines, and $80$-GPU MIT Supercloud trace windows.  At the
-experiment cutoff, 477 of 1,056 planned runs had completed, all on validation windows.  The two
-complete Single-Referee cells differ by only $-0.40$ percentage points in deadline violations in
-favour of the market family (95\% CI $[-1.25,0.45]$, exact $p=0.438$, 12 paired windows).  The
-Multi-Market cell is absent and Multi-Non-market lacks two of three seeds, so the preregistered
-multi-agent and interaction hypotheses are not estimable.  Strong fixed policies are already
-competitive: FAIR+ADAPT reaches $10.49\%$ and Auction-Deadline+ADAPT $9.87\%$ validation
-violations, versus $11.59\%$ and $11.19\%$ for the corresponding single referees.  A separate
-counterfactual library of 1,092 deterministic rollouts yields 44 clean training states and 24
-held-out validation states for Qwen3-8B LoRA.  Its oracle improves the fixed non-market baseline
-by $2.03$ points on validation but the market baseline by only $0.07$ points; the median gain is
-zero in both families.  Fine-tuning does not realise this ceiling: held-out mean regret is $8.78$
-points versus $8.70$ zero-shot and $1.05$ for the fixed floor, with 11/24 malformed outputs from
-both model arms.  Thus the current evidence supports safe adaptive sizing, but not a claim that
-markets, multi-agent reasoning, or this small LoRA intervention improves scheduling.
+A GPU job that can be resized makes two demands on a scheduler: which job to start, and how many
+devices to give it. Trace-driven studies almost always erase the second decision by replaying each
+job at its recorded size, and we show that this choice decides the outcome of the study. Replaying
+the MIT Supercloud accounting log rigidly on an $80$-GPU pool, five standard schedulers differ by at
+most $1.3$ percentage points of occupancy, recover on average $0.2\%$ of idle capacity, and separate
+on no service metric after correction: the comparison is close to vacuous by construction. Restoring
+elasticity through a malleability-aware simulator makes the same metric controllable and reverses its
+meaning. Sizing then moves service quality by an order of magnitude more than any ordering rule, and
+the sizing rule that attains the highest occupancy we measure, $0.988$ against $0.890$, is
+simultaneously the worst on every service axis, because sublinear speed-up converts capacity into
+busy-ness rather than into completed work. On held-out windows the four queue-ordering rules we test
+span $0.04$ percentage points of deadline violations while sizing spans $15.3$ to $46.4$, and among
+auction valuations only pricing a job's deadline pressure matters, $8.6$ against $14.9$ to $15.3$.
+The advantage of auction pricing over queue ordering is concentrated in one overloaded window of
+eleven, where violations fall from $91.0\%$ to $21.6\%$ while the median difference is zero.
+Counterfactual enumeration of every policy from sampled states bounds what any state-dependent
+selector could add at $2.03$ points for queue ordering and $0.07$ for auctions, with a median of
+zero, and a low-rank fine-tune does not approach even that bound. Reasoning earns its cost elsewhere:
+on an authored suite of operator-stated exceptions, which no public trace supplies, a debate between
+reviewers corrects a single model at an identical call budget. We conclude that the decision worth
+reasoning about in elastic GPU scheduling is sizing under runtime uncertainty during rare contention,
+not continuous policy selection, and that occupancy should be retired as a headline metric for
+elastic workloads.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -77,27 +79,32 @@ schedulers on it is close to a comparison of nothing. Restoring elasticity does 
 a tuning knob; it makes utilisation controllable, and --- as we show --- makes maximising it
 actively harmful.
 
-Our contributions, all on the MIT Supercloud GPU trace replayed through a malleability-aware
+Our contributions, all on the MIT Supercloud GPU trace~\cite{supercloud} replayed through a malleability-aware
 batch simulator~\cite{elastisim}, are:
 \begin{enumerate}
-\item \textbf{A controlled policy-selector test} (\S\ref{sec:factorial-method}).  We freeze a
-$2\times2$ design that separates policy family (market/non-market) from reasoning structure
-(Single/Multi), holds the action space and model configuration fixed, and pairs windows and seeds.
-\item \textbf{A reportable negative stopping result} (\S\ref{sec:factorial-results}).  The only
-complete factorial contrast, market versus non-market under a Single Referee, is small and
-uncertain.  The run does not contain enough evidence to estimate a Multi effect or interaction.
-\item \textbf{A deterministic floor and oracle ceiling} (\S\ref{sec:oracle}).  Strong fixed
-ADAPT policies match the zero-shot referee closely.  Counterfactual enumeration finds modest
-non-market headroom but almost none for the market family, localising what a learned selector
-could still improve.
-\item \textbf{A diagnostic explanation for the result} (\S\ref{sec:sizing}).  Prior controlled
-replays show that sizing dominates ordering and that occupancy-maximising GREEDY sizing is harmful;
-the useful decision is safe sizing under uncertainty, rather than unconstrained LLM allocation.
+\item \textbf{Rigid replay cannot answer an efficiency question} (\S\ref{sec:rigid}). We quantify
+how little room a fixed-size replay leaves: occupancy differs by at most $1.3$ points across five
+standard schedulers, recoverable idle capacity averages $0.2\%$, and no arm separates on service
+quality. Backfilling is inert on this trace because requested walltimes exceed true runtimes by two
+to three orders of magnitude.
+\item \textbf{Occupancy is an anti-metric once jobs are elastic} (\S\ref{sec:sizing},
+\S\ref{sec:antimetric}). Sizing moves service quality by an order of magnitude more than ordering
+does, and the highest-occupancy rule is the worst-service rule in every window we measure. We
+recommend reporting device-hours per unit of completed work instead.
+\item \textbf{What state-dependent policy selection can be worth} (\S\ref{sec:controls},
+\S\ref{sec:oracle}). On held-out windows, queue-ordering rules are interchangeable while sizing and
+the auction's valuation are not, and the advantage of auction pricing is a single-window tail effect.
+Counterfactual enumeration bounds the remaining headroom at $2.03$ and $0.07$ points with a median of
+zero, and a low-rank fine-tune does not reach it.
+\item \textbf{A protocol that makes such a comparison auditable} (\S\ref{sec:factorial-method}). The
+selector study is frozen before execution: workload-only window selection, a hashed manifest of
+trace, worlds, code and configuration, a fail-closed gate, and amendments recorded rather than
+absorbed.
 \end{enumerate}
 
 We additionally retain, unchanged, a result that does not depend on any trace
 (\S\ref{sec:text}): on an authored suite of exceptions expressible only in operator text ---
-which no public GPU trace supplies --- a debate between LLM reviewers corrects a single model's
+which no public GPU trace supplies --- a debate between reviewers corrects a single model's
 rulings at an identical call budget. That is where a reasoning layer earned its cost in our
 setting; it is not the numeric rationing decision, and \S\ref{sec:antimetric} explains why the
 numeric decision has been measured against the wrong target.
@@ -109,7 +116,7 @@ numeric decision has been measured against the wrong target.
 an ILP and reports large gains over Kubernetes. We inherit the reason-then-guarantee spine but
 invert its default: on numeric rationing the deterministic layer should be the proposer, not
 just the repairer, and the LLM should be gated behind a contextual trigger.
-\todo{2--3 more LLM-scheduling refs}
+% TODO before submission: 2--3 more LLM-scheduling references
 
 \textbf{Learning-based schedulers.} DRL schedulers (DeepRM~\cite{deeprm},
 Decima~\cite{decima}) learn allocation policies but are black-box and brittle under
@@ -152,7 +159,7 @@ declarative LLM agents.
 \node[llm] (ref) at (4.75,-0.8) {Referee};
 \node[code, text width=2.1cm] (action) at (6.8,0) {Global policy\\+ per-job sizing};
 \node[code, text width=2.2cm] (apply) at (9.1,0) {Validator +\\deterministic scheduler};
-\node[code, text width=3.2cm] (menu) at (4.7,1.65) {Frozen NM or MKT policy menu\\REQ / ADAPT / GREEDY / RCON};
+\node[code, text width=3.4cm] (menu) at (4.7,1.65) {Frozen action set: four ordering\\or pricing rules $\times$ four sizing rules};
 \draw[arr] (state) -- (single);
 \draw[arr] (state) -- (roles);
 \draw[arr] (roles) -- (ref);
@@ -183,17 +190,35 @@ shrink-tolerant jobs. Supply describes scarcity, queue pressure, resize cost, an
 agents cannot allocate GPUs; their analyses and the original state are passed to a Referee whose
 output schema is identical to the Single arm.
 
-\textbf{Frozen action and safety layers.} The non-market menu is FCFS, least-laxity, ageing
-fair-share, and priority-tier FCFS.  The market menu holds the auction mechanism fixed and varies
-the observable valuation: wait, deadline, fair-share, or priority.  Both expose REQ, ADAPT,
-GREEDY, and resize-conservative (RCON) sizing.  A shared validator rejects malformed actions,
-enforces the $80$-GPU capacity and each job's legal bounds, and invokes a counted deterministic
-fallback.  Hence the factorial comparison changes only policy family and reasoning structure.
+\textbf{The action set.} Both structures choose from the same two-part action, and the two policy
+families are matched in size so that neither referee simply has more options than the other.
+
+The \emph{queue-ordering} family decides which waiting job is considered first: first-come
+first-served, least-laxity-first on the requested walltime, ageing fair-share on accumulated
+per-user waiting, and priority-tier ordering that clears the high-priority tier first. The
+\emph{auction} family replaces that comparison with a single uniform-price clearing and varies only
+what a job's claim is priced on: the time it has already waited, its deadline pressure, its owner's
+waiting-service deficit, or its priority tier. Holding the clearing rule fixed isolates the
+valuation, which is the design decision an operator actually makes.
+
+Crossed with either family, four sizing rules decide how many devices a started job receives, and
+govern later resize points as well. \emph{Requested size} gives a job exactly what its owner asked
+for and makes it wait until that much is free; this reproduces the rigid replay and is the control.
+\emph{Queue-proportional} sizing shares the free pool across the waiting queue, so a job may start
+smaller when others are waiting and grow when they are not. \emph{Maximum-fit} sizing gives every
+job the largest legal size that fits at the moment it starts. \emph{Benefit-gated} sizing changes a
+running job's size only when the estimated gain, measured in seconds against the longest current
+wait and charged for the extra runtime that shrinking causes, exceeds a fixed threshold of $300$\,s;
+its estimates use requested walltimes only, never true runtimes.
+
+A shared validator rejects malformed actions, enforces the $80$-GPU capacity and each job's legal
+bounds, and invokes a counted deterministic fallback, so the comparison changes only the policy
+family and the reasoning structure.
 
 \section{Evaluation}
 \label{sec:eval}
 
-\textbf{Setup.} We replay the MIT Supercloud GPU trace (a $235$-day Slurm accounting log)
+\textbf{Setup.} We replay the MIT Supercloud GPU trace~\cite{supercloud} (a $235$-day Slurm accounting log)
 through ElastiSim~\cite{elastisim}, a batch-system simulator for malleable workloads. One
 simulated node is one GPU, so a job that used $g$ GPUs becomes a $g$-node job; its work is set
 so that it reproduces its recorded runtime exactly. The scheduler sees each job's arrival, size
@@ -234,7 +259,7 @@ Synthetic deadlines are generated once as
 $D_i=a_i+W_i^{\mathrm{req}}$; a missing walltime receives the fixed 86,400-second estimate.
 Deadline violation rate is the primary outcome.
 
-The four inferential cells are Single-NM, Single-MKT, Multi-NM, and Multi-MKT.  Qwen2.5-14B is
+The four inferential conditions cross the two reasoning structures with the two policy families.  Qwen2.5-14B is
 held fixed at temperature 0.1 and a 400-token output limit.  Thirty-two deterministic controls
 exhaustively cross the four policies and four sizing actions in each family.  Validation selects
 the best fixed policy per family; test is reserved for one final report.  The inferential unit is
@@ -275,7 +300,7 @@ worst case of $1.3\%$.
 Service quality is equally flat. Over $11$ windows no arm separates from the EASY baseline
 after Holm correction across three SLA thresholds; the largest raw effect, $-4.2$ points of
 SLA-2, carries $p_{\text{Holm}}=0.41$. Two properties of the trace explain the flatness and are
-worth recording, because both are usually assumed away. First, EASY backfilling is inert here:
+worth recording, because both are usually assumed away. First, EASY backfilling~\cite{easy} is inert here:
 across $1{,}351$ blocked scheduling points it backfilled $48$ times ($3.6\%$), because
 requested walltimes exceed true runtimes by $100$--$600\times$, so no job can be shown to fit
 before the head job's reservation. EASY and strict FCFS are byte-identical on most windows.
@@ -288,9 +313,9 @@ $-0.73$ and $-0.01$ across four windows --- the only significant value is negati
 \label{sec:sizing}
 
 We now allow every job to be moldable and hold the ordering rule fixed at first-fit, varying
-only how each job is sized: \textsc{as-requested} honours the size its owner asked for and
-waits until that many devices are free; \textsc{greedy} takes the largest legal size that fits;
-\textsc{adaptive} shares free capacity across the waiting queue. Table~\ref{tab:sizing} reports
+only how each job is sized: requested-size sizing honours the size its owner asked for and
+waits until that many devices are free; maximum-fit sizing takes the largest legal size that fits;
+Queue-proportional sizing shares free capacity across the waiting queue. Table~\ref{tab:sizing} reports
 means over the $12$ pre-registered windows.
 
 \begin{table}[t]
@@ -304,16 +329,16 @@ Mean $\pm$ 95\% CI.}
 \toprule
 sizing & device-h & occupancy & SLA-10 (\%) & mean wait (s) \\
 \midrule
-\textsc{as-requested} & $3653$ & $0.890$ & $22.3$ & $38{,}072$ \\
-\textsc{adaptive}     & $3339$ & $0.964$ & $32.5$ & $39{,}756$ \\
-\textsc{greedy}       & $9581$ & $0.988$ & $76.2$ & $270{,}522$ \\
+Requested-size sizing & $3653$ & $0.890$ & $22.3$ & $38{,}072$ \\
+Queue-proportional sizing     & $3339$ & $0.964$ & $32.5$ & $39{,}756$ \\
+Maximum-fit sizing       & $9581$ & $0.988$ & $76.2$ & $270{,}522$ \\
 \bottomrule
 \end{tabular}
 }
 \end{table}
 
 The spread is an order of magnitude, on an axis that does not exist in the rigid replay. Paired
-against \textsc{as-requested}, \textsc{greedy} costs $+5{,}929 \pm 1{,}707$ device-hours
+against requested-size sizing, maximum-fit sizing costs $+5{,}929 \pm 1{,}707$ device-hours
 ($p{=}3\times10^{-5}$), $+232{,}451 \pm 60{,}823$\,s of mean waiting ($p{=}10^{-5}$) and
 $+53.9 \pm 12.3$ points of SLA-10 ($p{<}10^{-5}$). No ordering rule we measured in
 \S\ref{sec:rigid} moves any metric by a comparable amount.
@@ -322,14 +347,14 @@ $+53.9 \pm 12.3$ points of SLA-10 ($p{<}10^{-5}$). No ordering rule we measured 
 \label{sec:antimetric}
 
 The three sizing rules order identically on occupancy and inversely on service.
-\textsc{greedy} attains the \emph{highest} occupancy of any arm we measure --- $0.988$, against
-$0.890$ for \textsc{as-requested} ($+0.1 \pm 0.1$, $p{=}0.009$) --- while being the worst on
+Maximum-fit sizing attains the \emph{highest} occupancy of any arm we measure --- $0.988$, against
+$0.890$ for requested-size sizing ($+0.1 \pm 0.1$, $p{=}0.009$) --- while being the worst on
 every service axis simultaneously. In $12$ of $12$ windows the highest-occupancy arm is the
 worst-service arm, and in $10$ of $12$ the highest-occupancy arm is not the best-service arm.
 
 The mechanism is not subtle, which is what makes the metric dangerous. Under sublinear scaling,
 a job given $4\times$ the devices at $s{=}0.7$ finishes about $1.6\times$ sooner while
-consuming $4\times$ the capacity. \textsc{greedy} therefore converts the cluster into
+consuming $4\times$ the capacity. Maximum-fit sizing therefore converts the cluster into
 \emph{busy-ness} without converting it into completed work, and the queue behind it grows.
 Occupancy records the busy-ness and is blind to the waste: on one low-load window it reads
 $1.000$ for all three sizing rules while their mean waiting times span $21{,}429$\,s to
@@ -345,8 +370,8 @@ for elastic workloads.
 \subsection{Sizing under uncertainty is open, not solved}
 \label{sec:open}
 
-The obvious fix for \textsc{greedy} is to shrink jobs when the queue is deep. It does not work.
-Paired over the $12$ windows, \textsc{adaptive} does not beat \textsc{as-requested} on mean
+The obvious fix for maximum-fit sizing is to shrink jobs when the queue is deep. It does not work.
+Paired over the $12$ windows, queue-proportional sizing does not beat requested-size sizing on mean
 waiting ($+1{,}684 \pm 10{,}847$\,s, $p{=}0.77$) or on device-hours ($-313 \pm 637$,
 $p{=}0.36$), and is significantly \emph{worse} on SLA-10 ($+10.2 \pm 8.3$ points, $p{=}0.035$).
 It also introduces a failure the other rules do not have: shrinking a job lengthens it, and at
@@ -355,8 +380,8 @@ killed. We therefore count kills as SLA violations rather than as fast completio
 killed job otherwise flatters every wait-based metric.
 
 We record one negative result about our own method. On the single most contended window
-($4.97\times$ offered load), \textsc{adaptive} cut mean waiting by $42\%$ against
-\textsc{as-requested} and looked like a clear win. It did not replicate across the
+($4.97\times$ offered load), queue-proportional sizing cut mean waiting by $42\%$ against
+Requested-size sizing and looked like a clear win. It did not replicate across the
 pre-registered set. Had the window been chosen after seeing that number, the effect would have
 been reported as a finding. This is the concrete argument for selecting windows from workload
 statistics alone.
@@ -365,11 +390,11 @@ What remains open is therefore the interesting decision: sizing a job under genu
 about its runtime, on a trace where the only available estimate is uninformative
 (\S\ref{sec:rigid}). We therefore test that decision with the controlled policy selectors below.
 
-\subsection{Core $2\times2$: reportable stopping result}
+\subsection{Selector conditions: what the completed runs show}
 \label{sec:factorial-results}
 
 The deterministic half of the factorial is complete on validation and all but two windows of test;
-the four LLM-controlled cells are still executing at the single amended seed, so no test-side
+the four selector conditions are still executing at the single amended repetition, so no test-side
 factorial estimate is reported here and RQ1--RQ3 remain open.  What the finished deterministic half
 already settles is the baseline the selectors must beat, and it settles it in a way that matters
 more than the eventual contrast: the fixed policy is chosen honestly, and choosing it honestly costs
@@ -388,42 +413,41 @@ cell & completed & planned & raw deadline violations (\%) \\
 \midrule
 fixed non-market & 192 & 192 & 23.14 \\
 fixed market     & 192 & 192 & 21.79 \\
-Single-NM        &  12 &  12 & 11.27 \\
-Single-MKT       &  12 &  12 & 10.70 \\
-Multi-NM         &  12 &  12 & 11.93 \\
-Multi-MKT        &   0 &  12 & --- \\
+Single referee, ordering    &  12 &  12 & 11.27 \\
+Single referee, auction    &  12 &  12 & 10.70 \\
+Role-separated, ordering   &  12 &  12 & 11.93 \\
+Role-separated, auction    &   0 &  12 & --- \\
 \bottomrule
 \end{tabular}
 }
 \end{table}
 
-Three of the four cells are complete on validation.  Paired over the 12 windows, Single-MKT is
-$-0.57$ percentage points against Single-NM (95\% CI $[-1.69,0.56]$; two-sided exact sign-flip
-$p=0.438$), with seven windows tied to the digit, three favouring market and two favouring
-non-market.  Multi-NM is $+0.67$ points \emph{worse} than the matched Single-NM (95\% CI
-$[-0.37,1.71]$, $p=0.250$), again with seven ties and only one window favouring the multi-agent
-arm.  Neither difference is evidence for anything: with seven of twelve windows identical, this
-instrument cannot separate these arms at this sample size, and the direction of the multi-agent
-difference is the opposite of the architectural hypothesis.  These are validation numbers reported
-for completion accounting, not the preregistered estimate; the confirmatory contrasts belong to the
-reserved test split and are still executing.
+Three of the four conditions are complete on the validation split.  Paired over its twelve windows,
+moving the single referee from queue ordering to auction pricing changes deadline violations by
+$-0.57$ percentage points (95\% CI $[-1.69,0.56]$; two-sided exact sign-flip $p=0.438$), with seven
+windows tied to the digit, three favouring auctions and two favouring ordering.  Separating the
+referee into demand and supply analysts costs $+0.67$ points against the single referee on the same
+family (95\% CI $[-0.37,1.71]$, $p=0.250$), again with seven ties and one window favouring the
+role-separated structure.  Neither difference supports a claim.  With seven of twelve windows
+identical, twelve windows cannot separate these conditions, and the sign of the
+role-separation difference is the opposite of the architectural hypothesis.  These are validation
+observations; the confirmatory contrasts belong to the reserved split.
 
-We flag one measurement trap we walked into ourselves, because it is easy to repeat.  Averaging each
-cell over whatever seeds happened to have finished --- 36 rows for the Single arms against 21 for
-Multi-NM --- put Multi-NM ahead of Single-NM by $0.81$ points.  Restricting to the one seed every
-window shares reverses the sign.  An unbalanced mean over partially completed cells is not an
-estimate of anything, and the same applies to the deterministic cells: the non-market baseline reads
-$8.08\%$ on the nine test windows that finished first and $15.27\%$ once the eleventh arrives,
-because the windows themselves differ by an order of magnitude in difficulty.  Every comparison in
-this paper is therefore paired on a window set that all compared cells have completed, with that
-set's size stated.
+One measurement trap is worth stating because it is easy to repeat and we fell into it first.
+Averaging each condition over whatever repetitions had finished, thirty-six runs for the single-referee
+conditions against twenty-one for the role-separated one, placed role separation $0.81$ points
+\emph{ahead}.  Restricting to the one repetition every window shares reverses the sign.  The same
+hazard applies to the deterministic controls: the best queue-ordering configuration reads $8.08\%$ on
+the nine test windows that finished first and $15.27\%$ once the eleventh arrives, because windows
+differ by an order of magnitude in difficulty.  Every comparison in this paper is therefore paired
+over a window set that all compared configurations have completed, and that set's size is stated.
 
-For the record, validation selects FAIR+ADAPT at $10.49\%$ violations in the non-market family and
-Auction-Deadline+ADAPT at $9.87\%$ in the market family, each chosen on validation deadline
-violations alone with a deterministic tie-break, and each carried unchanged to test.  We deliberately
-do not draw a selector-versus-fixed comparison here: the test-side factorial is still executing, and
-a comparison assembled from one completed split would be exactly the unbalanced reading we warn
-about below.  \S\ref{sec:future} states what will settle it.
+Validation selects ageing fair-share with queue-proportional sizing at $10.49\%$ violations for the
+ordering family, and the deadline-priced auction with queue-proportional sizing at $9.87\%$ for the
+auction family, each by validation violations alone with a deterministic tie-break, and each carried
+unchanged to the reserved split.  We do not draw a selector-against-fixed-policy comparison here:
+assembling it from one completed split is exactly the unbalanced reading described above, and
+\S\ref{sec:future} sets out what would settle it.
 
 \subsection{Inside the action space: ordering is inert, valuation is not}
 \label{sec:controls}
@@ -433,8 +457,8 @@ enough to characterise the action space the selectors choose within, independent
 Table~\ref{tab:controls} reports the held-out test means, paired over those 11 windows.
 
 \begin{table}[t]
-\caption{Deterministic controls on held-out test windows, paired over the 11 windows all 32 cells
-completed.  Each family's ordering rules are shown at ADAPT sizing; the sizing column varies sizing
+\caption{Deterministic controls on held-out test windows, paired over the 11 windows all 32
+configurations completed.  Each family's ordering rules are shown at queue-proportional sizing; the sizing column varies sizing
 under that family's best ordering.}
 \label{tab:controls}
 \centering
@@ -442,17 +466,17 @@ under that family's best ordering.}
 \resizebox{\columnwidth}{!}{%
 \begin{tabular}{llrlr}
 \toprule
-family & ordering (at ADAPT) & viol.\ (\%) & sizing & viol.\ (\%) \\
+family & ordering (at queue-proportional) & viol.\ (\%) & sizing & viol.\ (\%) \\
 \midrule
-non-market & FCFS          & $15.23$ & ADAPT        & $15.27$ \\
-           & least laxity  & $15.23$ & AS-REQUESTED & $15.42$ \\
-           & tier FCFS     & $15.25$ & RCON         & $15.99$ \\
-           & fair-share    & $15.27$ & GREEDY       & $46.35$ \\
+non-market & FCFS          & $15.23$ & queue-proportional        & $15.27$ \\
+           & least laxity  & $15.23$ & requested size & $15.42$ \\
+           & tier FCFS     & $15.25$ & benefit-gated         & $15.99$ \\
+           & fair-share    & $15.27$ & maximum-fit       & $46.35$ \\
 \midrule
-market     & deadline      & $ 8.62$ & ADAPT        & $ 8.62$ \\
-           & priority      & $14.90$ & RCON         & $ 8.71$ \\
-           & wait          & $15.23$ & AS-REQUESTED & $ 8.76$ \\
-           & fair-share    & $15.28$ & GREEDY       & $60.35$ \\
+market     & deadline      & $ 8.62$ & queue-proportional        & $ 8.62$ \\
+           & priority      & $14.90$ & benefit-gated         & $ 8.71$ \\
+           & wait          & $15.23$ & requested size & $ 8.76$ \\
+           & fair-share    & $15.28$ & maximum-fit       & $60.35$ \\
 \bottomrule
 \end{tabular}
 }
@@ -476,9 +500,9 @@ is the only one in the set where the cluster is overwhelmed, and it is the only 
 these choices is worth much.  A mean-only reading would present a one-window rescue as a general
 property of market clearing.
 
-One test window is excluded from Table~\ref{tab:controls}.  Under ADAPT sizing on that window the
+One test window is excluded from Table~\ref{tab:controls}.  Under queue-proportional sizing on that window the
 simulator reproducibly allocates 81 devices from an 80-device pool, and the runtime capacity
-assertion aborts the run; six of the 32 cells are affected, all of them ADAPT.  The same assertion is
+assertion aborts the run; six of the 32 configurations are affected, all of them under queue-proportional sizing.  The same assertion is
 what discards four oracle states in \S\ref{sec:oracle}.  We report the exclusion rather than
 loosening the assertion, but it is a defect in the sizing path that the winning configuration in both
 families happens to exercise, and it is the first thing to fix before these numbers are final.
@@ -497,7 +521,7 @@ oracle-only fields in model input.
 
 \begin{table}[t]
 \caption{Counterfactual oracle ceiling.  Gain is the paired reduction in deadline violations
-relative to FAIR+ADAPT (NM) or Auction-Deadline+ADAPT (MKT).}
+relative to ageing fair-share with queue-proportional sizing (NM) or deadline-priced auction with queue-proportional sizing (MKT).}
 \label{tab:oracle}
 \centering
 \small
@@ -603,12 +627,12 @@ sixteen; (ii) \emph{a blind confirmatory batch reproduces it} — on the 50 case
 to earlier outcomes, debate 29/50 vs.\ 19/50, $b{=}11$, $c{=}1$, $p=0.0032$; (iii) \emph{the
 effect respects the boundary} — on the 17 control scenes every LLM arm scores 12/17 against
 the deterministic market's 16/17, i.e.\ reasoning invoked where there is nothing to reason
-about is actively harmful. An exploratory per-category split (post-hoc, small cells) locates
+about is actively harmful. An exploratory per-category split (post-hoc, small strata) locates
 the gain where a fact is \emph{missing} from the model of the world (unmodeled: 13/21 vs.\
 4/21, $b{=}9$, $c{=}0$) rather than where an instruction is present (nl\_policy: 8/21 in every
 LLM arm): debate helps when reviewers must notice an absence, not follow a presence.
-\todo{if the gemma2:9b/27b replication lands: one sentence on cross-family robustness}
-\todo{rater-agreement number for the predicates, threats para}
+% TODO before submission: if the cross-family replication lands, one sentence on robustness
+% TODO before submission: rater-agreement number for the predicates, threats paragraph
 
 \subsection{Why the suite must be authored}
 \label{sec:boundary}
@@ -652,14 +676,14 @@ and it is where the one-window effect above lives.
 
 \textbf{The sizing path's capacity defect.}  The excluded window in \S\ref{sec:controls} and the
 discarded oracle states in \S\ref{sec:oracle} share one cause, an 81-device allocation from an
-80-device pool under ADAPT sizing.  It must be fixed, not asserted around, before any of these
+80-device pool under queue-proportional sizing.  It must be fixed, not asserted around, before any of these
 numbers is final.
 
 \section{Threats to Validity}
 \label{sec:threats}
 
-\textbf{The factorial run is incomplete.} At the amended single seed, three of the four cells are
-complete on validation and Multi-MKT is absent; the 32 deterministic controls are complete on
+\textbf{The factorial run is incomplete.} At the amended single repetition, three of the four selector
+conditions are complete on validation and the role-separated referee on auctions is absent; the 32 deterministic controls are complete on
 validation and on 11 of 12 test windows, but no LLM-controlled test cell has finished.  Every
 selector number in this paper is therefore a validation-set observation, not the preregistered
 confirmatory analysis, and we make no market, Multi, or interaction claim.  Raw cell means cannot
@@ -673,7 +697,7 @@ exactly at the size it really used, and we sweep the parallel fraction rather th
 $s{=}1$ recovers the rigid replay at every size and $s{=}0$ gives linear speed-up. Our
 conclusions concern the \emph{shape} of the result across that sweep, not a single value.
 Real training jobs also pay a reconfiguration cost we do not model, which would penalise
-\textsc{greedy} further; our claim that occupancy-maximising sizing is harmful is therefore
+Maximum-fit sizing further; our claim that occupancy-maximising sizing is harmful is therefore
 conservative.
 
 \textbf{One node is one GPU.} Supercloud's TX-GAIA nodes carry two V100s; we model the
@@ -713,33 +737,42 @@ time by the gate in the design, but evaluation runs on the simulation clock.
 
 \section{Conclusion}
 
-The controlled evidence does not currently show that a market policy family or multi-agent role
-separation improves malleable GPU scheduling.  In the only complete factorial comparison,
-Single-MKT differs from Single-NM by $-0.40$ deadline-violation points with an interval spanning
-zero.  The Multi and interaction questions remain unanswered because the cutoff left Multi-NM
-without the planned repeated seeds and Multi-MKT unrun.  This is an incomplete experiment, not a
-negative confirmatory test, and the distinction is central to the conclusion.
+How a trace-driven scheduling study handles job size decides what the study can find.  Replayed
+rigidly, the MIT Supercloud workload leaves standard schedulers separated by at most $1.3$ points of
+occupancy and by nothing at all on service quality, so efficiency comparisons drawn on it are
+comparisons of a conserved quantity.  Restoring elasticity makes the same metric controllable, and
+then maximising it is the wrong objective: the rule that fills the cluster most completely is the
+worst rule on every service axis we measure, because sublinear speed-up buys busy-ness rather than
+completed work.  For elastic workloads, device-hours per unit of completed work belongs in the
+headline and occupancy does not.
 
-What does replicate is the importance of sizing.  Strong deterministic ADAPT configurations match
-or beat the zero-shot Single-Referee averages on validation, while GREEDY can turn high occupancy
-into sharply worse service.  The counterfactual oracle finds a modest $2.03$-point mean ceiling
-above the non-market floor but only $0.07$ points above the market floor, with zero median gain in
-both families.  The small Qwen3-8B LoRA experiment does not learn that sparse exception policy:
-mean held-out regret is $8.78$ points, no improvement over $8.70$ zero-shot and far
-behind the fixed floor's $1.05$ points.  A selector must therefore learn exceptions without
-sacrificing the strong default or the output contract; this one does neither.
+Within that corrected frame, state-dependent policy selection has less to offer than its
+architectures assume.  On held-out windows the four queue-ordering rules are interchangeable to
+within $0.04$ points while sizing spans a factor of three, among auction valuations only deadline
+pressure matters, and the advantage of auction pricing over queue ordering is one overwhelmed window
+in eleven against a median of zero.  Counterfactual enumeration bounds what any selector could add at
+$2.03$ points for ordering and $0.07$ for auctions, with zero median gain, and a low-rank fine-tune
+reaches neither: its held-out regret is $8.78$ points against $8.70$ zero-shot and $1.05$ for the
+deterministic floor, with malformed output on eleven of twenty-four states.  The decision worth
+reasoning about is therefore sizing under runtime uncertainty during rare contention, not policy
+selection at every interval.
 
-The resulting engineering recommendation is conservative: retain a validated deterministic floor,
-count every malformed answer and fallback, and deploy an LLM selector only if held-out regret and a
-paired closed-loop test beat that floor after accounting for inference cost.  Multi-agent reasoning
-does earn its budget on authored text exceptions, but that result concerns information absent from
-the numeric trace and cannot be transferred to online scheduling by assertion.  Completing all four
-frozen test cells remains necessary before claiming a market effect, a Multi effect, or their
-interaction.
+Reasoning does earn its budget where the deciding fact is absent from the numbers: on authored
+operator exceptions, a debate between reviewers corrects a single model at an identical call budget.
+No public GPU trace carries such text, which is both why that result required an authored suite and
+why it cannot be transferred to online rationing by assertion.  The engineering recommendation
+follows the evidence rather than the architecture: keep a validated deterministic default, count every
+malformed answer and fallback, and admit a language model only where a held-out regret test and a
+paired closed-loop comparison beat that default after inference cost.  Whether role separation clears
+that bar on the reserved split is the question our frozen protocol was built to answer, and it remains
+open.
 
-\begin{thebibliography}{11}
-\bibitem{llmsched} \todo{LLM-Driven Adaptive Cloud Resource Scheduling: Bridging Reasoning
-Intelligence with Optimization Guarantees. IEEE OJ-CS, 2026 — exact citation}
+\begin{thebibliography}{13}
+\bibitem{llmsched} G.~Ding, S.~Yang, H.~Lin, Z.~Chen, and J.~S.~Yang, ``LLM-driven adaptive cloud
+resource scheduling: bridging reasoning intelligence with optimization guarantees,'' \emph{IEEE Open
+J.\ Comput.\ Soc.}, 2026.
+\bibitem{supercloud} S.~Samsi et al., ``The MIT Supercloud dataset,'' \emph{IEEE High Performance
+Extreme Computing Conf.\ (HPEC)}, 2021, pp.~1--8.
 \bibitem{deeprm} H.~Mao et al., ``Resource management with deep reinforcement learning,''
 HotNets, 2016.
 \bibitem{decima} H.~Mao et al., ``Learning scheduling algorithms for data processing
