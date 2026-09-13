@@ -38,11 +38,11 @@ elasticity through a malleability-aware simulator makes the same metric controll
 meaning. Sizing then moves service quality by an order of magnitude more than any ordering rule, and
 the sizing rule that attains the highest occupancy we measure, $0.988$ against $0.890$, is
 simultaneously the worst on every service axis, because sublinear speed-up converts capacity into
-busy-ness rather than into completed work. On held-out windows the four queue-ordering rules we test
-span $0.04$ percentage points of deadline violations while sizing spans $15.3$ to $46.4$, and among
-auction valuations only pricing a job's deadline pressure matters, $8.6$ against $14.9$ to $15.3$.
+busy-ness rather than into completed work. On twelve held-out windows the four queue-ordering rules we test span
+under one percentage point of deadline violations while sizing spans $15.1$ to $47.1$, and among
+auction valuations only pricing a job's deadline pressure matters, $8.1$ against $14.5$ to $15.0$.
 The advantage of auction pricing over queue ordering is concentrated in one overloaded window of
-eleven, where violations fall from $91.0\%$ to $21.6\%$ while the median difference is zero.
+twelve, where violations fall from $91.0\%$ to $21.6\%$ while the median difference is zero.
 Counterfactual enumeration of every policy from sampled states bounds what any state-dependent
 selector could add at $2.03$ points for queue ordering and $0.07$ for auctions, with a median of zero.
 Asked to select policies from that same observable state, a language model does not approach the
@@ -95,8 +95,9 @@ to three orders of magnitude.
 does, and the highest-occupancy rule is the worst-service rule in every window we measure. We
 recommend reporting device-hours per unit of completed work instead.
 \item \textbf{Language-model policy selection does not match deterministic code} (\S\ref{sec:controls},
-\S\ref{sec:oracle}). On held-out windows, queue-ordering rules are interchangeable while sizing and
-the auction's valuation are not, and the advantage of auction pricing is a single-window tail effect.
+\S\ref{sec:oracle}). On held-out windows the ordering rule is worth under one point while
+sizing is worth a factor of three and the auction's pricing rule six points, and the advantage of
+auction pricing over ordering is a single-window tail effect.
 Counterfactual enumeration bounds the available headroom at $2.03$ and $0.07$ points with a median of
 zero, and neither a zero-shot model, a low-rank fine-tune, nor a demand--supply role split comes near
 it: eight times the deterministic policy's regret, and an illegal action on 11 of 24 held-out states.
@@ -457,17 +458,17 @@ unchanged to the reserved split.  We do not draw a selector-against-fixed-policy
 assembling it from one completed split is exactly the unbalanced reading described above, and
 \S\ref{sec:future} sets out what would settle it.
 
-\subsection{Inside the action space: ordering is inert, valuation is not}
+\subsection{Inside the action space: sizing and pricing dominate ordering}
 \label{sec:controls}
 
-The 32 deterministic controls are complete on validation and on 11 of the 12 test windows, which is
-enough to characterise the action space the selectors choose within, independently of any selector.
-Table~\ref{tab:controls} reports the held-out test means, paired over those 11 windows.
+The 32 deterministic controls are complete on both splits: every configuration ran on all 12 validation
+and all 12 test windows.  They characterise the action space the selectors choose within, independently
+of any selector.  Table~\ref{tab:controls} reports the held-out test means, paired over the 12 windows.
 
 \begin{table}[t]
-\caption{Deterministic controls on held-out test windows, paired over the 11 windows all 32
-configurations completed.  Each family's ordering rules are shown at queue-proportional sizing; the sizing column varies sizing
-under that family's best ordering.}
+\caption{Deterministic controls on the 12 held-out test windows, all 32 configurations complete.
+Ordering rules are shown at queue-proportional sizing; the sizing column varies sizing under each
+family's validation-selected ordering.}
 \label{tab:controls}
 \centering
 \small
@@ -476,44 +477,48 @@ under that family's best ordering.}
 \toprule
 family & ordering (at queue-proportional) & viol.\ (\%) & sizing & viol.\ (\%) \\
 \midrule
-non-market & FCFS          & $15.23$ & queue-proportional        & $15.27$ \\
-           & least laxity  & $15.23$ & requested size & $15.42$ \\
-           & tier FCFS     & $15.25$ & benefit-gated         & $15.99$ \\
-           & fair-share    & $15.27$ & maximum-fit       & $46.35$ \\
+ordering & FCFS          & $14.48$ & queue-proportional & $15.07$ \\
+         & least laxity  & $14.48$ & requested size     & $15.15$ \\
+         & fair-share    & $15.07$ & benefit-gated      & $15.67$ \\
+         & tier FCFS     & $15.44$ & maximum-fit        & $47.06$ \\
 \midrule
-market     & deadline      & $ 8.62$ & queue-proportional        & $ 8.62$ \\
-           & priority      & $14.90$ & benefit-gated         & $ 8.71$ \\
-           & wait          & $15.23$ & requested size & $ 8.76$ \\
-           & fair-share    & $15.28$ & maximum-fit       & $60.35$ \\
+auction  & deadline      & $ 8.11$ & queue-proportional & $ 8.11$ \\
+         & wait          & $14.48$ & requested size     & $ 8.20$ \\
+         & priority      & $14.95$ & benefit-gated      & $ 8.20$ \\
+         & fair-share    & $15.03$ & maximum-fit        & $63.59$ \\
 \bottomrule
 \end{tabular}
 }
 \end{table}
 
-Two facts constrain what any selector could contribute.  First, \emph{ordering is inert}: the four
-non-market orderings span $15.23$ to $15.27$ points, a spread of $0.04$, so on this workload which
-queue order a referee names cannot matter.  Sizing under the same ordering spans $15.27$ to $46.35$.
-This reproduces \S\ref{sec:sizing} inside the larger $8\times4$ space, on held-out windows, with
-deadline violations rather than SLA-10 as the outcome.  Second, within the market family the clearing
-mechanism is held fixed and only what the bid \emph{values} moves the outcome: valuing deadline
-pressure gives $8.62$ points against $14.90$--$15.28$ for priority, wait, and fair-share valuations.
-The decision that matters is therefore not the ordering rule but how much capacity each job gets and
-what its claim is priced on.
+Two facts constrain what any selector could contribute.  First, the ordering rule is the least
+consequential part of the action: the four orderings span $14.48$ to $15.44$ points, under one point,
+while sizing under a fixed ordering spans $15.07$ to $47.06$, a factor of three.  Ordering is not
+literally inert, but it is worth roughly a thirtieth of what sizing is worth, which reproduces
+\S\ref{sec:sizing} inside the larger $8\times4$ space, on held-out windows, and with deadline
+violations rather than slowdown as the outcome.  Second, within the auction family the clearing
+mechanism is held fixed and only what a claim is \emph{priced on} moves the outcome: pricing deadline
+pressure gives $8.11$ points against $14.48$--$15.03$ for wait, priority, and fair-share pricing.  The
+decisions that matter are therefore how much capacity each job receives and what its claim is priced
+on, not the order in which the queue is scanned.
 
-The family-level difference is a tail effect and has to be reported as one.  The best market
-configuration beats the best non-market configuration by $6.61$ points on average, while the median
-difference over the same 11 windows is exactly zero: seven windows tie to the digit, three move by at
-most $1.6$ points, and one window moves by $69.4$, from $91.0\%$ violations to $21.6\%$.  That window
-is the only one in the set where the cluster is overwhelmed, and it is the only one where any of
-these choices is worth much.  A mean-only reading would present a one-window rescue as a general
-property of market clearing.
+The difference between the two families is a tail effect and has to be reported as one.  The best
+auction configuration beats the best ordering configuration by $6.38$ points on average, while the
+median difference across the 12 windows is exactly zero: seven windows tie to the digit, four move by
+$0.5$ to $3.8$ points, and one moves by $69.4$, from $91.0\%$ violations to $21.6\%$.  That window is
+the only one in the set where the cluster is overwhelmed, and it is where almost the entire mean
+difference lives.  A mean-only reading would present a one-window rescue as a general property of
+auction clearing.
 
-One test window is excluded from Table~\ref{tab:controls}.  Under queue-proportional sizing on that window the
-simulator reproducibly allocates 81 devices from an 80-device pool, and the runtime capacity
-assertion aborts the run; six of the 32 configurations are affected, all of them under queue-proportional sizing.  The same assertion is
-what discards four oracle states in \S\ref{sec:oracle}.  We report the exclusion rather than
-loosening the assertion, but it is a defect in the sizing path that the winning configuration in both
-families happens to exercise, and it is the first thing to fix before these numbers are final.
+One note on how this table reached completeness, since it bears on the value of running the checks at
+all.  Six configurations on one test window initially aborted, the capacity assertion reporting 81
+devices allocated from a pool of 80.  The cause was in the checker, not the scheduler: the simulator
+retains a killed job's assignment in its mirror for the job's callback while already offering those
+devices as free, and the assertion counted the stale record.  Completed jobs were already excluded and
+killed ones now are.  Re-running the six configurations after that correction produced no violation,
+and no allocation in this paper ever exceeded the pool.  The episode is worth a sentence because a
+capacity assertion that fires on a bookkeeping artifact is indistinguishable, from the outside, from
+one that catches a real over-allocation, and only reproducing it separates the two.
 
 \subsection{Counterfactual oracle and LoRA protocol}
 \label{sec:oracle}
@@ -522,8 +527,8 @@ To test whether supervision rather than architecture is the bottleneck, we clone
 states and execute all 16 policy--sizing actions in the relevant family from the same state, with
 the same future arrivals and seed.  The lowest deadline-violation action supplies an offline label;
 future outcomes are never included in the online prompt.  We sample two states per window and
-family.  Four states from one training window are discarded because a simulator capacity assertion
-reproducibly reports 81 allocations from an 80-GPU pool.  The resulting 1,092 auditable rollouts
+family.  Four states from one training window were discarded under the superseded capacity assertion described
+in \S\ref{sec:controls}; they are recoverable and their inclusion would slightly change the bound below.  The resulting 1,092 auditable rollouts
 form 44 complete training examples and 24 validation examples, with disjoint windows and no
 oracle-only fields in model input.
 
@@ -716,17 +721,16 @@ the contended subset: a contention condition defined from observable state alone
 minimum demand exceeding free capacity, partitions the windows without reference to which method won,
 and it is where the one-window effect above lives.
 
-\textbf{The sizing path's capacity defect.}  The excluded window in \S\ref{sec:controls} and the
-discarded oracle states in \S\ref{sec:oracle} share one cause, an 81-device allocation from an
-80-device pool under queue-proportional sizing.  It must be fixed, not asserted around, before any of these
-numbers is final.
+\textbf{Recovering the discarded oracle states.}  Four training states were dropped under the
+superseded capacity assertion (\S\ref{sec:controls}) and can be relabelled, which would tighten the
+counterfactual bound slightly.
 
 \section{Threats to Validity}
 \label{sec:threats}
 
 \textbf{The factorial run is incomplete.} At the amended single repetition, three of the four selector
-conditions are complete on validation and the role-separated referee on auctions is absent; the 32 deterministic controls are complete on
-validation and on 11 of 12 test windows, but no LLM-controlled test cell has finished.  Every
+conditions are complete on validation and the role-separated referee on auctions is absent; the 32 deterministic controls are complete on both
+splits, but no selector condition has finished on the reserved split.  Every
 selector number in this paper is therefore a validation-set observation, not the preregistered
 confirmatory analysis, and we make no market, Multi, or interaction claim.  Raw cell means cannot
 repair missing paired observations.  Reducing three seeds to one also merges response noise into the
@@ -789,10 +793,9 @@ completed work.  For elastic workloads, device-hours per unit of completed work 
 headline and occupancy does not.
 
 Within that corrected frame, our title question has a clear answer for numeric rationing: no.  On
-held-out windows the four queue-ordering rules are interchangeable to within $0.04$ points while
-sizing spans a factor of three, among auction valuations only deadline pressure matters, and the
-advantage of auction pricing over queue ordering is one overwhelmed window in eleven against a median
-of zero.  Counterfactual enumeration bounds what any selector could add at $2.03$ points for ordering
+twelve held-out windows the four queue-ordering rules span under one point while sizing spans a factor
+of three, among auction valuations only deadline pressure matters, and the advantage of auction pricing
+over queue ordering is one overwhelmed window in twelve against a median of zero.  Counterfactual enumeration bounds what any selector could add at $2.03$ points for ordering
 and $0.07$ for auctions, with zero median gain.  Asked to choose within that space, an 8B model
 carries $8.70$ points of held-out regret zero-shot and $8.78$ after low-rank fine-tuning, against
 $1.05$ for a single deterministic policy, and emits an illegal action on eleven of twenty-four states
