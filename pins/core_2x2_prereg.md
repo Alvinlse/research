@@ -66,3 +66,26 @@ Because the gate hashes the implementation, that one-line change invalidated the
 `implementation.accepted_sha256` so the 483 rows generated before the fix remain verifiable instead
 of being silently re-stamped. No design parameter was re-frozen: windows, trace, deadlines, build
 configuration, policy families, sizing actions, seeds and the analysis plan are unchanged.
+
+## Amendment 2 (2026-09-13): one inference seed instead of three
+
+Measured from 483 completed rows, the multi-agent cell costs 1,703 s per window run (median 1,426 s),
+the single referee 251 s and a fixed policy 8 s. Completing the frozen design needed 123 further
+multi-agent runs, about 64 hours serial, which does not fit before the submission target. The
+inference seed set is therefore reduced from `[17, 29, 43]` to `[17]`, cutting the remaining
+multi-agent work to roughly 11 hours.
+
+What this costs, stated plainly: the analysis plan said the three seeded responses are averaged
+within each window first, so within-window response noise was separable from between-window
+variance. With one response per window it is not. The inferential unit is unchanged (the window),
+the three contrasts are unchanged, the paired sign-flip test and Holm correction are unchanged, and
+the test split is still untouched by any selection. Decoding stays temperature 0.1, which is not
+greedy, so a single response is a draw from a distribution rather than a deterministic answer, and
+per-window differences now carry that sampling noise. This makes the tests more conservative for
+detecting a real effect, not less.
+
+No other parameter is re-frozen. `implementation.sha256` is updated because the prereg file and the
+tick script are part of the hashed implementation set; the superseded hashes stay in
+`accepted_sha256` and `accepted_manifest_sha256` so all rows generated before this amendment, at
+either seed count, remain verifiable. Rows already collected at seeds 29 and 43 are kept on disk and
+are excluded from the primary analysis by the manifest's seed list rather than deleted.

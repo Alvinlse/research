@@ -55,13 +55,15 @@
    "pins/test_core_2x2.py"
   ],
   "git_head_at_freeze": "29efc293aea0c69e0f021daa9b0decda3478b62b",
-  "sha256": "1fa98289babf7e1d8bbb26c949d35c7a9ada8dcf3424bc1f309d2b313c1c327a",
+  "sha256": "aebb4281ce2f66df40529c9e86bf1b6057d585ed1879c18c0fc340faf47ee698",
   "accepted_sha256": [
    "178066482f133e51e76b1a0e7678adf7b373134df31c303b473a314a4c69b00e",
-   "1fa98289babf7e1d8bbb26c949d35c7a9ada8dcf3424bc1f309d2b313c1c327a"
+   "1fa98289babf7e1d8bbb26c949d35c7a9ada8dcf3424bc1f309d2b313c1c327a",
+   "aebb4281ce2f66df40529c9e86bf1b6057d585ed1879c18c0fc340faf47ee698"
   ],
   "accepted_manifest_sha256": [
-   "14d54e95cdc9b00b2f305e2d71939b8180a36ffeab87ca71b0d477d7f626263f"
+   "14d54e95cdc9b00b2f305e2d71939b8180a36ffeab87ca71b0d477d7f626263f",
+   "8a050abf98b7efc52b7be68d357f9fbdc3b1c6795ae17273f6177e3d57d3334e"
   ],
   "amendments": [
    {
@@ -71,6 +73,14 @@
     "superseded_sha256": "178066482f133e51e76b1a0e7678adf7b373134df31c303b473a314a4c69b00e",
     "rows_generated_before": 483,
     "recorded_in": "pins/core_2x2_prereg.md, Amendment 1"
+   },
+   {
+    "date": "2026-09-13",
+    "what": "inference paired_seeds reduced from [17,29,43] to [17]",
+    "why": "multi-agent cell measured at 1703 s per run; 123 remaining runs were 64 h serial, past the target",
+    "cost": "within-window response noise is no longer separable from between-window variance; tests become more conservative",
+    "superseded_sha256": "1fa98289babf7e1d8bbb26c949d35c7a9ada8dcf3424bc1f309d2b313c1c327a",
+    "recorded_in": "pins/core_2x2_prereg.md, Amendment 2"
    }
   ]
  },
@@ -78,11 +88,14 @@
   "model": "qwen2.5:14b",
   "num_predict": 400,
   "paired_seeds": [
+   17
+  ],
+  "temperature": 0.1,
+  "superseded_paired_seeds": [
    17,
    29,
    43
-  ],
-  "temperature": 0.1
+  ]
  },
  "processed_trace": {
   "audit_path": "data/supercloud_gpu_jobs_v1_preprocess.json",

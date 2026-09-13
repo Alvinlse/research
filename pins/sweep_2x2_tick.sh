@@ -18,7 +18,7 @@ LOG=$OUT/tick.log
 # those inputs are being edited.
 mkdir -p "$OUT"
 [ -f "$OUT/.armed" ] || exit 0
-TOTAL=1056       # 24 eval windows x (32 fixed policies + 4 factorial cells x 3 seeds)
+TOTAL=864       # 24 eval windows x (32 fixed policies + 4 factorial cells x 1 seed, amendment 2)
 
 exec 9>"$OUT/.lock"
 flock -n 9 || exit 0          # a tick arriving while the previous one works exits, never queues
