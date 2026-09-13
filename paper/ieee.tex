@@ -29,16 +29,12 @@ lay.kim.seng.q4@dc.tohoku.ac.jp}
 
 \begin{abstract}
 A GPU job that can be resized makes two demands on a scheduler: which job to start, and how many
-devices to give it. Trace-driven studies almost always erase the second decision by replaying each
-job at its recorded size, and we show that this choice decides the outcome of the study. Replaying
-the MIT Supercloud accounting log rigidly on an $80$-GPU pool, five standard schedulers differ by at
-most $1.3$ percentage points of occupancy, recover on average $0.2\%$ of idle capacity, and separate
-on no service metric after correction: the comparison is close to vacuous by construction. Restoring
-elasticity through a malleability-aware simulator makes the same metric controllable and reverses its
-meaning. Sizing then moves service quality by an order of magnitude more than any ordering rule, and
-the sizing rule that attains the highest occupancy we measure, $0.988$ against $0.890$, is
-simultaneously the worst on every service axis, because sublinear speed-up converts capacity into
-busy-ness rather than into completed work. On twelve held-out windows the four queue-ordering rules we test span
+devices to give it. We ask whether reasoning structure helps with the second, on the MIT
+Supercloud accounting log replayed through a malleability-aware simulator on an $80$-GPU pool. Sizing
+is where the leverage is: it moves deadline violations by an order of magnitude more than any queue
+ordering rule, and the sizing rule attaining the highest occupancy we measure, $0.988$ against $0.890$,
+is simultaneously the worst on every service axis, because sublinear speed-up converts capacity into
+busy-ness rather than completed work. On twelve held-out windows the four queue-ordering rules we test span
 under one percentage point of deadline violations while sizing spans $15.1$ to $47.1$, and among
 auction valuations only pricing a job's deadline pressure matters, $8.1$ against $14.5$ to $15.0$.
 The advantage of auction pricing over queue ordering is concentrated in one overloaded window of
@@ -66,31 +62,19 @@ AI training and inference are the dominant consumers of GPU clusters, and they a
 completion time. A scheduler on such a workload therefore makes two decisions per job, not one
 --- \emph{which} job to start, and \emph{how large} to make it.
 
-Almost every published evaluation erases the second decision. A trace records that a job used
-$g$ devices for $t$ seconds; it does not record what that job would have done on $2g$ or on
-$g/2$, because the counterfactual was never observed. The standard response is to replay the
-trace \emph{rigidly}, pinning each job to its historical size. This is usually presented as a
-conservative simplification. We show it is a suppression, and that it silently invalidates the
-efficiency claims most commonly made on top of it.
-
-The argument is short. If no job can be resized, the device-seconds a workload consumes are
-fixed: every scheduler must run the same jobs for the same durations, so it can only move work
-earlier or later. Utilisation is then close to a conserved quantity, and a comparison of
-schedulers on it is close to a comparison of nothing. Restoring elasticity does not merely add
-a tuning knob; it makes utilisation controllable, and --- as we show --- makes maximising it
-actively harmful.
+A trace records that a job used $g$ devices for $t$ seconds; it does not record what that job would
+have done on $2g$ or $g/2$, so any study of the sizing decision must supply that counterfactual. We
+supply it with a speed-up model anchored on each job's observed point, and sweep its parallel fraction
+rather than fixing it, so that the rigid replay is the same model evaluated at the size each job really
+used.
 
 Our contributions, all on the MIT Supercloud GPU trace~\cite{supercloud} replayed through a malleability-aware
 batch simulator~\cite{elastisim}, are:
 \begin{enumerate}
-\item \textbf{Rigid replay cannot answer an efficiency question} (\S\ref{sec:rigid}). We quantify
-how little room a fixed-size replay leaves: occupancy differs by at most $1.3$ points across five
-standard schedulers, recoverable idle capacity averages $0.2\%$, and no arm separates on service
-quality. Backfilling is inert on this trace because requested walltimes exceed true runtimes by two
-to three orders of magnitude.
-\item \textbf{Occupancy is an anti-metric once jobs are elastic} (\S\ref{sec:rigid}). Sizing moves service quality by an order of magnitude more than ordering
-does, and the highest-occupancy rule is the worst-service rule in every window we measure. We
-recommend reporting device-hours per unit of completed work instead.
+\item \textbf{Occupancy is an anti-metric for elastic workloads} (\S\ref{sec:rigid}). Sizing moves
+service quality by an order of magnitude more than ordering does, and the highest-occupancy rule is the
+worst-service rule in every window we measure. We recommend reporting device-hours per unit of completed
+work instead.
 \item \textbf{Language-model policy selection does not match deterministic code} (\S\ref{sec:controls},
 \S\ref{sec:oracle}). On held-out windows the ordering rule is worth under one point while
 sizing is worth a factor of three and the auction's pricing rule six points, and the advantage of
@@ -132,6 +116,10 @@ self-consistency~\cite{wang2023selfconsistency} are usually evaluated on QA benc
 LLM-as-judge protocols~\cite{zheng2023judge} inherit that setting; budget-matched controls are
 rare, so a reported gain is rarely separable from the extra calls that buy it. Every structure
 comparison we report carries such a control.
+
+\textbf{GPU cluster traces.} Public traces record allocations, not counterfactual sizes: neither
+Supercloud~\cite{supercloud} nor the other widely used GPU trace~\cite{alibaba2020} states what a job
+would have done at a different size, which is why an elastic study must supply a speed-up model.
 
 \textbf{Malleability and mechanism design.} Runtime elasticity is rarely deployed in
 production~\cite{tarraf2024}; our partial-allocation model rests on it and we state that
@@ -260,28 +248,11 @@ retained, so rows produced before an amendment stay verifiable instead of being 
 assertions enforce capacity, malleable bounds, non-negative remaining work and single completion at
 every scheduler invocation.
 
-\subsection{Why elasticity, and why not occupancy}
+\subsection{Sizing dominates ordering, and occupancy inverts}
 \label{sec:rigid}
 
-Two properties of this workload shape everything that follows, and both are measured rather than
-assumed.
-
-\textbf{A rigid replay has almost nothing to compare.} With every job pinned to its historical size,
-the device-seconds consumed are fixed by the window, so a scheduler can only move work earlier or
-later.  Across five schedulers --- strict first-come first-served, first-fit, EASY
-backfilling~\cite{easy}, requested-walltime ordering, and a declared/undeclared split --- occupancy
-differs by at most $1.3$ points within a window and is identical to three decimals in several, the
-idle capacity any ordering rule could still recover averages $0.2\%$, and over $11$ windows no arm
-separates from the backfilling baseline after Holm correction across three slowdown thresholds (largest
-raw effect $-4.2$ points, $p_{\text{Holm}}=0.41$).  Two trace properties explain the flatness and are
-usually assumed away.  Backfilling is inert here: across $1{,}351$ blocked scheduling points it
-backfilled $48$ times, because requested walltimes exceed true runtimes by $100$--$600\times$, so no
-job can be shown to fit before the head job's reservation.  And requested walltime carries no runtime
-signal: its rank correlation with true runtime across four windows is $+0.16$, $-0.11$, $-0.73$ and
-$-0.01$, the only significant value being negative.  Any shortest-job-first rule on this trace orders
-on noise.
-
-\textbf{Once jobs are elastic, occupancy inverts.}  Holding ordering at first-fit and varying only
+Before handing the sizing decision to a selector, we establish what it is worth, and what the obvious
+objective for it costs.  Holding ordering at first-fit and varying only
 sizing over the same $12$ windows, requested-size sizing spends $3{,}653$ device-hours at $0.890$
 occupancy for $22.3\%$ slowdown violations; queue-proportional spends $3{,}339$ at $0.964$ for
 $32.5\%$; maximum-fit spends $9{,}581$ at $0.988$ for $76.2\%$.  Paired against requested size,
@@ -485,11 +456,9 @@ superseded capacity assertion remain to be relabelled.
 
 \section{Conclusion}
 
-How a trace-driven study handles job size decides what it can find.  Replayed rigidly, this workload
-leaves standard schedulers separated by at most $1.3$ points of occupancy and by nothing on service
-quality, so efficiency comparisons drawn on it compare a conserved quantity.  Restoring elasticity makes
-the metric controllable and then maximising it becomes the wrong objective, because the rule that fills
-the cluster most completely is the worst on every service axis.  For elastic workloads, device-hours per
+Once jobs can be resized, the sizing decision carries the leverage and occupancy stops being a safe
+objective: the rule that fills the cluster most completely is the worst on every service axis, because
+sublinear speed-up buys busy-ness rather than completed work.  For elastic workloads, device-hours per
 unit of completed work belongs in the headline and occupancy does not.
 
 Within that frame our title question has a clear answer for numeric rationing: no.  Counterfactual
@@ -509,7 +478,7 @@ direction.  The recommendation follows the evidence rather than the architecture
 deterministic default, count every malformed answer and fallback, and admit a language model only where a
 held-out regret test and a paired closed-loop comparison beat that default after inference cost.
 
-\begin{thebibliography}{13}
+\begin{thebibliography}{12}
 \bibitem{llmsched} G.~Ding, S.~Yang, H.~Lin, Z.~Chen, and J.~S.~Yang, ``LLM-driven adaptive cloud
 resource scheduling: bridging reasoning intelligence with optimization guarantees,'' \emph{IEEE Open
 J.\ Comput.\ Soc.}, 2026.
@@ -524,7 +493,6 @@ experiences, challenges, and future opportunities,'' \emph{IEEE Trans.\ Parallel
 Syst.}, vol.~35, no.~9, pp.~1551--1564, 2024.
 \bibitem{alibaba2020} Q.~Weng et al., ``MLaaS in the wild: workload analysis and scheduling
 in large-scale heterogeneous GPU clusters,'' NSDI, 2022 (cluster-trace-gpu-v2020).
-\bibitem{easy} D.~Lifka, ``The ANL/IBM SP scheduling system,'' JSSPP, 1995.
 \bibitem{elastisim} T.~\"Ozden, T.~Beringer, A.~Mazaheri, H.~M.~Fard, and F.~Wolf,
 ``ElastiSim: a batch-system simulator for malleable workloads,'' ICPP, 2022, pp.~1--11.
 \bibitem{du2024debate} Y.~Du, S.~Li, A.~Torralba, J.~B.~Tenenbaum, and I.~Mordatch,
