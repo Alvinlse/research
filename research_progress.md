@@ -44,6 +44,33 @@
 | 12 | The round-2 54-scene suite was **insensitive**, not merely negative: text-blind baselines (ILP 30/54, rule 31/54) scored within noise of every LLM arm, min p=0.238 across ~30 tests. Round 3's text-dependent design drops the rigid floor to 0/31 — the instrument was replaced, not the hypothesis re-shopped | Exp 65–67 → 79–83 | solid (methodology) |
 | 17 | **A second pass with cross-talk beats one call whether or not the reviewers are opposed** — opposed 43/81 and symmetric 41/81 both beat `single-pkt` 28/81 (p=0.0015, p=0.0044), confirmed on the blind r4 stratum. But **opposed vs symmetric is UNRESOLVED, not equivalent**: b=4 c=2, McNemar p=0.6875, and TOST **fails at the pre-registered ±5** (CI [−2.74, +5.25]) as well as ±3. Only 6 discordant pairs — the instrument cannot separate them. `CLAUDE.md`'s founding "symmetric objectives are theater" assumption stays **open**; it is not measured false | **Exp 100** | inconclusive (underpowered, n=81, m=6) — do not cite as equivalence |
 | 18 | **Grain, not intelligence, is what the window-level selector was missing — and two thirds of the grain does not exist.** Per-job labels put the ceilings at fixed 1.0599 → per-state 0.9079 → per-job 0.6148; only **34%** of the job-level gain is collectible by a per-state choice, the rest being zero-sum redistribution (`sum_j d[p,j] = 0` by construction). The implementable slice is sizing, and a **3-bucket static rule keyed on job size** captures 89% of the per-state *oracle* on cost and beats it on wait (11,514 s vs 11,669 s) at zero tokens. Regret is a tail: top 10% of jobs hold 77% of it | **Exp 101** (+ `runs/headroom_verdict.md`) | **qualified 2026-09-12 by its composability run: ranking confirmed, size not.** The simulator reproduces the predicted order (`by_size` < `adaptive` < `as_requested` on wait, and `by_size` is also lowest on p90 and sla10) but at **−127 s instead of −3083 s**, median 0, 25/55 windows, and −110 s against plain `adaptive` — 84% of jobs ask for one GPU so the rule is often a no-op. A 0-token tie-breaker, not an 89%-of-oracle win. The homogeneous rows are sound at full size (−207 s predicted vs −18 s measured); the per-job rows are upper bounds loose by >10x |
+| 19 | **Role separation is complementary with the market, not beneficial in general.** On the 12 untouched test windows, Demand+Supply+Referee is 0.38 deadline points worse than Single in the non-market family but 1.42 points better inside the market. The pre-registered interaction is −1.79 points: seven windows favour it and five tie, with none in the opposite direction (exact Holm p=0.0469), although the paired-t CI [−3.84, +0.25] crosses zero. | **Core 2×2 (`core-2x2-v1`)** | **qualified positive** — n=12 and one amended inference seed; the exact test and parametric CI disagree, and the multi-agent main effect is null |
+
+## Core 2×2 held-out factorial — completed 2026-09-14
+
+The append-only interleaved follow-up completed all **48/48** confirmatory cells: 12 untouched test
+windows × Single/Multi × non-market/market, with the amended inference seed 17. Invalid actions used
+the same-family fixed floor selected on validation (`fairness+adaptive` for non-market and
+`auction_deadline+adaptive` for market). The raw rows, complete machine-readable analysis, and compact
+table are in `runs/core_2x2_interleaved_test/{rows.jsonl,analysis.json,analysis.md}`.
+
+| family | Single referee | Demand+Supply+Referee | Multi − Single |
+|---|---:|---:|---:|
+| non-market | 14.750% | 15.125% | +0.375 pp |
+| market | 9.625% | **8.208%** | **−1.417 pp** |
+
+The three pre-registered test-window contrasts are: market main effect −6.021 pp, 95% CI
+[−17.780, +5.738], exact p=0.1250, Holm p=0.2500; multi-agent main effect −0.521 pp,
+CI [−1.441, +0.399], exact p=0.1875, Holm p=0.2500; interaction **−1.792 pp**, CI
+[−3.836, +0.252], exact p=0.0156, **Holm p=0.0469**. Report both inferential summaries: the
+sign-flip result is driven by directional consistency (seven negative interactions, five exact zeros,
+none positive), while the unequal magnitudes widen the paired-t interval across zero. This supports a
+specific complementarity claim, not “multi-agent wins overall” and not a precise effect-size claim.
+
+Execution was clean: zero LLM/runtime errors, zero invalid Single rulings, and four invalid Multi
+rulings, all absorbed by the pre-registered safety floor. The 24 Multi runs used 3,663 calls and
+10.93 wall-hours versus 1,239 calls and 1.62 wall-hours for the 24 Single runs. Because the disclosed
+amendment reduced `[17,29,43]` to `[17]`, decoding noise is inseparable from between-window variance.
 
 **Open / next**, roughly by value:
 

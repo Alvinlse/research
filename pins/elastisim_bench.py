@@ -1631,14 +1631,31 @@ POLICY_SELECT = ("You choose the scheduling policy for a GPU cluster for the nex
                  '"why": "one line naming the state feature that drove the choice"}. '
                  "Use an empty job_sizing object when no shown job needs an exception.")
 
+_DEMAND_SCHEMA = ('{"urgent_jobs": ["<shown job id>"], "scale_benefit_jobs": ["<shown job id>"], '
+                  '"shrink_tolerant_jobs": ["<shown job id>"], '
+                  '"analysis": "one sentence citing the demand evidence"}.')
+
 POLICY_DEMAND_REVIEW = (
     "You are the DEMAND-side analyst for a GPU scheduler. You may only assess the queue; do not "
     "choose a policy, sizing action, allocation, or GPU count. Identify deadline pressure, urgent "
     "jobs, jobs likely to benefit from scaling, and shrink-tolerant jobs using only supplied fields. "
-    "Do not invent future arrivals or true runtimes. Reply with JSON only: "
-    '{"urgent_jobs": ["<shown job id>"], "scale_benefit_jobs": ["<shown job id>"], '
-    '"shrink_tolerant_jobs": ["<shown job id>"], '
-    '"analysis": "one sentence citing the demand evidence"}.')
+    "Do not invent future arrivals or true runtimes. Reply with JSON only: " + _DEMAND_SCHEMA)
+
+# Selected by `demand_v2`. The frozen version above asks the analyst to "identify urgent jobs", which
+# presupposes some exist and offers no way to report their absence: it flagged urgency in 74 of 74
+# decision epochs on the most contended window, and the referee then held least-laxity ordering for 90%
+# of its decisions, the worse ordering there. This version defines each criterion against the
+# distribution the packet already shows and licenses the empty answer.
+POLICY_DEMAND_REVIEW_V2 = (
+    "You are the DEMAND-side analyst for a GPU scheduler. You may only assess the queue; do not "
+    "choose a policy, sizing action, allocation, or GPU count. Judge each criterion against the "
+    "distribution you are shown, not in absolute terms. A job is URGENT only if its laxity is "
+    "negative or below the queue's median laxity; a job that has merely waited a long time is not "
+    "urgent. A job BENEFITS FROM SCALING only if it is malleable and asked for less than its legal "
+    "maximum. A job is SHRINK-TOLERANT only if it is malleable and its laxity is above the median. "
+    "Report an empty list when no job meets a criterion: an empty list is the expected answer for a "
+    "queue under no deadline pressure, and listing most of the queue is an error. "
+    "Do not invent future arrivals or true runtimes. Reply with JSON only: " + _DEMAND_SCHEMA)
 
 POLICY_SUPPLY_REVIEW = (
     "You are the SUPPLY-side analyst for a GPU scheduler. You may only assess capacity; do not "
@@ -1736,8 +1753,28 @@ def _policy_observations(pending, ctx) -> dict:
     }
 
 
+def _held_intervals(ctx) -> int:
+    """How many consecutive decisions have kept the current policy. Repetition is otherwise invisible
+    to the model, which sees only the policy's name."""
+    hist, n = ctx.get("sel_history", []), 0
+    cur = (ctx.get("sel_ordering"), ctx.get("sel_sizing"))
+    for h in reversed(hist):
+        if (h.get("ordering"), h.get("sizing")) != cur:
+            break
+        n += 1
+    return n
+
+
 def _policy_menu_lines(ctx=None) -> list[str]:
+    """Under `packet_v2` only the action names survive: this block is identical at every decision and
+    is the largest in the packet (~319 tokens against ~139 for both analyst statements), so repeating
+    it dilutes the state it exists to support. Behind a flag because an earlier experiment found the
+    decision packet is what makes rulings feasible, capability-gated, so invalid rulings decide it."""
     allowed = _family_orderings(ctx)
+    if (ctx or {}).get("packet_v2"):
+        return [f"ORDERING OPTIONS: {', '.join(allowed)}",
+                f"SIZING OPTIONS: {', '.join(SELECTOR_MENU['sizing'])}",
+                "You choose one of each. Code enforces the pool and each job's legal bounds."]
     lines = ["ORDERING MENU:"]
     lines += [f"  {k}: {v}" for k, v in SELECTOR_MENU["ordering"].items() if k in allowed]
     lines += ["", "SIZING MENU:"]
@@ -1802,7 +1839,8 @@ def _packet_policy(pending, free, ctx) -> str:
         # The scratchpad: what you chose, and what the cluster did next. Without it the referee has
         # no evidence that any choice ever mattered, and a selector with no feedback has no reason
         # to change -- which is exactly the collapse onto one policy we measured.
-        lines += ["", "YOUR RECENT DECISIONS AND WHAT FOLLOWED:"]
+        lines += ["", "YOUR RECENT DECISIONS, EACH AGAINST THE INTERVAL BEFORE IT:"] \
+            if ctx.get("packet_v2") else ["", "YOUR RECENT DECISIONS AND WHAT FOLLOWED:"]
         for h in hist[-4:]:
             after = (f"queue_depth {h['queue']}->{h['queue_after']}, "
                      f"{h['started_after']} jobs started, running {h['running']}->{h['run_after']}"
@@ -1848,7 +1886,10 @@ def _packet_policy_supply(pending, free, ctx) -> str:
              f"running_age_s_p90={ob['running_age_s_p90']:.0f} "
              f"running_age_s_max={ob['running_age_s_max']:.0f}",
              f"current_policy=ordering:{ctx.get('sel_ordering', 'firstfit')} "
-             f"sizing:{ctx.get('sel_sizing', 'as_requested')}", ""]
+             f"sizing:{ctx.get('sel_sizing', 'as_requested')}"
+             # Repetition is otherwise invisible: the model sees the policy's name but not that it
+             # has been holding it for the last nine decisions.
+             + (f" held_intervals={_held_intervals(ctx)}" if ctx.get("packet_v2") else ""), ""]
     return "\n".join(lines + _policy_menu_lines(ctx) + [""] + _actionable_job_lines(pending, ctx))
 
 
@@ -1906,7 +1947,7 @@ def _policy_begin(pending, ctx) -> int | None:
 
 
 def _policy_record(pending, ctx, started_total: int, ans, mode: str, **extra) -> None:
-    """Commit one valid policy choice, or preserve the prior safe fallback."""
+    """Commit one valid policy choice, or execute the independently selected fixed floor."""
     pair = _policy_answer(ans, ctx)
     actions = _materialise_job_sizing(ans, pending, ctx) if pair else None
     if pair and actions is not None:
@@ -1916,6 +1957,12 @@ def _policy_record(pending, ctx, started_total: int, ans, mode: str, **extra) ->
         pair = None
         ctx["sel_invalid"] = ctx.get("sel_invalid", 0) + 1
         ctx["fallbacks"] = ctx.get("fallbacks", 0) + 1
+        fallback_o = ctx.get("fallback_ordering")
+        fallback_z = ctx.get("fallback_sizing")
+        if fallback_o and fallback_z:
+            ctx["sel_ordering"], ctx["sel_sizing"] = fallback_o, fallback_z
+            active = {_job_key(j) for j in list(pending) + list(ctx.get("running", []))}
+            ctx["job_sizing"] = {jid: fallback_z for jid in active}
     now = ctx["now"]
     load = round(sum(max(1, int(j.attributes.get("req_nodes", 1))) for j in pending)
                  / max(1, ctx.get("pool_n", 1)), 2)
@@ -1986,7 +2033,9 @@ def _arm_policy_reviewed(pending, free, ctx, opposed: bool) -> None:
         complete = _packet_policy(pending, free, ctx)
         if opposed:
             left_prompt, left_packet, left_tag = \
-                POLICY_DEMAND_REVIEW, _packet_policy_demand(pending, ctx), "es-policy-demand"
+                (POLICY_DEMAND_REVIEW_V2 if ctx.get("demand_v2") else POLICY_DEMAND_REVIEW), \
+                _packet_policy_demand(pending, ctx), \
+                ("es-policy-demand-v2" if ctx.get("demand_v2") else "es-policy-demand")
             right_prompt, right_packet, right_tag = \
                 POLICY_SUPPLY_REVIEW, _packet_policy_supply(pending, free, ctx), "es-policy-supply"
             mode, left_name, right_name = "opposed", "demand", "supply"
@@ -2006,8 +2055,13 @@ def _arm_policy_reviewed(pending, free, ctx, opposed: bool) -> None:
         ctx["calls"] += 2
         left_text = json.dumps(left) if left is not None else "none"
         right_text = json.dumps(right) if right is not None else "none"
-        referee_packet = (complete + f"\n\n{left_name.upper()} STATEMENT:\n{left_text}" +
-                          f"\n\n{right_name.upper()} STATEMENT:\n{right_text}")
+        # Statement POSITION is a variable, not a detail. In v1 both statements sit last, immediately
+        # before the instruction to decide, the strongest position in the context; v2 puts them first,
+        # so they read as inputs to the state rather than as conclusions that follow it.
+        stmts = (f"{left_name.upper()} STATEMENT:\n{left_text}\n\n"
+                 f"{right_name.upper()} STATEMENT:\n{right_text}")
+        referee_packet = (f"{stmts}\n\n{complete}" if ctx.get("packet_v2")
+                          else f"{complete}\n\n{stmts}")
         ans = _ask(POLICY_REVIEW_REFEREE, referee_packet, ctx["model"], ctx["host"],
                    ctx["cache"], f"es-policy-referee-{mode}",
                    num_predict=ctx.get("num_predict", 400),
@@ -2311,7 +2365,10 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
         text_labels: Path | None = None, policy_schedule: Path | None = None,
         slack_mult: float = 1.0, packet_every: int = 0, family: str = "",
         packet_out: Path | None = None, temperature: float = 0.0, llm_seed: int = 0,
-        num_predict: int = 400, rcon_threshold_s: float = 300.0) -> dict:
+        num_predict: int = 400, rcon_threshold_s: float = 300.0,
+        packet_v2: bool = False, demand_v2: bool = False,
+        fallback_ordering: str | None = None,
+        fallback_sizing: str | None = None) -> dict:
     from elastisim_python import JobState, NodeState, pass_algorithm
     from pins.llm_agent import HOST, take_tokens
     take_tokens()          # clear the meter so this run is billed only for its own inference
@@ -2329,6 +2386,13 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
         "pfs_read_links": ["PFS_read"], "pfs_write_links": ["PFS_write"],
         "job_statistics": str(stats), "node_utilization": str(world / f"out/{tag}_node_util.csv")}))
     _wmeta = json.loads((world / "meta.json").read_text())
+    family_orderings = _family_orderings({"family": family})
+    initial_ordering = fallback_ordering or (family_orderings[0] if family else "firstfit")
+    initial_sizing = fallback_sizing or "as_requested"
+    if family and initial_ordering not in family_orderings:
+        raise ValueError(f"fallback ordering {initial_ordering!r} is outside family {family!r}")
+    if initial_sizing not in SELECTOR_MENU["sizing"]:
+        raise ValueError(f"unknown fallback sizing {initial_sizing!r}")
     ctx = {"par_frac": _wmeta.get("par_frac", 1.0), "est_default": est_default,
            "model": model, "host": HOST, "cache": {}, "calls": 0, "fallbacks": 0, "critic_changed": 0, "trivial": 0,
            "temperature": temperature, "llm_seed": llm_seed, "num_predict": num_predict,
@@ -2344,8 +2408,10 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
            "rcon_threshold_s": rcon_threshold_s, "rcon_blocks": 0, "resize_log": [],
            # The pre-selection fallback must be INSIDE the family, or an invalid reply in the
            # market arm silently schedules a non-market ordering and the contrast is confounded.
-           "sel_every": sel_every, "sel_sizing": "as_requested", "family": family,
-           "sel_ordering": _family_orderings({"family": family})[0] if family else "firstfit",
+           "sel_every": sel_every, "sel_sizing": initial_sizing, "family": family,
+           "fallback_ordering": fallback_ordering, "fallback_sizing": fallback_sizing,
+           "packet_v2": packet_v2, "demand_v2": demand_v2,
+           "sel_ordering": initial_ordering,
            "slack_mult": slack_mult,
            "packet_every": packet_every,
            "packet_f": open(packet_out, "w") if packet_out else None,
@@ -2468,6 +2534,9 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
                 "text_debate", "policy_select", "policy_bo3", "policy_symmetric",
                 "policy_negotiate", "rule_synth")
     res.update(arm=arm, sizer=sizer, switch_at=switch_at, switch_on=switch_on, family=family,
+               packet_v2=packet_v2, demand_v2=demand_v2,
+               fallback_policy=(f"{fallback_ordering}+{fallback_sizing}"
+                                if fallback_ordering and fallback_sizing else None),
                rule_frozen=bool(rule), rule_invalid=ctx.get("rule_invalid"),
                rule_fires=ctx.get("rule_fires", {}),
                market_clearings=ctx.get("market_clearings", 0),

@@ -46,24 +46,30 @@
    "pins/elastisim_bench.py",
    "pins/correction.py",
    "pins/freeze_core_2x2.py",
-   "pins/run_core_2x2.py",
-   "pins/sweep_2x2_tick.sh",
-   "pins/analyse_core_2x2.py",
+      "pins/run_core_2x2.py",
+      "pins/sweep_2x2_tick.sh",
+      "pins/run_core_2x2_interleaved.py",
+      "pins/core_2x2_interleaved_tick.sh",
+      "pins/analyse_core_2x2.py",
    "pins/verify_core_2x2.py",
    "pins/core_2x2_prereg.md",
    "pins/test_policy_selector.py",
    "pins/test_core_2x2.py"
   ],
   "git_head_at_freeze": "29efc293aea0c69e0f021daa9b0decda3478b62b",
-  "sha256": "aebb4281ce2f66df40529c9e86bf1b6057d585ed1879c18c0fc340faf47ee698",
+    "sha256": "aacb8285c8975929d535e92c0417bf12b589a4d55febee3da6af009e0acca28c",
   "accepted_sha256": [
    "178066482f133e51e76b1a0e7678adf7b373134df31c303b473a314a4c69b00e",
-   "1fa98289babf7e1d8bbb26c949d35c7a9ada8dcf3424bc1f309d2b313c1c327a",
-   "aebb4281ce2f66df40529c9e86bf1b6057d585ed1879c18c0fc340faf47ee698"
+     "1fa98289babf7e1d8bbb26c949d35c7a9ada8dcf3424bc1f309d2b313c1c327a",
+     "6c3721d2579825a6588981501e152acaf06d5fa8c1060ffc234f07ea02f46230",
+     "aacb8285c8975929d535e92c0417bf12b589a4d55febee3da6af009e0acca28c",
+     "aebb4281ce2f66df40529c9e86bf1b6057d585ed1879c18c0fc340faf47ee698"
   ],
   "accepted_manifest_sha256": [
    "14d54e95cdc9b00b2f305e2d71939b8180a36ffeab87ca71b0d477d7f626263f",
-   "8a050abf98b7efc52b7be68d357f9fbdc3b1c6795ae17273f6177e3d57d3334e"
+     "8a050abf98b7efc52b7be68d357f9fbdc3b1c6795ae17273f6177e3d57d3334e",
+     "bc67dc919457c12422ec27e704198e372ed6933fa7ba04163071cb7919f0a215",
+     "e8c6e387db8c49b162e86643f18fb64cb6164d478a6abba12a535977f3709722"
   ],
   "amendments": [
    {
@@ -81,7 +87,21 @@
     "cost": "within-window response noise is no longer separable from between-window variance; tests become more conservative",
     "superseded_sha256": "1fa98289babf7e1d8bbb26c949d35c7a9ada8dcf3424bc1f309d2b313c1c327a",
     "recorded_in": "pins/core_2x2_prereg.md, Amendment 2"
-   }
+   },
+    {
+      "date": "2026-09-13",
+      "what": "added demand_v2 and packet_v2 diagnostic flags, both default off",
+      "verified": "default state packet byte-identical to the packet at the superseded hash",
+      "superseded_sha256": "aebb4281ce2f66df40529c9e86bf1b6057d585ed1879c18c0fc340faf47ee698",
+      "recorded_in": "pins/core_2x2_prereg.md, Amendment 3"
+    },
+    {
+      "date": "2026-09-13",
+      "what": "invalid selector outputs execute the validation-selected same-family fixed floor; test execution is window-interleaved",
+      "scope": "identical safety fallback and execution order for Single and Multi; original packet and model retained",
+      "superseded_sha256": "6c3721d2579825a6588981501e152acaf06d5fa8c1060ffc234f07ea02f46230",
+      "recorded_in": "pins/core_2x2_prereg.md, Amendment 4"
+    }
   ]
  },
  "inference": {

@@ -89,3 +89,40 @@ tick script are part of the hashed implementation set; the superseded hashes sta
 `accepted_sha256` and `accepted_manifest_sha256` so all rows generated before this amendment, at
 either seed count, remain verifiable. Rows already collected at seeds 29 and 43 are kept on disk and
 are excluded from the primary analysis by the manifest's seed list rather than deleted.
+
+## Amendment 3 (2026-09-13): two diagnostic flags, both inert by default
+
+Two flags were added to the scheduler while diagnosing why the role-separated referee settled on one
+policy: `demand_v2` selects a demand-analyst prompt that defines urgency against the median laxity and
+licenses the empty answer, and `packet_v2` moves the analyst statements ahead of the state, adds a
+held-intervals counter, relabels the decision-history block, and trims the action menu to names.
+
+Both default to off and the frozen behaviour is unchanged, which is verified rather than asserted: the
+state packet rendered by the default path is byte-identical to the packet rendered by the code at the
+previous frozen hash. Only the implementation hash moved, so the superseded hash joins
+`accepted_sha256` and every row generated before this amendment remains verifiable.
+
+The diagnostic runs those flags drive are training-window only and are reported as diagnostics, never
+as protocol results. Their findings, for the record: the anchor fix cut urgency flagging from 32 of 34
+epochs to 11 of 34 but made the policy choice *more* concentrated, not less, and the packet changes
+diversified choices while costing nine times the mean waiting on the same window. Neither is carried
+into the protocol.
+
+## Amendment 4 (2026-09-13): held-out safety floor and interleaved execution
+
+Before the first selector run on a test window, the invalid-action fallback is changed from “hold the
+last valid model action” to the independently selected fixed action in the same family. The floor is
+selected once from the complete validation fixed-policy menu: FAIR+ADAPT for non-market and
+Auction-Deadline+ADAPT for market. An invalid answer is still counted, but it cannot silently prolong
+an earlier model error. This uses no test outcome and is applied identically to Single and Multi.
+
+The local inference path already requests Ollama's JSON output mode. The strict parser additionally
+rejects unknown ordering names, sizing names, job IDs, and off-family actions; we retain that tested
+contract rather than introducing an unpiloted provider-specific schema immediately before test.
+The original semantic menu is retained (`packet_v2=false`, `demand_v2=false`).
+
+Execution is moved to an append-only driver that orders the four conditions within each window:
+Single-NM, Multi-NM, Single-MKT, Multi-MKT. This changes no simulated action or analysis; it ensures
+that an interrupted run leaves complete paired windows rather than an unbalanced collection of cells.
+The already disclosed one-seed amendment remains in force. No prompt, model, fallback, window, metric,
+or analysis change is permitted after the first test selector row is written.

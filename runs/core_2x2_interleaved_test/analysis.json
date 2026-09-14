@@ -1,0 +1,119 @@
+{
+  "analysis_windows": [
+    "d106h6",
+    "d133h0",
+    "d142h4",
+    "d145h23",
+    "d151h22",
+    "d168h20",
+    "d204h9",
+    "d216h5",
+    "d24h19",
+    "d52h9",
+    "d54h9",
+    "d6h20"
+  ],
+  "cell_means": {
+    "multi_mkt": 8.208333333333334,
+    "multi_nm": 15.125,
+    "single_mkt": 9.625,
+    "single_nm": 14.75
+  },
+  "complete": true,
+  "effects": {
+    "interaction": {
+      "ci95": [
+        -3.835553881369293,
+        0.25222054803596006
+      ],
+      "mean_difference_pct_points": -1.7916666666666665,
+      "n_windows": 12,
+      "p_exact": 0.015625,
+      "p_holm": 0.046875
+    },
+    "market_main_effect": {
+      "ci95": [
+        -17.779905321428032,
+        5.738238654761362
+      ],
+      "mean_difference_pct_points": -6.020833333333334,
+      "n_windows": 12,
+      "p_exact": 0.125,
+      "p_holm": 0.25
+    },
+    "multi_agent_main_effect": {
+      "ci95": [
+        -1.4408196732595318,
+        0.39915300659286523
+      ],
+      "mean_difference_pct_points": -0.5208333333333333,
+      "n_windows": 12,
+      "p_exact": 0.1875,
+      "p_holm": 0.25
+    }
+  },
+  "missing": [],
+  "secondary_descriptive": {
+    "multi_mkt": {
+      "completed": 394.5,
+      "fallbacks": 0.16666666666666666,
+      "mean_bsd": 4.23,
+      "mean_wait_s": 12477.416666666666,
+      "p50_wait_s": 10422.083333333334,
+      "resize_events": 163.08333333333334,
+      "resize_overhead_s": 0.0,
+      "sel_invalid": 0.16666666666666666,
+      "tok_completion": 19583.666666666668,
+      "tok_prompt": 562030.4166666666,
+      "tok_wall": 1681.2583333333334,
+      "useful_util_win": 0.7494999999999999,
+      "util_win": 0.83475
+    },
+    "multi_nm": {
+      "completed": 394.5833333333333,
+      "fallbacks": 0.16666666666666666,
+      "mean_bsd": 10.289166666666667,
+      "mean_wait_s": 18282.666666666668,
+      "p50_wait_s": 17097.166666666668,
+      "resize_events": 150.0,
+      "resize_overhead_s": 0.0,
+      "sel_invalid": 0.16666666666666666,
+      "tok_completion": 17968.833333333332,
+      "tok_prompt": 551258.9166666666,
+      "tok_wall": 1558.4,
+      "useful_util_win": 0.75025,
+      "util_win": 0.8319166666666666
+    },
+    "single_mkt": {
+      "completed": 394.5,
+      "fallbacks": 0.0,
+      "mean_bsd": 5.039166666666667,
+      "mean_wait_s": 13379.916666666666,
+      "p50_wait_s": 11501.916666666666,
+      "resize_events": 219.41666666666666,
+      "resize_overhead_s": 0.0,
+      "sel_invalid": 0.0,
+      "tok_completion": 2013.3333333333333,
+      "tok_prompt": 208352.25,
+      "tok_wall": 231.66666666666666,
+      "useful_util_win": 0.7520833333333333,
+      "util_win": 0.8504166666666667
+    },
+    "single_nm": {
+      "completed": 394.5,
+      "fallbacks": 0.0,
+      "mean_bsd": 10.434166666666666,
+      "mean_wait_s": 19060.416666666668,
+      "p50_wait_s": 17800.25,
+      "resize_events": 205.08333333333334,
+      "resize_overhead_s": 0.0,
+      "sel_invalid": 0.0,
+      "tok_completion": 1926.25,
+      "tok_prompt": 207513.16666666666,
+      "tok_wall": 225.575,
+      "useful_util_win": 0.753,
+      "util_win": 0.8422499999999999
+    }
+  },
+  "validation_selected_fixed_baselines": {}
+}

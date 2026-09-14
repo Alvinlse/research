@@ -103,6 +103,26 @@ def test_invalid_referee_answer_preserves_safe_previous_policy() -> None:
     assert executed == ["as_requested"]
 
 
+def test_invalid_referee_answer_executes_validation_selected_floor() -> None:
+    executed = []
+    old = bench.ARMS["fairness"]
+    bench.ARMS["fairness"] = lambda pending, free, ctx: executed.append(ctx["sizer"])
+    try:
+        ctx = context() | {
+            "fallback_ordering": "fairness", "fallback_sizing": "adaptive",
+            "running": [Job("running")], "job_sizing": {"running": "greedy"},
+        }
+        replies = iter([{}, {}, {"ordering": "invented", "default_sizing": "greedy"}])
+        with patch("pins.correction._ask", side_effect=lambda *a, **k: next(replies)):
+            bench.arm_policy_negotiate([Job()], [object()] * 4, ctx)
+    finally:
+        bench.ARMS["fairness"] = old
+    assert ctx["sel_invalid"] == ctx["fallbacks"] == 1
+    assert (ctx["sel_ordering"], ctx["sel_sizing"]) == ("fairness", "adaptive")
+    assert ctx["job_sizing"] == {"j0": "adaptive", "running": "adaptive"}
+    assert executed == ["adaptive"]
+
+
 def test_symmetric_control_has_matched_three_call_budget() -> None:
     calls = []
     replies = iter([

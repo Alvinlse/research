@@ -44,6 +44,7 @@ BUILD_CONFIG = {
 IMPLEMENTATION_FILES = [
     "pins/elastisim_bench.py", "pins/correction.py", "pins/freeze_core_2x2.py",
     "pins/run_core_2x2.py", "pins/sweep_2x2_tick.sh",
+    "pins/run_core_2x2_interleaved.py", "pins/core_2x2_interleaved_tick.sh",
     "pins/analyse_core_2x2.py", "pins/verify_core_2x2.py", "pins/core_2x2_prereg.md",
     "pins/test_policy_selector.py", "pins/test_core_2x2.py",
 ]
