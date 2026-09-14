@@ -1,7 +1,7 @@
 % IEEE workshop paper — controlled policy-selector study for malleable GPU scheduling.
 % Build: cd Research/paper && latexmk -pdf ieee.tex
-% 2026-09-13: aligned with the frozen selector protocol.  Partial validation results
-% are labelled exploratory; no test-split or interaction claim is made.
+% 2026-09-14: aligned with the completed frozen 2x2 and the post-core training pilot.
+% Confirmatory and exploratory results are kept separate throughout.
 \documentclass[conference]{IEEEtran}
 \usepackage{graphicx}
 \usepackage{booktabs}
@@ -44,11 +44,13 @@ selector could add at $2.03$ points for queue ordering and $0.07$ for auctions, 
 Asked to select policies from that same observable state, a language model does not approach the
 bound: on held-out states an 8B model carries $8.70$ points of mean regret against the deterministic
 policy's $1.05$, and emits an illegal action on 11 of 24 states where deterministic code emits none.
-Low-rank fine-tuning changes nothing, at $8.78$ points and the same 11 failures. Splitting the
-referee into demand and supply analysts does not help either: it costs $0.67$ points against a single
-referee for three times the calls, on twelve paired windows of which seven tie exactly. We conclude
-that numeric rationing on this workload belongs to deterministic code, and that the case for a
-language model in a scheduler has to be made where the deciding information is not numeric at all.
+Low-rank fine-tuning changes nothing, at $8.78$ points and the same 11 failures.  The completed
+pre-registered $2\times2$ test gives a narrower qualification: role separation is $0.38$ deadline
+points worse without the market but $1.42$ points better with it.  The $-1.79$-point interaction is
+directionally consistent (exact sign-flip Holm $p=0.0469$), although its paired-$t$ 95\% interval
+$[-3.84,0.25]$ crosses zero and the multi-agent main effect is null.  Thus role separation may be
+complementary with a market, but it does not win in general; numeric rationing still belongs by
+default to validated deterministic code.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -80,18 +82,22 @@ work instead.
 sizing is worth a factor of three and the auction's pricing rule six points, and the advantage of
 auction pricing over ordering is a single-window tail effect.
 Counterfactual enumeration bounds the available headroom at $2.03$ and $0.07$ points with a median of
-zero, and neither a zero-shot model, a low-rank fine-tune, nor a demand--supply role split comes near
-it: eight times the deterministic policy's regret, and an illegal action on 11 of 24 held-out states.
-\item \textbf{Role separation does not pay for itself} (\S\ref{sec:factorial-results}). Splitting the
-referee into demand and supply analysts costs $0.67$ deadline points against a single referee for three
-times the inference, and is the only condition that emitted invalid rulings.
+zero, and neither a zero-shot model nor a low-rank fine-tune comes near it: eight times the
+deterministic policy's regret, and an illegal action on 11 of 24 held-out states.
+\item \textbf{Role separation is complementary with the market, not beneficial in general}
+(\S\ref{sec:factorial-results}).  On twelve untouched test windows it is $0.38$ deadline points worse
+without the market but $1.42$ points better inside it.  The pre-registered interaction is $-1.79$
+points (exact Holm $p=0.0469$), while its paired-$t$ interval crosses zero and the structure main
+effect is null.
 \item \textbf{A protocol that makes such a comparison auditable} (\S\ref{sec:factorial-method}). The
 selector study is frozen before execution: workload-only window selection, a hashed manifest of
 trace, worlds, code and configuration, a fail-closed gate, and amendments recorded rather than
-absorbed.
+absorbed.  A post-core bounded-debate pilot (\S\ref{sec:bounded-pilot}) further shows why transcripts
+and candidate-level validation matter: disclosed opposing incentives produce genuine disagreement
+that is fully auditable, and still do not improve scheduling.
 \end{enumerate}
 
-A negative result of this kind is only worth reporting if the comparison was fair, so we spend
+A qualified result of this kind is only worth reporting if the comparison was fair, so we spend
 \S\ref{sec:factorial-method} on the protocol: the windows are chosen from workload statistics alone,
 the deterministic baseline is selected on validation and never on the reserved split, the action space
 and the model configuration are identical across structures, and a budget-matched control separates the
@@ -146,6 +152,25 @@ exactly one action for every affected job.
 shrink-tolerant jobs. Supply describes scarcity, queue pressure, resize cost, and fairness.  These
 agents cannot allocate GPUs; their analyses and the original state are passed to a Referee whose
 output schema is identical to the Single arm.
+
+\textbf{Bounded policy debate (post-core, exploratory).}  After the frozen factorial completed, we
+implemented a stricter one-round protocol to address consensus theatre and unconstrained judging.
+Both advocates share the dimensions (deadline protection, wait reduction, capacity efficiency,
+fairness), but receive disclosed weights
+$\mathbf{w}_{D}=(.45,.35,.10,.10)$ and $\mathbf{w}_{S}=(.05,.10,.50,.35)$, whose
+$L_1$ distance is $1.3$.  Their red lines are machine-readable and evaluated from simulator state:
+when at least one waiting job has negative laxity, Demand must retain deadline pricing; when queue
+pressure reaches $0.75$, Supply may not choose maximum-fit sizing.  Openings are independent.  If
+they differ, each advocate may retain, copy the other opening, or change exactly one of ordering and
+sizing.  An advocate states only the policy it now stands behind; code compares it against both
+openings, derives which of the three moves it is, and refuses a policy that is neither opening and
+differs from the advocate's own in both components.
+Code ratifies an opening or post-rebuttal consensus directly; otherwise the Referee must
+copy one surviving global proposal and cannot add job-level overrides.  Invalid moves retain the
+last valid opening, while an invalid final ruling invokes the same deterministic floor.  The resulting
+package records weights, red-line state, openings, concessions, rejected moves, candidate policies,
+dissent, resolution source and fallback use.  Thus a round costs two calls on opening consensus,
+four when rebuttals converge, and five only when unresolved disagreement reaches the Referee.
 
 \textbf{The action set.} Both structures choose from the same two-part action, and the two policy
 families are matched in size so that neither referee simply has more options than the other.
@@ -274,58 +299,51 @@ decision we hand to the selectors below.
 \subsection{Selector conditions: what the completed runs show}
 \label{sec:factorial-results}
 
-Table~\ref{tab:structures} compares the two reasoning structures directly, which is the paper's title
-question.  The deterministic controls are complete on both splits, but the reserved split carries no
-selector run yet, so these are validation observations and the confirmatory contrasts remain open.
+All 48 confirmatory cells completed: twelve untouched test windows crossed with Single or
+Demand--Supply--Referee reasoning and with the queue-ordering or auction family.
+Table~\ref{tab:structures} gives the window-level means for the primary outcome.
 
 \begin{table}[t]
-\caption{Role separation against a single referee, 12 validation windows, one repetition per window.
-Deadline violations are the primary outcome; cost is per window.}
+\caption{Completed frozen $2\times2$ on 12 held-out windows.  Entries are mean synthetic deadline
+violations; differences are percentage points and lower is better.}
 \label{tab:structures}
 \centering
 \small
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{llrrrr}
+\begin{tabular}{lrrr}
 \toprule
-family & structure & viol.\ (\%) & wait (s) & calls & prompt tokens \\
+family & Single (\%) & Multi (\%) & Multi$-$Single \\
 \midrule
-ordering & single referee   & $11.27$ & $14{,}210$ & $54$  & $207$k \\
-         & role-separated   & $11.93$ & $15{,}308$ & $160$ & $551$k \\
-\midrule
-auction  & single referee   & $10.70$ & $13{,}790$ & $55$  & $211$k \\
-         & role-separated   & \multicolumn{4}{c}{1 of 12 windows complete} \\
+queue ordering & 14.750 & 15.125 & $+0.375$ \\
+auction pricing & 9.625 & \textbf{8.208} & $\mathbf{-1.417}$ \\
 \bottomrule
 \end{tabular}
-}
 \end{table}
 
-Paired over the twelve windows of the ordering family, separating the referee into demand and supply
-analysts costs $+0.67$ percentage points against the single referee (95\% CI $[-0.37,1.71]$, two-sided
-exact sign-flip $p=0.250$), for three times the calls and $2.7\times$ the prompt tokens.  Seven windows
-tie to the digit, four favour the single referee and one favours role separation.  Within the same
-structure, moving from queue ordering to auction pricing changes violations by $-0.57$ points (95\% CI
-$[-1.69,0.56]$, $p=0.438$), again with seven ties.  Neither difference supports a claim.  With seven of
-twelve windows identical, twelve windows cannot separate these conditions, and the sign of the
-role-separation difference is the opposite of the architectural hypothesis.  The role-separated arm is
-also the only condition that produced invalid rulings at all, three across the twelve windows, each
-absorbed by the deterministic fallback.  These are validation
-observations; the confirmatory contrasts belong to the reserved split.
+The three pre-registered paired contrasts are not three versions of the same conclusion.  Averaging
+over structures, the market main effect is $-6.021$ points (95\% CI $[-17.780,5.738]$, exact sign-flip
+$p=0.1250$, Holm $p=0.2500$).  Averaging over families, the multi-agent main effect is $-0.521$
+points (CI $[-1.441,0.399]$, exact $p=0.1875$, Holm $p=0.2500$).  Neither main effect is distinguishable
+from zero.  The difference-in-differences interaction is $-1.792$ points: role separation moves from
+$0.375$ points worse without the market to $1.417$ points better with it.  Its exact sign-flip test is
+$p=0.0156$ and survives the three-test Holm family at $p=0.0469$, but its paired-$t$ interval
+$[-3.836,0.252]$ crosses zero.  Seven windows have a negative interaction and five are exact zeros,
+with none positive; this directional consistency explains the exact result, while unequal magnitudes
+widen the parametric interval.  We therefore call the interaction a \emph{qualified positive} for
+market complementarity, not evidence that multi-agent reasoning wins overall or a precise estimate of
+its magnitude.
 
-One measurement trap is worth stating because it is easy to repeat and we fell into it first.
-Averaging each condition over whatever repetitions had finished, thirty-six runs for the single-referee
-conditions against twenty-one for the role-separated one, placed role separation $0.81$ points
-\emph{ahead}.  Restricting to the one repetition every window shares reverses the sign.  The same
-hazard applies to the deterministic controls: the best queue-ordering configuration reads $8.08\%$ on
-the nine test windows that finished first and $15.27\%$ once the eleventh arrives, because windows
-differ by an order of magnitude in difficulty.  Every comparison in this paper is therefore paired
-over a window set that all compared configurations have completed, and that set's size is stated.
+Execution was clean: zero LLM or runtime errors and zero invalid Single rulings.  Multi emitted four
+invalid rulings, all absorbed by the same-family deterministic floor fixed on validation.  Across its
+24 test runs Multi used 3,663 calls and 10.93 wall-hours, against 1,239 calls and 1.62 wall-hours for
+Single.  The registered amendment reduced three inference seeds to seed 17 to finish the experiment;
+decoding noise is consequently inseparable from between-window variation.
 
 Validation selects ageing fair-share with queue-proportional sizing at $10.49\%$ violations for the
 ordering family, and the deadline-priced auction with queue-proportional sizing at $9.87\%$ for the
 auction family, each by validation violations alone with a deterministic tie-break, and each carried
-unchanged to the reserved split.  We do not draw a selector-against-fixed-policy comparison here:
-assembling it from one completed split is exactly the unbalanced reading described above, and
-\S\ref{sec:future} sets out what would settle it.
+unchanged to the reserved split.  The registered inferential family contains only the two main effects
+and their interaction; we do not add an unregistered selector-against-fixed hypothesis after seeing the
+test outcomes.  Section~\ref{sec:controls} instead reports the deterministic action space descriptively.
 
 \subsection{Inside the action space: sizing and pricing dominate ordering}
 \label{sec:controls}
@@ -417,19 +435,62 @@ This is a statement about the numeric rationing decision, not about language mod
 The same deterministic policy that dominates here is helpless when the deciding fact is not in the
 numbers at all, which is the case we turn to next.
 
+\subsection{Post-core bounded debate pilot}
+\label{sec:bounded-pilot}
+
+We tested the bounded debate protocol of \S\ref{sec:arch} only on the previously used training window
+\texttt{d58h19} (138 scored jobs after 40 warm-up jobs), after the frozen experiment was complete.
+This is an exploratory mechanism check, not a new confirmatory test.  Table~\ref{tab:bounded-pilot}
+reports it against three references on that window: the zero-token market floor, the single selector,
+and a budget-matched control that samples the single prompt three times and votes.  Synthetic
+deadline violations are $13.0\%$ for every row.
+
+\begin{table}[t]
+\caption{Exploratory one-window training pilot.  Lower wait and SLA-2 are better; useful utilization
+is effective Amdahl throughput divided by available GPU time.}
+\label{tab:bounded-pilot}
+\centering
+\small
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lrrrrr}
+\toprule
+arm & mean wait & p90 wait & SLA-2 & useful util. & calls \\
+\midrule
+fixed market floor & 168 & 338 & 2.2\% & .462 & 0 \\
+single selector & \textbf{42} & \textbf{137} & \textbf{0.0\%} & .464 & 33 \\
+bounded debate & 140 & 174 & \textbf{0.0\%} & \textbf{.465} & 134 \\
+three-sample selector & 899 & 3,628 & 26.1\% & .453 & 102 \\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+The disclosed incentives produce real disagreement rather than consensus theatre: openings agree in
+only 8 of 33 epochs, so 25 trigger rebuttals, 15 are ratified directly, and 18 reach the Referee.
+The audit holds throughout: every executed policy belongs to its recorded candidate set, every
+advocate move is legal, and all 9 active Demand red lines are respected, Supply's never activating
+here.  The run's only rejected output is one Referee ruling outside the candidate set, replaced by
+the deterministic floor.
+
+Scheduling performance does not follow.  Bounded debate beats its budget-matched three-sample control
+on every reported metric, and matches the single selector's SLA-2 rate at four times its call budget,
+yet stays behind that selector on mean and p90 wait and behind the zero-token floor on mean wait.  On
+this window every arm records the same $13.0\%$ deadline violation rate, so the pilot separates the
+arms only on waiting time and cannot speak to the primary outcome at all.  It therefore validates the
+audit and safety boundaries, not a performance claim, and does not justify opening another held-out
+split.
+
 \section{Future Work and Threats to Validity}
 \label{sec:future}
 \label{sec:threats}
 
-\textbf{The reserved split is unfinished.}  Three of the four selector conditions are complete on
-validation and none on the reserved split, so every selector number here is a validation observation
-rather than the preregistered confirmatory analysis, and we claim no family, structure, or interaction
-effect.  Completing it is the immediate next step, together with two analyses the existing labels
-already support: per-state regret against the counterfactual best action, which separates a selector
-that picks a harmless equivalent from one that picks a damaging action, and a split on a contention
-condition defined from observable state alone, which is where the one-window effect of
-\S\ref{sec:controls} lives.  Reducing three repetitions to one also merges decoding noise into the
-window-level differences and widens any interval we would report.
+\textbf{The reserved split is small, and opened once.}  Twelve paired windows at one inference seed
+support a directional interaction, not a precise effect size: the paired-$t$ interval crosses zero,
+five of the twelve windows are exact ties, and reducing three repetitions to one merges decoding noise
+into the window-level differences.  A replication at more windows and seeds is the natural next step,
+together with per-state regret against the counterfactual best action, which the existing labels
+already support and which separates a selector that picks a harmless equivalent from one that picks a
+damaging action.
 
 \textbf{The elasticity model is an assumption, and a swept one.} No trace records what a job would
 have done at a different size, so any elastic study must supply that counterfactual.  We use Amdahl's
