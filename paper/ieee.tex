@@ -31,26 +31,21 @@ lay.kim.seng.q4@dc.tohoku.ac.jp}
 A GPU job that can be resized makes two demands on a scheduler: which job to start, and how many
 devices to give it. We ask whether reasoning structure helps with the second, on the MIT
 Supercloud accounting log replayed through a malleability-aware simulator on an $80$-GPU pool. Sizing
-is where the leverage is: it moves deadline violations by an order of magnitude more than any queue
-ordering rule, and the sizing rule attaining the highest occupancy we measure, $0.988$ against $0.890$,
-is simultaneously the worst on every service axis, because sublinear speed-up converts capacity into
-busy-ness rather than completed work. On twelve held-out windows the four queue-ordering rules we test span
-under one percentage point of deadline violations while sizing spans $15.1$ to $47.1$, and among
-auction valuations only pricing a job's deadline pressure matters, $8.1$ against $14.5$ to $15.0$.
-The advantage of auction pricing over queue ordering is concentrated in one overloaded window of
-twelve, where violations fall from $91.0\%$ to $21.6\%$ while the median difference is zero.
+is where the leverage is: across twelve held-out windows the four queue-ordering rules we test span
+under one percentage point of deadline violations while sizing spans $15.1$ to $47.1$, and the sizing
+rule attaining the highest occupancy we measure, $0.988$ against $0.890$, is simultaneously the worst
+on every service axis, because sublinear speed-up converts capacity into busy-ness rather than
+completed work.
 Counterfactual enumeration of every policy from sampled states bounds what any state-dependent
 selector could add at $2.03$ points for queue ordering and $0.07$ for auctions, with a median of zero.
-Asked to select policies from that same observable state, a language model does not approach the
-bound: on held-out states an 8B model carries $8.70$ points of mean regret against the deterministic
-policy's $1.05$, and emits an illegal action on 11 of 24 states where deterministic code emits none.
-Low-rank fine-tuning changes nothing, at $8.78$ points and the same 11 failures.  The completed
-pre-registered $2\times2$ test gives a narrower qualification: role separation is $0.38$ deadline
-points worse without the market but $1.42$ points better with it.  The $-1.79$-point interaction is
-directionally consistent (exact sign-flip Holm $p=0.0469$), although its paired-$t$ 95\% interval
-$[-3.84,0.25]$ crosses zero and the multi-agent main effect is null.  Thus role separation may be
-complementary with a market, but it does not win in general; numeric rationing still belongs by
-default to validated deterministic code.
+Asked to select policies from that same observable state, an 8B model carries $8.70$ points of mean
+regret against the deterministic policy's $1.05$ and emits an illegal action on 11 of 24 held-out
+states; low-rank fine-tuning changes nothing.  A pre-registered $2\times2$ test gives one narrower
+qualification: role separation is $0.38$ deadline points worse without the market but $1.42$ points
+better with it, a $-1.79$-point interaction that is directionally consistent (exact sign-flip Holm
+$p=0.0469$) though its paired-$t$ interval $[-3.84,0.25]$ crosses zero and the structure main effect
+is null.  Role separation may thus be complementary with a market, but it does not win in general;
+numeric rationing still belongs by default to validated deterministic code.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -92,16 +87,16 @@ effect is null.
 \item \textbf{A protocol that makes such a comparison auditable} (\S\ref{sec:factorial-method}). The
 selector study is frozen before execution: workload-only window selection, a hashed manifest of
 trace, worlds, code and configuration, a fail-closed gate, and amendments recorded rather than
-absorbed.  A post-core bounded-debate pilot (\S\ref{sec:bounded-pilot}) further shows why transcripts
-and candidate-level validation matter: disclosed opposing incentives produce genuine disagreement
-that is fully auditable, and still do not improve scheduling.
+absorbed.  A post-core bounded-debate pilot (\S\ref{sec:bounded-pilot}) further shows that the worth
+of auditable disagreement depends on contention: it is inert on a slack window and $9.8$ deadline
+points better than a single selector on a saturated one, on training windows at one seed.
 \end{enumerate}
 
-A qualified result of this kind is only worth reporting if the comparison was fair, so we spend
-\S\ref{sec:factorial-method} on the protocol: the windows are chosen from workload statistics alone,
-the deterministic baseline is selected on validation and never on the reserved split, the action space
-and the model configuration are identical across structures, and a budget-matched control separates the
-effect of role separation from the effect of spending three times the calls.
+A qualified result of this kind is only worth reporting if the comparison was fair, so
+\S\ref{sec:factorial-method} sets out the protocol: windows chosen from workload statistics alone, a
+deterministic baseline selected on validation and never on the reserved split, an identical action space
+and model configuration across structures, and a budget-matched control separating role separation from
+the effect of spending three times the calls.
 
 \section{Related Work}
 \label{sec:related}
@@ -208,16 +203,16 @@ and \emph{requested} walltime, never its true runtime --- the same information a
 batch system has. Capacity is a fixed $80$-GPU pool, so a window's offered load is a property
 we \emph{measure} rather than a consequence of sizing the cluster to fit it.
 
-\textbf{Window selection is pre-registered.} Every $24$\,h window of the trace is described by
-workload statistics alone --- job count, GPU-hours, offered load, high-priority fraction,
-median and p90 runtime, size distribution --- with no scheduler executed. Of $5{,}613$ hourly
-starts, $4{,}312$ carry at least $100$ jobs. These are stratified into four offered-load bands
-($0.7$--$1.0$, $1.0$--$1.5$, $1.5$--$2.5$, ${>}2.5\times$) crossed with three high-priority
-bands (${<}2\%$, $2$--$10\%$, ${>}10\%$), and one window is drawn per cell under a fixed seed,
-subject to a non-overlap constraint. The resulting $12$ windows span days $41$--$222$, offered
-loads $0.75$--$4.97\times$ and priority fractions $0.7$--$58\%$. Each is preceded by $12$\,h of
-warm-up arrivals, which the arm under test also schedules but which are excluded from scoring,
-so no run begins on an empty cluster. Selection never sees a scheduler result.
+\textbf{Window selection is pre-registered.} Every $24$\,h window is described by workload statistics
+alone --- job count, GPU-hours, offered load, high-priority fraction, runtime and size distribution ---
+with no scheduler executed.  Of $5{,}613$ hourly starts, $4{,}312$ carry at least $100$ jobs; these are
+stratified into four offered-load bands crossed with three high-priority bands, and windows are drawn
+per cell under a fixed seed subject to a non-overlap constraint.  The $12$ so drawn span days
+$41$--$222$, offered loads $0.75$--$4.97\times$ and priority fractions $0.7$--$58\%$, and carry the
+deterministic control study of \S\ref{sec:controls}; the selector factorial of
+\S\ref{sec:factorial-method} draws its own $48$ by the same procedure.  Each is preceded by $12$\,h of
+warm-up arrivals, which the arm under test also schedules but which are excluded from scoring, so no
+run begins on an empty cluster. Selection never sees a scheduler result.
 
 \textbf{Elasticity model.} A job may be \emph{moldable}: its size is chosen once, at launch, and
 fixed thereafter. Speed-up follows Amdahl's law anchored on the observed point --- a job seen at
@@ -438,47 +433,53 @@ numbers at all, which is the case we turn to next.
 \subsection{Post-core bounded debate pilot}
 \label{sec:bounded-pilot}
 
-We tested the bounded debate protocol of \S\ref{sec:arch} only on the previously used training window
-\texttt{d58h19} (138 scored jobs after 40 warm-up jobs), after the frozen experiment was complete.
-This is an exploratory mechanism check, not a new confirmatory test.  Table~\ref{tab:bounded-pilot}
-reports it against three references on that window: the zero-token market floor, the single selector,
-and a budget-matched control that samples the single prompt three times and votes.  Synthetic
-deadline violations are $13.0\%$ for every row.
+We tested the bounded debate protocol of \S\ref{sec:arch} on two training windows after the frozen
+experiment was complete, holding the reserved split untouched.  These are exploratory checks at one
+inference seed against the single selector debate is meant to improve on, with the budget-matched
+three-sample control on the low-load window.  The windows differ sharply in contention:
+\texttt{d58h19} carries 138 scored jobs at $1.35\times$ offered load, \texttt{d48h23} 435 at
+$4.99\times$.
 
 \begin{table}[t]
-\caption{Exploratory one-window training pilot.  Lower wait and SLA-2 are better; useful utilization
-is effective Amdahl throughput divided by available GPU time.}
+\caption{Exploratory training-window pilots at one inference seed on \texttt{d58h19} and
+\texttt{d48h23}.  Deadline violations are the primary outcome; waits are seconds, lower better.}
 \label{tab:bounded-pilot}
 \centering
 \small
 \resizebox{\columnwidth}{!}{%
-\begin{tabular}{lrrrrr}
+\begin{tabular}{llrrrr}
 \toprule
-arm & mean wait & p90 wait & SLA-2 & useful util. & calls \\
+load & arm & deadline viol. & mean wait & p90 wait & calls \\
 \midrule
-fixed market floor & 168 & 338 & 2.2\% & .462 & 0 \\
-single selector & \textbf{42} & \textbf{137} & \textbf{0.0\%} & .464 & 33 \\
-bounded debate & 140 & 174 & \textbf{0.0\%} & \textbf{.465} & 134 \\
-three-sample selector & 899 & 3,628 & 26.1\% & .453 & 102 \\
+$1.35\times$ & single & 13.0\% & \textbf{42} & \textbf{137} & 33 \\
+ & debate & 13.0\% & 140 & 174 & 134 \\
+ & three-sample & 13.0\% & 899 & 3,628 & 102 \\
+\midrule
+$4.99\times$ & single & 24.1\% & \textbf{47,162} & \textbf{104,093} & 78 \\
+ & debate & \textbf{14.3\%} & 48,188 & 118,603 & 224 \\
 \bottomrule
 \end{tabular}
 }
 \end{table}
 
-The disclosed incentives produce real disagreement rather than consensus theatre: openings agree in
-only 8 of 33 epochs, so 25 trigger rebuttals, 15 are ratified directly, and 18 reach the Referee.
-The audit holds throughout: every executed policy belongs to its recorded candidate set, every
-advocate move is legal, and all 9 active Demand red lines are respected, Supply's never activating
-here.  The run's only rejected output is one Referee ruling outside the candidate set, replaced by
-the deterministic floor.
+The audit holds on both windows: every executed policy belongs to its recorded candidate set, every
+advocate move is legal, and every active Demand red line is respected.  Each run produces exactly one
+rejected output, both times a Referee ruling outside the candidate set, replaced by the counted
+fallback.
 
-Scheduling performance does not follow.  Bounded debate beats its budget-matched three-sample control
-on every reported metric, and matches the single selector's SLA-2 rate at four times its call budget,
-yet stays behind that selector on mean and p90 wait and behind the zero-token floor on mean wait.  On
-this window every arm records the same $13.0\%$ deadline violation rate, so the pilot separates the
-arms only on waiting time and cannot speak to the primary outcome at all.  It therefore validates the
-audit and safety boundaries, not a performance claim, and does not justify opening another held-out
-split.
+The two windows disagree, and that is the result.  Under slack every arm records $13.0\%$ and debate
+merely spends four times the calls to arrive there, though it beats its budget-matched control on every
+metric.  Under contention the arms separate: $14.3\%$ deadline violations against the single selector's
+$24.1\%$.  A pilot run only at low load would have reported no difference, so contention, not the
+protocol, is the informative variable.
+
+The transcripts attribute that gap to stability rather than argument.  Under contention debate
+concentrates on deadline-priced auction with queue-proportional sizing in 54 of 72 epochs, while the
+single selector disperses and spends 58 of 78 on fair-share pricing.  Debate also disagrees \emph{less}
+where it helps more, openings agreeing in 45 of 72 epochs under load against 8 of 33 under slack, so the
+advantage tracks how consistently a strong policy is held rather than how much the advocates argue.
+Both arms are poor in absolute terms, with p90 waits near $30$ hours.  One seed per window on training
+data is a direction to test, not an effect size.
 
 \section{Future Work and Threats to Validity}
 \label{sec:future}
@@ -496,11 +497,10 @@ damaging action.
 have done at a different size, so any elastic study must supply that counterfactual.  We use Amdahl's
 law anchored on the observed point, which reproduces each job's recorded runtime exactly at the size it
 really used, and we sweep the parallel fraction rather than fixing it: $s{=}1$ recovers the rigid
-replay at every size, $s{=}0$ gives linear speed-up.  Our conclusions concern the shape of the result
-across that sweep.  Reconfiguration cost is not modelled, which flatters resize-heavy policies and
-makes our claim against occupancy-maximising sizing conservative; we report resize counts with zero
-modelled overhead explicitly.  One node is modelled as one device, so intra-node placement effects are
-absent.
+replay, $s{=}0$ gives linear speed-up, and our conclusions concern the shape of the result across that
+sweep.  Reconfiguration cost is not modelled, which flatters resize-heavy policies and makes our claim
+against occupancy-maximising sizing conservative; resize counts are reported with zero modelled
+overhead.  One node is one device, so intra-node placement effects are absent.
 
 \textbf{The outcome metrics are synthetic and imperfect.}  The trace carries no deadline field, so
 deadlines are generated once from requested walltime and the primary result concerns that reproducible
@@ -509,11 +509,10 @@ runtime, which no scheduler knows at submission, and their allowance scales with
 report three thresholds and lead with waiting time and device-hours.
 
 \textbf{The model evidence is narrow.}  The offline comparison rests on 24 held-out states and a single
-fine-tuning run, and the model there is an 8B model while the closed loop uses a 14B one, so the
-fine-tuning failure is screening evidence against this recipe rather than proof that supervision cannot
-work.  Counterfactual enumeration bounds what a selector could achieve under this simulator; it is not
-evidence that an online model could identify those actions.  Four training states dropped under the
-superseded capacity assertion remain to be relabelled.
+fine-tuning run at 8B where the closed loop uses 14B, so the fine-tuning failure is screening evidence
+against this recipe rather than proof that supervision cannot work.  Counterfactual enumeration bounds
+what a selector could achieve under this simulator, not what an online model could identify.  Four
+training states dropped under the superseded capacity assertion remain to be relabelled.
 
 \section{Conclusion}
 
@@ -522,14 +521,17 @@ objective: the rule that fills the cluster most completely is the worst on every
 sublinear speed-up buys busy-ness rather than completed work.  For elastic workloads, device-hours per
 unit of completed work belongs in the headline and occupancy does not.
 
-Within that frame our title question has a clear answer for numeric rationing: no.  Counterfactual
+Within that frame our title question has a clear answer on the reserved split: no.  Counterfactual
 enumeration bounds what any state-dependent selector could add at $2.03$ points for ordering and $0.07$
 for auctions, with zero median gain.  Asked to choose in that space, an 8B model carries $8.70$ points
 of held-out regret zero-shot and $8.78$ after fine-tuning, against $1.05$ for one deterministic policy,
 and emits an illegal action on eleven of twenty-four states where the deterministic policy emits none.
-Splitting the referee into demand and supply analysts costs $0.67$ points for three times the inference.
-Neither structure nor supervision closes a gap this wide, because the contested decision is arithmetic
-the code already performs correctly.
+Splitting the referee into demand and supply analysts does not close that gap either: on the reserved
+split its main effect is null at $-0.52$ points for three times the inference, and only its interaction
+with the market survives correction.  Neither structure nor supervision closes a gap this wide, because
+the contested decision is arithmetic the code already performs correctly.  Exploratory training windows
+mark one boundary: under heavy contention the bounded debate of \S\ref{sec:bounded-pilot} is $9.8$
+deadline points better than a single selector, which is where a confirmatory test should aim next.
 
 Where a language model might still earn its place is the case this workload cannot express: an exception
 whose content is text, such as an operator instruction or a declaration that a note contradicts.  The
