@@ -36,6 +36,7 @@ from pathlib import Path
 
 from pins.policy_debate import arm_policy_debate
 from pins.policy_debate_v2 import arm_policy_debate_v2
+from pins.policy_debate_v2_3 import arm_policy_debate_v2_3
 
 ES_ROOT = Path(os.environ.get("ELASTISIM_ROOT", "/import/gp-home.ciero/kimseng/elastisim"))
 ES_BIN = ES_ROOT / "env/bin/elastisim"
@@ -2348,8 +2349,10 @@ ARMS = {"fcfs": arm_fcfs, "firstfit": arm_firstfit, "easy": arm_easy, "sjf": arm
         # Post-core experimental extension: bounded cross-talk over concrete policy actions.
         # The completed policy_negotiate path above remains unchanged.
         "policy_debate": arm_policy_debate,
-        # Cross-window revision.  Keep policy_debate frozen for its incomplete pre-registered sweep.
+        # Cross-window revision.  Keep policy_debate frozen after its completed pre-registered sweep.
         "policy_debate_v2": arm_policy_debate_v2,
+        # Full-training-audit revision with parallel openings and two-stage objection escalation.
+        "policy_debate_v2_3": arm_policy_debate_v2_3,
         "rule_synth": arm_rule_synth,
         "resize_debate": arm_firstfit,
         "single": lambda p, f, c: arm_llm(p, f, c, "single"),
@@ -2542,7 +2545,8 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
     llm_arms = ("single", "debate", "negotiate", "bo3", "correct", "neg_signed",
                 "correct3", "sham", "neg_v2", "resize_single", "text_single", "resize_debate",
                 "text_debate", "policy_select", "policy_bo3", "policy_symmetric",
-                "policy_negotiate", "policy_debate", "policy_debate_v2", "rule_synth")
+                "policy_negotiate", "policy_debate", "policy_debate_v2",
+                "policy_debate_v2_3", "rule_synth")
     res.update(arm=arm, sizer=sizer, switch_at=switch_at, switch_on=switch_on, family=family,
                packet_v2=packet_v2, demand_v2=demand_v2,
                fallback_policy=(f"{fallback_ordering}+{fallback_sizing}"
@@ -2576,6 +2580,17 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
                    "debate_v2_demand_guard_triggers", 0),
                debate_v2_demand_guard_floors=ctx.get(
                    "debate_v2_demand_guard_floors", 0),
+               debate_v23_epochs=ctx.get("debate_v23_epochs", 0),
+               debate_v23_parallel_opening_rounds=ctx.get(
+                   "debate_v23_parallel_opening_rounds", 0),
+               debate_v23_supply_escalation_epochs=ctx.get(
+                   "debate_v23_supply_escalation_epochs", 0),
+               debate_v23_supply_escalation_triggers=ctx.get(
+                   "debate_v23_supply_escalation_triggers", 0),
+               debate_v23_demand_escalation_epochs=ctx.get(
+                   "debate_v23_demand_escalation_epochs", 0),
+               debate_v23_demand_escalation_triggers=ctx.get(
+                   "debate_v23_demand_escalation_triggers", 0),
                switch_adaptive=ctx.get("switch_adaptive", 0), switch_calls=ctx.get("switch_calls", 0),
                model=model if arm in llm_arms else None, interval=interval,
                packet=PACKET_VERSION if arm in llm_arms else None,

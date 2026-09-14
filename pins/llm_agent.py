@@ -31,6 +31,7 @@ import fcntl
 import json
 import os
 import re
+import threading
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CACHE_PATH = os.environ.get("PINS_CACHE", os.path.join(HERE, "llm_agent_cache.json"))
@@ -145,6 +146,7 @@ def _rule_strategy(ctx: dict) -> dict:
 # the true marginal cost of an arm, not its cold-start cost.
 TOKENS = {"calls": 0, "prompt": 0, "completion": 0, "wall": 0.0}
 LATENCIES: list = []   # (model, seconds) per live call, session-cumulative (RQ5); never reset
+_TOKEN_LOCK = threading.Lock()
 import time as _time
 
 
@@ -166,7 +168,8 @@ def metered_client(host: str):
     if os.environ.get("PINS_DRY_LLM"):
         class _Stub:
             def chat(self, *a, **kw):
-                TOKENS["calls"] += 1
+                with _TOKEN_LOCK:
+                    TOKENS["calls"] += 1
                 raise _DryRun("dry run: counted, not called")
         return _Stub()
     import ollama
@@ -176,11 +179,13 @@ def metered_client(host: str):
     def chat(*a, **kw):
         t0 = _time.monotonic()
         resp = inner(*a, **kw)
-        LATENCIES.append((kw.get("model", "?"), _time.monotonic() - t0))  # RQ5: per-call wall s
-        TOKENS["calls"] += 1
-        TOKENS["wall"] += LATENCIES[-1][1]      # plan §13: the T_wall term of C_LLM
-        TOKENS["prompt"] += _count(resp, "prompt_eval_count")
-        TOKENS["completion"] += _count(resp, "eval_count")
+        latency = _time.monotonic() - t0
+        with _TOKEN_LOCK:
+            LATENCIES.append((kw.get("model", "?"), latency))  # RQ5: per-call wall s
+            TOKENS["calls"] += 1
+            TOKENS["wall"] += latency           # plan §13: the T_wall term of C_LLM
+            TOKENS["prompt"] += _count(resp, "prompt_eval_count")
+            TOKENS["completion"] += _count(resp, "eval_count")
         return resp
 
     client.chat = chat
@@ -189,8 +194,9 @@ def metered_client(host: str):
 
 def take_tokens() -> dict:
     """Read and reset the meter — trace_replay calls this once per (seed, arm)."""
-    out = dict(TOKENS)
-    TOKENS.update(calls=0, prompt=0, completion=0, wall=0.0)
+    with _TOKEN_LOCK:
+        out = dict(TOKENS)
+        TOKENS.update(calls=0, prompt=0, completion=0, wall=0.0)
     return out
 
 

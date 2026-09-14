@@ -36,6 +36,7 @@ per tick:  jobs ──► market.clear_market ──► A_bid ──► placemen
 | `negotiation_protocol.py` | the older bounded two-sided concession ladder; retained as a baseline arm |
 | `policy_debate.py` | post-core experimental arm: weighted Demand/Supply openings, machine-readable red lines, one bounded rebuttal, candidate-constrained ratification, strict fallback, and an audit package |
 | `policy_debate_v2.py` | exploratory cross-window revision: disjoint advocate roles, online episode state, role-enforced objections, and mandatory component-constrained Referee |
+| `policy_debate_v2_3.py` | 24-window-calibrated development arm: parallel Demand/Supply openings, sustained-deterioration escalation, and mandatory constrained Referee |
 | `trace_replay.py` | replays real Alibaba v2020 windows — arrivals, durations, GPU demand jointly from the trace |
 | `two_sided_sim.py` | merged two-sided world: demand margin + supply reserve on the SAME free pool |
 | `llm_agent.py` | LLM bid-strategy / priority class, cached per discretised state |
@@ -59,6 +60,8 @@ per tick:  jobs ──► market.clear_market ──► A_bid ──► placemen
 .venv/bin/python -m pins.elastisim_bench run --world <world> --arm policy_debate --family mkt \
   --fallback-ordering auction_deadline --fallback-sizing adaptive
 .venv/bin/python -m pins.elastisim_bench run --world <world> --arm policy_debate_v2 --family mkt \
+  --fallback-ordering auction_deadline --fallback-sizing adaptive
+.venv/bin/python -m pins.elastisim_bench run --world <world> --arm policy_debate_v2_3 --family mkt \
   --fallback-ordering auction_deadline --fallback-sizing adaptive
 ```
 
@@ -87,6 +90,13 @@ a new pre-registration before comparative measurement. The completed 24-window v
 shows that its majority-user guard is too broad to promote: v2.2 is retained as a rejected
 development prototype, while the recommended next rule treats concentration as an objection and
 requires observed deterioration before any binding Supply escalation.
+
+`policy_debate_v2_3` implements that next in-sample development rule. Demand and Supply calls are
+issued concurrently, followed by one Referee call. Supply escalation requires two consecutive
+queue-growth observations under service ordering plus multi-user majority concentration and no
+Demand emergency; Demand escalates for material production or severe user-distributed deadline
+pressure. The thresholds were fixed from the completed 24-window training audit before any v2.3
+row was run. Testing v2.3 on those same windows measures repair, not generalisation.
 
 ## What this is / isn't
 
