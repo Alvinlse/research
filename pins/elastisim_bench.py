@@ -34,6 +34,9 @@ import sys
 import time
 from pathlib import Path
 
+from pins.policy_debate import arm_policy_debate
+from pins.policy_debate_v2 import arm_policy_debate_v2
+
 ES_ROOT = Path(os.environ.get("ELASTISIM_ROOT", "/import/gp-home.ciero/kimseng/elastisim"))
 ES_BIN = ES_ROOT / "env/bin/elastisim"
 SLURM_LOG = Path(__file__).resolve().parent.parent / "data/slurm-log.csv"
@@ -2342,6 +2345,11 @@ ARMS = {"fcfs": arm_fcfs, "firstfit": arm_firstfit, "easy": arm_easy, "sjf": arm
         "policy_bo3": arm_policy_bo3,
         "policy_symmetric": arm_policy_symmetric,
         "policy_negotiate": arm_policy_negotiate,
+        # Post-core experimental extension: bounded cross-talk over concrete policy actions.
+        # The completed policy_negotiate path above remains unchanged.
+        "policy_debate": arm_policy_debate,
+        # Cross-window revision.  Keep policy_debate frozen for its incomplete pre-registered sweep.
+        "policy_debate_v2": arm_policy_debate_v2,
         "rule_synth": arm_rule_synth,
         "resize_debate": arm_firstfit,
         "single": lambda p, f, c: arm_llm(p, f, c, "single"),
@@ -2371,6 +2379,8 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
         fallback_sizing: str | None = None) -> dict:
     from elastisim_python import JobState, NodeState, pass_algorithm
     from pins.llm_agent import HOST, take_tokens
+    if (fallback_ordering is None) != (fallback_sizing is None):
+        raise ValueError("fallback_ordering and fallback_sizing must be supplied together")
     take_tokens()          # clear the meter so this run is billed only for its own inference
     world = world.resolve()
     tag = tag or arm
@@ -2532,7 +2542,7 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
     llm_arms = ("single", "debate", "negotiate", "bo3", "correct", "neg_signed",
                 "correct3", "sham", "neg_v2", "resize_single", "text_single", "resize_debate",
                 "text_debate", "policy_select", "policy_bo3", "policy_symmetric",
-                "policy_negotiate", "rule_synth")
+                "policy_negotiate", "policy_debate", "policy_debate_v2", "rule_synth")
     res.update(arm=arm, sizer=sizer, switch_at=switch_at, switch_on=switch_on, family=family,
                packet_v2=packet_v2, demand_v2=demand_v2,
                fallback_policy=(f"{fallback_ordering}+{fallback_sizing}"
@@ -2542,6 +2552,30 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
                market_clearings=ctx.get("market_clearings", 0),
                sel_every=sel_every, sel_invalid=ctx.get("sel_invalid", 0),
                sel_counts=ctx.get("sel_counts", {}), packet_order=packet_order, gate=gate,
+               debate_epochs=ctx.get("debate_epochs", 0),
+               debate_opening_agreements=ctx.get("debate_opening_agreements", 0),
+               debate_rebuttals=ctx.get("debate_rebuttals", 0),
+               debate_referee_calls=ctx.get("debate_referee_calls", 0),
+               debate_direct_ratifications=ctx.get("debate_direct_ratifications", 0),
+               debate_active_red_lines=ctx.get("debate_active_red_lines", 0),
+               debate_concessions=ctx.get("debate_concessions", 0),
+               debate_dissent=ctx.get("debate_dissent", 0),
+               debate_rejected_outputs=ctx.get("debate_rejected_outputs", 0),
+               debate_v2_epochs=ctx.get("debate_v2_epochs", 0),
+               debate_v2_one_sided_rejections=ctx.get(
+                   "debate_v2_one_sided_rejections", 0),
+               debate_v2_fairness_guard_epochs=ctx.get(
+                   "debate_v2_fairness_guard_epochs", 0),
+               debate_v2_fairness_guard_triggers=ctx.get(
+                   "debate_v2_fairness_guard_triggers", 0),
+               debate_v2_fairness_guard_floors=ctx.get(
+                   "debate_v2_fairness_guard_floors", 0),
+               debate_v2_demand_guard_epochs=ctx.get(
+                   "debate_v2_demand_guard_epochs", 0),
+               debate_v2_demand_guard_triggers=ctx.get(
+                   "debate_v2_demand_guard_triggers", 0),
+               debate_v2_demand_guard_floors=ctx.get(
+                   "debate_v2_demand_guard_floors", 0),
                switch_adaptive=ctx.get("switch_adaptive", 0), switch_calls=ctx.get("switch_calls", 0),
                model=model if arm in llm_arms else None, interval=interval,
                packet=PACKET_VERSION if arm in llm_arms else None,
@@ -2910,10 +2944,14 @@ if __name__ == "__main__":
     r.add_argument("--family", choices=sorted(POLICY_FAMILY), default="",
                    help="restrict the referee's ordering menu to one policy family (the 2x2 factor); "
                         "unset = the whole five-ordering library")
+    r.add_argument("--fallback-ordering", choices=SELECTOR_MENU["ordering"],
+                   help="policy-selector action executed after an invalid model ruling")
+    r.add_argument("--fallback-sizing", choices=SELECTOR_MENU["sizing"],
+                   help="policy-selector sizing executed after an invalid model ruling")
     r.add_argument("--rule", type=Path, help="rule_synth: execute this FROZEN rule instead of writing one")
     r.add_argument("--rule-out", type=Path, help="rule_synth: save the synthesised rule here")
     r.add_argument("--sel-every", type=int, default=1800,
-                   help="policy_select: seconds between policy re-selections")
+                   help="policy-selector arms: seconds between policy re-selections")
     r.add_argument("--switch-on", choices=["queue", "load"], default="queue",
                    help="auto sizer signal: queue depth over free GPUs, or waiting demand over pool")
     r.add_argument("--switch-at", type=float, default=1.0,
@@ -2980,4 +3018,5 @@ if __name__ == "__main__":
             text_labels=a.text_labels, policy_schedule=a.policy_schedule, slack_mult=a.slack_mult,
             family=a.family, packet_every=a.packet_every, packet_out=a.packet_out,
             temperature=a.temperature, llm_seed=a.llm_seed, num_predict=a.num_predict,
-            rcon_threshold_s=a.rcon_threshold_s)
+            rcon_threshold_s=a.rcon_threshold_s,
+            fallback_ordering=a.fallback_ordering, fallback_sizing=a.fallback_sizing)

@@ -34,6 +34,8 @@ per tick:  jobs ──► market.clear_market ──► A_bid ──► placemen
 | `correction_signed.py` | signed (up **and** down) corrections; the arm that actually wins |
 | `referee.py` | referee-LLM allocator (2026-07-15 pivot) — supersedes the bilateral ladder |
 | `negotiation_protocol.py` | the older bounded two-sided concession ladder; retained as a baseline arm |
+| `policy_debate.py` | post-core experimental arm: weighted Demand/Supply openings, machine-readable red lines, one bounded rebuttal, candidate-constrained ratification, strict fallback, and an audit package |
+| `policy_debate_v2.py` | exploratory cross-window revision: disjoint advocate roles, online episode state, role-enforced objections, and mandatory component-constrained Referee |
 | `trace_replay.py` | replays real Alibaba v2020 windows — arrivals, durations, GPU demand jointly from the trace |
 | `two_sided_sim.py` | merged two-sided world: demand margin + supply reserve on the SAME free pool |
 | `llm_agent.py` | LLM bid-strategy / priority class, cached per discretised state |
@@ -54,9 +56,37 @@ per tick:  jobs ──► market.clear_market ──► A_bid ──► placemen
 .venv/bin/python -m pins.trace_replay --llm --model qwen2.5:3b --pools 32 --seeds 8
 .venv/bin/python -m pins.two_sided_sim       # two-sided demand/supply sweep
 .venv/bin/python -m pins.negotiation_sim     # mechanism sweep in the synthetic world
+.venv/bin/python -m pins.elastisim_bench run --world <world> --arm policy_debate --family mkt \
+  --fallback-ordering auction_deadline --fallback-sizing adaptive
+.venv/bin/python -m pins.elastisim_bench run --world <world> --arm policy_debate_v2 --family mkt \
+  --fallback-ordering auction_deadline --fallback-sizing adaptive
 ```
 
 Every `--llm` arm falls back to a deterministic rule if Ollama (`localhost:11434`) is down.
+The unfrozen `policy_debate` follow-up uses two calls when the openings agree, four when rebuttals
+converge, and five when a Referee must resolve two surviving candidates. Demand and Supply receive
+disclosed incentive vectors with $L_1$ distance 1.3 and code-evaluated red lines. Consensus is
+ratified directly; a Referee cannot invent or splice a third policy. The arm logs incentives,
+red-line state, openings, validated rebuttals, candidates, concessions, dissent, rejected outputs,
+the executed policy, fallback use, and residual risks in `<tag>_policy_log.json`. It has no result
+claim yet and must receive a fresh pre-registration and evaluation split before measurement.
+
+`policy_debate_v2` is a separately named exploratory successor; it does not alter or resume the
+frozen v1 arm. Demand may defend deadline or production-priority ordering, while Supply may defend
+fairness or accumulated-wait ordering. Both also propose a bounded sizing position. If both
+openings validate, a Referee always selects from their component-wise cross-product; if either
+opening is invalid, code executes the configured deterministic floor. During a non-trivial backlog,
+material production pressure latches a Demand ordering episode; otherwise a batch-dominated
+majority-user burst latches a Supply fairness episode. An episode keeps that role's ordering
+binding until the backlog drains, while the Referee still chooses sizing. This is exactly three LLM
+calls for a valid epoch and two calls for a failed opening, with no rebuttal round. Its added state
+is online-observable (deadline-budget distribution, user concentration, production share, recent
+queue trend, and episode memory), not true duration or realised evaluation outcomes. The real-window
+checks in `debate_cross_window_review.md` are post-hoc diagnostics, not a validation claim; v2.2 needs
+a new pre-registration before comparative measurement. The completed 24-window v1 audit further
+shows that its majority-user guard is too broad to promote: v2.2 is retained as a rejected
+development prototype, while the recommended next rule treats concentration as an objection and
+requires observed deterioration before any binding Supply escalation.
 
 ## What this is / isn't
 

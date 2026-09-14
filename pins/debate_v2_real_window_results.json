@@ -1,0 +1,79 @@
+{
+  "status": "exploratory_post_hoc_development_only",
+  "date": "2026-09-15",
+  "metric": "deadline_viol_pct",
+  "lower_is_better": true,
+  "completed_v1_sweep_context": {
+    "paired_windows": 24,
+    "phase_one_runs": 48,
+    "budget_matched_control_runs": 8,
+    "mean_debate_minus_single_points": -2.396,
+    "paired_t_95pct_ci_points": [-5.106, 0.314],
+    "wins_ties_losses": [11, 8, 5],
+    "exact_sign_flip_p": 0.0738525390625,
+    "holm_adjusted_p": 0.147705078125,
+    "high_contention_mean_points": -3.475,
+    "high_contention_exact_p": 0.21875,
+    "high_contention_holm_adjusted_p": 0.21875,
+    "debate_epochs": 1576,
+    "single_llm_calls": 1587,
+    "debate_llm_calls": 5145,
+    "fixed_deadline_fairness_wins_ties": [14, 4, 6]
+  },
+  "common_configuration": {
+    "family": "mkt",
+    "model": "qwen2.5:14b",
+    "temperature": 0.1,
+    "llm_seed": 17,
+    "num_predict": 400,
+    "selection_interval_s": 1800,
+    "simulation_interval_s": 300,
+    "fallback_ordering": "auction_deadline",
+    "fallback_sizing": "adaptive"
+  },
+  "windows": [
+    {
+      "window": "d223h11",
+      "single": 28.1,
+      "debate_v1": 34.8,
+      "full_llm_revision": {
+        "version": "2.0",
+        "deadline_viol_pct": 33.8,
+        "epochs": 106,
+        "llm_calls": 318,
+        "llm_errors": 0,
+        "selected_deadline_epochs": 77,
+        "selected_fairness_epochs": 29
+      },
+      "post_hoc_zero_llm_episode_replay": {
+        "role": "supply",
+        "trigger_time_s": 82788,
+        "deadline_viol_pct": 22.5,
+        "single_relative_harmed_jobs": 20,
+        "single_relative_saved_jobs": 58
+      }
+    },
+    {
+      "window": "d118h14",
+      "single": 25.8,
+      "debate_v1": 22.6,
+      "full_llm_revision": {
+        "version": "2.1",
+        "deadline_viol_pct": 25.4,
+        "epochs": 58,
+        "llm_calls": 174,
+        "llm_errors": 0,
+        "selected_deadline_epochs": 0,
+        "selected_fairness_epochs": 58,
+        "supply_guard_epochs": 42
+      },
+      "post_hoc_zero_llm_episode_replay": {
+        "role": "demand",
+        "trigger_time_s": 68334,
+        "production_share_at_trigger": 0.291,
+        "deadline_viol_pct": 21.9
+      }
+    }
+  ],
+  "warning": "Episode rules and replay switch points were derived after viewing training-window outcomes. The completed 24-window v1 audit showed that majority-user concentration alone is not a safe binding guard. V2.2 is retained as a rejected development prototype; any successor requires a frozen deterioration condition and unseen evaluation."
+}
