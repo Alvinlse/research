@@ -18,6 +18,8 @@ from pins.policy_debate_v2_4 import PROTOCOL_VERSION
 
 ROOT = Path('/import/gp-home.ciero/kimseng/Research')
 OUT = ROOT / 'runs/sweep_train_debate_v243/rows.jsonl'
+PILOT = ROOT / 'runs/pilot_debate_v243_two/rows.jsonl'
+PILOT_WINDOWS = {'d111h22', 'd223h11'}
 if PROTOCOL_VERSION != '2.4.3':
     raise SystemExit(f'protocol drift: expected 2.4.3, found {PROTOCOL_VERSION}')
 manifest = json.loads((ROOT / 'pins/core_2x2_manifest.json').read_text())
@@ -29,15 +31,29 @@ windows = sorted(
 rows = [json.loads(line) for line in OUT.read_text().splitlines() if line.strip()] \
     if OUT.exists() else []
 done = {row['window'] for row in rows}
-todo = [window for window in windows if window['window'] not in done]
+if PILOT.exists():
+    for line in PILOT.read_text().splitlines():
+        if not line.strip():
+            continue
+        pilot_row = json.loads(line)
+        if pilot_row['window'] in PILOT_WINDOWS and pilot_row['window'] not in done:
+            imported = {**pilot_row, 'source_tag': 'pilot_v243_s17'}
+            with OUT.open('a') as handle:
+                handle.write(json.dumps(imported) + '\n')
+            rows.append(imported)
+            done.add(imported['window'])
+todo = [window for window in windows
+        if window['window'] not in done and window['window'] not in PILOT_WINDOWS]
 if not todo:
-    current = subprocess.run(
-        ['crontab', '-l'], text=True, capture_output=True, check=False).stdout
-    kept = [line for line in current.splitlines() if 'debate_v243_sweep_tick' not in line]
+    missing_pilot = PILOT_WINDOWS - done
+    if missing_pilot:
+        raise SystemExit(
+            f"22-window sweep complete; awaiting pilot rows {sorted(missing_pilot)}")
     subprocess.run(
-        ['crontab', '-'], input=('\n'.join(kept) + ('\n' if kept else '')),
-        text=True, check=True)
-    raise SystemExit('v2.4.3 24-window chain complete; awaiting analysis')
+        [str(ROOT / '.venv/bin/python'),
+         str(ROOT / 'pins/analyze_debate_v243_sweep.py')],
+        cwd=ROOT, check=True)
+    raise SystemExit('v2.4.3 24-window chain complete and analyzed')
 
 window = todo[0]
 name = window['window']
@@ -53,6 +69,7 @@ row = {
     'window': name, 'config': 'v2.4.3', 'arm': 'policy_debate_v2_4',
     'protocol_version': '2.4.3', 'offered_load': window['offered_load'],
     'n_jobs': window['n_jobs'], 'split': window['split'],
+    'source_tag': 'sw_v243_s17',
     **{key: result[key] for key in (
         'deadline_viol_pct', 'mean_wait_s', 'p90_wait_s', 'sla2_viol_pct',
         'sla5_viol_pct', 'useful_util_win', 'mean_bsd', 'llm_calls', 'llm_errors',

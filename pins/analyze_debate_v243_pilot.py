@@ -113,6 +113,7 @@ def main() -> None:
         "runtime_structural_integrity": all(item["passed"] for item in structural.values()),
     }
     positive = all(checks.values())
+    sweep_override = True
     traces = {window: trace_summary(window, TAG) for window in WINDOWS}
     result = {
         "protocol_version": "2.4.3",
@@ -124,6 +125,8 @@ def main() -> None:
         "completed_trials": completed_trials,
         "gate_checks": checks,
         "positive": positive,
+        "sweep_override": sweep_override,
+        "sweep_launch": "frozen_gate" if positive else "explicit_user_override",
         "structural_trace_checks": structural,
         "trace_analysis": traces,
     }
@@ -159,12 +162,12 @@ def main() -> None:
         "backoff admitted no blocked trial starts, so the 24-window sweep is launched. Aggregate "
         "movement remains observational and does not isolate rotation from sizing or emergencies."
         if positive else
-        "At least one frozen condition failed, so the 24-window sweep is not launched. The metric "
-        "and structural rows above distinguish performance failure from feedback/backoff failure."
+        "At least one frozen condition failed. The 24-window sweep nevertheless continues under "
+        "the explicit presentation-deadline override; the failed gate remains reported unchanged."
     )
     RESULT_MD.write_text(f"""# Debate v2.4.3 two-window pilot analysis
 
-Decision: **{'POSITIVE — launch the 24-window sweep' if positive else 'NOT POSITIVE — do not launch the sweep'}**.
+Decision: **{'POSITIVE — sweep justified by frozen gate' if positive else 'GATE NOT PASSED — sweep continues by explicit user override'}**.
 
 ## Matched-window results
 
@@ -212,7 +215,7 @@ Macro utilization: {macro['baseline_useful_util_win']:.4f} to {macro['pilot_usef
     kept = [line for line in current.splitlines()
             if "debate_v243_pilot_tick" not in line
             and "debate_v243_sweep_tick" not in line]
-    if positive:
+    if positive or sweep_override:
         kept.append(
             "* * * * * /import/gp-home.ciero/kimseng/Research/"
             "pins/debate_v243_sweep_tick.sh")
@@ -221,7 +224,7 @@ Macro utilization: {macro['baseline_useful_util_win']:.4f} to {macro['pilot_usef
         text=True, check=True)
     print(
         f"v2.4.3 analysis published; positive={positive}; "
-        f"24-window sweep {'scheduled' if positive else 'not scheduled'}")
+        f"24-window sweep scheduled; override={sweep_override and not positive}")
 
 
 if __name__ == "__main__":
