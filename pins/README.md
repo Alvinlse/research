@@ -37,6 +37,7 @@ per tick:  jobs ──► market.clear_market ──► A_bid ──► placemen
 | `policy_debate.py` | post-core experimental arm: weighted Demand/Supply openings, machine-readable red lines, one bounded rebuttal, candidate-constrained ratification, strict fallback, and an audit package |
 | `policy_debate_v2.py` | exploratory cross-window revision: disjoint advocate roles, online episode state, role-enforced objections, and mandatory component-constrained Referee |
 | `policy_debate_v2_3.py` | 24-window-calibrated development arm: parallel Demand/Supply openings, sustained-deterioration escalation, and mandatory constrained Referee |
+| `policy_debate_v2_4.py` | guarded ordering-branch rotation with 30-minute debate and deterministic five-minute sizing review |
 | `trace_replay.py` | replays real Alibaba v2020 windows — arrivals, durations, GPU demand jointly from the trace |
 | `two_sided_sim.py` | merged two-sided world: demand margin + supply reserve on the SAME free pool |
 | `llm_agent.py` | LLM bid-strategy / priority class, cached per discretised state |
@@ -62,6 +63,8 @@ per tick:  jobs ──► market.clear_market ──► A_bid ──► placemen
 .venv/bin/python -m pins.elastisim_bench run --world <world> --arm policy_debate_v2 --family mkt \
   --fallback-ordering auction_deadline --fallback-sizing adaptive
 .venv/bin/python -m pins.elastisim_bench run --world <world> --arm policy_debate_v2_3 --family mkt \
+  --fallback-ordering auction_deadline --fallback-sizing adaptive
+.venv/bin/python -m pins.elastisim_bench run --world <world> --arm policy_debate_v2_4 --family mkt \
   --fallback-ordering auction_deadline --fallback-sizing adaptive
 ```
 
@@ -97,6 +100,17 @@ queue-growth observations under service ordering plus multi-user majority concen
 Demand emergency; Demand escalates for material production or severe user-distributed deadline
 pressure. The thresholds were fixed from the completed 24-window training audit before any v2.3
 row was run. Testing v2.3 on those same windows measures repair, not generalisation.
+
+`policy_debate_v2_4` keeps the parallel 30-minute ordering debate but removes sizing from every LLM
+schema. A deterministic controller reviews sizing at the first scheduler invocation at least five
+simulated minutes after the previous review, using separate enter/exit thresholds to avoid flapping;
+actual GPU changes remain work-boundary-only. Once per hour, when service risk is low, a rotation
+becomes eligible: Demand and Supply vote independently, then the Referee chooses `none`, `demand`,
+or `supply` only from requested candidates. The simulator never randomly selects a branch. Queue or
+deadline-pressure regression rolls a 30-minute trial back; otherwise it becomes the incumbent. Raw
+outcomes and a per-side accept/rollback and performance scorecard are fed into later debates so the
+Referee can improve its judgment within the run. This arm is implemented but must not enter a sweep
+until the frozen v2.3 chain finishes and its results are analysed.
 
 ## What this is / isn't
 

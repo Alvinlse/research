@@ -37,6 +37,8 @@ from pathlib import Path
 from pins.policy_debate import arm_policy_debate
 from pins.policy_debate_v2 import arm_policy_debate_v2
 from pins.policy_debate_v2_3 import arm_policy_debate_v2_3
+from pins.policy_debate_v2_4 import (
+    arm_policy_debate_v2_4, update_sizing_controller as update_v24_sizing_controller)
 
 ES_ROOT = Path(os.environ.get("ELASTISIM_ROOT", "/import/gp-home.ciero/kimseng/elastisim"))
 ES_BIN = ES_ROOT / "env/bin/elastisim"
@@ -2353,6 +2355,8 @@ ARMS = {"fcfs": arm_fcfs, "firstfit": arm_firstfit, "easy": arm_easy, "sjf": arm
         "policy_debate_v2": arm_policy_debate_v2,
         # Full-training-audit revision with parallel openings and two-stage objection escalation.
         "policy_debate_v2_3": arm_policy_debate_v2_3,
+        # Guarded ordering rotation; sizing is a separate deterministic five-minute controller.
+        "policy_debate_v2_4": arm_policy_debate_v2_4,
         "rule_synth": arm_rule_synth,
         "resize_debate": arm_firstfit,
         "single": lambda p, f, c: arm_llm(p, f, c, "single"),
@@ -2476,6 +2480,8 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
         # A malleable job pauses at each work boundary and may change size before continuing. Keep
         # this deterministic: debate still decides waiting-job starts, never reconfiguration maths.
         if system["invocation_type"].name == "INVOKE_SCHEDULING_POINT":
+            if arm == "policy_debate_v2_4":
+                update_v24_sizing_controller(pending, free, ctx, sys.modules[__name__])
             if arm in ("neg_v2", "resize_debate") and pending:
                 _llm_resize_decide(system["job"], pending, free, ctx)
             elif arm == "resize_single" and pending:
@@ -2534,6 +2540,9 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
         "".join(json.dumps(x) + "\n" for x in ctx["llm_audit"]))
     (world / f"out/{tag}_resize_log.jsonl").write_text(
         "".join(json.dumps(x) + "\n" for x in ctx["resize_log"]))
+    if ctx.get("debate_v24_sizing_log") is not None:
+        (world / f"out/{tag}_v24_sizing_log.jsonl").write_text(
+            "".join(json.dumps(x) + "\n" for x in ctx["debate_v24_sizing_log"]))
     (world / f"out/{tag}_size_history.json").write_text(json.dumps(
         {str(k): v for k, v in ctx["size_history"].items()}))
     res = summarise(stats, world)
@@ -2546,7 +2555,7 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
                 "correct3", "sham", "neg_v2", "resize_single", "text_single", "resize_debate",
                 "text_debate", "policy_select", "policy_bo3", "policy_symmetric",
                 "policy_negotiate", "policy_debate", "policy_debate_v2",
-                "policy_debate_v2_3", "rule_synth")
+                "policy_debate_v2_3", "policy_debate_v2_4", "rule_synth")
     res.update(arm=arm, sizer=sizer, switch_at=switch_at, switch_on=switch_on, family=family,
                packet_v2=packet_v2, demand_v2=demand_v2,
                fallback_policy=(f"{fallback_ordering}+{fallback_sizing}"
@@ -2591,6 +2600,12 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
                    "debate_v23_demand_escalation_epochs", 0),
                debate_v23_demand_escalation_triggers=ctx.get(
                    "debate_v23_demand_escalation_triggers", 0),
+               debate_v24_epochs=ctx.get("debate_v24_epochs", 0),
+               debate_v24_sizing_reviews=ctx.get("debate_v24_sizing_reviews", 0),
+               debate_v24_sizing_transitions=ctx.get("debate_v24_sizing_transitions", 0),
+               debate_v24_trials=ctx.get("debate_v24_trials", 0),
+               debate_v24_trial_accepts=ctx.get("debate_v24_trial_accepts", 0),
+               debate_v24_trial_rollbacks=ctx.get("debate_v24_trial_rollbacks", 0),
                switch_adaptive=ctx.get("switch_adaptive", 0), switch_calls=ctx.get("switch_calls", 0),
                model=model if arm in llm_arms else None, interval=interval,
                packet=PACKET_VERSION if arm in llm_arms else None,
