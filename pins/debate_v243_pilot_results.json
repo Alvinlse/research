@@ -1,0 +1,361 @@
+{
+  "baselines": {
+    "d111h22": {
+      "commit": "df531df",
+      "deadline_viol_pct": 8.9,
+      "mean_wait_s": 57764,
+      "useful_util_win": 0.721,
+      "version": "v2.4.2"
+    },
+    "d223h11": {
+      "commit": "df531df",
+      "deadline_viol_pct": 28.0,
+      "mean_wait_s": 37929,
+      "useful_util_win": 0.85,
+      "version": "v2.4.2"
+    }
+  },
+  "completed_trials": 4,
+  "gate_checks": {
+    "both_complete_zero_llm_errors": true,
+    "d111_deadline_at_most_10_9": false,
+    "d223_deadline_at_most_27_1": false,
+    "macro_deadline_not_worse": false,
+    "macro_util_within_0_02": true,
+    "macro_wait_within_5pct": false,
+    "revised_evaluator_exercised": true,
+    "runtime_structural_integrity": true
+  },
+  "llm_seed": 17,
+  "macro": {
+    "baseline_deadline_viol_pct": 18.45,
+    "baseline_mean_wait_s": 47846.5,
+    "baseline_useful_util_win": 0.7855,
+    "pilot_deadline_viol_pct": 23.85,
+    "pilot_mean_wait_s": 54974.5,
+    "pilot_useful_util_win": 0.7855
+  },
+  "positive": false,
+  "protocol_version": "2.4.3",
+  "structural_trace_checks": {
+    "d111h22": {
+      "backoff_start_violations": [],
+      "blocked_requests": 0,
+      "passed": true,
+      "phase_feedback_mismatches": []
+    },
+    "d223h11": {
+      "backoff_start_violations": [],
+      "blocked_requests": 0,
+      "passed": true,
+      "phase_feedback_mismatches": []
+    }
+  },
+  "sweep_launch": "explicit_user_override",
+  "sweep_override": true,
+  "tag": "pilot_v243_s17",
+  "trace_analysis": {
+    "d111h22": {
+      "abstentions": {
+        "demand": 19,
+        "supply": 0
+      },
+      "available": true,
+      "epochs": 97,
+      "invalid_holds": 0,
+      "opening_orderings": {
+        "demand": {
+          "abstain": 19,
+          "auction_deadline": 75,
+          "auction_priority": 3
+        },
+        "supply": {
+          "auction_fairness": 97
+        }
+      },
+      "ordering_counts": {
+        "auction_deadline": 79,
+        "auction_fairness": 15,
+        "auction_priority": 3
+      },
+      "outcome_events": [
+        {
+          "action": "trial_probation",
+          "checks": {
+            "deadline_pressure_delta": 0.0,
+            "deadline_pressure_ok": true,
+            "objective": {
+              "name": "supply_queue_or_concentration",
+              "top_user_wait_share_delta": -0.028
+            },
+            "objective_ok": true,
+            "passed": true,
+            "queue_delta": -6,
+            "queue_trend_limit": 55,
+            "queue_trend_ok": true,
+            "wait_s_p90_growth": 1764,
+            "wait_s_p90_limit": 2100,
+            "wait_s_p90_ok": true
+          },
+          "phase": "probation",
+          "reason": null,
+          "role": "supply",
+          "transition": "auction_deadline->auction_fairness"
+        },
+        {
+          "action": "trial_accept",
+          "checks": {
+            "deadline_pressure_delta": 0.0,
+            "deadline_pressure_ok": true,
+            "objective": {
+              "name": "supply_queue_or_concentration",
+              "top_user_wait_share_delta": -0.014
+            },
+            "objective_ok": true,
+            "passed": true,
+            "queue_delta": -4,
+            "queue_trend_limit": 0,
+            "queue_trend_ok": true,
+            "wait_s_p90_growth": 2482,
+            "wait_s_p90_limit": 3116,
+            "wait_s_p90_ok": true
+          },
+          "phase": "probation",
+          "reason": "probation_passed",
+          "role": "supply",
+          "transition": "auction_deadline->auction_fairness"
+        }
+      ],
+      "path": "runs/core_2x2_worlds/d111h22/out/pilot_v243_s17_policy_log.json",
+      "referee_actions": {
+        "hold": 96,
+        "trial_supply": 1
+      },
+      "rotation_actions": {
+        "emergency_demand": 67,
+        "hold": 28,
+        "trial_continue": 1,
+        "trial_start": 1
+      },
+      "trial_requests": {
+        "demand": 1,
+        "supply": 1
+      }
+    },
+    "d223h11": {
+      "abstentions": {
+        "demand": 61,
+        "supply": 58
+      },
+      "available": true,
+      "epochs": 104,
+      "invalid_holds": 0,
+      "opening_orderings": {
+        "demand": {
+          "abstain": 61,
+          "auction_deadline": 39,
+          "auction_priority": 4
+        },
+        "supply": {
+          "abstain": 58,
+          "auction_fairness": 46
+        }
+      },
+      "ordering_counts": {
+        "auction_deadline": 100,
+        "auction_fairness": 4
+      },
+      "outcome_events": [
+        {
+          "action": "trial_probation",
+          "checks": {
+            "deadline_pressure_delta": 0.0,
+            "deadline_pressure_ok": true,
+            "objective": {
+              "name": "supply_queue_or_concentration",
+              "top_user_wait_share_delta": -0.028
+            },
+            "objective_ok": true,
+            "passed": true,
+            "queue_delta": 0,
+            "queue_trend_limit": 0,
+            "queue_trend_ok": true,
+            "wait_s_p90_growth": 1923,
+            "wait_s_p90_limit": 2226,
+            "wait_s_p90_ok": true
+          },
+          "phase": "probation",
+          "reason": null,
+          "role": "supply",
+          "transition": "auction_deadline->auction_fairness"
+        },
+        {
+          "action": "trial_rollback",
+          "checks": {
+            "deadline_pressure_delta": 0.0,
+            "deadline_pressure_ok": true,
+            "objective": {
+              "name": "supply_queue_or_concentration",
+              "top_user_wait_share_delta": -0.038
+            },
+            "objective_ok": true,
+            "passed": false,
+            "queue_delta": 12,
+            "queue_trend_limit": 0,
+            "queue_trend_ok": false,
+            "wait_s_p90_growth": 2271,
+            "wait_s_p90_limit": 2575,
+            "wait_s_p90_ok": true
+          },
+          "phase": "probation",
+          "reason": "probation_failed",
+          "role": "supply",
+          "transition": "auction_deadline->auction_fairness"
+        },
+        {
+          "action": "trial_rollback",
+          "checks": {
+            "deadline_pressure_delta": 0.0,
+            "deadline_pressure_ok": true,
+            "objective": {
+              "name": "supply_queue_or_concentration",
+              "top_user_wait_share_delta": -0.069
+            },
+            "objective_ok": true,
+            "passed": false,
+            "queue_delta": 55,
+            "queue_trend_limit": 0,
+            "queue_trend_ok": false,
+            "wait_s_p90_growth": 2072,
+            "wait_s_p90_limit": 2387,
+            "wait_s_p90_ok": true
+          },
+          "phase": "trial",
+          "reason": "trial_failed",
+          "role": "supply",
+          "transition": "auction_deadline->auction_fairness"
+        },
+        {
+          "action": "trial_rollback",
+          "checks": {
+            "deadline_pressure_delta": 0.006,
+            "deadline_pressure_ok": true,
+            "objective": {
+              "name": "supply_queue_or_concentration",
+              "top_user_wait_share_delta": -0.009
+            },
+            "objective_ok": true,
+            "passed": false,
+            "queue_delta": 51,
+            "queue_trend_limit": 1,
+            "queue_trend_ok": false,
+            "wait_s_p90_growth": 255,
+            "wait_s_p90_limit": 2471,
+            "wait_s_p90_ok": true
+          },
+          "phase": "trial",
+          "reason": "trial_failed",
+          "role": "supply",
+          "transition": "auction_deadline->auction_fairness"
+        }
+      ],
+      "path": "runs/core_2x2_worlds/d223h11/out/pilot_v243_s17_policy_log.json",
+      "referee_actions": {
+        "hold": 101,
+        "trial_supply": 3
+      },
+      "rotation_actions": {
+        "emergency_demand": 15,
+        "hold": 85,
+        "trial_continue": 1,
+        "trial_start": 3
+      },
+      "trial_requests": {
+        "demand": 1,
+        "supply": 5
+      }
+    }
+  },
+  "windows": [
+    {
+      "arm": "policy_debate_v2_4",
+      "config": "v2.4.3",
+      "deadline_viol_pct": 14.2,
+      "debate_epochs": 97,
+      "debate_referee_calls": 97,
+      "debate_rejected_outputs": 0,
+      "debate_v24_epochs": 97,
+      "debate_v24_invalid_holds": 0,
+      "debate_v24_sizing_reviews": 895,
+      "debate_v24_sizing_transitions": 3,
+      "debate_v24_transition_backoff_holds": 0,
+      "debate_v24_transition_blocked_requests": 0,
+      "debate_v24_trial_accepts": 1,
+      "debate_v24_trial_probations": 1,
+      "debate_v24_trial_rollbacks": 0,
+      "debate_v24_trials": 1,
+      "fallbacks": 0,
+      "llm_calls": 291,
+      "llm_errors": 0,
+      "mean_bsd": 6.95,
+      "mean_wait_s": 67013,
+      "n_jobs": 450,
+      "offered_load": 3.76,
+      "p90_wait_s": 148236,
+      "protocol_version": "2.4.3",
+      "sel_counts": {
+        "auction_deadline+adaptive": 56,
+        "auction_deadline+as_requested": 23,
+        "auction_fairness+adaptive": 15,
+        "auction_priority+adaptive": 2,
+        "auction_priority+as_requested": 1
+      },
+      "sel_invalid": 0,
+      "sla2_viol_pct": 56.0,
+      "sla5_viol_pct": 49.6,
+      "split": "train",
+      "useful_util_win": 0.721,
+      "wall_s": 3640,
+      "window": "d111h22"
+    },
+    {
+      "arm": "policy_debate_v2_4",
+      "config": "v2.4.3",
+      "deadline_viol_pct": 33.5,
+      "debate_epochs": 104,
+      "debate_referee_calls": 104,
+      "debate_rejected_outputs": 0,
+      "debate_v24_epochs": 104,
+      "debate_v24_invalid_holds": 0,
+      "debate_v24_sizing_reviews": 772,
+      "debate_v24_sizing_transitions": 3,
+      "debate_v24_transition_backoff_holds": 0,
+      "debate_v24_transition_blocked_requests": 0,
+      "debate_v24_trial_accepts": 0,
+      "debate_v24_trial_probations": 1,
+      "debate_v24_trial_rollbacks": 3,
+      "debate_v24_trials": 3,
+      "fallbacks": 0,
+      "llm_calls": 312,
+      "llm_errors": 0,
+      "mean_bsd": 16.23,
+      "mean_wait_s": 42936,
+      "n_jobs": 672,
+      "offered_load": 2.9,
+      "p90_wait_s": 86034,
+      "protocol_version": "2.4.3",
+      "sel_counts": {
+        "auction_deadline+adaptive": 56,
+        "auction_deadline+as_requested": 44,
+        "auction_fairness+adaptive": 4
+      },
+      "sel_invalid": 0,
+      "sla2_viol_pct": 60.9,
+      "sla5_viol_pct": 30.4,
+      "split": "train",
+      "useful_util_win": 0.85,
+      "wall_s": 2313,
+      "window": "d223h11"
+    }
+  ]
+}

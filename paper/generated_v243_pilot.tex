@@ -1,4 +1,10 @@
 \paragraph{Two-window v2.4.3 repair check.}
-The preregistered training-window pilot is running. This sentence is generated and will be replaced
-with measured results immediately after both rows complete; no pending number is used elsewhere in
-the paper.
+Against v2.4.2 on the same seed and training windows, deadline violations changed from
+8.9\% to 14.2\% on \texttt{d111h22} and from 28.0\% to
+33.5\% on \texttt{d223h11}. Macro mean wait was
+54974~s and useful utilization 0.785.
+The frozen gate did not pass; the 24-window development sweep
+nevertheless proceeds under the explicit presentation-deadline override. Across these two runs,
+4 trials produced 1 accepts, 3 rollbacks, and
+0 requests blocked by transition backoff. Runtime phase-feedback consistency
+passed.
