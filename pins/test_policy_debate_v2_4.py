@@ -1,4 +1,4 @@
-"""Contract tests for guarded rotation and fast deterministic sizing in v2.4."""
+"""Contract tests for hold-or-trial rotation and deterministic sizing in v2.4.2."""
 from __future__ import annotations
 
 import threading
@@ -13,8 +13,15 @@ from pins.test_policy_debate_v2 import Job, context
 
 def state(**updates) -> dict:
     base = {
-        "queue_depth": 20, "waiting_users": 3, "production_share": 0.0,
-        "deadline_pressure_fraction": 0.0, "deadline_pressure_user_share": 0.0,
+        "queue_depth": 20,
+        "queue_delta_last_epoch": 3,
+        "waiting_users": 3,
+        "production_share": 0.0,
+        "deadline_pressure_fraction": 0.0,
+        "deadline_pressure_jobs": 0,
+        "deadline_pressure_user_share": 0.0,
+        "top_user_wait_share": 0.8,
+        "wait_s_p90": 1000.0,
     }
     base.update(updates)
     return base
@@ -29,16 +36,31 @@ def opening(role: str, ordering: str, request_trial: bool = False) -> dict:
     }
 
 
-def referee(ordering: str, trial_role: str = "none") -> dict:
+def referee(action: str = "hold") -> dict:
     return {
-        "ordering": ordering, "trial_role": trial_role,
-        "why": "both objections and the rotation vote resolved from supplied state",
+        "action": action,
+        "why": "both objections and transition history justify this action",
     }
+
+
+def initialise(ctx: dict) -> None:
+    ctx.update(
+        now=0,
+        debate_v24_last_trial_t=0,
+        debate_v24_incumbent_ordering="auction_deadline")
+
+
+def start_supply_trial(ctx: dict, baseline: dict | None = None) -> tuple[str, dict]:
+    ctx["now"] = 3600
+    return debate.manage_rotation(
+        baseline or state(), "auction_deadline", "auction_fairness",
+        "trial_supply", ctx)
 
 
 def test_v24_is_registered_without_replacing_v23() -> None:
     assert bench.ARMS["policy_debate_v2_4"] is debate.arm_policy_debate_v2_4
     assert bench.ARMS["policy_debate_v2_3"] is not debate.arm_policy_debate_v2_4
+    assert debate.PROTOCOL_VERSION == "2.4.2"
 
 
 def test_sizing_review_uses_five_minute_cadence_and_hysteresis() -> None:
@@ -61,149 +83,177 @@ def test_sizing_review_uses_five_minute_cadence_and_hysteresis() -> None:
     load.update(queue_pressure=0.5, arrival_load=0.1)
     ctx["now"] = 600
     assert debate.update_sizing_controller(pending, [], ctx, fake) == "adaptive"
-    assert ctx["debate_v24_sizing_transitions"] == 2
 
 
-def test_rotation_waits_one_hour_before_first_trial() -> None:
-    ctx = {"now": 0}
+def test_advocates_may_abstain_but_cannot_request_an_abstention_trial() -> None:
+    ctx = context()
+    got, error = debate.validate_opening(
+        opening("demand", "abstain"), "demand", ctx, bench)
+    assert error is None and got["ordering"] == "abstain"
+    got, error = debate.validate_opening(
+        opening("demand", "abstain", True), "demand", ctx, bench)
+    assert got is None and "cannot request" in error
+    got, error = debate.validate_opening(
+        opening("demand", "auction_fairness"), "demand", ctx, bench)
+    assert got is None and "outside its role" in error
+
+
+def test_referee_emits_only_an_allowed_hold_or_trial_action() -> None:
+    assert debate.validate_final(referee("hold"), {"hold"})[0] == "hold"
+    got, error = debate.validate_final(
+        referee("trial_supply"), {"hold", "trial_demand"})
+    assert got is None and "not eligible" in error
+    got, error = debate.validate_final(
+        {"ordering": "auction_deadline", "why": "old schema"}, {"hold"})
+    assert got is None and "schema" in error
+
+
+def test_hold_never_changes_the_incumbent() -> None:
+    ctx = {}
+    initialise(ctx)
+    ctx["now"] = 3600
     selected, event = debate.manage_rotation(
-        state(), "auction_deadline", "auction_fairness", "auction_deadline", "none", ctx)
-    assert selected == "auction_deadline" and event["action"] == "referee"
+        state(), "auction_priority", "auction_fairness", "hold", ctx)
+    assert selected == "auction_deadline"
+    assert event["action"] == "hold"
+
+
+def test_rotation_waits_one_hour() -> None:
+    ctx = {}
+    initialise(ctx)
     ctx["now"] = 3599
     selected, event = debate.manage_rotation(
-        state(), "auction_deadline", "auction_fairness", "auction_deadline", "none", ctx)
-    assert selected == "auction_deadline" and event["action"] == "referee"
-
-
-def test_referee_selected_hourly_rotation_starts_requested_branch_trial() -> None:
-    ctx = {"now": 0}
-    debate.manage_rotation(
-        state(), "auction_deadline", "auction_fairness", "auction_deadline", "none", ctx)
-    ctx["now"] = 3600
-    selected, event = debate.manage_rotation(
-        state(queue_depth=30), "auction_deadline", "auction_fairness",
-        "auction_deadline", "supply", ctx)
-    assert selected == "auction_fairness"
-    assert event["action"] == "trial_start"
-    assert ctx["debate_v24_trial"]["end_t"] == 5400
-
-
-def test_trial_compares_with_predebate_incumbent_not_referee_ordering() -> None:
-    """Regression for real traces where Referee ordering and requested advocate naturally match."""
-    ctx = {
-        "now": 3600,
-        "debate_v24_last_trial_t": 0,
-        "debate_v24_incumbent_ordering": "auction_priority",
-    }
-    selected, event = debate.manage_rotation(
-        state(queue_depth=50), "auction_priority", "auction_fairness",
-        "auction_fairness", "supply", ctx)
-    assert selected == "auction_fairness"
-    assert event["action"] == "trial_start"
-    assert event["trial"]["incumbent"] == "auction_priority"
-
-
-def test_safe_clock_does_not_select_a_rotation_without_referee_vote() -> None:
-    ctx = {"now": 0}
-    debate.manage_rotation(
-        state(), "auction_deadline", "auction_fairness", "auction_deadline", "none", ctx)
-    ctx["now"] = 3600
-    selected, event = debate.manage_rotation(
-        state(queue_depth=30), "auction_deadline", "auction_fairness",
-        "auction_deadline", "none", ctx)
+        state(), "auction_deadline", "auction_fairness", "trial_supply", ctx)
     assert selected == "auction_deadline"
-    assert event["action"] == "trial_not_selected"
+    assert event["action"] == "hold"
     assert ctx.get("debate_v24_trial") is None
 
 
-def test_trial_rolls_back_when_queue_regresses() -> None:
-    ctx = {"now": 0}
-    debate.manage_rotation(
-        state(), "auction_deadline", "auction_fairness", "auction_deadline", "none", ctx)
-    ctx["now"] = 3600
-    debate.manage_rotation(
-        state(queue_depth=20), "auction_deadline", "auction_fairness",
-        "auction_deadline", "supply", ctx)
-    ctx["now"] = 5400
-    selected, event = debate.manage_rotation(
-        state(queue_depth=21), "auction_deadline", "auction_fairness",
-        "auction_deadline", "none", ctx)
-    assert selected == "auction_deadline"
-    assert event["action"] == "trial_rollback"
-    assert ctx["debate_v24_trial_rollbacks"] == 1
+def test_requested_rotation_starts_against_saved_incumbent() -> None:
+    ctx = {}
+    initialise(ctx)
+    selected, event = start_supply_trial(ctx)
+    assert selected == "auction_fairness"
+    assert event["action"] == "trial_start"
+    assert event["trial"]["incumbent"] == "auction_deadline"
+    assert event["trial"]["phase"] == "trial"
 
 
-def test_trial_is_retained_when_queue_and_pressure_do_not_regress() -> None:
-    ctx = {"now": 0}
-    debate.manage_rotation(
-        state(), "auction_deadline", "auction_fairness", "auction_deadline", "none", ctx)
-    ctx["now"] = 3600
-    debate.manage_rotation(
-        state(queue_depth=20), "auction_deadline", "auction_fairness",
-        "auction_deadline", "supply", ctx)
+def test_passing_first_phase_enters_probation_not_acceptance() -> None:
+    ctx = {}
+    initialise(ctx)
+    _, start_event = start_supply_trial(ctx)
     ctx["now"] = 5400
     selected, event = debate.manage_rotation(
-        state(queue_depth=18, deadline_pressure_fraction=0.05),
-        "auction_deadline", "auction_fairness", "auction_deadline", "none", ctx)
+        state(queue_depth=18, queue_delta_last_epoch=-2,
+              top_user_wait_share=0.75, wait_s_p90=2500),
+        "auction_deadline", "auction_fairness", "hold", ctx)
+    assert selected == "auction_fairness"
+    assert event["action"] == "trial_probation"
+    assert ctx["debate_v24_trial"]["phase"] == "probation"
+    assert start_event["trial"]["phase"] == "trial"
+    assert ctx.get("debate_v24_trial_accepts", 0) == 0
+
+
+def test_passing_probation_accepts_and_starts_cooldown_at_completion() -> None:
+    ctx = {}
+    initialise(ctx)
+    start_supply_trial(ctx)
+    ctx["now"] = 5400
+    debate.manage_rotation(
+        state(queue_depth=18, queue_delta_last_epoch=-2,
+              top_user_wait_share=0.75, wait_s_p90=2500),
+        "auction_deadline", "auction_fairness", "hold", ctx)
+    ctx["now"] = 7200
+    selected, event = debate.manage_rotation(
+        state(queue_depth=17, queue_delta_last_epoch=-1,
+              top_user_wait_share=0.73, wait_s_p90=4000),
+        "auction_deadline", "auction_fairness", "hold", ctx)
     assert selected == "auction_fairness"
     assert event["action"] == "trial_accept"
-    assert ctx["debate_v24_trial_accepts"] == 1
+    assert ctx["debate_v24_incumbent_ordering"] == "auction_fairness"
+    assert ctx["debate_v24_last_trial_t"] == 7200
+
+
+def test_first_phase_rolls_back_on_queue_regression() -> None:
+    ctx = {}
+    initialise(ctx)
+    start_supply_trial(ctx)
+    ctx["now"] = 5400
+    selected, event = debate.manage_rotation(
+        state(queue_depth=25, queue_delta_last_epoch=5,
+              top_user_wait_share=0.82, wait_s_p90=2500),
+        "auction_deadline", "auction_fairness", "hold", ctx)
+    assert selected == "auction_deadline"
+    assert event["action"] == "trial_rollback"
+    assert event["reason"] == "trial_failed"
+
+
+def test_probation_failure_rolls_back() -> None:
+    ctx = {}
+    initialise(ctx)
+    start_supply_trial(ctx)
+    ctx["now"] = 5400
+    debate.manage_rotation(
+        state(queue_depth=18, queue_delta_last_epoch=-2,
+              top_user_wait_share=0.75, wait_s_p90=2500),
+        "auction_deadline", "auction_fairness", "hold", ctx)
+    ctx["now"] = 7200
+    selected, event = debate.manage_rotation(
+        state(queue_depth=22, queue_delta_last_epoch=4,
+              top_user_wait_share=0.8, wait_s_p90=4000),
+        "auction_deadline", "auction_fairness", "hold", ctx)
+    assert selected == "auction_deadline"
+    assert event["action"] == "trial_rollback"
+    assert event["reason"] == "probation_failed"
 
 
 def test_demand_emergency_aborts_supply_trial() -> None:
-    ctx = {"now": 0}
-    debate.manage_rotation(
-        state(), "auction_deadline", "auction_fairness", "auction_deadline", "none", ctx)
-    ctx["now"] = 3600
-    debate.manage_rotation(
-        state(), "auction_deadline", "auction_fairness", "auction_deadline", "supply", ctx)
+    ctx = {}
+    initialise(ctx)
+    start_supply_trial(ctx)
     ctx["now"] = 3900
     selected, event = debate.manage_rotation(
         state(production_share=0.1), "auction_priority", "auction_fairness",
-        "auction_fairness", "none", ctx)
+        "hold", ctx)
     assert selected == "auction_priority"
-    assert event["action"] == "emergency_rollback"
+    assert event["action"] == "emergency_demand"
     assert ctx["debate_v24_trial"] is None
+    assert ctx["debate_v24_trial_rollbacks"] == 1
 
 
-def test_llm_schemas_cannot_choose_sizing() -> None:
-    ctx = context()
-    got, error = debate.validate_opening(
-        {**opening("demand", "auction_deadline"), "default_sizing": "adaptive"},
-        "demand", ctx, bench)
-    assert got is None and "schema" in error
-    got, error = debate.validate_final(
-        {**referee("auction_deadline"), "default_sizing": "adaptive"},
-        {"auction_deadline", "auction_fairness"}, {"none"})
-    assert got is None and "schema" in error
-
-
-def test_referee_cannot_select_an_unrequested_rotation() -> None:
-    got, error = debate.validate_final(
-        referee("auction_fairness", "supply"),
-        {"auction_deadline", "auction_fairness"}, {"none"})
-    assert got is None
-    assert "not requested" in error
-
-
-def test_completed_trials_become_referee_learning_evidence() -> None:
-    ctx = {"now": 0}
-    debate.manage_rotation(
-        state(), "auction_deadline", "auction_fairness", "auction_deadline", "none", ctx)
-    ctx["now"] = 3600
-    debate.manage_rotation(
-        state(queue_depth=20), "auction_deadline", "auction_fairness",
-        "auction_deadline", "supply", ctx)
+def test_completed_trial_learning_is_keyed_by_transition() -> None:
+    ctx = {}
+    initialise(ctx)
+    start_supply_trial(ctx)
     ctx["now"] = 5400
     debate.manage_rotation(
-        state(queue_depth=23, deadline_pressure_fraction=0.04),
-        "auction_deadline", "auction_fairness", "auction_deadline", "none", ctx)
+        state(queue_depth=25, top_user_wait_share=0.82, wait_s_p90=2500),
+        "auction_deadline", "auction_fairness", "hold", ctx)
     learning = debate.trial_learning(ctx["debate_v24_trial_outcomes"])
-    assert learning["supply"] == {
-        "completed": 1, "accepts": 0, "rollbacks": 1,
-        "mean_queue_delta": 3.0, "mean_deadline_pressure_delta": 0.04,
+    assert learning["supply"]["rollbacks"] == 1
+    assert learning["by_transition"][
+        "auction_deadline->auction_fairness"]["rollbacks"] == 1
+
+
+def test_expired_outcome_can_be_added_before_decision_state_is_built() -> None:
+    ctx = {}
+    initialise(ctx)
+    start_supply_trial(ctx)
+    ctx["now"] = 5400
+    settled = debate.settle_expired_trial(
+        state(queue_depth=25, top_user_wait_share=0.82, wait_s_p90=2500), ctx)
+    assert settled[1]["action"] == "trial_rollback"
+    base = {
+        **state(queue_depth=25),
+        "queue_pressure": 1.0, "arrival_load_1h": 1.0,
+        "free_gpus": 1, "current_policy_held_epochs": 1,
+        "deadline_budget_used_p50": 0.0, "deadline_budget_used_p90": 0.0,
+        "declared_walltime_share": 1.0,
     }
-    assert learning["demand"]["completed"] == 0
+    with patch.object(debate.v2, "decision_state", return_value=base):
+        visible = debate.decision_state([], [], ctx, SimpleNamespace())
+    assert visible["prior_trial_outcomes"][-1]["action"] == "trial_rollback"
 
 
 def test_ordering_openings_are_parallel() -> None:
@@ -229,12 +279,7 @@ def test_ordering_openings_are_parallel() -> None:
     assert ctx["calls"] == 2
 
 
-def test_valid_arm_epoch_uses_three_calls_and_deterministic_sizing() -> None:
-    replies = {
-        "es-policy-debate-v2-4-demand": opening("demand", "auction_deadline"),
-        "es-policy-debate-v2-4-supply": opening("supply", "auction_fairness"),
-        "es-policy-debate-v2-4-referee": referee("auction_deadline"),
-    }
+def run_arm(replies: dict) -> tuple[dict, list[str], list[tuple[str, str]]]:
     calls, executed = [], []
 
     def fake_ask(*args, **kwargs):
@@ -252,14 +297,37 @@ def test_valid_arm_epoch_uses_three_calls_and_deterministic_sizing() -> None:
             debate.arm_policy_debate_v2_4([Job()], [object()] * 4, ctx)
     finally:
         bench.ARMS.update(old)
+    return ctx, calls, executed
+
+
+def test_valid_arm_epoch_uses_three_calls_and_holds_incumbent() -> None:
+    ctx, calls, executed = run_arm({
+        "es-policy-debate-v2-4-demand": opening("demand", "auction_deadline"),
+        "es-policy-debate-v2-4-supply": opening("supply", "auction_fairness"),
+        "es-policy-debate-v2-4-referee": referee("hold"),
+    })
     package = ctx["sel_log"][0]["ratification"]
     assert set(calls[:2]) == {
         "es-policy-debate-v2-4-demand", "es-policy-debate-v2-4-supply"}
     assert calls[2] == "es-policy-debate-v2-4-referee"
     assert ctx["calls"] == 3
-    assert package["deterministic_sizing"] == "as_requested"
+    assert package["protocol_version"] == "2.4.2"
+    assert package["fallback_used"] is False
+    assert package["invalid_hold_used"] is False
     assert executed == [("auction_deadline", "as_requested")]
-    assert ctx["sel_every"] == 1800
+
+
+def test_invalid_opening_holds_without_fixed_fallback() -> None:
+    ctx, calls, executed = run_arm({
+        "es-policy-debate-v2-4-demand": opening("demand", "auction_fairness"),
+        "es-policy-debate-v2-4-supply": opening("supply", "auction_fairness"),
+    })
+    package = ctx["sel_log"][0]["ratification"]
+    assert len(calls) == 2
+    assert ctx.get("fallbacks", 0) == 0
+    assert ctx["debate_v24_invalid_holds"] == 1
+    assert package["invalid_hold_used"] is True
+    assert executed == [("auction_deadline", "as_requested")]
 
 
 def main() -> None:

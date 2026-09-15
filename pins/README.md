@@ -101,16 +101,15 @@ Demand emergency; Demand escalates for material production or severe user-distri
 pressure. The thresholds were fixed from the completed 24-window training audit before any v2.3
 row was run. Testing v2.3 on those same windows measures repair, not generalisation.
 
-`policy_debate_v2_4` (protocol 2.4.1) keeps the parallel 30-minute ordering debate but removes sizing from every LLM
-schema. A deterministic controller reviews sizing at the first scheduler invocation at least five
-simulated minutes after the previous review, using separate enter/exit thresholds to avoid flapping;
-actual GPU changes remain work-boundary-only. Once per hour, when service risk is low, a rotation
-becomes eligible: Demand and Supply vote independently, then the Referee chooses `none`, `demand`,
-or `supply` only from requested candidates. The simulator never randomly selects a branch. Queue or
-deadline-pressure regression rolls a 30-minute trial back; otherwise it becomes the incumbent. Raw
-outcomes and a per-side accept/rollback and performance scorecard are fed into later debates so the
-Referee can improve its judgment within the run. This arm is implemented but must not enter a sweep
-until the frozen v2.3 chain finishes and its results are analysed.
+`policy_debate_v2_4` (protocol 2.4.2) keeps the parallel 30-minute ordering debate but removes sizing
+from every LLM schema. A deterministic controller reviews sizing every five simulated minutes with
+hysteresis; actual GPU changes remain work-boundary-only. Demand and Supply may propose a role-valid
+ordering or abstain. Once per hour, when service risk is low, the Referee chooses only `hold`,
+`trial_demand`, or `trial_supply` from eligible advocate requests. Hold and invalid output preserve
+the incumbent, so rotation is the only non-emergency branch change and never uses randomness. A
+passing 30-minute trial enters a second 30-minute probation; role-specific queue, deadline,
+concentration, and p90-wait checks then accept or roll it back. Outcomes are settled before the next
+debate and fed back by role and exact incumbent-to-challenger transition.
 
 ## What this is / isn't
 

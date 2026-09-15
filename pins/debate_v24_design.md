@@ -1,12 +1,7 @@
 # Policy debate v2.4 design
 
-Status: implemented as a separate arm; do not start its evaluation sweep until the frozen v2.3
-24-window sweep is complete and analysed.
-
-Protocol version 2.4.1 fixes trial-start bookkeeping found by the first v2.4 audit: a requested
-challenger is compared with the saved pre-debate incumbent. The ordinary Referee ordering updates
-the incumbent only when no trial starts; an accepted trial updates it after observation. Frozen
-2.4 result files remain attributable to commit `b6d0d6c`.
+Status: protocol 2.4.2 is implemented for focused comparison. Frozen 2.4 results are attributable
+to commit `b6d0d6c`; the 2.4.1 trial-start diagnostic is attributable to `956d289`.
 
 ## Decision clocks
 
@@ -25,25 +20,28 @@ below 0.25, and production share is below 0.10.
 
 Eligibility never selects a branch. During the ordinary ordering debate:
 
-1. Demand proposes `auction_deadline` or `auction_priority` and independently votes
+1. Demand proposes `auction_deadline`, `auction_priority`, or `abstain` and independently votes
    `request_trial=true|false`.
-2. Supply proposes `auction_fairness` or `auction_wait` and independently votes
+2. Supply proposes `auction_fairness`, `auction_wait`, or `abstain` and independently votes
    `request_trial=true|false`.
-3. The Referee selects an advocate ordering and `trial_role=none|demand|supply`. A side is an
-   allowed trial role only if it requested the trial and the safety gate says rotation is eligible.
+3. The Referee chooses `hold`, `trial_demand`, or `trial_supply`. A trial action is allowed only
+   when that advocate requested it, supplied a non-abstaining candidate different from the
+   incumbent, and the safety gate says rotation is eligible.
 
-The deterministic manager only validates those votes, starts the selected 30-minute trial, and
-enforces emergency rollback. It contains no random or automatic branch selection.
+Hold and invalid output retain the incumbent. The deterministic manager only validates votes,
+starts exposure, and enforces probation/rollback. Rotation is the only non-emergency branch-change
+path; the manager contains no random or automatic branch selection.
 
 ## Result feedback
 
 At trial completion, the manager records the selected role and ordering, baseline and ending queue
 depth, baseline and ending deadline-pressure fraction, and whether the trial was accepted or rolled
-back. Later Demand, Supply, and Referee calls receive:
+back. It settles an expired phase before inference so the next Demand, Supply, and Referee calls
+receive:
 
 - the three most recent raw outcomes; and
-- an accumulated per-role scorecard containing completions, accepts, rollbacks, mean queue delta,
-  and mean deadline-pressure delta.
+- an accumulated per-role scorecard; and
+- a transition scorecard keyed by the exact incumbent-to-challenger pair.
 
 This is in-context learning within one simulated window. Each evaluation window starts with empty
 trial history so results cannot leak between test windows. Cross-window prompt revision remains a
@@ -51,10 +49,12 @@ separate analysis step after a complete frozen sweep.
 
 ## Trial decision
 
-A trial is accepted when ending queue depth is no higher than baseline and deadline-pressure
-fraction has not risen by more than 0.10. Otherwise the incumbent is restored. Material production
-or broad severe deadline pressure immediately aborts a Supply-side trial and executes Demand's
-ordering.
+A 30-minute first phase must pass queue-trend, deadline-pressure, and p90-wait non-regression checks
+plus its role objective: Supply must improve queue drainage or concentration; Demand must improve
+queue drainage or deadline pressure. A pass enters a second 30-minute probation with a fresh
+baseline. Only a second pass updates the incumbent. Failure restores the previous incumbent, and
+the one-hour cooldown starts when exposure ends. Material production or broad severe deadline
+pressure immediately aborts a Supply trial and executes Demand's ordering.
 
 ## Deterministic sizing hysteresis
 
