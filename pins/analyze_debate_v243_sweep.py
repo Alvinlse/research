@@ -14,6 +14,8 @@ ROWS = ROOT / "runs/sweep_train_debate_v243/rows.jsonl"
 BASELINE_ROWS = ROOT / "runs/sweep_train_debate/rows.jsonl"
 RESULT_JSON = ROOT / "pins/debate_v243_24_window_results.json"
 RESULT_MD = ROOT / "pins/debate_v243_24_window_analysis.md"
+PAPER_TEX = ROOT / "paper/generated_v243_results.tex"
+PAPER_PDF = ROOT / "paper/ieee.pdf"
 METRICS = ("deadline_viol_pct", "mean_wait_s", "p90_wait_s", "useful_util_win")
 
 
@@ -160,7 +162,46 @@ generalization result. The sweep ran by explicit user override regardless of the
 {chr(10).join(window_lines)}
 """)
 
-    relative = [str(path.relative_to(ROOT)) for path in (RESULT_JSON, RESULT_MD)]
+    v243 = summaries["v2.4.3"]["macro"]
+    single = summaries["single"]["macro"]
+    debate = summaries["debate_v1"]["macro"]
+    vs_single = comparisons["single"]["deadline_viol_pct"]
+    vs_debate = comparisons["debate"]["deadline_viol_pct"]
+    PAPER_TEX.write_text(f"""\\begin{{table}}[t]
+\\caption{{Exploratory 24-training-window macro means at seed 17. Lower is better except useful utilization.}}
+\\label{{tab:v243-sweep}}
+\\centering
+\\scriptsize
+\\begin{{tabular}}{{lrrr}}
+\\toprule
+method & deadline viol. & mean wait (s) & useful util. \\\\
+\\midrule
+single selector & {single['deadline_viol_pct']:.2f}\\% & {single['mean_wait_s']:.0f} & {single['useful_util_win']:.3f} \\\\
+bounded debate v1 & {debate['deadline_viol_pct']:.2f}\\% & {debate['mean_wait_s']:.0f} & {debate['useful_util_win']:.3f} \\\\
+rotation v2.4.3 & {v243['deadline_viol_pct']:.2f}\\% & {v243['mean_wait_s']:.0f} & {v243['useful_util_win']:.3f} \\\\
+\\bottomrule
+\\end{{tabular}}
+\\end{{table}}
+
+\\paragraph{{Twenty-four-window v2.4.3 sweep.}}
+Against the single selector, v2.4.3 wins/ties/loses
+{vs_single['wins']}/{vs_single['ties']}/{vs_single['losses']} windows on deadline violations,
+with a mean difference of {vs_single['mean_candidate_minus_baseline']:+.2f} points. Against bounded
+debate v1 the corresponding result is
+{vs_debate['wins']}/{vs_debate['ties']}/{vs_debate['losses']} and
+{vs_debate['mean_candidate_minus_baseline']:+.2f} points. The protocol made
+{totals['llm_calls']} calls with {totals['llm_errors']} errors; {totals['debate_v24_trials']}
+trials yielded {totals['debate_v24_trial_accepts']} accepts and
+{totals['debate_v24_trial_rollbacks']} rollbacks, while transition backoff blocked
+{totals['debate_v24_transition_blocked_requests']} requests. These are adaptive development-window
+results, not held-out evidence.
+""")
+
+    subprocess.run(
+        ["latexmk", "-pdf", "-interaction=nonstopmode", "ieee.tex"],
+        cwd=ROOT / "paper", check=True)
+    relative = [str(path.relative_to(ROOT))
+                for path in (RESULT_JSON, RESULT_MD, PAPER_TEX, PAPER_PDF)]
     subprocess.run(["git", "add", "--", *relative], cwd=ROOT, check=True)
     changed = subprocess.run(
         ["git", "diff", "--cached", "--quiet", "--", *relative], cwd=ROOT)

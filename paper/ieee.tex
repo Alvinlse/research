@@ -430,80 +430,33 @@ This is a statement about the numeric rationing decision, not about language mod
 The same deterministic policy that dominates here is helpless when the deciding fact is not in the
 numbers at all, which is the case we turn to next.
 
-\subsection{Post-core bounded debate pilot}
+\subsection{Post-core debate repair and outcome-gated rotation}
 \label{sec:bounded-pilot}
+\label{sec:rotation}
 
-We tested the bounded debate protocol of \S\ref{sec:arch} on four training windows after the frozen
-experiment was complete, holding the reserved split untouched.  These are exploratory checks at one
-inference seed against the single selector debate is meant to improve on, with the budget-matched
-three-sample control on the low-load window.  The windows differ sharply in contention:
-\texttt{d58h19} carries 138 scored jobs at $1.35\times$ offered load; the three stress windows
-\texttt{d48h23}, \texttt{d111h22}, and \texttt{d22h6} carry 435, 450, and 1,111 scored jobs at
-$4.99\times$, $3.76\times$, and $3.53\times$, respectively.
+The first bounded protocol produced a deliberately mixed four-training-window check: relative to the
+single selector it changed deadline violations by $0.0$, $-9.8$, $-14.2$, and $+0.5$ points as offered
+load increased. Stable selection therefore did not imply a win, and no average or held-out claim was
+made. This motivated a separately versioned protocol that lets language
+models propose changes but makes observed outcomes authoritative. Every 1,800 simulated seconds,
+Demand and Supply independently propose a role-valid auction ordering or abstain; their two calls run
+in parallel. A Referee may only hold the saved incumbent or authorize one requested challenger---it
+cannot directly name or switch to another ordering. Sizing is outside all three schemas and is reviewed
+by a deterministic hysteresis controller every 300 simulated seconds. Thus an ordering epoch still
+costs three calls, not an additional reflection round.
 
-\begin{table}[t]
-\caption{Exploratory training-window sweep at one inference seed.  Deadline violations are the
-primary outcome; waits are seconds, lower better.  The complete stress-window sweep is shown,
-including the window where debate is worse.}
-\label{tab:bounded-pilot}
-\centering
-\scriptsize
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{llrrrr}
-\toprule
-load & arm & deadline viol. & mean wait & p90 wait & calls \\
-\midrule
-$1.35\times$ & single & 13.0\% & \textbf{42} & \textbf{137} & 33 \\
- & debate & 13.0\% & 140 & 174 & 134 \\
- & three-sample & 13.0\% & 899 & 3,628 & 102 \\
-\midrule
-$4.99\times$ & single & 24.1\% & \textbf{47,162} & \textbf{104,093} & 78 \\
- & debate & \textbf{14.3\%} & 48,188 & 118,603 & 224 \\
-\midrule
-$3.76\times$ & single & 26.9\% & 68,584 & \textbf{135,354} & 94 \\
- & debate & \textbf{12.7\%} & \textbf{64,235} & 143,232 & 284 \\
-\midrule
-$3.53\times$ & single & \textbf{31.5\%} & \textbf{60,506} & 111,765 & 88 \\
- & debate & 32.0\% & 63,180 & \textbf{104,315} & 261 \\
-\bottomrule
-\end{tabular}
-}
-\end{table}
+An authorized challenger receives a 30-minute trial and, if its role-specific queue, deadline-pressure,
+tail-wait, and concentration checks pass, a second 30-minute probation. Failure restores the incumbent;
+only two passes accept the challenger. Protocol v2.4.3 corrects the learning record to use deltas from
+the phase that actually passed or failed, labels rollback as negative evidence about the
+\emph{challenger}, and removes an exact incumbent-to-challenger transition from the Referee's allowed
+actions for four hours after two consecutive rollbacks. Rotation never chooses a branch randomly.
+The following training-window checks are exploratory: the rule was revised after inspecting earlier
+training runs, and the 24-window sweep was explicitly run despite a frozen two-window gate to meet a
+presentation deadline.
 
-The audit holds: each executed policy is a recorded candidate, active Demand red lines are respected, and
-out-of-set finals are retained and replaced by the deterministic floor (one counted fallback each on the
-low-load and $4.99\times$ runs; none on the later stress runs).  The sweep is mixed.  Under slack every
-arm records $13.0\%$; at $4.99\times$ and $3.76\times$ load, debate lowers deadline violations by $9.8$
-and $14.2$ points, but at $3.53\times$ it is $0.5$ worse.  There is no across-window test, held-out
-evaluation, or average-effect claim.
-
-The transcripts show stable policy selection, not its causal value: debate chooses deadline auction plus
-adaptive sizing in 54 of 72 epochs at $4.99\times$ and 90 of 98 at $3.76\times$, whereas the single
-selector chooses fair-share pricing in 58 of 78 and 71 of 94.  Debate makes the same stable choice in
-79 of 90 epochs at $3.53\times$ and still loses, so consistency alone cannot explain the outcome.
-
-\begin{table}[t]
-\caption{Illustrative audited decision at $t=40{,}384$ s in \texttt{d111h22}: one waiting job,
-negative-laxity count $=1$, and queue pressure $=0.01$.  This is a mechanism trace, not a causal estimate.}
-\label{tab:debate-trace}
-\centering
-\scriptsize
-\resizebox{\columnwidth}{!}{%
-\begin{tabular}{p{0.45\columnwidth}p{0.47\columnwidth}}
-\toprule
-single selector & bounded debate \\
-\midrule
-fairness auction + adaptive sizing: ``high concurrency and fair waiting-service balance''
-& Demand selects deadline auction + adaptive sizing because of immediate deadline risk; Supply selects
-the same policy because queue pressure is low.  Code verifies the active Demand red line, then ratifies
-opening consensus without a referee, rejection, or fallback. \\
-\bottomrule
-\end{tabular}
-}
-\end{table}
-
-Table~\ref{tab:debate-trace} shows an explicit, independently checked constraint and recorded agreement
-that the single rationale lacks; it does \emph{not} show that this one choice caused the window-level gain.
+\input{generated_v243_pilot}
+\input{generated_v243_results}
 
 \section{Future Work and Threats to Validity}
 \label{sec:future}
@@ -521,6 +474,11 @@ and device-hours.
 
 \textbf{Narrow model evidence.} The offline comparison has 24 held-out states and one 8B fine-tuning run
 while the closed loop uses 14B.  It screens this recipe; it does not prove supervision cannot work.
+
+\textbf{Adaptive reuse of training windows.} The rotation protocol and its backoff were revised after
+examining failures on the same training windows used for the exploratory sweep. Those results measure
+repair and mechanism behavior, not generalization; a frozen validation/test evaluation is required
+before making a confirmatory performance claim.
 
 \section{Conclusion}
 

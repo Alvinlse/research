@@ -14,6 +14,8 @@ ROOT = Path("/import/gp-home.ciero/kimseng/Research")
 ROWS = ROOT / "runs/pilot_debate_v243_two/rows.jsonl"
 RESULT_JSON = ROOT / "pins/debate_v243_pilot_results.json"
 RESULT_MD = ROOT / "pins/debate_v243_pilot_analysis.md"
+PAPER_TEX = ROOT / "paper/generated_v243_pilot.tex"
+PAPER_PDF = ROOT / "paper/ieee.pdf"
 WINDOWS = ("d111h22", "d223h11")
 BASELINES = {
     "d111h22": {
@@ -194,7 +196,29 @@ Macro utilization: {macro['baseline_useful_util_win']:.4f} to {macro['pilot_usef
 {interpretation}
 """)
 
-    relative = [str(path.relative_to(ROOT)) for path in (RESULT_JSON, RESULT_MD)]
+    d111, d223 = by_window["d111h22"], by_window["d223h11"]
+    total_trials = sum(int(row["debate_v24_trials"]) for row in pilot)
+    total_accepts = sum(int(row["debate_v24_trial_accepts"]) for row in pilot)
+    total_rollbacks = sum(int(row["debate_v24_trial_rollbacks"]) for row in pilot)
+    total_blocked = sum(
+        int(row["debate_v24_transition_blocked_requests"]) for row in pilot)
+    PAPER_TEX.write_text(f"""\\paragraph{{Two-window v2.4.3 repair check.}}
+Against v2.4.2 on the same seed and training windows, deadline violations changed from
+8.9\\% to {d111['deadline_viol_pct']:.1f}\\% on \\texttt{{d111h22}} and from 28.0\\% to
+{d223['deadline_viol_pct']:.1f}\\% on \\texttt{{d223h11}}. Macro mean wait was
+{macro['pilot_mean_wait_s']:.0f}~s and useful utilization {macro['pilot_useful_util_win']:.3f}.
+The frozen gate {'passed' if positive else 'did not pass'}; the 24-window development sweep
+nevertheless proceeds under the explicit presentation-deadline override. Across these two runs,
+{total_trials} trials produced {total_accepts} accepts, {total_rollbacks} rollbacks, and
+{total_blocked} requests blocked by transition backoff. Runtime phase-feedback consistency
+{'passed' if checks['runtime_structural_integrity'] else 'failed'}.
+""")
+
+    subprocess.run(
+        ["latexmk", "-pdf", "-interaction=nonstopmode", "ieee.tex"],
+        cwd=ROOT / "paper", check=True)
+    relative = [str(path.relative_to(ROOT))
+                for path in (RESULT_JSON, RESULT_MD, PAPER_TEX, PAPER_PDF)]
     subprocess.run(["git", "add", "--", *relative], cwd=ROOT, check=True)
     changed = subprocess.run(
         ["git", "diff", "--cached", "--quiet", "--", *relative], cwd=ROOT)
