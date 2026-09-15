@@ -1,3 +1,28 @@
+\begin{table}[t]
+\caption{Exploratory 24-training-window macro means at seed 17. Lower is better except useful utilization.}
+\label{tab:v243-sweep}
+\centering
+\scriptsize
+\begin{tabular}{lrrr}
+\toprule
+method & deadline viol. & mean wait (s) & useful util. \\
+\midrule
+single selector & 13.36\% & 24149 & 0.834 \\
+bounded debate v1 & 10.96\% & 25580 & 0.818 \\
+rotation v2.4.3 & 10.99\% & 24999 & 0.825 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \paragraph{Twenty-four-window v2.4.3 sweep.}
-The explicitly authorized training-window sweep is running. This generated placeholder will be
-replaced by the analyzed paired results before they are presented as evidence.
+Against the single selector, v2.4.3 wins/ties/loses
+12/9/3 windows on deadline violations,
+with a mean difference of -2.37 points. Against bounded
+debate v1 the corresponding result is
+8/9/7 and
++0.03 points. The protocol made
+4712 calls with 0 errors; 76
+trials yielded 24 accepts and
+52 rollbacks, while transition backoff blocked
+14 requests. These are adaptive development-window
+results, not held-out evidence.

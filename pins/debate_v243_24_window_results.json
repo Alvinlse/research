@@ -1,0 +1,721 @@
+{
+  "llm_seed": 17,
+  "paired_comparisons": {
+    "debate": {
+      "deadline_viol_pct": {
+        "losses": 7,
+        "mean_candidate_minus_baseline": 0.0292,
+        "ties": 9,
+        "wins": 8
+      },
+      "mean_wait_s": {
+        "losses": 11,
+        "mean_candidate_minus_baseline": -581.2083,
+        "ties": 0,
+        "wins": 13
+      },
+      "p90_wait_s": {
+        "losses": 9,
+        "mean_candidate_minus_baseline": -3886.0833,
+        "ties": 0,
+        "wins": 15
+      },
+      "useful_util_win": {
+        "losses": 9,
+        "mean_candidate_minus_baseline": 0.0065,
+        "ties": 5,
+        "wins": 10
+      }
+    },
+    "single": {
+      "deadline_viol_pct": {
+        "losses": 3,
+        "mean_candidate_minus_baseline": -2.3667,
+        "ties": 9,
+        "wins": 12
+      },
+      "mean_wait_s": {
+        "losses": 11,
+        "mean_candidate_minus_baseline": 850.0,
+        "ties": 0,
+        "wins": 13
+      },
+      "p90_wait_s": {
+        "losses": 10,
+        "mean_candidate_minus_baseline": -1180.2917,
+        "ties": 0,
+        "wins": 14
+      },
+      "useful_util_win": {
+        "losses": 14,
+        "mean_candidate_minus_baseline": -0.0091,
+        "ties": 1,
+        "wins": 9
+      }
+    }
+  },
+  "per_window": [
+    {
+      "deadline_vs_debate_v1": "loss",
+      "deadline_vs_single": "win",
+      "debate_v1": {
+        "deadline_viol_pct": 14.3,
+        "mean_wait_s": 48188,
+        "p90_wait_s": 118603,
+        "useful_util_win": 0.862
+      },
+      "offered_load": 4.99,
+      "single": {
+        "deadline_viol_pct": 24.1,
+        "mean_wait_s": 47162,
+        "p90_wait_s": 104093,
+        "useful_util_win": 0.909
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 15.2,
+        "mean_wait_s": 42455,
+        "p90_wait_s": 73780,
+        "useful_util_win": 0.864
+      },
+      "window": "d48h23"
+    },
+    {
+      "deadline_vs_debate_v1": "loss",
+      "deadline_vs_single": "win",
+      "debate_v1": {
+        "deadline_viol_pct": 12.7,
+        "mean_wait_s": 64235,
+        "p90_wait_s": 143232,
+        "useful_util_win": 0.625
+      },
+      "offered_load": 3.76,
+      "single": {
+        "deadline_viol_pct": 26.9,
+        "mean_wait_s": 68584,
+        "p90_wait_s": 135354,
+        "useful_util_win": 0.618
+      },
+      "source_tag": "pilot_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 14.2,
+        "mean_wait_s": 67013,
+        "p90_wait_s": 148236,
+        "useful_util_win": 0.721
+      },
+      "window": "d111h22"
+    },
+    {
+      "deadline_vs_debate_v1": "win",
+      "deadline_vs_single": "win",
+      "debate_v1": {
+        "deadline_viol_pct": 32.0,
+        "mean_wait_s": 63180,
+        "p90_wait_s": 104315,
+        "useful_util_win": 0.959
+      },
+      "offered_load": 3.53,
+      "single": {
+        "deadline_viol_pct": 31.5,
+        "mean_wait_s": 60506,
+        "p90_wait_s": 111765,
+        "useful_util_win": 0.983
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 30.5,
+        "mean_wait_s": 61022,
+        "p90_wait_s": 104357,
+        "useful_util_win": 0.984
+      },
+      "window": "d22h6"
+    },
+    {
+      "deadline_vs_debate_v1": "win",
+      "deadline_vs_single": "win",
+      "debate_v1": {
+        "deadline_viol_pct": 22.6,
+        "mean_wait_s": 16702,
+        "p90_wait_s": 38064,
+        "useful_util_win": 0.874
+      },
+      "offered_load": 3.01,
+      "single": {
+        "deadline_viol_pct": 25.8,
+        "mean_wait_s": 19075,
+        "p90_wait_s": 47490,
+        "useful_util_win": 0.884
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 21.9,
+        "mean_wait_s": 16785,
+        "p90_wait_s": 37988,
+        "useful_util_win": 0.87
+      },
+      "window": "d118h14"
+    },
+    {
+      "deadline_vs_debate_v1": "win",
+      "deadline_vs_single": "loss",
+      "debate_v1": {
+        "deadline_viol_pct": 34.8,
+        "mean_wait_s": 44208,
+        "p90_wait_s": 87450,
+        "useful_util_win": 0.84
+      },
+      "offered_load": 2.9,
+      "single": {
+        "deadline_viol_pct": 28.1,
+        "mean_wait_s": 38430,
+        "p90_wait_s": 93307,
+        "useful_util_win": 0.894
+      },
+      "source_tag": "pilot_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 33.5,
+        "mean_wait_s": 42936,
+        "p90_wait_s": 86034,
+        "useful_util_win": 0.85
+      },
+      "window": "d223h11"
+    },
+    {
+      "deadline_vs_debate_v1": "win",
+      "deadline_vs_single": "win",
+      "debate_v1": {
+        "deadline_viol_pct": 7.7,
+        "mean_wait_s": 17438,
+        "p90_wait_s": 81898,
+        "useful_util_win": 0.75
+      },
+      "offered_load": 2.74,
+      "single": {
+        "deadline_viol_pct": 4.8,
+        "mean_wait_s": 10578,
+        "p90_wait_s": 32602,
+        "useful_util_win": 0.761
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 4.6,
+        "mean_wait_s": 11654,
+        "p90_wait_s": 27691,
+        "useful_util_win": 0.75
+      },
+      "window": "d188h6"
+    },
+    {
+      "deadline_vs_debate_v1": "loss",
+      "deadline_vs_single": "win",
+      "debate_v1": {
+        "deadline_viol_pct": 24.0,
+        "mean_wait_s": 56919,
+        "p90_wait_s": 105970,
+        "useful_util_win": 0.994
+      },
+      "offered_load": 2.68,
+      "single": {
+        "deadline_viol_pct": 34.7,
+        "mean_wait_s": 56875,
+        "p90_wait_s": 106657,
+        "useful_util_win": 0.981
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 30.9,
+        "mean_wait_s": 54360,
+        "p90_wait_s": 104407,
+        "useful_util_win": 0.993
+      },
+      "window": "d202h19"
+    },
+    {
+      "deadline_vs_debate_v1": "tie",
+      "deadline_vs_single": "tie",
+      "debate_v1": {
+        "deadline_viol_pct": 7.7,
+        "mean_wait_s": 10707,
+        "p90_wait_s": 24854,
+        "useful_util_win": 0.864
+      },
+      "offered_load": 2.54,
+      "single": {
+        "deadline_viol_pct": 7.7,
+        "mean_wait_s": 9723,
+        "p90_wait_s": 19122,
+        "useful_util_win": 0.863
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 7.7,
+        "mean_wait_s": 13370,
+        "p90_wait_s": 28919,
+        "useful_util_win": 0.853
+      },
+      "window": "d160h17"
+    },
+    {
+      "deadline_vs_debate_v1": "loss",
+      "deadline_vs_single": "tie",
+      "debate_v1": {
+        "deadline_viol_pct": 5.3,
+        "mean_wait_s": 18012,
+        "p90_wait_s": 31566,
+        "useful_util_win": 0.848
+      },
+      "offered_load": 2.46,
+      "single": {
+        "deadline_viol_pct": 5.5,
+        "mean_wait_s": 15494,
+        "p90_wait_s": 31655,
+        "useful_util_win": 0.862
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 5.5,
+        "mean_wait_s": 12559,
+        "p90_wait_s": 33135,
+        "useful_util_win": 0.882
+      },
+      "window": "d207h17"
+    },
+    {
+      "deadline_vs_debate_v1": "win",
+      "deadline_vs_single": "win",
+      "debate_v1": {
+        "deadline_viol_pct": 9.5,
+        "mean_wait_s": 18802,
+        "p90_wait_s": 36527,
+        "useful_util_win": 0.938
+      },
+      "offered_load": 1.88,
+      "single": {
+        "deadline_viol_pct": 8.5,
+        "mean_wait_s": 19242,
+        "p90_wait_s": 38731,
+        "useful_util_win": 0.954
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 8.0,
+        "mean_wait_s": 18857,
+        "p90_wait_s": 37857,
+        "useful_util_win": 0.948
+      },
+      "window": "d102h8"
+    },
+    {
+      "deadline_vs_debate_v1": "win",
+      "deadline_vs_single": "win",
+      "debate_v1": {
+        "deadline_viol_pct": 26.8,
+        "mean_wait_s": 112104,
+        "p90_wait_s": 145164,
+        "useful_util_win": 1.0
+      },
+      "offered_load": 1.82,
+      "single": {
+        "deadline_viol_pct": 28.8,
+        "mean_wait_s": 88775,
+        "p90_wait_s": 128586,
+        "useful_util_win": 1.04
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 25.6,
+        "mean_wait_s": 116664,
+        "p90_wait_s": 140221,
+        "useful_util_win": 1.0
+      },
+      "window": "d109h7"
+    },
+    {
+      "deadline_vs_debate_v1": "loss",
+      "deadline_vs_single": "loss",
+      "debate_v1": {
+        "deadline_viol_pct": 10.0,
+        "mean_wait_s": 15842,
+        "p90_wait_s": 27486,
+        "useful_util_win": 0.943
+      },
+      "offered_load": 1.78,
+      "single": {
+        "deadline_viol_pct": 10.6,
+        "mean_wait_s": 10818,
+        "p90_wait_s": 20940,
+        "useful_util_win": 0.956
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 11.4,
+        "mean_wait_s": 9797,
+        "p90_wait_s": 18618,
+        "useful_util_win": 0.958
+      },
+      "window": "d190h0"
+    },
+    {
+      "deadline_vs_debate_v1": "tie",
+      "deadline_vs_single": "win",
+      "debate_v1": {
+        "deadline_viol_pct": 4.7,
+        "mean_wait_s": 6035,
+        "p90_wait_s": 18140,
+        "useful_util_win": 0.942
+      },
+      "offered_load": 1.69,
+      "single": {
+        "deadline_viol_pct": 5.1,
+        "mean_wait_s": 8104,
+        "p90_wait_s": 23708,
+        "useful_util_win": 0.989
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 4.7,
+        "mean_wait_s": 9655,
+        "p90_wait_s": 24918,
+        "useful_util_win": 0.935
+      },
+      "window": "d185h6"
+    },
+    {
+      "deadline_vs_debate_v1": "loss",
+      "deadline_vs_single": "win",
+      "debate_v1": {
+        "deadline_viol_pct": 7.8,
+        "mean_wait_s": 34939,
+        "p90_wait_s": 44199,
+        "useful_util_win": 1.0
+      },
+      "offered_load": 1.47,
+      "single": {
+        "deadline_viol_pct": 12.8,
+        "mean_wait_s": 36948,
+        "p90_wait_s": 64014,
+        "useful_util_win": 0.994
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 9.1,
+        "mean_wait_s": 39268,
+        "p90_wait_s": 56639,
+        "useful_util_win": 1.0
+      },
+      "window": "d225h0"
+    },
+    {
+      "deadline_vs_debate_v1": "tie",
+      "deadline_vs_single": "tie",
+      "debate_v1": {
+        "deadline_viol_pct": 13.0,
+        "mean_wait_s": 140,
+        "p90_wait_s": 174,
+        "useful_util_win": 0.465
+      },
+      "offered_load": 1.35,
+      "single": {
+        "deadline_viol_pct": 13.0,
+        "mean_wait_s": 42,
+        "p90_wait_s": 137,
+        "useful_util_win": 0.464
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 13.0,
+        "mean_wait_s": 0,
+        "p90_wait_s": 0,
+        "useful_util_win": 0.465
+      },
+      "window": "d58h19"
+    },
+    {
+      "deadline_vs_debate_v1": "win",
+      "deadline_vs_single": "tie",
+      "debate_v1": {
+        "deadline_viol_pct": 6.8,
+        "mean_wait_s": 19787,
+        "p90_wait_s": 37172,
+        "useful_util_win": 0.88
+      },
+      "offered_load": 1.32,
+      "single": {
+        "deadline_viol_pct": 5.2,
+        "mean_wait_s": 10184,
+        "p90_wait_s": 29226,
+        "useful_util_win": 0.951
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 5.2,
+        "mean_wait_s": 15049,
+        "p90_wait_s": 34623,
+        "useful_util_win": 0.898
+      },
+      "window": "d209h23"
+    },
+    {
+      "deadline_vs_debate_v1": "loss",
+      "deadline_vs_single": "loss",
+      "debate_v1": {
+        "deadline_viol_pct": 2.1,
+        "mean_wait_s": 8225,
+        "p90_wait_s": 16145,
+        "useful_util_win": 0.959
+      },
+      "offered_load": 1.23,
+      "single": {
+        "deadline_viol_pct": 2.1,
+        "mean_wait_s": 7750,
+        "p90_wait_s": 15528,
+        "useful_util_win": 0.961
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 2.3,
+        "mean_wait_s": 8716,
+        "p90_wait_s": 15861,
+        "useful_util_win": 0.946
+      },
+      "window": "d221h21"
+    },
+    {
+      "deadline_vs_debate_v1": "tie",
+      "deadline_vs_single": "tie",
+      "debate_v1": {
+        "deadline_viol_pct": 8.5,
+        "mean_wait_s": 5899,
+        "p90_wait_s": 12632,
+        "useful_util_win": 0.974
+      },
+      "offered_load": 1.19,
+      "single": {
+        "deadline_viol_pct": 8.5,
+        "mean_wait_s": 5394,
+        "p90_wait_s": 11220,
+        "useful_util_win": 0.977
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 8.5,
+        "mean_wait_s": 6358,
+        "p90_wait_s": 16248,
+        "useful_util_win": 0.96
+      },
+      "window": "d211h16"
+    },
+    {
+      "deadline_vs_debate_v1": "tie",
+      "deadline_vs_single": "win",
+      "debate_v1": {
+        "deadline_viol_pct": 0.0,
+        "mean_wait_s": 7003,
+        "p90_wait_s": 13371,
+        "useful_util_win": 0.834
+      },
+      "offered_load": 0.91,
+      "single": {
+        "deadline_viol_pct": 0.1,
+        "mean_wait_s": 6548,
+        "p90_wait_s": 12402,
+        "useful_util_win": 0.838
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 0.0,
+        "mean_wait_s": 6095,
+        "p90_wait_s": 12673,
+        "useful_util_win": 0.842
+      },
+      "window": "d98h19"
+    },
+    {
+      "deadline_vs_debate_v1": "tie",
+      "deadline_vs_single": "tie",
+      "debate_v1": {
+        "deadline_viol_pct": 1.0,
+        "mean_wait_s": 441,
+        "p90_wait_s": 1110,
+        "useful_util_win": 0.683
+      },
+      "offered_load": 0.88,
+      "single": {
+        "deadline_viol_pct": 1.0,
+        "mean_wait_s": 974,
+        "p90_wait_s": 2471,
+        "useful_util_win": 0.681
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 1.0,
+        "mean_wait_s": 2599,
+        "p90_wait_s": 8006,
+        "useful_util_win": 0.677
+      },
+      "window": "d71h7"
+    },
+    {
+      "deadline_vs_debate_v1": "tie",
+      "deadline_vs_single": "tie",
+      "debate_v1": {
+        "deadline_viol_pct": 0.0,
+        "mean_wait_s": 773,
+        "p90_wait_s": 2564,
+        "useful_util_win": 0.63
+      },
+      "offered_load": 0.62,
+      "single": {
+        "deadline_viol_pct": 0.0,
+        "mean_wait_s": 705,
+        "p90_wait_s": 2324,
+        "useful_util_win": 0.626
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 0.0,
+        "mean_wait_s": 558,
+        "p90_wait_s": 2003,
+        "useful_util_win": 0.627
+      },
+      "window": "d218h4"
+    },
+    {
+      "deadline_vs_debate_v1": "win",
+      "deadline_vs_single": "win",
+      "debate_v1": {
+        "deadline_viol_pct": 5.6,
+        "mean_wait_s": 44127,
+        "p90_wait_s": 98123,
+        "useful_util_win": 1.0
+      },
+      "offered_load": 0.58,
+      "single": {
+        "deadline_viol_pct": 29.6,
+        "mean_wait_s": 57474,
+        "p90_wait_s": 92747,
+        "useful_util_win": 1.05
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 4.8,
+        "mean_wait_s": 44159,
+        "p90_wait_s": 84067,
+        "useful_util_win": 1.0
+      },
+      "window": "d116h2"
+    },
+    {
+      "deadline_vs_debate_v1": "tie",
+      "deadline_vs_single": "tie",
+      "debate_v1": {
+        "deadline_viol_pct": 6.2,
+        "mean_wait_s": 152,
+        "p90_wait_s": 456,
+        "useful_util_win": 0.517
+      },
+      "offered_load": 0.49,
+      "single": {
+        "deadline_viol_pct": 6.2,
+        "mean_wait_s": 120,
+        "p90_wait_s": 197,
+        "useful_util_win": 0.517
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 6.2,
+        "mean_wait_s": 54,
+        "p90_wait_s": 0,
+        "useful_util_win": 0.512
+      },
+      "window": "d26h21"
+    },
+    {
+      "deadline_vs_debate_v1": "tie",
+      "deadline_vs_single": "tie",
+      "debate_v1": {
+        "deadline_viol_pct": 0.0,
+        "mean_wait_s": 74,
+        "p90_wait_s": 332,
+        "useful_util_win": 0.259
+      },
+      "offered_load": 0.32,
+      "single": {
+        "deadline_viol_pct": 0.0,
+        "mean_wait_s": 78,
+        "p90_wait_s": 332,
+        "useful_util_win": 0.26
+      },
+      "source_tag": "sw_v243_s17",
+      "v243": {
+        "deadline_viol_pct": 0.0,
+        "mean_wait_s": 0,
+        "p90_wait_s": 0,
+        "useful_util_win": 0.26
+      },
+      "window": "d63h11"
+    }
+  ],
+  "protocol_version": "2.4.3",
+  "scope": "24 frozen training/development windows",
+  "source_counts": {
+    "pilot_v243_s17": 2,
+    "sw_v243_s17": 22
+  },
+  "summaries": {
+    "debate_v1": {
+      "job_weighted": {
+        "deadline_viol_pct": 13.1538,
+        "mean_wait_s": 29514.258,
+        "p90_wait_s": 61237.5373,
+        "useful_util_win": 0.8501
+      },
+      "macro": {
+        "deadline_viol_pct": 10.9625,
+        "mean_wait_s": 25580.5,
+        "p90_wait_s": 49564.4583,
+        "useful_util_win": 0.8183
+      }
+    },
+    "single": {
+      "job_weighted": {
+        "deadline_viol_pct": 14.7484,
+        "mean_wait_s": 27297.8088,
+        "p90_wait_s": 54881.6226,
+        "useful_util_win": 0.864
+      },
+      "macro": {
+        "deadline_viol_pct": 13.3583,
+        "mean_wait_s": 24149.2917,
+        "p90_wait_s": 46858.6667,
+        "useful_util_win": 0.8339
+      }
+    },
+    "v2.4.3": {
+      "job_weighted": {
+        "deadline_viol_pct": 13.1904,
+        "mean_wait_s": 28010.2223,
+        "p90_wait_s": 52823.3575,
+        "useful_util_win": 0.8584
+      },
+      "macro": {
+        "deadline_viol_pct": 10.9917,
+        "mean_wait_s": 24999.2917,
+        "p90_wait_s": 45678.375,
+        "useful_util_win": 0.8248
+      }
+    }
+  },
+  "sweep_authorization": "explicit user override of the two-window gate",
+  "totals": {
+    "debate_v24_invalid_holds": 65,
+    "debate_v24_transition_backoff_holds": 0,
+    "debate_v24_transition_blocked_requests": 14,
+    "debate_v24_trial_accepts": 24,
+    "debate_v24_trial_probations": 43,
+    "debate_v24_trial_rollbacks": 52,
+    "debate_v24_trials": 76,
+    "llm_calls": 4712,
+    "llm_errors": 0
+  }
+}
