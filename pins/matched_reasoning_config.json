@@ -1,0 +1,16 @@
+{
+  "experiment_id": "matched-reasoning-v1",
+  "inherited_implementation_sha256": "1925a0b38ebd73987ea94644e6a87bfa52ef45d2b7507ba699cfd93fb73e7df3",
+  "model": "qwen2.5:14b",
+  "temperature": 0.1,
+  "num_predict": 400,
+  "seeds": [17, 29, 43],
+  "structures": ["single", "self_review", "symmetric", "multi"],
+  "families": ["nm", "mkt"],
+  "selection_interval_s": 1800,
+  "simulation_interval_s": 300,
+  "fallbacks": {"nm": ["fairness", "adaptive"], "mkt": ["auction_deadline", "adaptive"]},
+  "primary_contrast": ["multi", "self_review"],
+  "secondary_contrasts": [["multi", "single"], ["multi", "symmetric"]],
+  "interpretation": "exploratory follow-up on previously used workload windows"
+}

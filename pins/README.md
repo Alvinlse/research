@@ -114,6 +114,27 @@ deltas from the phase that actually passed or failed, labels rollback as negativ
 evidence, and blocks an exact transition for four simulated hours after two consecutive rollbacks.
 The backoff changes no LLM cadence and never chooses a branch.
 
+## Next experiment: matched reasoning (2026-09-16)
+
+Compare one-call Single, three-call self-review, symmetric independent reviewers,
+and Demand–Supply–Referee using the same state, global action menu, final schema,
+decoding settings, and deterministic executor. The primary comparison is Multi
+versus self-review. Both same-state oracle scoring and full closed-loop runs are
+implemented; no experiment results are claimed yet.
+
+See [the frozen protocol and run commands](matched_reasoning_prereg.md). Start with:
+
+```bash
+python3 -m unittest pins.test_matched_reasoning
+python3 -m pins.run_matched_reasoning --mode closed-loop --split train \
+  --out runs/matched_reasoning_v1_train --dry-run
+bash pins/matched_reasoning_tick.sh --mode closed-loop --split train \
+  --out runs/matched_reasoning_v1_train --max-runs 1
+```
+
+The dry run prints the 576-cell plan without starting inference. Reused workload
+windows are exploratory. Run the actual simulation on the configured compute host.
+
 ## What this is / isn't
 
 - **Is:** the evaluated Stage-2 substrate — structured bids, a provable clearing rule, gated
