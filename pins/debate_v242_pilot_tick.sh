@@ -27,13 +27,11 @@ rows = [json.loads(line) for line in OUT.read_text().splitlines() if line.strip(
 done = {row['window'] for row in rows}
 todo = [name for name in WINDOWS if name not in done]
 if not todo:
-    current = subprocess.run(
-        ['crontab', '-l'], text=True, capture_output=True, check=False).stdout
-    kept = [line for line in current.splitlines() if 'debate_v242_pilot_tick' not in line]
     subprocess.run(
-        ['crontab', '-'], input=('\n'.join(kept) + ('\n' if kept else '')),
-        text=True, check=True)
-    raise SystemExit('v2.4.2 pilot chain complete; awaiting analysis')
+        [str(ROOT / '.venv/bin/python'),
+         str(ROOT / 'pins/analyze_debate_v242_pilot.py')],
+        cwd=ROOT, check=True)
+    raise SystemExit('v2.4.2 pilot chain complete and analyzed')
 
 name = todo[0]
 window = by_name[name]
