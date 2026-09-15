@@ -1,8 +1,8 @@
 #!/bin/bash
-# One v2.4.2 focused pilot per tick; completed rows are resumable checkpoints.
+# One v2.4.2 real training window per tick; Demand/Supply calls are parallel inside the arm.
 set -u
 REPO=/import/gp-home.ciero/kimseng/Research
-OUT=$REPO/runs/pilot_debate_v242_two
+OUT=$REPO/runs/sweep_train_debate_v242
 mkdir -p "$OUT"
 exec 9>"$OUT/.lock"
 flock -n 9 || exit 0
@@ -16,31 +16,32 @@ from pathlib import Path
 from pins.elastisim_bench import run
 
 ROOT = Path('/import/gp-home.ciero/kimseng/Research')
-OUT = ROOT / 'runs/pilot_debate_v242_two/rows.jsonl'
-WINDOWS = ('d111h22', 'd223h11')
+OUT = ROOT / 'runs/sweep_train_debate_v242/rows.jsonl'
 manifest = json.loads((ROOT / 'pins/core_2x2_manifest.json').read_text())
 cfg, selector, inference = (
     manifest['execution'], manifest['selector'], manifest['inference'])
-by_name = {window['window']: window for window in manifest['windows']}
+windows = sorted(
+    (window for window in manifest['windows'] if window['split'] == 'train'),
+    key=lambda window: -window['offered_load'])
 rows = [json.loads(line) for line in OUT.read_text().splitlines() if line.strip()] \
     if OUT.exists() else []
 done = {row['window'] for row in rows}
-todo = [name for name in WINDOWS if name not in done]
+todo = [window for window in windows if window['window'] not in done]
 if not todo:
     current = subprocess.run(
         ['crontab', '-l'], text=True, capture_output=True, check=False).stdout
-    kept = [line for line in current.splitlines() if 'debate_v242_pilot_tick' not in line]
+    kept = [line for line in current.splitlines() if 'debate_v242_sweep_tick' not in line]
     subprocess.run(
         ['crontab', '-'], input=('\n'.join(kept) + ('\n' if kept else '')),
         text=True, check=True)
-    raise SystemExit('v2.4.2 pilot chain complete; awaiting analysis')
+    raise SystemExit('v2.4.2 24-window chain complete; awaiting analysis')
 
-name = todo[0]
-window = by_name[name]
+window = todo[0]
+name = window['window']
 started = time.time()
 result = run(
     ROOT / f'runs/core_2x2_worlds/{name}', 'policy_debate_v2_4', inference['model'],
-    interval=cfg['simulation_interval_s'], tag='pilot_v242_s17', quiet=True,
+    interval=cfg['simulation_interval_s'], tag='sw_v242_s17', quiet=True,
     sizer='as_requested', family='mkt', sel_every=selector['selection_interval_s'],
     temperature=inference['temperature'], llm_seed=17,
     num_predict=inference['num_predict'], rcon_threshold_s=selector['rcon_threshold_s'],
@@ -62,11 +63,17 @@ row = {
 }
 with OUT.open('a') as handle:
     handle.write(json.dumps(row) + '\n')
+completed = rows + [row]
+mean_wall_s = sum(item['wall_s'] for item in completed) / len(completed)
+remaining_s = round(mean_wall_s * (len(todo) - 1))
+hours, remaining_s = divmod(remaining_s, 3600)
+minutes, remaining_s = divmod(remaining_s, 60)
+eta = f'{hours}h {minutes:02d}m' if hours else f'{minutes}m {remaining_s:02d}s'
 print(
     f"{name} v2.4.2 -> {row['deadline_viol_pct']}% wait {row['mean_wait_s']} "
-    f"util {row['useful_util_win']} trials {row['debate_v24_trials']} "
-    f"accept {row['debate_v24_trial_accepts']} rollback "
-    f"{row['debate_v24_trial_rollbacks']} invalid-hold "
-    f"{row['debate_v24_invalid_holds']} wall {row['wall_s']}s "
-    f"({len(todo) - 1} left)", flush=True)
+    f"util {row['useful_util_win']} calls {row['llm_calls']} "
+    f"trials {row['debate_v24_trials']} probation "
+    f"{row['debate_v24_trial_probations']} accept {row['debate_v24_trial_accepts']} "
+    f"rollback {row['debate_v24_trial_rollbacks']} wall {row['wall_s']}s "
+    f"({len(todo) - 1} left, est {eta})", flush=True)
 PY
