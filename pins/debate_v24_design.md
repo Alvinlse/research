@@ -1,7 +1,8 @@
 # Policy debate v2.4 design
 
-Status: protocol 2.4.2 is implemented for focused comparison. Frozen 2.4 results are attributable
-to commit `b6d0d6c`; the 2.4.1 trial-start diagnostic is attributable to `956d289`.
+Status: protocol 2.4.3 is implemented for focused comparison. Frozen 2.4 results are attributable
+to commit `b6d0d6c`; the 2.4.1 trial-start diagnostic is attributable to `956d289`; and the completed
+2.4.2 pilot and its frozen-gate analysis are attributable to `df531df`.
 
 ## Decision clocks
 
@@ -42,6 +43,11 @@ receive:
 - the three most recent raw outcomes; and
 - an accumulated per-role scorecard; and
 - a transition scorecard keyed by the exact incumbent-to-challenger pair.
+
+Protocol 2.4.3 calculates learning deltas from the trial or probation phase whose checks produced
+the verdict. A rollback explicitly means `harmful_challenger`; only an acceptance contributes to
+positive aggregate evidence. Two consecutive rollbacks of an exact transition remove it from
+allowed Referee actions for four simulated hours. The reverse transition remains independent.
 
 This is in-context learning within one simulated window. Each evaluation window starts with empty
 trial history so results cannot leak between test windows. Cross-window prompt revision remains a

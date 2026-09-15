@@ -1,4 +1,4 @@
-"""Policy debate v2.4.2: hold-or-trial rotation and deterministic fast sizing.
+"""Policy debate v2.4.3: phase-correct rotation learning and deterministic fast sizing.
 
 V2.4 is a separate development arm built while the frozen v2.3 sweep runs.  It does not change
 v1--v2.3.  Independent Demand and Supply managers propose ordering branches concurrently every
@@ -7,6 +7,8 @@ emergency is present, the clock makes a 30-minute trial eligible. Demand and Sup
 vote whether their proposed ordering should receive that trial, and the Referee chooses only hold,
 trial_demand, or trial_supply. Code never picks a branch randomly, and no-trial decisions retain the
 incumbent. A successful first phase enters a second 30-minute probation before acceptance.
+Completed outcomes report deltas from the phase that actually passed or failed. Two consecutive
+rollbacks block that exact incumbent-to-challenger transition for four simulated hours.
 
 Sizing is no longer an LLM output.  A deterministic controller reviews queue and arrival pressure
 at the first scheduler invocation at least five simulated minutes after its previous review.  It
@@ -25,7 +27,7 @@ from pins import policy_debate as v1
 from pins import policy_debate_v2 as v2
 
 
-PROTOCOL_VERSION = "2.4.2"
+PROTOCOL_VERSION = "2.4.3"
 ORDERING_REVIEW_INTERVAL_S = 1800
 SIZING_REVIEW_INTERVAL_S = 300
 ADAPTIVE_ENTER_PRESSURE = 0.75
@@ -38,6 +40,8 @@ TRIAL_PRESSURE_REGRESSION = 0.05
 TRIAL_CONCENTRATION_REGRESSION = 0.02
 TRIAL_WAIT_TOLERANCE_S = 300
 MIN_TRIAL_QUEUE = 8
+TRANSITION_BACKOFF_ROLLBACKS = 2
+TRANSITION_BACKOFF_S = 4 * 3600
 
 OPENING_FIELDS = {"ordering", "request_trial", "objection", "evidence"}
 FINAL_FIELDS = {"action", "why"}
@@ -74,24 +78,35 @@ REFEREE_PROMPT = (
     "You are the ordering REFEREE. Choose exactly one action from ALLOWED ACTIONS and address both "
     "objections. hold retains the saved incumbent; trial_demand and trial_supply execute the named "
     "advocate's candidate under deterministic trial and rollback control. You never emit an ordering "
-    "name. Use raw prior outcomes and the transition scorecard; repeated rollback is negative "
-    "evidence, while one outcome is not universal. Choose a trial only when that exact action is "
-    "allowed and evidence beats holding. Sizing is outside your authority. Reply JSON only: "
+    "name. Use raw prior outcomes and the transition scorecard. A rollback is negative evidence "
+    "about that exact challenger, never evidence that the incumbent failed; only trial_accept is "
+    "positive evidence. A blocked transition is unavailable until its blocked_until_t. Choose a "
+    "trial only when that exact action is allowed and evidence beats holding. Sizing is outside "
+    "your authority. Reply JSON only: "
     '{"action": "hold|trial_demand|trial_supply", '
     '"why": "<one sentence citing the decisive state, objections, and trial history>"}.'
 )
 
 
-def trial_learning(outcomes: list[dict]) -> dict:
-    """Summarise completed trials by role and transition as compact in-context evidence."""
+def _phase_deltas(outcome: dict) -> tuple[int, float]:
+    """Return deltas from the phase whose checks produced the outcome verdict."""
+    checks = outcome.get("checks") or {}
+    return int(checks.get("queue_delta", 0)), float(
+        checks.get("deadline_pressure_delta", 0.0))
+
+
+def trial_learning(outcomes: list[dict], now: float | None = None) -> dict:
+    """Summarise phase-correct positive evidence and exact-transition rollback history."""
     summary = {
         role: {
             "completed": 0, "accepts": 0, "rollbacks": 0,
-            "mean_queue_delta": 0.0, "mean_deadline_pressure_delta": 0.0,
+            "accepted_evidence_count": 0,
+            "mean_accepted_phase_queue_delta": None,
+            "mean_accepted_phase_deadline_pressure_delta": None,
         }
         for role in ("demand", "supply")
     }
-    deltas = {role: {"queue": [], "pressure": []} for role in summary}
+    accepted_deltas = {role: {"queue": [], "pressure": []} for role in summary}
     for outcome in outcomes:
         trial = outcome.get("trial") or {}
         role = trial.get("role")
@@ -101,19 +116,16 @@ def trial_learning(outcomes: list[dict]) -> dict:
         summary[role]["completed"] += 1
         summary[role]["accepts"] += int(accepted)
         summary[role]["rollbacks"] += int(not accepted)
-        deltas[role]["queue"].append(
-            int(outcome.get("end_queue_depth", trial.get("baseline_queue_depth", 0)))
-            - int(trial.get("baseline_queue_depth", 0)))
-        deltas[role]["pressure"].append(
-            float(outcome.get(
-                "end_deadline_pressure_fraction",
-                trial.get("baseline_deadline_pressure_fraction", 0.0)))
-            - float(trial.get("baseline_deadline_pressure_fraction", 0.0)))
-    for role, role_deltas in deltas.items():
+        if accepted:
+            queue_delta, pressure_delta = _phase_deltas(outcome)
+            accepted_deltas[role]["queue"].append(queue_delta)
+            accepted_deltas[role]["pressure"].append(pressure_delta)
+            summary[role]["accepted_evidence_count"] += 1
+    for role, role_deltas in accepted_deltas.items():
         if role_deltas["queue"]:
-            summary[role]["mean_queue_delta"] = round(
+            summary[role]["mean_accepted_phase_queue_delta"] = round(
                 sum(role_deltas["queue"]) / len(role_deltas["queue"]), 3)
-            summary[role]["mean_deadline_pressure_delta"] = round(
+            summary[role]["mean_accepted_phase_deadline_pressure_delta"] = round(
                 sum(role_deltas["pressure"]) / len(role_deltas["pressure"]), 3)
     transitions: dict[str, dict] = {}
     for outcome in outcomes:
@@ -122,23 +134,57 @@ def trial_learning(outcomes: list[dict]) -> dict:
         if not incumbent or not challenger:
             continue
         key = f"{incumbent}->{challenger}"
-        item = transitions.setdefault(
-            key, {"completed": 0, "accepts": 0, "rollbacks": 0,
-                  "last_queue_delta": 0, "last_deadline_pressure_delta": 0.0})
+        item = transitions.setdefault(key, {
+            "incumbent": incumbent, "challenger": challenger,
+            "completed": 0, "accepts": 0, "rollbacks": 0,
+            "consecutive_rollbacks": 0, "last_verdict": None,
+            "last_reason": None, "last_phase": None,
+            "last_phase_queue_delta": 0,
+            "last_phase_deadline_pressure_delta": 0.0,
+            "last_outcome_t": None, "blocked_until_t": None,
+            "blocked_now": False, "recommendation": "eligible_with_caution",
+        })
         accepted = outcome.get("action") == "trial_accept"
+        queue_delta, pressure_delta = _phase_deltas(outcome)
         item["completed"] += 1
         item["accepts"] += int(accepted)
         item["rollbacks"] += int(not accepted)
-        item["last_queue_delta"] = (
-            int(outcome.get("end_queue_depth", trial.get("baseline_queue_depth", 0)))
-            - int(trial.get("baseline_queue_depth", 0)))
-        item["last_deadline_pressure_delta"] = round(
-            float(outcome.get(
-                "end_deadline_pressure_fraction",
-                trial.get("baseline_deadline_pressure_fraction", 0.0)))
-            - float(trial.get("baseline_deadline_pressure_fraction", 0.0)), 3)
+        item["consecutive_rollbacks"] = (
+            0 if accepted else item["consecutive_rollbacks"] + 1)
+        item["last_verdict"] = "beneficial_challenger" if accepted else "harmful_challenger"
+        item["last_reason"] = outcome.get("reason")
+        item["last_phase"] = trial.get("phase", "trial")
+        item["last_phase_queue_delta"] = queue_delta
+        item["last_phase_deadline_pressure_delta"] = round(pressure_delta, 3)
+        item["last_outcome_t"] = outcome.get("t")
+        item["last_failure_checks"] = None if accepted else outcome.get("checks")
+    for item in transitions.values():
+        if (item["consecutive_rollbacks"] >= TRANSITION_BACKOFF_ROLLBACKS
+                and item["last_outcome_t"] is not None):
+            item["blocked_until_t"] = int(item["last_outcome_t"] + TRANSITION_BACKOFF_S)
+            item["blocked_now"] = bool(
+                now is not None and now < item["blocked_until_t"])
+        if item["blocked_now"]:
+            item["recommendation"] = "block_harmful_challenger"
+        elif item["last_verdict"] == "beneficial_challenger":
+            item["recommendation"] = "accepted_positive_evidence"
+        elif item["rollbacks"]:
+            item["recommendation"] = "negative_challenger_evidence"
     summary["by_transition"] = transitions
     return summary
+
+
+def transition_status(outcomes: list[dict], incumbent: str, challenger: str,
+                      now: float) -> dict:
+    """Return the exact-transition evidence and deterministic backoff status."""
+    key = f"{incumbent}->{challenger}"
+    return trial_learning(outcomes, now)["by_transition"].get(key, {
+        "incumbent": incumbent, "challenger": challenger,
+        "completed": 0, "accepts": 0, "rollbacks": 0,
+        "consecutive_rollbacks": 0, "last_verdict": None,
+        "blocked_until_t": None, "blocked_now": False,
+        "recommendation": "no_prior_evidence",
+    })
 
 
 def decision_state(pending, free, ctx: dict, bench) -> dict:
@@ -155,7 +201,7 @@ def decision_state(pending, free, ctx: dict, bench) -> dict:
     state["ordering_trial"] = trial
     outcomes = ctx.get("debate_v24_trial_outcomes", [])
     state["prior_trial_outcomes"] = outcomes[-3:]
-    state["trial_learning"] = trial_learning(outcomes)
+    state["trial_learning"] = trial_learning(outcomes, float(ctx.get("now", 0.0)))
     state["rotation_eligible_now"] = bool(
         trial is None and elapsed is not None and elapsed >= ORDERING_TRIAL_INTERVAL_S
         and int(state["queue_depth"]) >= MIN_TRIAL_QUEUE
@@ -393,6 +439,18 @@ def manage_rotation(state: dict, demand_ordering: str, supply_ordering: str,
             return incumbent, {
                 "action": "trial_same_as_incumbent", "referee_action": referee_action,
                 "executed": incumbent, "emergency": False}
+        transition = transition_status(
+            ctx.get("debate_v24_trial_outcomes", []), incumbent, challenger, now)
+        if transition["blocked_now"]:
+            ctx["debate_v24_transition_backoff_holds"] = ctx.get(
+                "debate_v24_transition_backoff_holds", 0) + 1
+            return incumbent, {
+                "action": "transition_backoff_hold",
+                "referee_action": referee_action,
+                "transition": transition,
+                "executed": incumbent,
+                "emergency": False,
+            }
         baseline = _trial_snapshot(state, now)
         trial = {
             "role": role,
@@ -521,6 +579,16 @@ def arm_policy_debate_v2_4(pending, free, ctx) -> None:
     rotation = None
     if demand and supply:
         incumbent = ctx["debate_v24_incumbent_ordering"]
+        blocked_trial_requests = {}
+        for role, advocate in (("demand", demand), ("supply", supply)):
+            if (advocate["request_trial"] and advocate["ordering"] != "abstain"
+                    and advocate["ordering"] != incumbent
+                    and state["rotation_eligible_now"]):
+                transition = transition_status(
+                    ctx.get("debate_v24_trial_outcomes", []), incumbent,
+                    advocate["ordering"], float(ctx.get("now", 0.0)))
+                if transition["blocked_now"]:
+                    blocked_trial_requests[role] = transition
         allowed_actions = {"hold"} | {
             f"trial_{role}"
             for role, advocate in (("demand", demand), ("supply", supply))
@@ -528,7 +596,8 @@ def arm_policy_debate_v2_4(pending, free, ctx) -> None:
                 advocate["request_trial"]
                 and advocate["ordering"] != "abstain"
                 and advocate["ordering"] != incumbent
-                and state["rotation_eligible_now"])
+                and state["rotation_eligible_now"]
+                and role not in blocked_trial_requests)
         }
         packet = (
             bench._packet_policy(pending, free, ctx) +
@@ -543,6 +612,7 @@ def arm_policy_debate_v2_4(pending, free, ctx) -> None:
             rejected.append({"role": "referee", "reason": final_error})
     else:
         final_error = "both ordering objections are required"
+        blocked_trial_requests = {}
 
     demand_ordering = demand["ordering"] if demand else "abstain"
     supply_ordering = supply["ordering"] if supply else "abstain"
@@ -554,7 +624,7 @@ def arm_policy_debate_v2_4(pending, free, ctx) -> None:
         "ordering": ordering,
         "default_sizing": ctx["sel_sizing"],
         "job_sizing": {},
-        "why": f"v2.4.2 {rotation['action']}; referee action {effective_action}",
+        "why": f"v2.4.3 {rotation['action']}; referee action {effective_action}",
     }
     bench._policy_record(pending, ctx, started_total, answer, "policy_debate_v2_4")
     invalid_hold_used = bool(rejected)
@@ -568,6 +638,7 @@ def arm_policy_debate_v2_4(pending, free, ctx) -> None:
         "openings": {"demand": demand, "supply": supply},
         "referee": final_raw,
         "referee_action": referee_action,
+        "blocked_trial_requests": blocked_trial_requests,
         "rotation": rotation,
         "deterministic_sizing": ctx.get("sel_sizing"),
         "final_valid": referee_action is not None,
@@ -583,4 +654,6 @@ def arm_policy_debate_v2_4(pending, free, ctx) -> None:
     ctx["debate_v24_epochs"] = ctx.get("debate_v24_epochs", 0) + 1
     ctx["debate_v24_invalid_holds"] = ctx.get(
         "debate_v24_invalid_holds", 0) + int(invalid_hold_used)
+    ctx["debate_v24_transition_blocked_requests"] = ctx.get(
+        "debate_v24_transition_blocked_requests", 0) + len(blocked_trial_requests)
     bench._policy_execute(pending, free, ctx)

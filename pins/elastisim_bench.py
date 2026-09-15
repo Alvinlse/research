@@ -2608,6 +2608,10 @@ def run(world: Path, arm: str, model: str = "qwen2.5:14b", interval: int = 300, 
                debate_v24_trial_accepts=ctx.get("debate_v24_trial_accepts", 0),
                debate_v24_trial_rollbacks=ctx.get("debate_v24_trial_rollbacks", 0),
                debate_v24_invalid_holds=ctx.get("debate_v24_invalid_holds", 0),
+               debate_v24_transition_blocked_requests=ctx.get(
+                   "debate_v24_transition_blocked_requests", 0),
+               debate_v24_transition_backoff_holds=ctx.get(
+                   "debate_v24_transition_backoff_holds", 0),
                switch_adaptive=ctx.get("switch_adaptive", 0), switch_calls=ctx.get("switch_calls", 0),
                model=model if arm in llm_arms else None, interval=interval,
                packet=PACKET_VERSION if arm in llm_arms else None,

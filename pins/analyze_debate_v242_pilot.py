@@ -32,8 +32,8 @@ def mean(rows: list[dict], key: str) -> float:
     return sum(float(row[key]) for row in rows) / len(rows)
 
 
-def trace_summary(window: str) -> dict:
-    path = ROOT / f"runs/core_2x2_worlds/{window}/out/pilot_v242_s17_policy_log.json"
+def trace_summary(window: str, tag: str = "pilot_v242_s17") -> dict:
+    path = ROOT / f"runs/core_2x2_worlds/{window}/out/{tag}_policy_log.json"
     if not path.exists():
         return {"available": False, "path": str(path.relative_to(ROOT))}
     epochs = json.loads(path.read_text())

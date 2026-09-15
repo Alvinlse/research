@@ -1,4 +1,4 @@
-"""Contract tests for hold-or-trial rotation and deterministic sizing in v2.4.2."""
+"""Contract tests for phase-correct rotation learning and sizing in v2.4.3."""
 from __future__ import annotations
 
 import threading
@@ -60,7 +60,7 @@ def start_supply_trial(ctx: dict, baseline: dict | None = None) -> tuple[str, di
 def test_v24_is_registered_without_replacing_v23() -> None:
     assert bench.ARMS["policy_debate_v2_4"] is debate.arm_policy_debate_v2_4
     assert bench.ARMS["policy_debate_v2_3"] is not debate.arm_policy_debate_v2_4
-    assert debate.PROTOCOL_VERSION == "2.4.2"
+    assert debate.PROTOCOL_VERSION == "2.4.3"
 
 
 def test_sizing_review_uses_five_minute_cadence_and_hysteresis() -> None:
@@ -236,6 +236,74 @@ def test_completed_trial_learning_is_keyed_by_transition() -> None:
         "auction_deadline->auction_fairness"]["rollbacks"] == 1
 
 
+def test_rollback_learning_uses_failed_phase_not_original_trial_baseline() -> None:
+    outcome = {
+        "action": "trial_rollback", "reason": "probation_failed", "t": 7200,
+        "trial": {
+            "role": "supply", "incumbent": "auction_deadline",
+            "ordering": "auction_fairness", "phase": "probation",
+            "baseline_queue_depth": 50,
+            "baseline_deadline_pressure_fraction": 0.20,
+            "phase_baseline": {"queue_depth": 15, "deadline_pressure_fraction": 0.02},
+        },
+        # The full exposure looks beneficial (50 -> 20), but probation itself failed (+5).
+        "end_queue_depth": 20,
+        "end_deadline_pressure_fraction": 0.04,
+        "checks": {"queue_delta": 5, "deadline_pressure_delta": 0.02,
+                   "passed": False},
+    }
+    learning = debate.trial_learning([outcome], now=7200)
+    role = learning["supply"]
+    transition = learning["by_transition"]["auction_deadline->auction_fairness"]
+    assert role["accepted_evidence_count"] == 0
+    assert role["mean_accepted_phase_queue_delta"] is None
+    assert transition["last_phase_queue_delta"] == 5
+    assert transition["last_phase_deadline_pressure_delta"] == 0.02
+    assert transition["last_verdict"] == "harmful_challenger"
+    assert transition["recommendation"] == "negative_challenger_evidence"
+
+
+def rollback_outcome(t: int) -> dict:
+    return {
+        "action": "trial_rollback", "reason": "trial_failed", "t": t,
+        "trial": {
+            "role": "supply", "incumbent": "auction_deadline",
+            "ordering": "auction_fairness", "phase": "trial",
+        },
+        "checks": {"queue_delta": 3, "deadline_pressure_delta": 0.01,
+                   "passed": False},
+    }
+
+
+def test_two_consecutive_rollbacks_block_only_the_exact_transition() -> None:
+    outcomes = [rollback_outcome(100), rollback_outcome(200)]
+    blocked = debate.transition_status(
+        outcomes, "auction_deadline", "auction_fairness", 201)
+    reverse = debate.transition_status(
+        outcomes, "auction_fairness", "auction_deadline", 201)
+    expired = debate.transition_status(
+        outcomes, "auction_deadline", "auction_fairness",
+        200 + debate.TRANSITION_BACKOFF_S)
+    assert blocked["consecutive_rollbacks"] == 2
+    assert blocked["blocked_now"] is True
+    assert blocked["recommendation"] == "block_harmful_challenger"
+    assert reverse["blocked_now"] is False
+    assert expired["blocked_now"] is False
+
+
+def test_rotation_manager_enforces_transition_backoff() -> None:
+    ctx = {}
+    initialise(ctx)
+    ctx["now"] = 3600
+    ctx["debate_v24_trial_outcomes"] = [rollback_outcome(100), rollback_outcome(200)]
+    selected, event = debate.manage_rotation(
+        state(), "auction_deadline", "auction_fairness", "trial_supply", ctx)
+    assert selected == "auction_deadline"
+    assert event["action"] == "transition_backoff_hold"
+    assert event["transition"]["blocked_now"] is True
+    assert ctx["debate_v24_transition_backoff_holds"] == 1
+
+
 def test_expired_outcome_can_be_added_before_decision_state_is_built() -> None:
     ctx = {}
     initialise(ctx)
@@ -311,7 +379,7 @@ def test_valid_arm_epoch_uses_three_calls_and_holds_incumbent() -> None:
         "es-policy-debate-v2-4-demand", "es-policy-debate-v2-4-supply"}
     assert calls[2] == "es-policy-debate-v2-4-referee"
     assert ctx["calls"] == 3
-    assert package["protocol_version"] == "2.4.2"
+    assert package["protocol_version"] == "2.4.3"
     assert package["fallback_used"] is False
     assert package["invalid_hold_used"] is False
     assert executed == [("auction_deadline", "as_requested")]

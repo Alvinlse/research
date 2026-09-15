@@ -101,7 +101,7 @@ Demand emergency; Demand escalates for material production or severe user-distri
 pressure. The thresholds were fixed from the completed 24-window training audit before any v2.3
 row was run. Testing v2.3 on those same windows measures repair, not generalisation.
 
-`policy_debate_v2_4` (protocol 2.4.2) keeps the parallel 30-minute ordering debate but removes sizing
+`policy_debate_v2_4` (protocol 2.4.3) keeps the parallel 30-minute ordering debate but removes sizing
 from every LLM schema. A deterministic controller reviews sizing every five simulated minutes with
 hysteresis; actual GPU changes remain work-boundary-only. Demand and Supply may propose a role-valid
 ordering or abstain. Once per hour, when service risk is low, the Referee chooses only `hold`,
@@ -109,7 +109,10 @@ ordering or abstain. Once per hour, when service risk is low, the Referee choose
 the incumbent, so rotation is the only non-emergency branch change and never uses randomness. A
 passing 30-minute trial enters a second 30-minute probation; role-specific queue, deadline,
 concentration, and p90-wait checks then accept or roll it back. Outcomes are settled before the next
-debate and fed back by role and exact incumbent-to-challenger transition.
+debate and fed back by role and exact incumbent-to-challenger transition. Version 2.4.3 reports
+deltas from the phase that actually passed or failed, labels rollback as negative challenger
+evidence, and blocks an exact transition for four simulated hours after two consecutive rollbacks.
+The backoff changes no LLM cadence and never chooses a branch.
 
 ## What this is / isn't
 
