@@ -27,9 +27,33 @@ rows = [json.loads(line) for line in OUT.read_text().splitlines() if line.strip(
 done = {row['window'] for row in rows}
 todo = [name for name in WINDOWS if name not in done]
 if not todo:
+    published = ROOT / 'pins/debate_v242_two_window_results.json'
+    published.write_text(json.dumps({
+        'protocol_version': '2.4.2',
+        'implementation_commit': '2d491ac',
+        'tag': 'pilot_v242_s17',
+        'llm_seed': 17,
+        'windows': rows,
+    }, indent=2) + '\n')
+    relative = str(published.relative_to(ROOT))
+    subprocess.run(['git', 'add', '--', relative], cwd=ROOT, check=True)
+    changed = subprocess.run(
+        ['git', 'diff', '--cached', '--quiet', '--', relative], cwd=ROOT)
+    if changed.returncode:
+        subprocess.run([
+            'git', 'commit', '--only', '-m',
+            'results: record v2.4.2 two-window pilot', '--', relative,
+        ], cwd=ROOT, check=True)
+    pushed = subprocess.run(['git', 'push', 'origin', 'elastisim'], cwd=ROOT)
+    if pushed.returncode:
+        raise SystemExit('result is checkpointed locally; GitHub push will retry next tick')
+    current = subprocess.run(
+        ['crontab', '-l'], text=True, capture_output=True, check=False).stdout
+    kept = [line for line in current.splitlines() if 'debate_v242_pilot_tick' not in line]
     subprocess.run(
-        "crontab -l | grep -v debate_v242_pilot_tick | crontab -", shell=True)
-    raise SystemExit('v2.4.2 pilot chain complete')
+        ['crontab', '-'], input=('\n'.join(kept) + ('\n' if kept else '')),
+        text=True, check=True)
+    raise SystemExit('v2.4.2 pilot chain complete and published')
 
 name = todo[0]
 window = by_name[name]
