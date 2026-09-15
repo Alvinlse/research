@@ -3,6 +3,11 @@
 Status: implemented as a separate arm; do not start its evaluation sweep until the frozen v2.3
 24-window sweep is complete and analysed.
 
+Protocol version 2.4.1 fixes trial-start bookkeeping found by the first v2.4 audit: a requested
+challenger is compared with the saved pre-debate incumbent. The ordinary Referee ordering updates
+the incumbent only when no trial starts; an accepted trial updates it after observation. Frozen
+2.4 result files remain attributable to commit `b6d0d6c`.
+
 ## Decision clocks
 
 - Ordering is debated every 1,800 simulated seconds. Demand and Supply openings execute in

@@ -26,7 +26,7 @@ from pins import policy_debate as v1
 from pins import policy_debate_v2 as v2
 
 
-PROTOCOL_VERSION = "2.4"
+PROTOCOL_VERSION = "2.4.1"
 ORDERING_REVIEW_INTERVAL_S = 1800
 SIZING_REVIEW_INTERVAL_S = 300
 ADAPTIVE_ENTER_PRESSURE = 0.75
@@ -73,8 +73,11 @@ REFEREE_PROMPT = (
     "sustained multi-user imbalance with deterioration, and wait for broadly distributed age. "
     "The advocates also vote on a bounded rotation trial. Use the raw prior outcomes and accumulated "
     "per-role trial scorecard to improve later decisions; repeated rollback is negative evidence, "
-    "while one result is not a universal rule. Choose trial_role only from ALLOWED TRIAL ROLES; use "
-    "none unless an eligible, requested trial has evidence. Sizing is outside your "
+    "while one result is not a universal rule. The saved incumbent is the ordering executed before "
+    "this debate. If you approve a requested trial, choose that advocate's trial_role and its "
+    "ordering; the trial manager compares it with the saved incumbent. Choose trial_role only from "
+    "ALLOWED TRIAL ROLES; use none unless an eligible, requested trial has evidence. Sizing is "
+    "outside your "
     "authority. Reply JSON only: "
     '{"ordering": "<allowed ordering>", "trial_role": "none|demand|supply", '
     '"why": "<one sentence citing decisive state and the rotation decision>"}.'
@@ -229,10 +232,10 @@ def manage_rotation(state: dict, demand_ordering: str, supply_ordering: str,
             "action": "trial_continue", "trial": trial,
             "executed": trial["ordering"], "emergency": False}
 
-    incumbent = referee_ordering
-    ctx["debate_v24_incumbent_ordering"] = incumbent
     last_trial = ctx.get("debate_v24_last_trial_t")
     if last_trial is None:
+        incumbent = referee_ordering
+        ctx["debate_v24_incumbent_ordering"] = incumbent
         ctx["debate_v24_last_trial_t"] = now
         return incumbent, {**event, "executed": incumbent, "emergency": False}
 
@@ -264,6 +267,12 @@ def manage_rotation(state: dict, demand_ordering: str, supply_ordering: str,
         return challenger, {
             "action": "trial_start", "trial": trial,
             "executed": challenger, "emergency": False}
+    # No trial started: the ordinary Referee decision becomes the new incumbent. This assignment
+    # must happen after challenger comparison; doing it before the comparison caused every
+    # Referee-approved trial whose ordering matched its advocate to collapse into
+    # `trial_same_as_incumbent`, even when the pre-debate incumbent was the opposing branch.
+    incumbent = referee_ordering
+    ctx["debate_v24_incumbent_ordering"] = incumbent
     return incumbent, {
         **event,
         "action": "trial_not_selected" if safe else event["action"],

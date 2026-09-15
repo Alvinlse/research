@@ -88,6 +88,21 @@ def test_referee_selected_hourly_rotation_starts_requested_branch_trial() -> Non
     assert ctx["debate_v24_trial"]["end_t"] == 5400
 
 
+def test_trial_compares_with_predebate_incumbent_not_referee_ordering() -> None:
+    """Regression for real traces where Referee ordering and requested advocate naturally match."""
+    ctx = {
+        "now": 3600,
+        "debate_v24_last_trial_t": 0,
+        "debate_v24_incumbent_ordering": "auction_priority",
+    }
+    selected, event = debate.manage_rotation(
+        state(queue_depth=50), "auction_priority", "auction_fairness",
+        "auction_fairness", "supply", ctx)
+    assert selected == "auction_fairness"
+    assert event["action"] == "trial_start"
+    assert event["trial"]["incumbent"] == "auction_priority"
+
+
 def test_safe_clock_does_not_select_a_rotation_without_referee_vote() -> None:
     ctx = {"now": 0}
     debate.manage_rotation(

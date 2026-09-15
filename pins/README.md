@@ -101,7 +101,7 @@ Demand emergency; Demand escalates for material production or severe user-distri
 pressure. The thresholds were fixed from the completed 24-window training audit before any v2.3
 row was run. Testing v2.3 on those same windows measures repair, not generalisation.
 
-`policy_debate_v2_4` keeps the parallel 30-minute ordering debate but removes sizing from every LLM
+`policy_debate_v2_4` (protocol 2.4.1) keeps the parallel 30-minute ordering debate but removes sizing from every LLM
 schema. A deterministic controller reviews sizing at the first scheduler invocation at least five
 simulated minutes after the previous review, using separate enter/exit thresholds to avoid flapping;
 actual GPU changes remain work-boundary-only. Once per hour, when service risk is low, a rotation
