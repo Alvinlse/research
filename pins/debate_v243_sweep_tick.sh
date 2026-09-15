@@ -42,13 +42,13 @@ if PILOT.exists():
                 handle.write(json.dumps(imported) + '\n')
             rows.append(imported)
             done.add(imported['window'])
+missing_pilot = PILOT_WINDOWS - done
+if missing_pilot:
+    raise SystemExit(
+        f"single-GPU queue: awaiting pilot rows {sorted(missing_pilot)}")
 todo = [window for window in windows
         if window['window'] not in done and window['window'] not in PILOT_WINDOWS]
 if not todo:
-    missing_pilot = PILOT_WINDOWS - done
-    if missing_pilot:
-        raise SystemExit(
-            f"22-window sweep complete; awaiting pilot rows {sorted(missing_pilot)}")
     subprocess.run(
         [str(ROOT / '.venv/bin/python'),
          str(ROOT / 'pins/analyze_debate_v243_sweep.py')],
