@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from collections import Counter
 from pathlib import Path
@@ -239,7 +240,14 @@ Macro useful utilization changed from {macro['baseline_useful_util_win']:.3f} to
             "git", "commit", "--only", "-m", "results: analyze v2.4.2 pilot",
             "--", *relative,
         ], cwd=ROOT, check=True)
-    subprocess.run(["git", "push", "origin", "elastisim"], cwd=ROOT, check=True)
+    git_env = {
+        **os.environ,
+        "GIT_TERMINAL_PROMPT": "0",
+        "GIT_SSH_COMMAND": "ssh -o BatchMode=yes",
+    }
+    subprocess.run(
+        ["git", "push", "origin", "elastisim"], cwd=ROOT, check=True,
+        env=git_env)
 
     current = subprocess.run(
         ["crontab", "-l"], text=True, capture_output=True, check=False).stdout
